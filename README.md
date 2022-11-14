@@ -1,21 +1,41 @@
-# Collaborative-Tacton
-Vibrotactile pattern generator for collaborative development. All instruction will send to a webscoket server, which will distribute the instruction to other clients from the same room
+# TactileCollab
+A tool that enables real-time collaboration when deisgning vibrotactile experiences.
 
-## Frontend installation ##
-1. install node version 14.18.2
-2. see installtation of abandonware/noble for other needed packages in cause of your OS
-3. for windows you will need a bluetooth-dongle, which use the WinUsb Driver (for flashing Bluetooth Adapter use zadig)
-4. navigate inside of a terminal to the directory "Collaborative-Tacton\collaborative-tacton-frontend"
-5. run npm install
-    1. there could be an error, that you have to remove the electron module
-    2. if this error occure  --> remove all folder, which contain the name "electron" inside of the node_modules folder
-    3. run npm install
-6. ensure that you plugged in your bluetooth-dongle, with the correct driver and that it's currently not used
-7. run npm electron:serve
 
-## Backend installation ##
-1. install node version 14.18.2
-2. navigate inside of a terminal to the directory "Collaborative-Tacton\collaborative-tacton-backend"
-3. run npm install
-4. run npm serve
-5. if you want to use your own server, change the used ip address in the frontend under "Collaborative-Tacton\collaborative-tacton-frontend\src\renderer\CommunicationManager\WebSocketManager\index.ts
+## Prerequisites
+
+This version was tested with NodeJS **v14.18.2**. Make sure to install the same version on your computer. You can easliy install or change the active Node version with a version manager like [NVM](https://github.com/nvm-sh/nvm) or [N](https://www.npmjs.com/package/n). Please read the dedicated documentation how to do that.
+
+Clone the repository on your computer, e.g. `git clone https://github.com/TactileVision/TactileCollab.git`
+
+
+
+## Frontend
+
+### How to Install
+1. Inside the repository, navigate to `frontend`
+2. Execute `npm install`
+    - If an error related to *electron modules* occures, you need to remove all folders containing "electron" in the name inside of the `node_modules` folder.
+    - Execute `npm install` once more
+3. **Only for Windows users:** check the `node_modules/abandonware/noble` for other requiered packages
+
+### How to Run
+**NOTE:** For windows you need a bluetooth-dongle, which use the WinUsb Driver (for flashing Bluetooth Adapter use zadig). Before you start the frontend, make sure that the bluetooth-dongle is connected to your computer with the correct driver and that it's currently not used.
+
+**NOTE:** If the server doesn't run on the same computer you need to set the server IP address in `frontend\src\renderer\CommunicationManager\WebSocketManager\index.ts`
+
+1. Inside the repository, navigate to `frontend`
+2. Execute `npm run electron:serve`
+
+
+
+
+## Backend
+
+### How to Install
+1. Inside the repository, navigate to `backend`
+2. Execute `npm install`
+
+### How to Run
+1. Inside the repository, navigate to `backend`
+2. Execute `npm run serve`
