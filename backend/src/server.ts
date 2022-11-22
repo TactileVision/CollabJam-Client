@@ -23,7 +23,7 @@ wss.on('connection', function connection(ws: WebSocket, request: string, client:
  */
 function authenticate(request: IncomingMessage, next: any) {
     if (request.url !== undefined) {
-        const current_url = new URL("https:localhost:8080" + request.url)
+        const current_url = new URL("https://localhost:8080" + request.url)
         const search_params = current_url.searchParams;
         const id = search_params.get('token');
         //console.log(id)
@@ -59,6 +59,12 @@ server.on('upgrade', function upgrade(request, socket, head) {
         });
     });
 });
+server.on("request", function (req,res){
+    console.log(req);
+})
+server.on("connect", function (req,res){
+    console.log(req);
+})
 
-server.listen(8080);
-console.log("Server startet at port 8080");
+server.listen(3333);
+console.log("Server startet at port 3333");
