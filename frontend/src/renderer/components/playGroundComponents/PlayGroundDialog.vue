@@ -200,7 +200,7 @@ export default defineComponent({
     /**
       set the number of maximum activeChannels
     */
-    this.channelActive = new Array(this.store.getters.getNumberOfOutputs).fill(
+    this.channelActive = new Array(5).fill(
       false
     );
 
