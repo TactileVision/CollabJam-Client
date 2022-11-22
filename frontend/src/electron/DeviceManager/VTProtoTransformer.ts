@@ -2,6 +2,7 @@ import { TactileTask } from "@/types/GeneralType";
 import { Peripheral } from "@abandonware/noble";
 import protobuf from "protobufjs";
 import { tactileDisplayService } from "./Services";
+import path from "path";
 
 enum InstructionType {
     channelId = "channelId",
@@ -64,7 +65,7 @@ const convertTaskToInstruction = (taskList: TactileTask[], InstSetParamDef: prot
  * it will transform it to the VTProto format and will use the characteristic to controll the device 
  */
 export const executeInstruction = (device: Peripheral, taskList: TactileTask[]) => {
-    protobuf.load("src/protobuf/vtproto.proto", function (err, root) {
+    protobuf.load(path.join(process.resourcesPath, "extraResources/vtproto.proto"), function (err, root){
         if (err) {
             console.log(err);
             throw err;

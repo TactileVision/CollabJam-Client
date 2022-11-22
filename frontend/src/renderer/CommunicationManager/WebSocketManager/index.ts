@@ -32,7 +32,7 @@ function heartbeat(store:Store) {
 export const initWebsocket = (store: Store) => {
     //add this token to establish a connection
     const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-    clientWs = new WebSocket("ws://localhost:8080/path?token="+token)
+    clientWs = new WebSocket("wss://itactjam.informatik.htw-dresden.de/whws/path?token="+token)
     if (clientWs !== null) {
         clientWs.onopen = function (event: Event) {
             store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, true);

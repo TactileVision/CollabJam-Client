@@ -4,8 +4,18 @@ module.exports = {
     electronBuilder: {
       preload: 'src/preload.js',
       builderOptions: {
-        productName: 'Collaborative Tacton Generator'
-      }
+        productName: 'Collaborative Tacton Generator',
+        extraResources: [
+          {
+            "from": "./src/protobuf/",
+            "to": "extraResources",
+            "filter": [
+              "**/*"
+            ]
+          }],
+      },
+    
+
     },
     vuetify: {
 			// https://github.com/vuetifyjs/vuetify-loader/tree/next/packages/vuetify-loader
