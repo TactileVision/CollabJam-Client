@@ -7,7 +7,7 @@ This software runs on the user's computer. It connects the vibrotactile display 
 
 ### How to Install the Binary
 1. Download the latest binary from the [Releases](https://github.com/TactileVision/TactileCollab/releases) page
-2. Move the exeutable to your applications folder or whereever you prefer to store it
+2. Doubleclick the executable to install the software
 
 ### How to Use the Frontend
 
