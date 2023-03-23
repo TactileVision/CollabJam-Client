@@ -11,6 +11,7 @@ import { executeInstruction } from "./VTProtoTransformer";
  */
 let discoveredDevices = [] as Peripheral[]
 let connectedDevice: Peripheral | undefined = undefined;
+let connectedDevices = new Set<Peripheral>();
 
 const startScan = () => {
     discoveredDevices = [];
@@ -34,9 +35,11 @@ const addDevice = (peripheral: Peripheral) => {
 
 const updateConnectedDevice = async (peripheral: Peripheral) => {
     if (peripheral.state == "connected") {
-        connectedDevice = peripheral;
+        // connectedDevice = peripheral;
+        connectedDevices.add(peripheral);
     } else {
-        connectedDevice = undefined;
+        // connectedDevice = undefined;
+        connectedDevices.delete(peripheral);
     }
     sendMessageToRenderer(IPC_CHANNELS.renderer.deviceStatusChanged, {
         id: peripheral.id,
@@ -47,25 +50,34 @@ const updateConnectedDevice = async (peripheral: Peripheral) => {
 }
 
 const connectDevice = (deviceID: string) => {
+    //Check if specified device is in list of discovered deviceds
+    console.log("Connecting device");
     const device = discoveredDevices.find(device => device.id === deviceID);
     //check if device is already connected
     if (device == undefined || device.state === "connected") return;
-    if (connectedDevice !== undefined && connectedDevice !== null)
-        disconnectBlutetoothDevice(connectedDevice);
-        
-    connectBlutetoothDevice(device);
+
+    // //TODO: Check if device is in set of peripherals
+    // //Richards code disconnects an alredy connected device which allows him to connect the new device
+    // if (connectedDevice !== undefined && connectedDevice !== null)
+    //     disconnectBlutetoothDevice(connectedDevice);
+
+    //if number of connected devies is at maximum ignore
+    if (!connectedDevices.has(device)) {
+        console.log("Device not in list yet");
+        connectBlutetoothDevice(device);
+    }
 }
 
+//TODO: Add id or device instant to remove a specific device
 const disconnectDevice = () => {
     if (connectedDevice == null) return;
     disconnectBlutetoothDevice(connectedDevice)
 }
 
 const executeTask = (taskList: TactileTask[]) => {
-    if (connectedDevice == null)
-        return;
-
-    executeInstruction(connectedDevice, taskList)
+    connectedDevices.forEach(device => {
+        executeInstruction(device, taskList)
+    })
 }
 
 const initialVibration = async () => {

@@ -65,7 +65,7 @@ const convertTaskToInstruction = (taskList: TactileTask[], InstSetParamDef: prot
  * it will transform it to the VTProto format and will use the characteristic to controll the device 
  */
 export const executeInstruction = (device: Peripheral, taskList: TactileTask[]) => {
-    protobuf.load(path.join(process.resourcesPath, "extraResources/vtproto.proto"), function (err, root){
+    protobuf.load(path.join(process.resourcesPath, "extraResources/vtproto.proto"), function (err, root) {
         if (err) {
             console.log(err);
             throw err;
@@ -86,10 +86,18 @@ export const executeInstruction = (device: Peripheral, taskList: TactileTask[]) 
                 const messages = buildMessages(instructions, instructionDef);
                 //
                 const buffer = buildWriter(messages, instructionDef);
-                characteristic.write(buffer, true, (error) => {
+                console.log("Buffer:");
+                console.log(buffer);
+                characteristic.write(buffer, false, (error) => {
                     //go always in this callback if error is null;all is fine
-                    if (error !== null)
+                    
+                    console.log(buffer);
+                    if (error !== null) {
+                        console.log("Error sending data")
+                        console.log(error)
                         throw error;
+                    }
+
                 });
             }
         }

@@ -1,4 +1,4 @@
-import noble, { Peripheral } from "@abandonware/noble";
+import noble, { Descriptor, Peripheral } from "@abandonware/noble";
 import { isKnownService, knownServices, knownServiceUuids } from "./Services"
 import DeviceManager from "./DeviceManager";
 
@@ -26,7 +26,7 @@ export const startBluetoothScan = () => {
         // clear list
         console.log("[Bluetooth] Starting Scan");
         // start scan
-        noble.startScanning([], false, (error?: Error) => {
+        noble.startScanning(knownServiceUuids, false, (error?: Error) => {
             if (!error) return;
             throw error;
         });
@@ -67,12 +67,23 @@ const setOnCharacteristicsDiscover = (service: noble.Service) => {
                             // call all defined functions of callbacks in the service file for the connected device
                             if (s.characteristics[key] !== undefined && s.characteristics[key].callbacks !== undefined) {
                                 s.characteristics[key]!.callbacks!.forEach((setOnFn) => {
-                                    console.log("inside of callback");
+                                    // console.log("inside of callback");
                                     setOnFn(characteristic)
                                 }
                                 );
                             }
                         }
+                        characteristic.once("descriptorsDiscover", (descriptors) => {
+                                // console.log(descriptors)
+                                descriptors.forEach((d) =>{
+                                    d.readValue((error, data)=>{
+                                        // console.log("decriptor read")
+                                        // console.log(data)
+                                        // console.log(error)
+                                    })
+                                })
+                        } )
+                        characteristic.discoverDescriptors()
                     }
                 }
             }

@@ -52,6 +52,11 @@ const tactileDisplayService:Service = {
     characteristics: {
         vtprotoBuffer: {
             uuid: "f33c00328ebf4c9c83ecbfff479a930b",
+            callbacks:[
+                (characteristic: any) => {
+                    console.log("vtprotoBuffer characteristic")
+                }
+            ]
         },
         numberOfOutputs: {
             uuid: "f33c00028ebf4c9c83ecbfff479a930b",
@@ -62,7 +67,7 @@ const tactileDisplayService:Service = {
                         if (error) {
                             console.log(error);
                         }
-                        console.log("im A characteristic")
+                        // console.log("im A characteristic")
                         sendMessageToRenderer(IPC_CHANNELS.renderer.numberOfOutputsDiscovered, {
                             deviceId:characteristic._peripheralId,
                             numOfOutputs:data.readUInt8()
