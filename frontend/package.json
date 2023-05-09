@@ -28,7 +28,7 @@
     "vue": "^3.2.13",
     "vue-grid-layout": "git+https://github.com/lvjunhao/vue-grid-layout.git",
     "vue-router": "^4.0.3",
-    "vuetify": "^3.0.0-beta.1",
+    "vuetify": "3.0.0-beta.1",
     "vuex": "^4.0.0",
     "webfontloader": "^1.0.0"
   },
