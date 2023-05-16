@@ -1,22 +1,14 @@
 <template>
-  <v-card
-    class="mx-auto pa-1 keyButton"
-    max-width="100"
-    min-width="100"
-    min-height="100"
-    @click="handleMouse(false)"
-    @mouseleave="handleMouseLeave()"
-    @mousedown="handleMouse(true)"
-    v-bind:style="{ backgroundColor: colorActuator }"
-  >
+  <v-card class="mx-auto pa-1 keyButton" max-width="100" min-width="100" min-height="100" @click="handleMouse(false)"
+    @mouseleave="handleMouseLeave()" @mousedown="handleMouse(true)" v-bind:style="{ backgroundColor: colorActuator }">
     <v-card-text style="padding: 1px" class="keyButton">
       <v-row no-gutters>
-        {{ button.name }}
+        {{ binding.name }}
         <v-spacer />
-        <div>{{ button.intensity * 100 }}%</div>
+        <div>{{ actuatorActions[0].intensity * 100 }}%</div>
       </v-row>
       <v-row no-gutters class="cardMainRow">
-        <div>{{ button.key }}</div>
+        <div>{{ inputName }}</div>
       </v-row>
     </v-card-text>
     <v-card-actions style="padding: 2px; min-height: 0">
@@ -35,10 +27,14 @@
 .keyButton {
   display: flex;
   flex-direction: column;
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* IE10+/Edge */
-  user-select: none; /* Standard */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE10+/Edge */
+  user-select: none;
+  /* Standard */
 }
 
 .cardMainRow {
@@ -54,9 +50,11 @@
 <script lang="ts">
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "@vue/runtime-core";
-import { KeyBoardButton } from "@/types/GeneralType";
+import { InputDevice, isTriggerActuatorAction } from "@/types/InputBindings";
+import getInputName from "@/renderer/InputDetection/getInputName";
 import { lightenDarkenColor } from "../../../lib/colors";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/playGround/types";
+import { StateInputBinding } from "@/renderer/store/modules/playGround/playGround";
 
 export default defineComponent({
   name: "KeyBoardButton",
@@ -67,8 +65,12 @@ export default defineComponent({
     };
   },
   props: {
-    button: {
-      type: Object as () => KeyBoardButton,
+    binding: {
+      type: Object as () => StateInputBinding,
+      required: true,
+    },
+    device: {
+      type: Object as () => InputDevice,
       required: true,
     },
     isMoved: {
@@ -76,20 +78,28 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ["updateisMoved","editButton"],
+  emits: ["updateisMoved", "editButton"],
   computed: {
     colorActuator() {
-      if (this.button.isActive.mouse || this.button.isActive.keyboard)
-        return lightenDarkenColor(this.button.color, -100);
-      return this.button.color;
+      if (this.binding.activeTriggers > 0)
+        return lightenDarkenColor(this.binding.color, -100);
+      return this.binding.color;
     },
+    inputName() {
+      return getInputName(this.binding.inputs[0]);
+    },
+    actuatorActions() {
+      return this.binding.actions.filter(isTriggerActuatorAction);
+    }
   },
   methods: {
     handleMouseLeave() {
+      if (!this.buttonPressed) return;
       if (!this.store.state.playGround.inEditMode) {
+        this.buttonPressed = false;
         this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
-          buttonKey: this.button.key,
-          mouse: false,
+          device: this.device,
+          input: this.binding.inputs[0]
         });
       }
     },
@@ -103,22 +113,22 @@ export default defineComponent({
       if (this.store.state.playGround.inEditMode) {
         if (!mouseDown) {
           //the button wanted to be edit
-          this.$emit("editButton", this.button.i);
+          this.$emit("editButton", this.binding.uid);
         }
       } else {
         if (mouseDown) {
           //button clicked
           this.buttonPressed = true;
           this.store.dispatch(PlayGroundActionTypes.activateKey, {
-            buttonKey: this.button.key,
-            mouse: true,
+            device: this.device,
+            input: this.binding.inputs[0]
           });
         } else {
           if (this.buttonPressed) {
             this.buttonPressed = false;
             this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
-              buttonKey: this.button.key,
-              mouse: false,
+              device: this.device,
+              input: this.binding.inputs[0],
             });
           }
         }
@@ -126,9 +136,9 @@ export default defineComponent({
     },
     listChannels(): string {
       let channelList = "[";
-      this.button.channels.forEach((channel: number, index: number) => {
+      this.actuatorActions.map(action => action.channel).forEach((channel: number, index: number) => {
         channelList += channel + 1;
-        if (index !== this.button.channels.length - 1) channelList += ", ";
+        if (index !== this.actuatorActions.length - 1) channelList += ", ";
       });
       channelList += "]";
       return channelList;

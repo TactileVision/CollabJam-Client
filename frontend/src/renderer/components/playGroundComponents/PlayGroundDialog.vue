@@ -14,7 +14,7 @@
         <v-row no-gutters>
           <v-col cols="7" align-self="center">
             <div>
-              {{ key }}
+              {{ inputName }}
             </div>
             <div class="errorField" v-if="keyIsTaken">
               The Key is already taken.
@@ -139,7 +139,10 @@ import { RouterNames } from "@/types/Routernames";
 import { defineComponent } from "@vue/runtime-core";
 import { lightenDarkenColor, defaultColors } from "../../lib/colors";
 import { createInputDetection } from "@/renderer/InputDetection";
-import { InputEvent, isGamepadAxis, isGamepadButton } from "@/renderer/InputDetection/types";
+import { InputEvent } from "@/renderer/InputDetection/types";
+import { UserInput, UserInputType, KeyInput } from "@/types/InputDetection";
+import { InputBinding, InputDevice, KeyboardDevice, isTriggerActuatorAction } from "@/types/InputBindings";
+import getInputName from "@/renderer/InputDetection/getInputName";
 
 export default defineComponent({
   name: "PlayGroundDialog",
@@ -157,6 +160,8 @@ export default defineComponent({
       keyIsRequired: false,
       name: "",
       key: "",
+      input: null as UserInput | null,
+      device: null as InputDevice | null,
       intensity: 1,
       colorButtons: defaultColors[1],
       channelActive: new Array(0).fill(false),
@@ -182,15 +187,20 @@ export default defineComponent({
     set channels active, if the area button get modified
     */
     if (this.keyButtonId == undefined) return;
-    const keyButtonStore = this.store.getters.getKeyButton(this.keyButtonId);
-    if (keyButtonStore == undefined) return;
+    const result = this.store.getters.getKeyButton(this.keyButtonId);
+    if (result == undefined) return;
+
+    const { device, binding } = result;
+    this.device = device;
 
     //insert values in dialog of found button
-    if (keyButtonStore.name !== undefined) this.name = keyButtonStore.name;
-    this.key = keyButtonStore.key;
-    this.intensity = keyButtonStore.intensity;
-    this.colorButtons = keyButtonStore.color;
-    keyButtonStore.channels.forEach((element) => {
+    if (binding.name !== undefined) this.name = binding.name;
+
+    const triggerActuatorActions = binding.actions.filter(isTriggerActuatorAction)
+    this.input = binding.inputs[0];
+    this.intensity = triggerActuatorActions[0].intensity || 1;
+    this.colorButtons = binding.color;
+    triggerActuatorActions.map(action => action.channel).forEach((element) => {
       this.channelActive[element] = true;
     });
   },
@@ -202,6 +212,10 @@ export default defineComponent({
         return this.colorButtons;
       };
     },
+    inputName(): string | undefined {
+      if (!this.input) return;
+      return getInputName(this.input);
+    }
   },
   methods: {
     updateChannel(currentState: boolean, index: number) {
@@ -218,26 +232,30 @@ export default defineComponent({
       this.detection.start();
       setTimeout(this.stopKeyDetection, 5000);
     },
-    enterNewKey(e: any) {
+    enterNewKey(e: KeyboardEvent) {
       //check if user want to enter key
       if (!this.isKeyDetecting) return;
 
-      this.key = e.key.toUpperCase();
+      const keyInput: KeyInput = {
+        type: UserInputType.Key,
+        key: e.key.toUpperCase(),
+      }
+
+      const device: KeyboardDevice = { type: "keyboard" };
+
+      this.input = keyInput;
+      this.device = device;
       this.onUserInput();
     },
     onDetectionInput(e: InputEvent) {
-      const input = e.input;
-      if (isGamepadButton(input)) {
-        this.key = input.getName();
-      } else if (isGamepadAxis(input)) {
-        this.key = input.getName();
-      }
+      this.input = e.input;
+      this.device = e.device;
       this.onUserInput()
     },
     onUserInput() {
       this.keyIsRequired = false;
 
-      if (this.store.getters.isKeyAlreadyTaken(this.keyButtonId, this.key)) {
+      if (this.input && this.device && this.store.getters.isKeyAlreadyTaken(this.keyButtonId, this.device, this.input)) {
         this.keyIsTaken = true;
         return;
       }
@@ -248,14 +266,16 @@ export default defineComponent({
     },
     deleteButton() {
       if (this.keyButtonId == undefined) return;
+      if (!this.device) return;
+
       this.store.commit(
         PlayGroundMutations.DELETE_ITEM_FROM_GRID,
-        this.keyButtonId
+        { uid: this.keyButtonId, device: this.device }
       );
       this.$emit("closeDialog");
     },
     modifyButton() {
-      if (this.key.length == 0) {
+      if (!this.input || !this.device) {
         this.keyIsRequired = true;
         return;
       }
@@ -266,25 +286,27 @@ export default defineComponent({
       this.channelActive.forEach((isActive, index) => {
         if (isActive) channels.push(index);
       });
-      const button = {
-        channels: channels,
-        color: this.colorButtons,
-        intensity: this.intensity,
+
+      const binding: Omit<InputBinding, "uid" | "position"> = {
+        inputs: [{ ...this.input }],
         name: this.name,
-        key: this.key,
-        isActive: {
-          mouse: false,
-          keyboard: false,
-        },
-      };
+        color: this.colorButtons,
+        actions: channels.map(channel => ({
+          type: "trigger_actuator",
+          channel,
+          intensity: this.intensity
+        }))
+      }
 
       if (this.keyButtonId == undefined) {
-        this.store.dispatch(PlayGroundActionTypes.addButtonToGrid, button);
+        this.store.dispatch(PlayGroundActionTypes.addButtonToGrid, { device: this.device, binding });
         this.$emit("closeDialog");
       } else {
+        console.log("updating ", this.device, binding, this.keyButtonId);
         this.store.dispatch(PlayGroundActionTypes.updateKeyButton, {
           id: this.keyButtonId,
-          props: button,
+          device: this.device,
+          props: binding,
         });
         this.$emit("closeDialog");
       }

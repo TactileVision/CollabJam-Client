@@ -5,7 +5,7 @@ import { app } from "electron";
 import { initSettings, CustomSettings } from './initSettings';
 import { sendMessageToRenderer } from '../IPCMainManager/IPCController';
 import { IPC_CHANNELS } from '../IPCMainManager/IPCChannels';
-import { KeyBoardButton } from '@/types/GeneralType';
+import { InputBinding, InputDevice, compareDevices } from '@/types/InputBindings';
 
 //Manager to handle all user configurations and save them locally
 class SettingManager {
@@ -66,13 +66,17 @@ class SettingManager {
         this.writeFile();
     }
 
-
-    updateButton(button: KeyBoardButton) {
-        const index = this.customSettings.buttons.findIndex(buttonSettings => buttonSettings.i == button.i);
-        if (index == -1) {
-            this.customSettings.buttons.push(button);
+    updateButton(device: InputDevice, binding: InputBinding) {
+        const deviceBindingsIndex = this.customSettings.deviceBindings.findIndex(deviceBinding => compareDevices(deviceBinding.device, device));
+        if (deviceBindingsIndex == -1) {
+            this.customSettings.deviceBindings.push({ device, bindings: [binding] });
         } else {
-            this.customSettings.buttons[index] = button;
+            const index = this.customSettings.deviceBindings[deviceBindingsIndex].bindings.findIndex(storedBinding => storedBinding.uid === binding.uid);
+            if(index == -1) {
+                this.customSettings.deviceBindings[deviceBindingsIndex].bindings.push(binding);
+            } else {
+                this.customSettings.deviceBindings[deviceBindingsIndex].bindings[index] = binding;
+            }
         }
 
         this.writeFile();

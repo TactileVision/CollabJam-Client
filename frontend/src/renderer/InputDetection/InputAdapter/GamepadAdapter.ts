@@ -1,5 +1,6 @@
-import { GamepadAxisInput, GamepadButtonInput, GamepadDevice, InputDeviceType, UserInputType } from "../types";
+import { GamepadDevice, InputDeviceType } from "../types";
 import { InputAdapter, InputAdapterConfig } from "../InputAdapter";
+import { GamepadAxisInput, GamepadButtonInput, UserInputType } from "@/types/InputDetection";
 
 export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter => {
   let isDetecting = false;
@@ -20,7 +21,6 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
           const input: GamepadButtonInput = {
             type: UserInputType.GamepadButton,
             index,
-            getName: buttonNameResolverFor(device.name, index)
           }
           onInput({ device, input, value: button.value })
         })
@@ -33,7 +33,6 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
           const input: GamepadAxisInput = {
             type: UserInputType.GamepadAxis,
             index,
-            getName: axisNameResolverFor(device.name, index)
           }
 
           onInput({ device, input, value: axis })
@@ -60,68 +59,3 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
   })
 }
 
-interface InputMap {
-  buttons: string[];
-  axes: string[];
-}
-
-const INPUT_NAME_MAP = {
-  xbox: {
-    buttons: [
-      "A",
-      "B",
-      "X",
-      "Y",
-      "LB",
-      "RB",
-      "LT",
-      "RT",
-      "Select",
-      "Start",
-      "Left Stick",
-      "Right Stick",
-      "Up",
-      "Down",
-      "Left",
-      "Right",
-      "XBox"
-    ],
-    axes: [
-      "Left Horizontally",
-      "Left Vertically",
-      "Right Horizontally",
-      "Right Vertically"
-    ]
-  }
-}
-
-const buttonNameResolverFor = (gamepadName: string, buttonIndex: number): () => string => {
-  let inputMap: InputMap | null = null
-  return () => {
-    if(!inputMap) {
-      const deviceType = getDeviceType(gamepadName);
-      if(!deviceType) return "unknown";
-      inputMap = INPUT_NAME_MAP[deviceType];
-    }
-    return inputMap.buttons[buttonIndex] || "unknown";
-  };
-}
-const axisNameResolverFor = (gamepadName: string, buttonIndex: number): () => string => {
-  let inputMap: InputMap | null = null
-  return () => {
-    if(!inputMap) {
-      const deviceType = getDeviceType(gamepadName);
-      if(!deviceType) return "unknown";
-      inputMap = INPUT_NAME_MAP[deviceType];
-    }
-    return inputMap.axes[buttonIndex] || "unknown";
-  };
-}
-
-const getDeviceType = (gamepadName: string) => {
-  if(gamepadName.match(/microsoft/i)) {
-    return "xbox"
-  }
-  console.error(`unknown device type: ${gamepadName}`);
-  return null;
-}

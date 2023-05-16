@@ -24,8 +24,8 @@ export const initIPCListener = () => {
     store.dispatch(GeneralSettingsActionTypes.setNumberOfOutPuts, payload)
   });
 
-  window.api.receive(IPC_CHANNELS.renderer.initConfig, (setting:CustomSettings) => {
-    store.commit(PlayGroundMutations.BULK_GRID_UPDATE, setting.buttons);
+  window.api.receive(IPC_CHANNELS.renderer.initConfig, (setting: CustomSettings) => {
+    store.commit(PlayGroundMutations.BULK_GRID_UPDATE, setting.deviceBindings);
     store.commit(RoomMutations.UPDATE_USER_NAME, setting.userName);
   });
 

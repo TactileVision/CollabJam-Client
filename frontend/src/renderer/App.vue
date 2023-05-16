@@ -150,7 +150,9 @@ import { useStore } from "./store/store";
 import { initWebsocket } from "./CommunicationManager/WebSocketManager";
 import { PlayGroundActionTypes } from "./store/modules/playGround/types";
 import { createInputDetection } from "./InputDetection";
-import { InputEvent, isGamepadAxis, isGamepadButton } from "./InputDetection/types";
+import { InputEvent } from "./InputDetection/types";
+import { KeyInput, UserInputType } from "@/types/InputDetection";
+import { KeyboardDevice } from "@/types/InputBindings";
 export default defineComponent({
   name: "App",
   data() {
@@ -182,59 +184,42 @@ export default defineComponent({
     correctFrameForInput(): boolean {
       return this.store.getters.currentView == RouterNames.PLAY_GROUND;
     },
-    buttonDown(e: any) {
+    buttonDown(e: KeyboardEvent) {
+      if (e.repeat) return;
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
-      const key: string = e.key.toUpperCase();
-      //console.log("buttonDown");
-      this.store.dispatch(PlayGroundActionTypes.activateKey, {
-        buttonKey: key,
-        keyboard: true,
-      });
+      const input: KeyInput = { type: UserInputType.Key, key: e.key.toUpperCase() };
+      const device: KeyboardDevice = { type: "keyboard" };
+
+      this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input });
     },
     buttonUp(e: any) {
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
-      const key = e.key.toUpperCase();
-      //console.log("buttonUp");
-      this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
-        buttonKey: key,
-        keyboard: false,
-      });
+      const input: KeyInput = { type: UserInputType.Key, key: e.key.toUpperCase() };
+      const device: KeyboardDevice = { type: "keyboard" };
+
+      this.store.dispatch(PlayGroundActionTypes.deactivateKey, { device, input });
     },
     onUserInput(e: InputEvent) {
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
 
       const input = e.input;
-      let key: string | null = null;
-      if (isGamepadButton(input)) {
-        key = input.getName();
-      } else if (isGamepadAxis(input)) {
-        key = input.getName();
-      }
-      if (!key) return;
 
       // If there is an active timeout we are already active.
       if (this.disableButtonTimeout) {
         cancelAnimationFrame(this.disableButtonTimeout);
         this.disableButtonTimeout = null;
       } else {
-        this.store.dispatch(PlayGroundActionTypes.activateKey, {
-          buttonKey: key,
-          keyboard: true,
-        });
+        this.store.dispatch(PlayGroundActionTypes.activateKey, { device: e.device, input });
       }
 
       // setTimeout is needed to ensure that the requested animation frame
       // is performed after the next tick in the input manager
       setTimeout(() => {
         this.disableButtonTimeout = requestAnimationFrame(() => {
-          this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
-            // not sure why typescript things this can be null?
-            buttonKey: key || "",
-            keyboard: false,
-          });
+          this.store.dispatch(PlayGroundActionTypes.deactivateKey, { device: e.device, input });
           this.disableButtonTimeout = null;
         })
       }, 1);

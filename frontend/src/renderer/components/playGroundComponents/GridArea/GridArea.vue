@@ -1,32 +1,11 @@
 <template>
-  <grid-layout
-    :layout="store.state.playGround.gridItems"
-    :col-num="store.state.playGround.gridLayout.x"
-    :row-height="rowHeight"
-    :maxRows="store.state.playGround.gridLayout.y"
-    :is-draggable="store.state.playGround.inEditMode"
-    :is-resizable="false"
-    :vertical-compact="false"
-    :prevent-collision="true"
-  >
-    <grid-item
-      v-for="item in store.state.playGround.gridItems"
-      :key="item.i"
-      :static="false"
-      :x="item.x"
-      :y="item.y"
-      :w="item.w"
-      :h="item.h"
-      :i="item.i"
-      @moved="movedEvent"
-      @move="moveEvent"
-    >
-      <KeyBoardButton
-        :button="item"
-        :isMoved="isMoved"
-        @updateisMoved="updateisMoved"
-        @editButton="(id) => $emit('editButton', id)"
-      />
+  <grid-layout :layout="gridItems" :col-num="store.state.playGround.gridLayout.x" :row-height="rowHeight"
+    :maxRows="store.state.playGround.gridLayout.y" :is-draggable="store.state.playGround.inEditMode" :is-resizable="false"
+    :vertical-compact="false" :prevent-collision="true">
+    <grid-item v-for="item in gridItems" :key="item.i" :static="false" :x="item.x" :y="item.y" :w="item.w" :h="item.h"
+      :i="item.i" @moved="(i, x, y) => movedEvent(item.binding, item.device, x, y)" @move="moveEvent">
+      <KeyBoardButton :binding="item.binding" :device="item.device" :isMoved="isMoved" @updateisMoved="updateisMoved"
+        @editButton="(id) => $emit('editButton', id)" />
     </grid-item>
   </grid-layout>
 </template>
@@ -55,15 +34,25 @@ export default defineComponent({
     window.addEventListener("resize", this.resizeScreen);
     this.resizeScreen();
   },
+  computed: {
+    gridItems() {
+      return this.store.state.playGround.deviceBindings.flatMap(deviceBinding => deviceBinding.bindings.map(binding => ({
+        i: binding.uid,
+        binding,
+        device: deviceBinding.device,
+        ...binding.position
+      })))
+    }
+  },
   methods: {
-    movedEvent: function (i, newX, newY) {
+    movedEvent: function (binding, device, newX, newY) {
       //console.log("MOVED i=" + i + ", X=" + newX + ", Y=" + newY);
+      const newPosition = { ...binding.position, x: newX, y: newY };
+
       this.store.dispatch(PlayGroundActionTypes.updateKeyButton, {
-        id: i,
-        props: {
-          x: newX,
-          y: newY,
-        },
+        id: binding.uid,
+        device,
+        props: { position: newPosition }
       });
     },
     moveEvent: function () {

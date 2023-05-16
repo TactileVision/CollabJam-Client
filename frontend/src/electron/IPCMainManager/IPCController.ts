@@ -3,10 +3,11 @@ import fs from 'fs';
 import { app, BrowserWindow, dialog } from "electron";
 import { IPC_CHANNELS } from "./IPCChannels";
 import DeviceManager from "../DeviceManager/DeviceManager"
-import { KeyBoardButton, TactileTask } from "@/types/GeneralType";
+import { TactileTask } from "@/types/GeneralType";
 import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
+import { InputBinding, InputDevice } from '@/types/InputBindings';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -66,7 +67,7 @@ ipcMain.on(IPC_CHANNELS.main.executeTask, (event, taskList: TactileTask[]) => {
     DeviceManager.executeTask(taskList)
 });
 
-//copy roomName and adress 
+//copy roomName and adress
 ipcMain.on(IPC_CHANNELS.main.copyToClipBoard, (event, adress: string) => {
     //console.log("copyToClipBoard");
     clipboard.writeText(adress);
@@ -85,9 +86,9 @@ ipcMain.on(IPC_CHANNELS.main.saveUserName, (event, userName: string) => {
 });
 
 //save one updated keyboard buttton
-ipcMain.on(IPC_CHANNELS.main.saveKeyBoardButton, (event, button: KeyBoardButton) => {
+ipcMain.on(IPC_CHANNELS.main.saveKeyBoardButton, (event, payload: { device: InputDevice, binding: InputBinding }) => {
     //console.log("saveKeyBoardButton");
-    _settingManager.updateButton(button);
+    _settingManager.updateButton(payload.device, payload.binding);
 });
 
 //log informations
