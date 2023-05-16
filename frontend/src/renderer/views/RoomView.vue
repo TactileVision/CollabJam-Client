@@ -13,7 +13,6 @@
       <v-row align="center" justify="center" style="margin-top: 40px">
         <v-btn elevation="2" color="primary" @click="enterRoom">Enter Room</v-btn>
       </v-row>
-      <v-btn @click="toggleDetection">Toggle Gamepad Detection</v-btn>
     </v-container>
   </v-container>
 </template>
@@ -32,7 +31,6 @@ import { useStore } from "../store/store";
 import { RoomMutations } from "../store/modules/roomSettings/roomSettings";
 import { sendSocketMessage } from "../CommunicationManager/WebSocketManager";
 import { WS_MSG_TYPE } from "../CommunicationManager/WebSocketManager/ws_types";
-import { createInputDetection } from "../InputDetection";
 
 export default defineComponent({
   name: "RoomView",
@@ -40,8 +38,6 @@ export default defineComponent({
     return {
       userName: "",
       store: useStore(),
-      detection: createInputDetection({ onInput: (e) => console.log(e) }),
-      isDetecting: false,
     };
   },
   computed: {
@@ -57,17 +53,6 @@ export default defineComponent({
   methods: {
     enterRoom() {
       sendSocketMessage(WS_MSG_TYPE.ROOM_INFO_SERV, this.roomName);
-    },
-    toggleDetection() {
-      if (this.isDetecting) {
-        this.detection.stop();
-        this.isDetecting = false;
-        console.log("stopping detection")
-      } else {
-        this.detection.start();
-        this.isDetecting = true;
-        console.log("started detection")
-      }
     }
   },
 });

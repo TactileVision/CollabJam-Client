@@ -5,11 +5,7 @@
         Name
       </v-col>
       <v-col cols="7">
-        <v-text-field
-          variant="underlined"
-          hide-details="auto"
-          v-model="name"
-        ></v-text-field>
+        <v-text-field variant="underlined" hide-details="auto" v-model="name"></v-text-field>
       </v-col>
     </v-row>
     <v-row justify="center" style="margin-bottom: 10px">
@@ -29,12 +25,7 @@
           </v-col>
           <v-col cols="5" style="display: flex; justify-content: flex-end">
             <v-btn elevation="2" color="primary" @click="startKeyDetection">
-              <v-progress-circular
-                v-if="isKeyDetecting"
-                indeterminate
-                color="red"
-                :size="20"
-              ></v-progress-circular>
+              <v-progress-circular v-if="isKeyDetecting" indeterminate color="red" :size="20"></v-progress-circular>
               <div style="padding: 5px">Detect</div>
             </v-btn>
           </v-col>
@@ -45,14 +36,7 @@
       <v-col cols="2" align-self="center"> Intensity </v-col>
       <v-col cols="7">
         <v-row no-gutters class="slider">
-          <v-slider
-            v-model="intensity"
-            step="0.1"
-            max="1"
-            min="0"
-            hide-details
-            style="margin: 0px"
-          />
+          <v-slider v-model="intensity" step="0.1" max="1" min="0" hide-details style="margin: 0px" />
           <div style="margin-left: 20px">
             {{ `${intensity * 100} %` }}
           </div>
@@ -64,28 +48,19 @@
       <v-col cols="7">
         <v-row style="justify-content: space-between" no-gutters>
           <v-col cols="1" v-for="(item, index) in colors" v-bind:key="index">
-            <span
-              class="dot"
-              :style="[
-                item == colorButtons
-                  ? { backgroundColor: item, border: 'solid 0.11em' }
-                  : { backgroundColor: item },
-              ]"
-              @click="colorButtons = item"
-            ></span>
+            <span class="dot" :style="[
+              item == colorButtons
+                ? { backgroundColor: item, border: 'solid 0.11em' }
+                : { backgroundColor: item },
+            ]" @click="colorButtons = item"></span>
           </v-col>
         </v-row>
       </v-col>
     </v-row>
     <v-row class="pa-3">
       <div class="listChannels">
-        <v-card
-          v-for="(item, index) in channelActive"
-          v-bind:key="index"
-          class="actuator"
-          @click="updateChannel(item, index)"
-          v-bind:style="{ backgroundColor: colorActuator(index) }"
-        >
+        <v-card v-for="(item, index) in channelActive" v-bind:key="index" class="actuator"
+          @click="updateChannel(item, index)" v-bind:style="{ backgroundColor: colorActuator(index) }">
           {{ index + 1 }}
         </v-card>
       </div>
@@ -95,13 +70,8 @@
         Cancel
       </v-btn>
       <v-spacer />
-      <v-btn
-        elevation="2"
-        color="primary"
-        style="margin-right: 20px"
-        v-if="keyButtonId !== undefined"
-        @click="deleteButton"
-      >
+      <v-btn elevation="2" color="primary" style="margin-right: 20px" v-if="keyButtonId !== undefined"
+        @click="deleteButton">
         Delete
       </v-btn>
       <v-btn elevation="2" color="primary" @click="modifyButton">
@@ -151,6 +121,7 @@
   font-size: 0.8em;
   color: red;
 }
+
 .slider {
   justify-content: center;
   align-items: center;
@@ -167,6 +138,8 @@ import { useStore } from "@/renderer/store/store";
 import { RouterNames } from "@/types/Routernames";
 import { defineComponent } from "@vue/runtime-core";
 import { lightenDarkenColor, defaultColors } from "../../lib/colors";
+import { createInputDetection } from "@/renderer/InputDetection";
+import { InputEvent, isGamepadAxis, isGamepadButton } from "@/renderer/InputDetection/types";
 
 export default defineComponent({
   name: "PlayGroundDialog",
@@ -188,6 +161,7 @@ export default defineComponent({
       colorButtons: defaultColors[1],
       channelActive: new Array(0).fill(false),
       colors: defaultColors,
+      detection: createInputDetection({ onInput: (e) => this.onDetectionInput(e) })
     };
   },
   mounted() {
@@ -236,27 +210,38 @@ export default defineComponent({
     stopKeyDetection() {
       //stop the key detection ;
       this.isKeyDetecting = false;
+      this.detection.stop();
     },
     startKeyDetection() {
       if (this.isKeyDetecting) return;
       this.isKeyDetecting = true;
+      this.detection.start();
       setTimeout(this.stopKeyDetection, 5000);
     },
     enterNewKey(e: any) {
       //check if user want to enter key
       if (!this.isKeyDetecting) return;
 
-      const newKey = e.key.toUpperCase();
+      this.key = e.key.toUpperCase();
+      this.onUserInput();
+    },
+    onDetectionInput(e: InputEvent) {
+      const input = e.input;
+      if (isGamepadButton(input)) {
+        this.key = input.getName();
+      } else if (isGamepadAxis(input)) {
+        this.key = input.getName();
+      }
+      this.onUserInput()
+    },
+    onUserInput() {
       this.keyIsRequired = false;
 
-      this.key = newKey;
-      //key is already taken
-      if (this.store.getters.isKeyAlreadyTaken(this.keyButtonId, newKey)) {
+      if (this.store.getters.isKeyAlreadyTaken(this.keyButtonId, this.key)) {
         this.keyIsTaken = true;
         return;
       }
 
-      //key is not taken
       this.keyIsTaken = false;
       this.isKeyDetecting = false;
       this.stopKeyDetection();

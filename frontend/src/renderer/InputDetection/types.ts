@@ -37,6 +37,14 @@ export interface GamepadAxisInput extends UserInput {
   getName: () => string;
 }
 
+export const isGamepadButton = (input: UserInput): input is GamepadButtonInput => {
+  return input.type === UserInputType.GamepadButton;
+}
+
+export const isGamepadAxis = (input: UserInput): input is GamepadAxisInput => {
+  return input.type === UserInputType.GamepadAxis;
+}
+
 export interface InputEvent {
   device: InputDevice;
   input: UserInput;

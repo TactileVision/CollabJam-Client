@@ -10,32 +10,17 @@
               <div class="label">
                 It seems you are offline pleasy try to reconnect
               </div>
-              <v-btn
-                text
-                color="transparent"
-                @click="reconnectSocket"
-                loading="isReconnecting"
-              >
-                <v-progress-circular
-                  v-if="isReconnecting"
-                  indeterminate
-                  color="red"
-                  :size="20"
-                ></v-progress-circular>
+              <v-btn text color="transparent" @click="reconnectSocket" loading="isReconnecting">
+                <v-progress-circular v-if="isReconnecting" indeterminate color="red" :size="20"></v-progress-circular>
                 <v-icon v-else left> mdi-reload </v-icon>
                 <div class="customIcon">Retry</div>
               </v-btn>
             </div>
           </transition>
           <transition name="fade">
-            <div
-              class="snackbarSucess"
-              style="background-color: rgb(218, 141, 27)"
-              v-show="
-                store.getters.isConnectedToSocket &&
-                store.state.generalSettings.tactonLengthZero
-              "
-            >
+            <div class="snackbarSucess" style="background-color: rgb(218, 141, 27)" v-show="store.getters.isConnectedToSocket &&
+              store.state.generalSettings.tactonLengthZero
+              ">
               <div class="label">
                 You have to record one tacton, before you could save it.
               </div>
@@ -43,20 +28,15 @@
           </transition>
 
           <transition name="fade">
-            <div
-              class="snackbarSucess"
-              style="background-color: rgb(49, 146, 62)"
-              v-show="
-                store.getters.isConnectedToSocket &&
-                (store.state.generalSettings.userNameChanged ||
-                  store.state.generalSettings.copiedToClipboard)
-              "
-            >
+            <div class="snackbarSucess" style="background-color: rgb(49, 146, 62)" v-show="store.getters.isConnectedToSocket &&
+              (store.state.generalSettings.userNameChanged ||
+                store.state.generalSettings.copiedToClipboard)
+              ">
               <div class="label">
                 {{
                   store.state.generalSettings.copiedToClipboard
-                    ? "Copied adress to clipboard"
-                    : "Username get succesfully updated."
+                  ? "Copied adress to clipboard"
+                  : "Username get succesfully updated."
                 }}
               </div>
             </div>
@@ -85,53 +65,80 @@
   display: block;
   width: 100%;
 }
+
 .customIcon {
   padding-left: 5px;
 }
+
 .snackbar {
   display: flex;
   justify-content: space-between;
-  width: 90%; /* Set a default minimum width */
+  width: 90%;
+  /* Set a default minimum width */
   box-shadow: 0 10px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
   border-radius: 5px !important;
   // box-shadow: #333;
-  background-color: #333; /* Black background color */
-  color: #fff; /* White text color */
-  text-align: center; /* Centered text */
-  border-radius: 2px; /* Rounded borders */
-  padding: 16px; /* Padding */
-  margin: 16px; /* Padding */
-  position: fixed; /* Sit on top of the screen */
-  z-index: 1; /* Add a z-index if needed */
-  bottom: 30px; /* 30px from the bottom */
+  background-color: #333;
+  /* Black background color */
+  color: #fff;
+  /* White text color */
+  text-align: center;
+  /* Centered text */
+  border-radius: 2px;
+  /* Rounded borders */
+  padding: 16px;
+  /* Padding */
+  margin: 16px;
+  /* Padding */
+  position: fixed;
+  /* Sit on top of the screen */
+  z-index: 1;
+  /* Add a z-index if needed */
+  bottom: 30px;
+  /* 30px from the bottom */
 }
 
 .snackbarSucess {
   display: flex;
   justify-content: center;
-  width: 50%; /* Set a default minimum width */
+  width: 50%;
+  /* Set a default minimum width */
   box-shadow: 0 10px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
   border-radius: 5px !important;
   // box-shadow: #333;
-  color: #fff; /* White text color */
-  text-align: center; /* Centered text */
-  border-radius: 2px; /* Rounded borders */
-  padding: 16px; /* Padding */
-  margin: auto; /* Padding */
-  position: fixed; /* Sit on top of the screen */
-  z-index: 1; /* Add a z-index if needed */
-  bottom: 30px; /* 30px from the bottom */
+  color: #fff;
+  /* White text color */
+  text-align: center;
+  /* Centered text */
+  border-radius: 2px;
+  /* Rounded borders */
+  padding: 16px;
+  /* Padding */
+  margin: auto;
+  /* Padding */
+  position: fixed;
+  /* Sit on top of the screen */
+  z-index: 1;
+  /* Add a z-index if needed */
+  bottom: 30px;
+  /* 30px from the bottom */
 }
 
 .label {
   display: flex;
   align-items: center;
 }
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.9s;
 }
-.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+
+.fade-enter,
+.fade-leave-to
+
+/* .fade-leave-active below version 2.1.8 */
+  {
   opacity: 0;
 }
 </style>
@@ -142,12 +149,16 @@ import { GeneralSettingsActionTypes } from "./store/modules/generalSettings/gene
 import { useStore } from "./store/store";
 import { initWebsocket } from "./CommunicationManager/WebSocketManager";
 import { PlayGroundActionTypes } from "./store/modules/playGround/types";
+import { createInputDetection } from "./InputDetection";
+import { InputEvent, isGamepadAxis, isGamepadButton } from "./InputDetection/types";
 export default defineComponent({
   name: "App",
   data() {
     return {
       store: useStore(),
       isReconnecting: false,
+      detection: createInputDetection({ onInput: (e) => this.onUserInput(e) }),
+      disableButtonTimeout: null as number | null,
     };
   },
   watch: {
@@ -158,6 +169,9 @@ export default defineComponent({
         to.name
       );
     },
+  },
+  mounted() {
+    this.detection.start();
   },
   methods: {
     reconnectSocket() {
@@ -188,6 +202,43 @@ export default defineComponent({
         keyboard: false,
       });
     },
+    onUserInput(e: InputEvent) {
+      if (this.store.state.playGround.inEditMode) return;
+      if (!this.correctFrameForInput()) return;
+
+      const input = e.input;
+      let key: string | null = null;
+      if (isGamepadButton(input)) {
+        key = input.getName();
+      } else if (isGamepadAxis(input)) {
+        key = input.getName();
+      }
+      if (!key) return;
+
+      // If there is an active timeout we are already active.
+      if (this.disableButtonTimeout) {
+        cancelAnimationFrame(this.disableButtonTimeout);
+        this.disableButtonTimeout = null;
+      } else {
+        this.store.dispatch(PlayGroundActionTypes.activateKey, {
+          buttonKey: key,
+          keyboard: true,
+        });
+      }
+
+      // setTimeout is needed to ensure that the requested animation frame
+      // is performed after the next tick in the input manager
+      setTimeout(() => {
+        this.disableButtonTimeout = requestAnimationFrame(() => {
+          this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
+            // not sure why typescript things this can be null?
+            buttonKey: key || "",
+            keyboard: false,
+          });
+          this.disableButtonTimeout = null;
+        })
+      }, 1);
+    }
   },
 });
 </script>
