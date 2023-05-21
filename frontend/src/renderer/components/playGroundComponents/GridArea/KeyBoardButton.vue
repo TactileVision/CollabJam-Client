@@ -5,7 +5,7 @@
       <v-row no-gutters>
         {{ binding.name }}
         <v-spacer />
-        <div>{{ actuatorActions[0].intensity * 100 }}%</div>
+        <div>{{ intensity }}%</div>
       </v-row>
       <v-row no-gutters class="cardMainRow">
         <div>{{ inputName }}</div>
@@ -50,7 +50,7 @@
 <script lang="ts">
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "@vue/runtime-core";
-import { InputDevice, isTriggerActuatorAction } from "@/types/InputBindings";
+import { InputDevice, isActuatorAction, isTriggerActuatorAction } from "@/types/InputBindings";
 import getInputName from "@/renderer/InputDetection/getInputName";
 import { lightenDarkenColor } from "../../../lib/colors";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/playGround/types";
@@ -89,7 +89,15 @@ export default defineComponent({
       return getInputName(this.binding.inputs[0]);
     },
     actuatorActions() {
-      return this.binding.actions.filter(isTriggerActuatorAction);
+      return this.binding.actions.filter(isActuatorAction);
+    },
+    intensity() {
+      const action = this.actuatorActions.find(isTriggerActuatorAction);
+      if (action) {
+        return action.intensity * 100;
+      } else {
+        return '-'
+      }
     }
   },
   methods: {
@@ -121,7 +129,9 @@ export default defineComponent({
           this.buttonPressed = true;
           this.store.dispatch(PlayGroundActionTypes.activateKey, {
             device: this.device,
-            input: this.binding.inputs[0]
+            input: this.binding.inputs[0],
+            value: 1,
+            wasActive: false,
           });
         } else {
           if (this.buttonPressed) {

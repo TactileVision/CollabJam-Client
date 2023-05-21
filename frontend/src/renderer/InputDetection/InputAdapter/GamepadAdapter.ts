@@ -5,9 +5,11 @@ import { GamepadAxisInput, GamepadButtonInput, UserInputType } from "@/types/Inp
 export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter => {
   let isDetecting = false;
 
-  const { axesThreshold, buttonThreshold, onInput } = config;
+  const { axesThreshold, buttonThreshold, throttleTimeout, onInput } = config;
   const activeButtons: Set<number>[] = []
+  const buttonTimeouts: Set<number>[] = []
   const activeAxes: Set<number>[] = []
+  const axesTimeouts: Set<number>[] = []
 
   const scanGamepads = () => {
     for(const [gamepadIndex, gamepad] of [...navigator.getGamepads()].entries()) {
@@ -17,6 +19,8 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
 
       activeButtons[gamepadIndex] ||= new Set
       activeAxes[gamepadIndex] ||= new Set
+      buttonTimeouts[gamepadIndex] ||= new Set
+      axesTimeouts[gamepadIndex] ||= new Set
 
       gamepad.
         buttons.
@@ -28,8 +32,16 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
 
           const wasActive = activeButtons[gamepadIndex].has(index);
           if(button.pressed && button.value > buttonThreshold) {
-            activeButtons[gamepadIndex].add(index)
-            onInput({ device, input, wasActive, value: button.value })
+            if(!buttonTimeouts[gamepadIndex].has(index)) {
+              activeButtons[gamepadIndex].add(index)
+              const transformedValue = (button.value - buttonThreshold) / (1 - buttonThreshold)
+              onInput({ device, input, wasActive, value: transformedValue })
+              buttonTimeouts[gamepadIndex].add(index)
+
+              setTimeout(() => {
+                buttonTimeouts[gamepadIndex].delete(index)
+              }, throttleTimeout)
+            }
           } else if (wasActive) {
             activeButtons[gamepadIndex].delete(index)
             onInput({ device, input, wasActive, value: 0 })
@@ -46,8 +58,16 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
 
           const wasActive = activeAxes[gamepadIndex].has(index);
           if(Math.abs(axis) > axesThreshold) {
-            activeAxes[gamepadIndex].add(index)
-            onInput({ device, input, wasActive, value: axis })
+            if(!axesTimeouts[gamepadIndex].has(index)) {
+              activeAxes[gamepadIndex].add(index)
+              const transformedValue = (Math.abs(axis) - axesThreshold) / (1 - axesThreshold) * Math.sign(axis)
+              onInput({ device, input, wasActive, value: transformedValue })
+              axesTimeouts[gamepadIndex].add(index)
+
+              setTimeout(() => {
+                axesTimeouts[gamepadIndex].delete(index)
+              }, throttleTimeout)
+            }
           } else if (wasActive) {
             activeAxes[gamepadIndex].delete(index)
             onInput({ device, input, wasActive, value: 0 })

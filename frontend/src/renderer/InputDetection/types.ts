@@ -27,6 +27,7 @@ export interface InputDetectionConfig {
   adapters: ((config: InputAdapterConfig) => InputAdapter)[];
   axesThreshold: number;
   buttonThreshold: number;
+  throttleTimeout: number;
   onInput: (event: InputEvent) => void
 }
 

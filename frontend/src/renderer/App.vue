@@ -190,7 +190,7 @@ export default defineComponent({
       const input: KeyInput = { type: UserInputType.Key, key: e.key.toUpperCase() };
       const device: KeyboardDevice = { type: "keyboard" };
 
-      this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input });
+      this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input, value: 1, wasActive: false });
     },
     buttonUp(e: any) {
       if (this.store.state.playGround.inEditMode) return;
@@ -209,8 +209,8 @@ export default defineComponent({
 
       if (e.value === 0) {
         this.store.dispatch(PlayGroundActionTypes.deactivateKey, { device, input });
-      } else if (!e.wasActive) {
-        this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input });
+      } else {
+        this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input, value: e.value, wasActive: e.wasActive });
       }
     }
   },
