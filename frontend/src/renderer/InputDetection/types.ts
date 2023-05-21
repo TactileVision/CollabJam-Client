@@ -20,6 +20,7 @@ export interface InputEvent {
   device: InputDevice;
   input: UserInput;
   value: number;
+  wasActive: boolean;
 }
 
 export interface InputDetectionConfig {

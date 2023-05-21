@@ -160,7 +160,6 @@ export default defineComponent({
       store: useStore(),
       isReconnecting: false,
       detection: createInputDetection({ onInput: (e) => this.onUserInput(e) }),
-      disableButtonTimeout: null as number | null,
     };
   },
   watch: {
@@ -206,23 +205,13 @@ export default defineComponent({
       if (!this.correctFrameForInput()) return;
 
       const input = e.input;
+      const device = e.device;
 
-      // If there is an active timeout we are already active.
-      if (this.disableButtonTimeout) {
-        cancelAnimationFrame(this.disableButtonTimeout);
-        this.disableButtonTimeout = null;
-      } else {
-        this.store.dispatch(PlayGroundActionTypes.activateKey, { device: e.device, input });
+      if (e.value === 0) {
+        this.store.dispatch(PlayGroundActionTypes.deactivateKey, { device, input });
+      } else if (!e.wasActive) {
+        this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input });
       }
-
-      // setTimeout is needed to ensure that the requested animation frame
-      // is performed after the next tick in the input manager
-      setTimeout(() => {
-        this.disableButtonTimeout = requestAnimationFrame(() => {
-          this.store.dispatch(PlayGroundActionTypes.deactivateKey, { device: e.device, input });
-          this.disableButtonTimeout = null;
-        })
-      }, 1);
     }
   },
 });

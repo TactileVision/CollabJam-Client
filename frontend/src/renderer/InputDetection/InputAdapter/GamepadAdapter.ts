@@ -6,36 +6,52 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
   let isDetecting = false;
 
   const { axesThreshold, buttonThreshold, onInput } = config;
+  const activeButtons: Set<number>[] = []
+  const activeAxes: Set<number>[] = []
 
   const scanGamepads = () => {
-    for(const [index, gamepad] of [...navigator.getGamepads()].entries()) {
+    for(const [gamepadIndex, gamepad] of [...navigator.getGamepads()].entries()) {
       if(!gamepad) continue;
 
-      const device: GamepadDevice = { type: InputDeviceType.Gamepad, index, name: gamepad.id  }
+      const device: GamepadDevice = { type: InputDeviceType.Gamepad, index: gamepadIndex, name: gamepad.id  }
+
+      activeButtons[gamepadIndex] ||= new Set
+      activeAxes[gamepadIndex] ||= new Set
 
       gamepad.
         buttons.
-        map((button, index) => ({ button, index })).
-        filter(({ button }) => button.pressed && button.value > buttonThreshold).
-        forEach(({ button, index }) => {
+        forEach((button, index) => {
           const input: GamepadButtonInput = {
             type: UserInputType.GamepadButton,
             index,
           }
-          onInput({ device, input, value: button.value })
+
+          const wasActive = activeButtons[gamepadIndex].has(index);
+          if(button.pressed && button.value > buttonThreshold) {
+            activeButtons[gamepadIndex].add(index)
+            onInput({ device, input, wasActive, value: button.value })
+          } else if (wasActive) {
+            activeButtons[gamepadIndex].delete(index)
+            onInput({ device, input, wasActive, value: 0 })
+          }
         })
 
       gamepad.
         axes.
-        map((axis, index) => ({ axis, index })).
-        filter(({ axis }) => Math.abs(axis) > axesThreshold).
-        forEach(({ axis, index }) => {
+        forEach((axis, index) => {
           const input: GamepadAxisInput = {
             type: UserInputType.GamepadAxis,
             index,
           }
 
-          onInput({ device, input, value: axis })
+          const wasActive = activeAxes[gamepadIndex].has(index);
+          if(Math.abs(axis) > axesThreshold) {
+            activeAxes[gamepadIndex].add(index)
+            onInput({ device, input, wasActive, value: axis })
+          } else if (wasActive) {
+            activeAxes[gamepadIndex].delete(index)
+            onInput({ device, input, wasActive, value: 0 })
+          }
         })
     }
   }
