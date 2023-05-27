@@ -11,29 +11,20 @@ export interface TactileAction {
   type: string;
 }
 
-export interface ActuatorAction extends TactileAction {
-  channel: number;
-}
-
-export interface TriggerActuatorAction extends ActuatorAction{
-  type: "trigger_actuator";
+export interface IntensityAction extends TactileAction {
   intensity: number;
 }
 
-export interface TriggerActuatorWithDynamicIntensityAction extends ActuatorAction {
-  type: "trigger_actuator_with_dynamic_intensity";
+export interface ActuatorAction extends TactileAction {
+  channel: number;
 }
 
 export const isActuatorAction = (action: TactileAction): action is ActuatorAction => {
   return (action as ActuatorAction).channel !== undefined;
 }
 
-export const isTriggerActuatorAction = (action: TactileAction): action is TriggerActuatorAction => {
-  return action.type === "trigger_actuator";
-}
-
-export const isTriggerActuatorWithDynamicIntensityAction = (action: TactileAction): action is TriggerActuatorWithDynamicIntensityAction => {
-  return action.type === "trigger_actuator_with_dynamic_intensity";
+export const isIntensityAction = (action: TactileAction): action is IntensityAction => {
+  return (action as IntensityAction).intensity !== undefined;
 }
 
 export interface InputDevice {

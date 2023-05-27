@@ -50,7 +50,7 @@
 <script lang="ts">
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "@vue/runtime-core";
-import { InputDevice, isActuatorAction, isTriggerActuatorAction } from "@/types/InputBindings";
+import { InputDevice, isActuatorAction, isIntensityAction } from "@/types/InputBindings";
 import getInputName from "@/renderer/InputDetection/getInputName";
 import { lightenDarkenColor } from "../../../lib/colors";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/playGround/types";
@@ -88,15 +88,12 @@ export default defineComponent({
     inputName() {
       return getInputName(this.binding.inputs[0]);
     },
-    actuatorActions() {
-      return this.binding.actions.filter(isActuatorAction);
-    },
     intensity() {
-      const action = this.actuatorActions.find(isTriggerActuatorAction);
-      if (action) {
-        return action.intensity * 100;
+      const intensityAction = this.binding.actions.find(isIntensityAction);
+      if (intensityAction) {
+        return intensityAction.intensity * 100;
       } else {
-        return '-'
+        return '-';
       }
     }
   },
@@ -146,9 +143,11 @@ export default defineComponent({
     },
     listChannels(): string {
       let channelList = "[";
-      this.actuatorActions.map(action => action.channel).forEach((channel: number, index: number) => {
+      const channels = this.binding.actions.filter(isActuatorAction).map(action => action.channel);
+
+      channels.forEach((channel: number, index: number) => {
         channelList += channel + 1;
-        if (index !== this.actuatorActions.length - 1) channelList += ", ";
+        if (index !== channels.length - 1) channelList += ", ";
       });
       channelList += "]";
       return channelList;

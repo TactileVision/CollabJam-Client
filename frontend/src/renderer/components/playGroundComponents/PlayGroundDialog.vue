@@ -141,7 +141,7 @@ import { lightenDarkenColor, defaultColors } from "../../lib/colors";
 import { createInputDetection } from "@/renderer/InputDetection";
 import { InputEvent } from "@/renderer/InputDetection/types";
 import { UserInput, UserInputType, KeyInput } from "@/types/InputDetection";
-import { InputBinding, InputDevice, KeyboardDevice, isTriggerActuatorAction, isTriggerActuatorWithDynamicIntensityAction } from "@/types/InputBindings";
+import { InputBinding, InputDevice, KeyboardDevice, isIntensityAction, isActuatorAction } from "@/types/InputBindings";
 import getInputName from "@/renderer/InputDetection/getInputName";
 
 export default defineComponent({
@@ -196,17 +196,17 @@ export default defineComponent({
     //insert values in dialog of found button
     if (binding.name !== undefined) this.name = binding.name;
 
-    const triggerActuatorActions = binding.actions.filter(isTriggerActuatorAction);
-    this.input = binding.inputs[0];
-    this.intensity = triggerActuatorActions[0].intensity || 1;
+    if (binding.inputs.length > 0) this.input = binding.inputs[0];
     this.colorButtons = binding.color;
-    triggerActuatorActions.map(action => action.channel).forEach((element) => {
-      this.channelActive[element] = true;
-    });
 
-    const triggerActuatorWithDynamicIntensityAction = binding.actions.filter(isTriggerActuatorWithDynamicIntensityAction);
-    triggerActuatorWithDynamicIntensityAction.map(action => action.channel).forEach((element) => {
-      this.channelActive[element] = true;
+
+    const intensityAction = binding.actions.find(isIntensityAction);
+    if (intensityAction)
+      this.intensity = intensityAction.intensity;
+
+    const channels = binding.actions.filter(isActuatorAction).map(action => action.channel);
+    channels.forEach(channel => {
+      this.channelActive[channel] = true
     });
   },
   computed: {

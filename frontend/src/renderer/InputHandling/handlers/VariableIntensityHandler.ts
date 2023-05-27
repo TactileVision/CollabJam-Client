@@ -1,0 +1,67 @@
+import { TactileAction } from "@/types/InputBindings";
+import { InputHandler, Instruction } from "../InputHandlerManager";
+
+interface SetIntensityAction extends TactileAction {
+  type: "set_intensity_action";
+  name: string;
+}
+
+const isSetIntensityAction = (action: TactileAction): action is SetIntensityAction => {
+  return action.type === "set_intensity_action";
+}
+
+interface TriggerActuatorWithVariableIntensityAction extends TactileAction {
+  type: "trigger_actuator_with_variable_intensity_action";
+  channel: number;
+  name: string;
+}
+
+const isTriggerAction = (action: TactileAction): action is TriggerActuatorWithVariableIntensityAction => {
+  return action.type === "trigger_actuator_with_variable_intensity_action";
+}
+
+const VariableIntensityHandler = (): InputHandler => {
+  const intensities: { [key: string]: number } = {};
+
+  const handler: InputHandler = {
+    onInput: ({ binding, value, globalIntensity }) => {
+      const instructions: Instruction[] = [];
+
+      binding.actions.filter(isSetIntensityAction).forEach(action => {
+        intensities[action.name] = Math.abs(value);
+      });
+
+      const triggerActions = binding.actions.filter(isTriggerAction);
+      if(triggerActions.length > 0) {
+        if(binding.activeTriggers > 0) {
+          const groupedActions: { [key: string]: number[] } = {}
+          triggerActions.forEach(action => {
+            if(groupedActions[action.name] === undefined) {
+              groupedActions[action.name] = [action.channel];
+            } else {
+              groupedActions[action.name].push(action.channel);
+            }
+          })
+
+          Object.entries(groupedActions).forEach(([name, channels]) => {
+            instructions.push({
+              channels,
+              intensity: (intensities[name] || 0) * globalIntensity,
+            })
+          })
+        } else {
+          instructions.push({
+            channels: triggerActions.map(action => action.channel),
+            intensity: 0
+          });
+        }
+      }
+
+      return instructions;
+    }
+  }
+
+  return Object.freeze(handler);
+}
+
+export default VariableIntensityHandler;
