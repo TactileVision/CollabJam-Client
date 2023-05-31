@@ -22,5 +22,5 @@ const defaultConfig = (): Omit<InputDetectionConfig, "onInput"> =>  Object.freez
   adapters: [createGamepadAdapter],
   axesThreshold: 0.2,
   buttonThreshold: 0.2,
-  throttleTimeout: 100
+  throttleTimeout: 50 
 })

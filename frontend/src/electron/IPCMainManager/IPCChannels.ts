@@ -12,6 +12,7 @@ const IPC_CHANNELS = {
         saveKeyBoardButton: "tactile-jam.main.saveKeyBoardButton",
         logMessageInfos: "tactile-jam.main.logMessageInfos",
         saveTacton: "tactile-jam.main.saveTacton",
+        getRecordedTacton:  "tactile-jam.main.getRecordedTacton",
     },
     //channels to communicate with renderer process
     renderer: {

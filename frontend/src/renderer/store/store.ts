@@ -40,12 +40,22 @@ import {
   State as TactonSettingsState,
 } from './modules/tactonSettings/tactonSettings'
 
+import {
+  store as tactonPlayback,
+  TactonPlaybackStore,
+} from './modules/tactonPlayback'
+
+import {
+    State as TactonPlaybackState,
+} from './modules/tactonPlayback/tactonPlayback'
+
 
 export type RootState = {
   generalSettings: GeneralSettingsState,
   roomSettings: RoomSettingsState,
   playGround:PlayGroundState,
-  tactonSettings:TactonSettingsState
+  tactonSettings: TactonSettingsState,
+  tactonPlayback: TactonPlaybackState
 }
 
 /**
@@ -54,14 +64,15 @@ interface Mutations extends MutationsDirectInput,MutationsBreakPoint {}
 interface Actions extends ActionsDirectInput,ActionsBreakPoint {}
 interface Getters extends GettersDirectInput,GettersBreakPoint {}
 */
-export type Store = GeneralSettingsStore<Pick<RootState, 'generalSettings'>> & RoomSettingsStore<Pick<RootState, 'roomSettings'>> & PlayGroundStore<Pick<RootState, 'playGround'>> & TactonSettingsStore<Pick<RootState, 'tactonSettings'>>
+export type Store = GeneralSettingsStore<Pick<RootState, 'generalSettings'>> & RoomSettingsStore<Pick<RootState, 'roomSettings'>> & PlayGroundStore<Pick<RootState, 'playGround'>> & TactonSettingsStore<Pick<RootState, 'tactonSettings'>>  & TactonPlaybackStore<Pick<RootState, 'tactonPlayback'>>
 
 export const store = createStore({
   modules: {
     generalSettings,
     roomSettings,
     playGround,
-    tactonSettings
+    tactonSettings,
+    tactonPlayback
   },
 })
 

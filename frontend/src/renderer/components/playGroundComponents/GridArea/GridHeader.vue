@@ -3,7 +3,7 @@
     <v-col style="display:flex">
       <v-switch
         v-model="editModeOne"
-        :label="`Edite Mode: ${editModeOne ? 'on' : 'off'}`"
+        :label="`Edit Mode: ${editModeOne ? 'on' : 'off'}`"
         color="primary"
         :value="true"
         hide-details

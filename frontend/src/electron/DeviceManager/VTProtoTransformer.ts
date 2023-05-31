@@ -83,7 +83,6 @@ export const executeInstruction = (device: Peripheral, taskList: TactileTask[]) 
 
             const map = (value: number, x1: number, y1: number, x2: number, y2: number) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
             taskList.forEach(task => {
-                console.log("Channel id: ", task.channelId)
                 const intensity = map((task.intensity * 100), 0, 100, 0, 254)
                 output[task.channelId] = intensity;
             })
