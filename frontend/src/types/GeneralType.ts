@@ -10,8 +10,8 @@ export interface KeyBoardAttributes {
   name?: string,
   key: string,
   isActive: {
-    mouse:boolean,
-    keyboard:boolean,
+    mouse: boolean,
+    keyboard: boolean,
   }
 }
 
@@ -25,4 +25,12 @@ export interface KeyBoardButton extends KeyBoardAttributes {
 export interface TactileTask {
   channelId: number,
   intensity: number,
+}
+
+
+
+export enum InteractionMode {
+  Jamming = 1,
+  Recording,
+  Playback
 }

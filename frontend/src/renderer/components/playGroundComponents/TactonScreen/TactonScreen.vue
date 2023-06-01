@@ -8,11 +8,9 @@
   >
     <v-col style="max-width: fit-content">
       
-      {{ store.state.tactonPlayback.currentTacton?.uuid }}
-      <!-- {{ store.state.tactonPlayback.tactons }} -->
-      <v-btn @click="changeRecordMode" color="primary">
+      <!-- <v-btn @click="changeRecordMode" color="primary">
         {{ store.state.roomSettings.isRecording ? "Stop" : "Record" }} 
-      </v-btn>
+      </v-btn> -->
     </v-col>
     <v-col style="max-width: fit-content">
       <v-row align="center">
@@ -21,7 +19,6 @@
           class="durationBox"
           :items="items"
           v-model="duration"
-          :disabled="store.state.roomSettings.isRecording"
         ></v-select>
       </v-row>
     </v-col>
@@ -83,7 +80,7 @@ export default defineComponent({
     data() {
         return {
             store: useStore(),
-            items: ["5s", "10s", "15s"],
+            items: ["5s", "10s", "15s", "60s"],
         };
     },
     computed: {
@@ -103,24 +100,7 @@ export default defineComponent({
         },
     },
     methods: {
-        changeRecordMode() {
-            if (this.store.state.roomSettings.isRecording) {
-                sendSocketMessage(WS_MSG_TYPE.UPDATE_RECORD_MODE_SERV, {
-                    roomId: this.store.state.roomSettings.id,
-                    shouldRecord: false,
-                });
-                sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
-                    roomId: this.store.state.roomSettings.id,
-                    shouldRecord: false,
-                });
-            }
-            else {
-                sendSocketMessage(WS_MSG_TYPE.UPDATE_RECORD_MODE_SERV, {
-                    roomId: this.store.state.roomSettings.id,
-                    shouldRecord: true,
-                });
-            }
-        },
+
         saveTacton() {
             sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
                 roomId: this.store.state.roomSettings.id,

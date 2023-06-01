@@ -202,6 +202,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
         });
 
         if (instructions.length > 0) {
+            console.log(instructions)
             sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
                 roomId: store.state.roomSettings.id,
                 instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))

@@ -3,29 +3,11 @@ import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../store';
 import { User } from '../roomSettings/roomSettings';
 import { stat } from 'original-fs';
+import { InstructionServerPayload, TactonInstruction, Tacton } from '@/types/TactonTypes';
 /**
  * Types
  * 
  */
-export interface InstructionWait {
-  wait: {
-    miliseconds: number
-  }
-}
-
-export interface InstructionSetParameter {
-  setParameter: {
-    channelId: number;
-    intensity: number;
-  }
-}
-
-export type TactonInstruction = InstructionSetParameter | InstructionWait;
-
-export interface InstructionServerPayload {
-  Instruction: TactonInstruction
-}
-
 
 
 export const isInstructionWait = (instruction: TactonInstruction) => {
@@ -51,17 +33,14 @@ export const createTactonInstructionsFromPayload = (payload: InstructionServerPa
 }
 
 
-export type Tacton = {
-  uuid: string
-  recordDate: Date
-  instructions: TactonInstruction[]
-}
 
 export const createTacton = () => {
   const t: Tacton = {
     uuid: Date.now().toString(36) + Math.random().toString(36).substring(2),
     recordDate: new Date(),
-    instructions: [] as TactonInstruction[]
+    instructions: [] as TactonInstruction[],
+    name: 'unnamed_tacton',
+    favorite: false
   }
   return t
 }

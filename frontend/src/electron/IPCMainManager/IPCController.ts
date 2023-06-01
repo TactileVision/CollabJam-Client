@@ -8,8 +8,6 @@ import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding, InputDevice } from '@/types/InputBindings';
-import { playbackRecordedTacton } from '../DeviceManager/TactonPlayer';
-import { InstructionServerPayload, isInstructionSetParameter, isInstructionWait, TactonInstruction } from '@/renderer/store/modules/tactonPlayback/tactonPlayback';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;

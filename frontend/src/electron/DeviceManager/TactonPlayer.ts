@@ -1,7 +1,9 @@
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
 import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
-import { InstructionSetParameter, InstructionWait, TactonInstruction, isInstructionWait, isInstructionSetParameter } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
+import { isInstructionWait, isInstructionSetParameter } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
 import { store } from "@/renderer/store/store";
+import { InteractionMode } from "@/types/GeneralType";
+import { TactonInstruction, InstructionWait, InstructionSetParameter } from "@/types/TactonTypes";
 
 //TODO Define a type that will allow to differentiate between wait and execute instructions
 export const playbackRecordedTacton = (tacton: TactonInstruction[]) => {
@@ -14,6 +16,10 @@ export const executeInstruction = (tacton: TactonInstruction[], index: number) =
 
 	if (index == tacton.length) {
 		console.log("[TactonPlayer] Done")
+		sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
+			roomId: store.state.roomSettings.id,
+			newMode: InteractionMode.Jamming
+		})
 		return
 	}
 

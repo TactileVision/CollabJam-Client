@@ -17,8 +17,8 @@ const TriggerActuatorHandler = (): InputHandler => {
       const instructions: Instruction[] = []
 
       const actions = binding.actions.filter(isTriggerActuatorAction);
-      if(binding.activeTriggers > 0) {
-        if(!wasActive) {
+      if (binding.activeTriggers > 0) {
+        if (!wasActive) {
           actions.forEach(action => {
             const intensity = action.intensity * globalIntensity;
 
@@ -35,7 +35,7 @@ const TriggerActuatorHandler = (): InputHandler => {
         })
       }
 
-      return instructions;
+      return instructions
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Room, User } from "../types";
+import { InteractionMode, Room, TactonRecording, User } from "../types";
 import { WS_MSG_TYPE } from "../webSocket/ws_types";
 import RoomModule from "./RoomModule";
 import TactonModule from "./TactonModule";
@@ -71,14 +71,68 @@ const removeUserOfSession = (roomId: string, user: User, startTimeStamp: number)
 
 }
 
-const changeRecordMode = (roomId: string, shouldRecord: boolean, startTimeStamp: number) => {
-    const needUpdate = RoomModule.updateRecordMode(roomId, shouldRecord)
-    if (needUpdate == true) {
-        if (shouldRecord == true)
-            TactonModule.deleteTactonInstructions(roomId);
+const changeRoomMode = (roomId: string, newMode: InteractionMode, startTimeStamp: number) => {
 
-        broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI, shouldRecord, startTimeStamp)
+    // const isValidModeChange  = RoomModule.
+    // if(newMode == InteractionMode.Jamming)
+    const r = RoomModule.getRoomInfo(roomId)
+    if (r == undefined) return
+    const rm = r.mode
+    if (RoomModule.updateRoomMode(roomId, newMode)) {
+        console.log(`Changing interaction mode to ${newMode}`)
+        const s = TactonModule.sessions.get(roomId)
+        if (s == undefined) return
+
+        if (newMode == InteractionMode.Recording) { //Old Mode was Jamming
+            // Start new Recording 
+            s.recording = new TactonRecording()
+            //TODO Broadcast information about recording to clients
+
+
+        }
+        else if (newMode == InteractionMode.Playback) {
+            //Old Mode was Jamming
+        }
+        else {
+            //Old Mode was reccording or playback
+            if (rm == InteractionMode.Recording) {
+                const t = s.recording.getTacton()
+                console.log(s.history)
+                console.log(r.recordingNamePrefix)
+                const prefix = s.history.filter(e => {
+                    console.log(r.recordingNamePrefix + "-")
+                    console.log(e.name)
+                    return e.name.startsWith(r.recordingNamePrefix + "-") == true
+                })
+                // console.log(prefix)
+                let len = prefix.length.toString()
+                t.name = r.recordingNamePrefix + "-" + len
+                console.log(t)
+                s.history.push(t)
+
+                //TODO Send updated history/ new history item
+
+            } else { // Playback
+            }
+        }
+
+        broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI, newMode, startTimeStamp)
     }
+
+}
+
+const changeRecordMode = (roomId: string, shouldRecord: boolean, startTimeStamp: number) => {
+    // const needUpdate = RoomModule.updateRecordMode(roomId, shouldRecord)
+    // if (needUpdate == true) {
+    //     if (shouldRecord == true){
+    //         console.log("Starting to record now")
+    //         TactonModule.deleteTactonInstructions(roomId);
+    //     } else {
+    //         console.log("Stopping the recording now")
+    //     }
+
+    //     broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI, shouldRecord, startTimeStamp)
+    // }
 
 }
 
@@ -114,16 +168,18 @@ const broadCastMessage = (roomId: string, type: WS_MSG_TYPE, payload: any, start
  * method to start the calculation of needed operations and distribute them
  * also to store the tacton in vtproto format
  */
-const enterInstruction = (roomId: string, clienId: string, instructions: [{ keyId: string, channels: string[], intensity: number }], startTimeStamp:number) => {
-    const newInstructions = RoomModule.updateIntensities(clienId, roomId, instructions)
+const processInstructionsFromClient = (roomId: string, clienId: string, instructions: [{ keyId: string, channels: number[], intensity: number }], startTimeStamp: number) => {
+    const newInstructions = RoomModule.getInstructionsFromClientInput(clienId, roomId, instructions)
     if (newInstructions == undefined || newInstructions.length == 0) return;
-    //console.log("sended Instruction")
-    //console.log(newInstructions)
+    // console.log(newInstructions)
+
     broadCastMessage(roomId, WS_MSG_TYPE.SEND_INSTRUCTION_CLI, newInstructions, startTimeStamp);
 
     const room = RoomModule.getRoomInfo(roomId);
-    if(room == undefined) return;
-    if(room.isRecording) TactonModule.addTactonInstruction(roomId, newInstructions);
+    if (room == undefined) return;
+    if (room.mode == InteractionMode.Recording) {
+        TactonModule.addInstructionsToTactonRecording(roomId, newInstructions)
+    }
 }
 
 export default {
@@ -133,6 +189,7 @@ export default {
     updateSession,
     removeUserOfSession,
     changeRecordMode,
+    changeRoomMode,
     changeDuration,
-    enterInstruction
+    processInstructionsFromClient
 }

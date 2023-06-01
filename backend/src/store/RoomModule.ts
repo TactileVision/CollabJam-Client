@@ -1,4 +1,4 @@
-import { Channel, ClientInstrution, Room, User } from "../types";
+import { Channel, ClientInstrution, InteractionMode, Room, User } from "../types";
 import TactonModule from "./TactonModule";
 import UserModule from "./UserModule";
 
@@ -38,8 +38,9 @@ const createRoom = (room: Room): string => {
         id: roomId,
         name: room.name,
         description: room.description,
-        isRecording: false,
+        mode: InteractionMode.Jamming,
         maxDurationRecord: 5000,
+        recordingNamePrefix: "tacton"
     });
 
     return roomId;
@@ -75,15 +76,13 @@ const removeRoom = (roomId: string) => {
  * @param instructionList:[] instructions of the user
  * @returns clientinstructions to distribute on all clients
  */
-const updateIntensities = (clientId: string, roomId: string, instructionList: [{ keyId: string, channels: string[], intensity: number }]): Array<{ channelId: string, intensity: number, author: User | undefined }> | undefined => {
+const getInstructionsFromClientInput = (clientId: string, roomId: string, instructionList: [{ keyId: string, channels: number[], intensity: number }]): Array<{ channelId: number, intensity: number, author: User | undefined }> | undefined => {
     const roomChannels = channelList.get(roomId);
     const clientInstruction: ClientInstrution[] = [];
-    //console.log("roomId: " + roomId)
-    //console.log("clientId: " + clientId)
-    //console.log("keyId: " + keyId)
-    //console.log("channels: " + channels)
+    // console.log("roomId: " + roomId)
+    // console.log("clientId: " + clientId)
     if (roomChannels == undefined) return;
- 
+
     instructionList.forEach(instruction => {
         for (let i = 0; i < instruction.channels.length; i++) {
             let roomChannel = roomChannels.find(roomChannel => roomChannel.id == instruction.channels[i]);
@@ -138,20 +137,42 @@ const updateIntensities = (clientId: string, roomId: string, instructionList: [{
     return clientInstruction;
 }
 
-const updateRecordMode = (roomId: string, shouldRecord: boolean): boolean => {
+const updateRoomMode = (roomId: string, newMode: InteractionMode): boolean => {
     const room = roomList.get(roomId);
     if (room == undefined) return false;
 
-    room.isRecording = shouldRecord;
+    // if(room.mode == InteractionMode.Jamming){
+
+    /* } else */
+    if (room.mode == InteractionMode.Recording) {
+        if (newMode == InteractionMode.Playback) return false
+
+    } else if (room.mode == InteractionMode.Playback) {
+        if (newMode == InteractionMode.Recording) return false
+    }
+    room.mode = newMode;
     return true;
 }
+// const updateRecordMode = (roomId: string, shouldRecord: boolean): boolean => {
+//     const room = roomList.get(roomId);
+//     if (room == undefined) return false;
+
+//     room.isRecording = shouldRecord;
+//     return true;
+// }
 
 const updateMaxDuration = (roomId: string, maxDuration: number): boolean => {
     const room = roomList.get(roomId);
     if (room == undefined) return false;
-    if (room.isRecording) return false;
+    if (room.mode == InteractionMode.Recording) return false;
 
     room.maxDurationRecord = maxDuration;
+    return true
+}
+const updateRecordingPrefix = (roomId: string, prefix: string): boolean => {
+    const room = roomList.get(roomId);
+    if (room == undefined) return false;
+    room.recordingNamePrefix = prefix;
     return true
 }
 
@@ -161,7 +182,8 @@ export default {
     getNewRoomName,
     updateRoomInformation,
     removeRoom,
-    updateIntensities,
-    updateRecordMode,
+    updateRecordingPrefix,
+    getInstructionsFromClientInput,
+    updateRoomMode,
     updateMaxDuration
 }
