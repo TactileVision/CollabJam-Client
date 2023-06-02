@@ -48,11 +48,9 @@ const VariableIntensityHandler = (): InputHandler => {
         })
 
         Object.entries(groupedActions).forEach(([name, channels]) => {
-          let li = lastIntensity.get(name) as Map<number, number>
-          if (li == undefined) lastIntensity.set(name, new Map<number, number>())
-          li = lastIntensity.get(name) as Map<number, number>
+          const li = lastIntensity.get(name) || new Map<number, number>()
 
-          //only update channels that have differing intensities in compairson to last iteration
+          //only update channels that have differing intensities in comparison to last iteration
           const changedVibratingChannels: number[] = []
           const changedDeactivatedChannels: number[] = []
           channels.forEach(c => {

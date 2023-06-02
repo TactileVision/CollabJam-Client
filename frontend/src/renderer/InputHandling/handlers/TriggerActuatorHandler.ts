@@ -30,8 +30,7 @@ const TriggerActuatorHandler = (): InputHandler => {
           })
         }
       } else {
-        const a = actions.map(action => action.channel)
-        if (a.length > 0) {
+        if (actions.length > 0) {
           instructions.push({
             channels: actions.map(action => action.channel),
             intensity: 0
