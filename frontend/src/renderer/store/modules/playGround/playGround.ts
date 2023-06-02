@@ -65,6 +65,48 @@ export const state: State = {
                 name: "get",
                 color: "#00ffff",
                 actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 0 } as TactileAction]
+            },
+            {
+                inputs: [{ type: UserInputType.GamepadButton, index: 7 } as GamepadButtonInput],
+                activeTriggers: 0,
+                uid: "LOCATION",
+                position: { x: 7, y: 4, w: 1, h: 1 },
+                name: "set",
+                color: "#7CFC00",
+                actions: [
+                    {
+                        type: "dynamic_actuator_action",
+                        name: "dynamic actuator",
+                        actuators: [
+                            {
+                                channels: [0, 4],
+                                minValue: 0,
+                                maxValue: 0.2
+                            },
+                            {
+                                channels: [1, 3],
+                                minValue: 0.2,
+                                maxValue: 0.4
+                            },
+                            {
+                                channels: [2],
+                                minValue: 0.4,
+                                maxValue: 0.6
+                            },
+                            {
+                                channels: [3, 1],
+                                minValue: 0.6,
+                                maxValue: 0.8
+                            },
+                            {
+                                channels: [4, 0],
+                                minValue: 0.8,
+                                maxValue: 1
+                            }
+                        ]
+                    } as TactileAction
+                ]
+
             }
         ]
     }],

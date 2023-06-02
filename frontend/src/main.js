@@ -10,6 +10,7 @@ import { registerInputHandler } from "./renderer/InputHandling/InputHandlerManag
 import VariableIntensityHandler from "./renderer/InputHandling/handlers/VariableIntensityHandler";
 import TriggerActuatorHandler from "./renderer/InputHandling/handlers/TriggerActuatorHandler";
 import TriggerActuatorWithDynamicIntensityHandler from "./renderer/InputHandling/handlers/TriggerActuatorWithDynamicIntensityHandler";
+import DynamicActuatorHandler from "./renderer/InputHandling/handlers/DynamicActuatorHandler";
 
 loadFonts()
 const store = useStore();
@@ -17,6 +18,7 @@ const store = useStore();
 registerInputHandler(VariableIntensityHandler());
 registerInputHandler(TriggerActuatorHandler());
 registerInputHandler(TriggerActuatorWithDynamicIntensityHandler());
+registerInputHandler(DynamicActuatorHandler());
 
 createApp(App)
   .use(vuetify)
