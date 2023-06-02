@@ -53,36 +53,41 @@ const VariableIntensityHandler = (): InputHandler => {
           li = lastIntensity.get(name) as Map<number, number>
 
           //only update channels that have differing intensities in compairson to last iteration
-          const filteredChannels: number[] = []
+          const changedVibratingChannels: number[] = []
+          const changedDeactivatedChannels: number[] = []
           channels.forEach(c => {
             const int = li.get(c)
-            if (int == undefined) li.set(c, binding.activeTriggers == 0 ? 0 : intensities[name])
-            if (
-              (int as number > intensities[name] + sendThreshold) ||
-              (int as number < intensities[name] - sendThreshold)
-            ) {
-            filteredChannels.push(c)
-            li.set(c, binding.activeTriggers == 0 ? 0 : intensities[name])
-          }
-        })
-
-        if (filteredChannels.length > 0) {
-
-          instructions.push({
-            channels: filteredChannels,
-            intensity: (intensities[name] || 0) * globalIntensity,
+            if (int == undefined) { li.set(c, intensities[name]) }
+            if (binding.activeTriggers == 0 && li.get(c) != 0) {
+              changedDeactivatedChannels.push(c)
+              li.set(c, 0)
+            } else if (((int as number > intensities[name] + sendThreshold) || (int as number < intensities[name] - sendThreshold))) {
+              changedVibratingChannels.push(c)
+              li.set(c, intensities[name])
+            }
           })
 
+          if (changedVibratingChannels.length > 0) {
+            instructions.push({
+              channels: changedVibratingChannels,
+              intensity: (intensities[name] || 0) * globalIntensity,
+            })
+          }
+          if (changedDeactivatedChannels.length > 0) {
+            instructions.push({
+              channels: changedDeactivatedChannels,
+              intensity: 0,
+            })
+          }
         }
-      }
         )
       }
 
-return instructions;
+      return instructions;
     }
   }
 
-return Object.freeze(handler);
+  return Object.freeze(handler);
 }
 
 export default VariableIntensityHandler;
