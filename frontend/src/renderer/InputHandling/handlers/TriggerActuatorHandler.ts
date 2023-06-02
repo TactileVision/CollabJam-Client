@@ -21,21 +21,24 @@ const TriggerActuatorHandler = (): InputHandler => {
         if(!wasActive) {
           actions.forEach(action => {
             const intensity = action.intensity * globalIntensity;
-
-            instructions.push({
-              intensity,
-              channels: [action.channel]
-            })
+            if ([action.channel].length > 0) {
+              instructions.push({
+                intensity,
+                channels: [action.channel]
+              })
+            }
           })
         }
       } else {
-        instructions.push({
-          channels: actions.map(action => action.channel),
-          intensity: 0
-        })
+        const a = actions.map(action => action.channel)
+        if (a.length > 0) {
+          instructions.push({
+            channels: actions.map(action => action.channel),
+            intensity: 0
+          })
+        }
       }
-
-      return instructions;
+      return instructions
     }
   }
 }

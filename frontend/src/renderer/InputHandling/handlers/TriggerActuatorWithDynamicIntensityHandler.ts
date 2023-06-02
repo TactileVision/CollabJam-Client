@@ -10,16 +10,28 @@ const isDynamicTriggerAction = (action: TactileAction): action is TriggerActuato
   return action.type === "trigger_actuator_with_dynamic_intensity";
 }
 
+
 const TriggerActuatorWithDynamicIntensityHandler = (): InputHandler => {
-  return {
+  let lastIntensity = 0
+  const sendThreshold = 1.0 / 255
+
+  const handler: InputHandler = {
     onInput({ binding, value, globalIntensity }) {
       const actions = binding.actions.filter(isDynamicTriggerAction);
       const intensity = binding.activeTriggers > 0 ? Math.abs(value) * globalIntensity : 0;
       const channels = actions.map(action => action.channel);
-
-      return [{ channels, intensity }];
+      if (channels.length > 0 &&
+        ((intensity > lastIntensity + sendThreshold) ||
+          (intensity < lastIntensity - sendThreshold))
+      ) {
+        lastIntensity = intensity
+        return [{ channels, intensity }];
+      } else {
+        return []
+      }
     }
   }
+  return Object.freeze(handler);
 }
 
 export default TriggerActuatorWithDynamicIntensityHandler;

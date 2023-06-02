@@ -22,6 +22,8 @@ const isTriggerAction = (action: TactileAction): action is TriggerActuatorWithVa
 
 const VariableIntensityHandler = (): InputHandler => {
   const intensities: { [key: string]: number } = {};
+  const lastIntensity: Map<string, Map<number, number>> = new Map<string, Map<number, number>>();
+  const sendThreshold = 1.0 / 32
 
   const handler: InputHandler = {
     onInput: ({ binding, value, globalIntensity }) => {
@@ -32,36 +34,55 @@ const VariableIntensityHandler = (): InputHandler => {
       });
 
       const triggerActions = binding.actions.filter(isTriggerAction);
-      if(triggerActions.length > 0) {
-        if(binding.activeTriggers > 0) {
-          const groupedActions: { [key: string]: number[] } = {}
-          triggerActions.forEach(action => {
-            if(groupedActions[action.name] === undefined) {
-              groupedActions[action.name] = [action.channel];
-            } else {
-              groupedActions[action.name].push(action.channel);
-            }
+      if (triggerActions.length > 0) {
+        //1 is pressed
+        //2 is held
+        //0 is released/ not held
+        const groupedActions: { [key: string]: number[] } = {}
+        triggerActions.forEach(action => {
+          if (groupedActions[action.name] === undefined) {
+            groupedActions[action.name] = [action.channel];
+          } else {
+            groupedActions[action.name].push(action.channel);
+          }
+        })
+
+        Object.entries(groupedActions).forEach(([name, channels]) => {
+          let li = lastIntensity.get(name) as Map<number, number>
+          if (li == undefined) lastIntensity.set(name, new Map<number, number>())
+          li = lastIntensity.get(name) as Map<number, number>
+
+          //only update channels that have differing intensities in compairson to last iteration
+          const filteredChannels: number[] = []
+          channels.forEach(c => {
+            const int = li.get(c)
+            if (int == undefined) li.set(c, binding.activeTriggers == 0 ? 0 : intensities[name])
+            if (
+              (int as number > intensities[name] + sendThreshold) ||
+              (int as number < intensities[name] - sendThreshold)
+            ) {
+            filteredChannels.push(c)
+            li.set(c, binding.activeTriggers == 0 ? 0 : intensities[name])
+          }
+        })
+
+        if (filteredChannels.length > 0) {
+
+          instructions.push({
+            channels: filteredChannels,
+            intensity: (intensities[name] || 0) * globalIntensity,
           })
 
-          Object.entries(groupedActions).forEach(([name, channels]) => {
-            instructions.push({
-              channels,
-              intensity: (intensities[name] || 0) * globalIntensity,
-            })
-          })
-        } else {
-          instructions.push({
-            channels: triggerActions.map(action => action.channel),
-            intensity: 0
-          });
         }
       }
+        )
+      }
 
-      return instructions;
+return instructions;
     }
   }
 
-  return Object.freeze(handler);
+return Object.freeze(handler);
 }
 
 export default VariableIntensityHandler;
