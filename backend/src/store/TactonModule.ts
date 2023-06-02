@@ -52,7 +52,6 @@ const addInstructionsToTactonRecording = (roomId: string, clientInstrution: Clie
 
     s.recording.instructions = instructions
     s.lastModified = new Date().getTime()
-    console.log(s.recording.instructions.length)
 }
 
 const deleteTactonInstructions = (roomId: string) => {

@@ -74,6 +74,17 @@ export default defineComponent({
 	methods: {
 		changeRecordMode() {
 			if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
+				//TODO Send 0 to all available channels
+				sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
+					roomId: this.store.state.roomSettings.id,
+					instructions : [
+						{
+							keyId : "",
+							channels: [0,1,2,3,4],
+							intensity: 0
+						}
+					]
+				})
 				sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
 					roomId: this.store.state.roomSettings.id,
 					newMode: InteractionMode.Jamming

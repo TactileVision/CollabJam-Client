@@ -94,24 +94,16 @@ const changeRoomMode = (roomId: string, newMode: InteractionMode, startTimeStamp
             //Old Mode was Jamming
         }
         else {
-            //Old Mode was reccording or playback
+            //Old Mode was reccording or playback, Store tacton in history and send item to client
+            //TODO Extract to own method
             if (rm == InteractionMode.Recording) {
                 const t = s.recording.getTacton()
-                console.log(s.history)
-                console.log(r.recordingNamePrefix)
                 const prefix = s.history.filter(e => {
-                    console.log(r.recordingNamePrefix + "-")
-                    console.log(e.name)
                     return e.name.startsWith(r.recordingNamePrefix + "-") == true
                 })
-                // console.log(prefix)
                 let len = prefix.length.toString()
                 t.name = r.recordingNamePrefix + "-" + len
-                console.log(t)
                 s.history.push(t)
-
-                //TODO Send updated history/ new history item
-
             } else { // Playback
             }
         }

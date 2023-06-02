@@ -89,6 +89,10 @@ export class TactonRecording {
     instructions: TactonInstruction[] = [] as TactonInstruction[]
 
     getTacton(): Tacton {
+
+        const i = this.instructions[this.instructions.length -1] 
+        console.log(i)
+
         return impl<Tacton>({
             uuid: this.uuid,
             name: this.name,

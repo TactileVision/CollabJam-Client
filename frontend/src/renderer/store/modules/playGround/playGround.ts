@@ -49,6 +49,15 @@ export const state: State = {
                 color: "#ff0000",
                 actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 1 } as TactileAction]
             },
+            // {
+            //     inputs: [{ type: UserInputType.GamepadAxis, index: 1 } as GamepadAxisInput],
+            //     activeTriggers: 0,
+            //     uid: "UNIQUE2",
+            //     position: { x: 1, y: 5, w: 1, h: 1 },
+            //     name: "dynamic2",
+            //     color: "#ff0000",
+            //     actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 2 } as TactileAction]
+            // },
             {
                 inputs: [{ type: UserInputType.GamepadButton, index: 6 } as GamepadButtonInput],
                 activeTriggers: 0,
@@ -202,7 +211,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
         });
 
         if (instructions.length > 0) {
-            console.log(instructions)
+            // console.log(instructions)
             sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
                 roomId: store.state.roomSettings.id,
                 instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))

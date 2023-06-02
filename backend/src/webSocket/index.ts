@@ -156,7 +156,7 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 */
                 // const r = RoomModule.getRoomInfo(msg.payload.roomId)
                 // if (r?.isRecording) {
-                // console.log(msg.payload.instructions)
+                console.log(msg.payload.instructions)
                 StorageManager.processInstructionsFromClient(msg.payload.roomId, client, msg.payload.instructions, msg.startTimeStamp)
                 // }
                 break;
