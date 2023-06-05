@@ -35,9 +35,6 @@ const VariableIntensityHandler = (): InputHandler => {
 
       const triggerActions = binding.actions.filter(isTriggerAction);
       if (triggerActions.length > 0) {
-        //1 is pressed
-        //2 is held
-        //0 is released/ not held
         const groupedActions: { [key: string]: number[] } = {}
         triggerActions.forEach(action => {
           if (groupedActions[action.name] === undefined) {
@@ -54,15 +51,19 @@ const VariableIntensityHandler = (): InputHandler => {
           const changedVibratingChannels: number[] = []
           const changedDeactivatedChannels: number[] = []
           channels.forEach(c => {
-            const int = li.get(c)
-            if (int == undefined) { li.set(c, intensities[name]) }
+            let int = li.get(c)
+            if (int == undefined) {
+              int = binding.activeTriggers == 0 ? 0 : intensities[name];
+              li.set(c, int);
+            }
             if (binding.activeTriggers == 0 && li.get(c) != 0) {
               changedDeactivatedChannels.push(c)
               li.set(c, 0)
-            } else if (((int as number > intensities[name] + sendThreshold) || (int as number < intensities[name] - sendThreshold))) {
+            } else if (((int > intensities[name] + sendThreshold) || (int < intensities[name] - sendThreshold))) {
               changedVibratingChannels.push(c)
               li.set(c, intensities[name])
             }
+            lastIntensity.set(name, li)
           })
 
           if (changedVibratingChannels.length > 0) {
@@ -77,8 +78,7 @@ const VariableIntensityHandler = (): InputHandler => {
               intensity: 0,
             })
           }
-        }
-        )
+        })
       }
 
       return instructions;
