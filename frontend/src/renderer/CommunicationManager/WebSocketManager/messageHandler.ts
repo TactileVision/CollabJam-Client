@@ -6,6 +6,7 @@ import router from "@/renderer/router";
 import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
+import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index"
 
 export interface SocketMessage {
     type: WS_MSG_TYPE;
@@ -55,10 +56,19 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 *   } as payload
          */
         case WS_MSG_TYPE.ENTER_UPDATE_ROOM_CLI: {
-            //console.log("ENTER_UPDATE_ROOM_CLI")
+            console.log("ENTER_UPDATE_ROOM_CLI")
             store.dispatch(RoomSettingsActionTypes.enterRoom, msg.payload)
-            if (store.state.generalSettings.currentView == RouterNames.SETUP)
+            if (store.state.generalSettings.currentView == RouterNames.SETUP) {
                 router.push("/playGround");
+                //TODO Start periodic sending of input data
+                if (store.state.roomSettings.id != undefined) {
+
+                    setInterval(() => {
+                        bufferedSending(store.state.roomSettings.id || "", store.state.tactonSettings.instructions)
+                        store.dispatch(TactonSettingsActionTypes.clearDebounceBuffer)
+                    }, 20)
+                }
+            }
             break;
         }
         /**
@@ -82,7 +92,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
            * 
            */
         case WS_MSG_TYPE.ENTER_ROOM_CLI: {
-            //console.log("NO_CHANGE_ROOM_CLI")
+            console.log("NO_CHANGE_ROOM_CLI")
             if (store.state.generalSettings.currentView == RouterNames.SETUP)
                 router.push("/playGround");
             break;

@@ -74,20 +74,24 @@ const disconnectDevice = () => {
     disconnectBlutetoothDevice(connectedDevice)
 }
 
+let n = 0
+// let millis = new Date()
 const executeTask = (taskList: TactileTask[]) => {
     connectedDevices.forEach(device => {
+        console.log(`executeInstruction ${n}`)
         executeInstruction(device, taskList)
+        ++n
     })
 }
 
 const initialVibration = async () => {
     executeTask([{
-        channelId: 0,
+        channelIds: [0],
         intensity: 1
     }])
     await new Promise((r) => setTimeout(r, 1000));
     executeTask([{
-        channelId: 0,
+        channelIds: [0],
         intensity: 0
     }])
 }

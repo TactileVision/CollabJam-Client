@@ -1,3 +1,4 @@
+import { InstructionFromClient, InstructionToClient } from "../types";
 import { Room, User } from "../types";
 import { WS_MSG_TYPE } from "../webSocket/ws_types";
 import RoomModule from "./RoomModule";
@@ -114,16 +115,22 @@ const broadCastMessage = (roomId: string, type: WS_MSG_TYPE, payload: any, start
  * method to start the calculation of needed operations and distribute them
  * also to store the tacton in vtproto format
  */
-const enterInstruction = (roomId: string, clienId: string, instructions: [{ keyId: string, channels: string[], intensity: number }], startTimeStamp:number) => {
-    const newInstructions = RoomModule.updateIntensities(clienId, roomId, instructions)
-    if (newInstructions == undefined || newInstructions.length == 0) return;
-    //console.log("sended Instruction")
-    //console.log(newInstructions)
-    broadCastMessage(roomId, WS_MSG_TYPE.SEND_INSTRUCTION_CLI, newInstructions, startTimeStamp);
+const enterInstruction = (roomId: string, clienId: string, instructions: InstructionFromClient[], startTimeStamp: number) => {
+    const clientInstruction: InstructionToClient[] = [];
+    instructions.forEach(instruction => {
+        const user = UserModule.getUser(roomId, clienId)
+        clientInstruction.push({
+            intensity: instruction.intensity,
+            channelIds: instruction.channels,
+            author: user
+        })
+    })
+    if (clientInstruction.length == 0) return;
+    broadCastMessage(roomId, WS_MSG_TYPE.SEND_INSTRUCTION_CLI, clientInstruction, startTimeStamp);
 
     const room = RoomModule.getRoomInfo(roomId);
-    if(room == undefined) return;
-    if(room.isRecording) TactonModule.addTactonInstruction(roomId, newInstructions);
+    if (room == undefined) return;
+    if (room.isRecording) TactonModule.addTactonInstruction(roomId, clientInstruction);
 }
 
 export default {

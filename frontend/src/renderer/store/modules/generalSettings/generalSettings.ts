@@ -225,8 +225,8 @@ export const getters: GetterTree<State, RootState> & Getters = {
   return 8;
 */
     const device = getters.getConnectedDevice(state);
-    if (device == undefined) return 12;
-    if (device.numOfOutputs == undefined) return 12;
+    if (device == undefined) return 5;
+    if (device.numOfOutputs == undefined) return 5;
     return device.numOfOutputs;
 
 

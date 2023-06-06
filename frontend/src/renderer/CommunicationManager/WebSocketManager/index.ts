@@ -5,6 +5,8 @@ import { GeneralMutations } from "../../store/modules/generalSettings/generalSet
 import { Store } from "../../store/store";
 import { handleMessage } from "./messageHandler";
 import { WS_MSG_TYPE } from "./ws_types";
+import { Instruction } from "@/renderer/InputHandling/InputHandlerManager";
+import { debouncedHandling } from "@/renderer/InputHandling/Debouincing";
 
 let clientWs = null as WebSocket | null;
 
@@ -25,15 +27,29 @@ function heartbeat(store:Store) {
     //setInterval(heartbeat(store),1000*5)
   }
 
-  /**
- * method to initiate the websocket connection
- * in onmessage Function all custom messages are handled
- */
+
+export const bufferedSending = (roomId: string, instructions: Instruction[]) => {
+    if (instructions.length > 0) {
+        const instructionsToSend = debouncedHandling(instructions)
+        if (instructionsToSend.length > 0) {
+            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
+                roomId: roomId,
+                instructions: instructionsToSend
+            });
+        }
+    }
+}
+
+/**
+* method to initiate the websocket connection
+* in onmessage Function all custom messages are handled
+*/
 export const initWebsocket = (store: Store) => {
     //add this token to establish a connection
     const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-    clientWs = new WebSocket("wss://itactjam.informatik.htw-dresden.de/whws/path?token="+token)
-    
+    // clientWs = new WebSocket("wss://itactjam.informatik.htw-dresden.de/whws/path?token="+token)
+    clientWs = new WebSocket("ws://localhost:3333/path?token=" + token)
+
     if (clientWs !== null) {
         clientWs.onopen = function (event: Event) {
             store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, true);

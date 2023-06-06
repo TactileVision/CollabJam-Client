@@ -2,13 +2,12 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../store';
 import { v4 as uuidv4 } from 'uuid';
-import { sendSocketMessage } from '@/renderer/CommunicationManager/WebSocketManager';
-import { WS_MSG_TYPE } from '@/renderer/CommunicationManager/WebSocketManager/ws_types';
 import { PlayGroundActionTypes, PlayGroundMutations } from './types';
 import { IPC_CHANNELS } from '@/electron/IPCMainManager/IPCChannels';
 import { GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, TactileAction, compareDevices } from '@/types/InputBindings';
 import { GamepadAxisInput, GamepadButtonInput, UserInput, UserInputType, compareInputs } from '@/types/InputDetection';
 import { executeAllInputHandlers } from '@/renderer/InputHandling/InputHandlerManager';
+import { TactonMutations } from '../tactonSettings/tactonSettings';
 
 export interface Layout {
     x: number,
@@ -37,7 +36,7 @@ export type State = {
 export const state: State = {
     gridLayout: { x: 11, y: 8 },
     deviceBindings: [{
-        device: { type: "gamepad", name: "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)", index: 0 } as GamepadDevice,
+        device: { type: "gamepad", name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)", index: 0 } as GamepadDevice,
         bindings: [
             {
                 inputs: [{ type: UserInputType.GamepadAxis, index: 0 } as GamepadAxisInput],
@@ -64,7 +63,34 @@ export const state: State = {
                 position: { x: 3, y: 4, w: 1, h: 1 },
                 name: "get",
                 color: "#00ffff",
-                actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 0 } as TactileAction]
+                actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 1 } as TactileAction]
+            },
+            {
+                inputs: [{ type: UserInputType.GamepadButton, index: 1 } as GamepadButtonInput],
+                activeTriggers: 0,
+                uid: "USE_INTENSITY",
+                position: { x: 5, y: 4, w: 1, h: 1 },
+                name: "get",
+                color: "#00ffff",
+                actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 2 } as TactileAction]
+            },
+            {
+                inputs: [{ type: UserInputType.GamepadButton, index: 2 } as GamepadButtonInput],
+                activeTriggers: 0,
+                uid: "USE_INTENSITY",
+                position: { x: 6, y: 4, w: 1, h: 1 },
+                name: "get",
+                color: "#00ffff",
+                actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 3 } as TactileAction]
+            },
+            {
+                inputs: [{ type: UserInputType.GamepadButton, index: 3 } as GamepadButtonInput],
+                activeTriggers: 0,
+                uid: "USE_INTENSITY",
+                position: { x: 7, y: 4, w: 1, h: 1 },
+                name: "get",
+                color: "#00ffff",
+                actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 4 } as TactileAction]
             },
             {
                 inputs: [{ type: UserInputType.GamepadButton, index: 7 } as GamepadButtonInput],
@@ -79,30 +105,25 @@ export const state: State = {
                         name: "dynamic actuator",
                         actuators: [
                             {
-                                channels: [0, 4],
+                                channels: [1],
                                 minValue: 0,
-                                maxValue: 0.2
-                            },
-                            {
-                                channels: [1, 3],
-                                minValue: 0.2,
-                                maxValue: 0.4
+                                maxValue: 0.25
                             },
                             {
                                 channels: [2],
-                                minValue: 0.4,
-                                maxValue: 0.6
+                                minValue: 0.25,
+                                maxValue: 0.50
                             },
                             {
-                                channels: [3, 1],
-                                minValue: 0.6,
-                                maxValue: 0.8
+                                channels: [3],
+                                minValue: 0.50,
+                                maxValue: 0.75
                             },
                             {
-                                channels: [4, 0],
-                                minValue: 0.8,
-                                maxValue: 1
-                            }
+                                channels: [4],
+                                minValue: 0.75,
+                                maxValue: 1.0
+                            },
                         ]
                     } as TactileAction
                 ]
@@ -140,7 +161,7 @@ export const mutations: MutationTree<State> & Mutations = {
     },
     [PlayGroundMutations.ADD_ITEM_TO_GRID](state, payload) {
         const index = state.deviceBindings.findIndex(deviceBinding => compareDevices(deviceBinding.device, payload.device));
-        if(index == -1) {
+        if (index == -1) {
             state.deviceBindings.push({ device: payload.device, bindings: [payload.binding] })
         } else {
             state.deviceBindings[index].bindings.push(payload.binding);
@@ -215,11 +236,8 @@ export const actions: ActionTree<State, RootState> & Actions = {
             globalIntensity: state.globalIntensity
         });
 
-        if(instructions.length > 0) {
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))
-            });
+        if (instructions.length > 0) {
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructions)
         }
 
         if(!payload.wasActive)
@@ -238,11 +256,8 @@ export const actions: ActionTree<State, RootState> & Actions = {
         const newBinding = { ...binding, activeTriggers: binding.activeTriggers - 1 };
 
         const instructions = executeAllInputHandlers({ binding: newBinding, value: 0, wasActive: true, globalIntensity: state.globalIntensity });
-        if(instructions.length > 0) {
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))
-            });
+        if (instructions.length > 0) {
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructions.map((instruction) => ({ keyId: binding.uid, ...instruction })))
         }
 
         commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, deviceIndex, binding: newBinding });
@@ -318,10 +333,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
         if (instructionList.length > 0) {
             const store = useStore();
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructionList
-            });
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructionList)
         }
     },
 };

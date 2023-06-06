@@ -70,7 +70,7 @@ export default defineComponent({
       this.isVibrating = true;
       window.api.send(IPC_CHANNELS.main.executeTask, [
         {
-          channelId: 0,
+          channelIds: [0],
           intensity: 1,
         },
       ]);
@@ -78,7 +78,7 @@ export default defineComponent({
 
       window.api.send(IPC_CHANNELS.main.executeTask, [
         {
-          channelId: 0,
+          channelIds: [0],
           intensity: 0,
         },
       ]);
