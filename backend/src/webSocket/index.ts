@@ -3,6 +3,7 @@ import StorageManager from "../store/StoreManager"
 import RoomModule from "../store/RoomModule";
 import UserModule from "../store/UserModule";
 import TactonModule from "../store/TactonModule";
+import { InteractionMode } from "../types";
 
 interface SocketMessage {
     type: WS_MSG_TYPE;
@@ -153,18 +154,33 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 *      instructions:[InstructionFromClient]
                 *  } as payload
                 */
-                StorageManager.enterInstruction(msg.payload.roomId, client, msg.payload.instructions, msg.startTimeStamp)
+                // const r = RoomModule.getRoomInfo(msg.payload.roomId)
+                // if (r?.isRecording) {
+                console.log(msg.payload.instructions)
+                StorageManager.processInstructionsFromClient(msg.payload.roomId, client, msg.payload.instructions, msg.startTimeStamp)
+                // }
                 break;
             }
-            case WS_MSG_TYPE.UPDATE_RECORD_MODE_SERV: {
+            // case WS_MSG_TYPE.UPDATE_RECORD_MODE_SERV: {
+            //     /**
+            //     * method to update all clients with the new recordmode
+            //     * recieve {
+            //     *      "roomId":string
+            //     *      shouldRecord:boolen
+            //     *  } as payload
+            //     */
+            //     StorageManager.changeRecordMode(msg.payload.roomId, msg.payload.shouldRecord, msg.startTimeStamp)
+            //     break;
+            // }
+            case WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV: {
                 /**
                 * method to update all clients with the new recordmode
                 * recieve {
                 *      "roomId":string
-                *      shouldRecord:boolen
+                *      "newMode": InteractionMode
                 *  } as payload
                 */
-                StorageManager.changeRecordMode(msg.payload.roomId, msg.payload.shouldRecord, msg.startTimeStamp)
+                StorageManager.changeRoomMode(msg.payload.roomId, msg.payload.newMode as InteractionMode, msg.startTimeStamp)
                 break;
             }
             case WS_MSG_TYPE.CHANGE_DURATION_SERV: {
@@ -179,8 +195,8 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 /**
                  * method to measure the latency
                  * recieve no payload
-                 * return no payload
                  */
+
                 ws.send(JSON.stringify({
                     type: WS_MSG_TYPE.PONG,
                     startTimeStamp: msg.startTimeStamp
@@ -190,13 +206,45 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
             case WS_MSG_TYPE.GET_TACTON_SERV: {
                 /**
                  * method to request one tacton as json in vtproto format
-                 * recieve "{roomId:string} as payload
+                 * recieve "{
+                 *  roomId:string
+                 *  tactonUuid : string
+                 * } as payload
                  * return {tacton:TactonInstruction}
                  */
+                //if no uuid send last else search by uuid
+
+                const s = TactonModule.sessions.get(msg.payload.roomId)
+                if (s == undefined) return
+                const t = s.history[s.history.length - 1]
                 ws.send(JSON.stringify({
                     type: WS_MSG_TYPE.GET_TACTON_CLI,
-                    payload: TactonModule.getTacton(msg.payload.roomId)
+                    // payload: TactonModule.getTacton(msg.payload.roomId, "")
+                    payload: t
                 }))
+                // ws.send(JSON.stringify({
+                //     type: WS_MSG_TYPE.GET_TACTON_CLI,
+                //     payload: TactonModule.getTacton(msg.payload.roomId)
+                // }))
+                break;
+            }
+            case WS_MSG_TYPE.CHANGE_ROOMINFO_TACTON_PREFIX_SERV: {
+                /**
+                 * method to update the filename prefix 
+                 * recieve "{roomId:string,prefix:string}" as payload
+                 */
+                // StorageManager.changeDuration(msg.payload.roomId, msg.payload.duration, msg.startTimeStamp)
+                // StorageManager.changeFilenamePrefix(msg.payload.roomId, msg.payload.prefix)
+                if (RoomModule.updateRecordingPrefix(msg.payload.roomId, msg.payload.prefix)) {
+                    const r = RoomModule.getRoomInfo(msg.payload.roomId)
+                    if (r != undefined) {
+                        ws.send(JSON.stringify({
+                            type: WS_MSG_TYPE.UPDATE_ROOM_CLI,
+                            payload: {room: r, participants : UserModule.getParticipants(msg.payload.roomId)}
+                        }))
+                    }
+                }
+
                 break;
             }
         }

@@ -1,6 +1,10 @@
 <template>
   <v-container class="playGroundView" ref="container" tabindex="-1">
     <v-row no-gutters>
+
+      <v-col cols="1" id="tactonScreen">
+        <TactonSelectionList></TactonSelectionList>
+      </v-col>
       <v-col cols="5" id="tactonScreen">
         <TactonScreen :isMounted="isMounted" />
       </v-col>
@@ -10,16 +14,8 @@
       </v-col>
     </v-row>
 
-    <v-dialog
-      v-model="playGroundDialog"
-      max-width="50%"
-      class="tesing"
-      @click:outside="closeDialog"
-    >
-      <PlayGroundDialog
-        @closeDialog="closeDialog"
-        :keyButtonId="idOfEditableButton"
-      />
+    <v-dialog v-model="playGroundDialog" max-width="50%" class="tesing" @click:outside="closeDialog">
+      <PlayGroundDialog @closeDialog="closeDialog" :keyButtonId="idOfEditableButton" />
     </v-dialog>
   </v-container>
 </template>
@@ -37,8 +33,9 @@
   outline: none;
 }
 
-#tactonScreen{
-  border-right: 1px solid rgba(0, 0, 0, .2);;
+#tactonScreen {
+  border-right: 1px solid rgba(0, 0, 0, .2);
+  ;
 }
 </style>
 
@@ -52,6 +49,7 @@ import { GeneralMutations } from "../../store/modules/generalSettings/generalSet
 import { RouterNames } from "@/types/Routernames";
 import { useStore } from "../../store/store";
 import { PlayGroundMutations } from "../../store/modules/playGround/types";
+import TactonSelectionList from "@/renderer/components/playGroundComponents/TactonScreen/TactonSelectionList.vue";
 
 export default defineComponent({
   name: "PlayGroundBody",
@@ -59,6 +57,7 @@ export default defineComponent({
     GridHeader,
     GridArea,
     TactonScreen,
+    TactonSelectionList,
     PlayGroundDialog,
   },
   data() {

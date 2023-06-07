@@ -1,5 +1,4 @@
-import { InstructionFromClient, InstructionToClient } from "../types";
-import { Room, User } from "../types";
+import { InstructionFromClient, InstructionToClient,InteractionMode, Room, TactonRecording, User } from "../types";
 import { WS_MSG_TYPE } from "../webSocket/ws_types";
 import RoomModule from "./RoomModule";
 import TactonModule from "./TactonModule";
@@ -72,14 +71,60 @@ const removeUserOfSession = (roomId: string, user: User, startTimeStamp: number)
 
 }
 
-const changeRecordMode = (roomId: string, shouldRecord: boolean, startTimeStamp: number) => {
-    const needUpdate = RoomModule.updateRecordMode(roomId, shouldRecord)
-    if (needUpdate == true) {
-        if (shouldRecord == true)
-            TactonModule.deleteTactonInstructions(roomId);
+const changeRoomMode = (roomId: string, newMode: InteractionMode, startTimeStamp: number) => {
 
-        broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI, shouldRecord, startTimeStamp)
+    // const isValidModeChange  = RoomModule.
+    // if(newMode == InteractionMode.Jamming)
+    const r = RoomModule.getRoomInfo(roomId)
+    if (r == undefined) return
+    const rm = r.mode
+    if (RoomModule.updateRoomMode(roomId, newMode)) {
+        console.log(`Changing interaction mode to ${newMode}`)
+        const s = TactonModule.sessions.get(roomId)
+        if (s == undefined) return
+
+        if (newMode == InteractionMode.Recording) { //Old Mode was Jamming
+            // Start new Recording 
+            s.recording = new TactonRecording()
+            //TODO Broadcast information about recording to clients
+
+
+        }
+        else if (newMode == InteractionMode.Playback) {
+            //Old Mode was Jamming
+        }
+        else {
+            //Old Mode was reccording or playback, Store tacton in history and send item to client
+            //TODO Extract to own method
+            if (rm == InteractionMode.Recording) {
+                const t = s.recording.getTacton()
+                const prefix = s.history.filter(e => {
+                    return e.name.startsWith(r.recordingNamePrefix + "-") == true
+                })
+                let len = prefix.length.toString()
+                t.name = r.recordingNamePrefix + "-" + len
+                s.history.push(t)
+            } else { // Playback
+            }
+        }
+
+        broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI, newMode, startTimeStamp)
     }
+
+}
+
+const changeRecordMode = (roomId: string, shouldRecord: boolean, startTimeStamp: number) => {
+    // const needUpdate = RoomModule.updateRecordMode(roomId, shouldRecord)
+    // if (needUpdate == true) {
+    //     if (shouldRecord == true){
+    //         console.log("Starting to record now")
+    //         TactonModule.deleteTactonInstructions(roomId);
+    //     } else {
+    //         console.log("Stopping the recording now")
+    //     }
+
+    //     broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI, shouldRecord, startTimeStamp)
+    // }
 
 }
 
@@ -115,7 +160,7 @@ const broadCastMessage = (roomId: string, type: WS_MSG_TYPE, payload: any, start
  * method to start the calculation of needed operations and distribute them
  * also to store the tacton in vtproto format
  */
-const enterInstruction = (roomId: string, clienId: string, instructions: InstructionFromClient[], startTimeStamp: number) => {
+const processInstructionsFromClient = (roomId: string, clienId: string, instructions: InstructionFromClient[], startTimeStamp: number) => {
     const clientInstruction: InstructionToClient[] = [];
     instructions.forEach(instruction => {
         const user = UserModule.getUser(roomId, clienId)
@@ -130,7 +175,9 @@ const enterInstruction = (roomId: string, clienId: string, instructions: Instruc
 
     const room = RoomModule.getRoomInfo(roomId);
     if (room == undefined) return;
-    if (room.isRecording) TactonModule.addTactonInstruction(roomId, clientInstruction);
+    if (room.mode == InteractionMode.Recording) {
+        TactonModule.addInstructionsToTactonRecording(roomId, clientInstruction)
+    }
 }
 
 export default {
@@ -140,6 +187,7 @@ export default {
     updateSession,
     removeUserOfSession,
     changeRecordMode,
+    changeRoomMode,
     changeDuration,
-    enterInstruction
+    processInstructionsFromClient
 }

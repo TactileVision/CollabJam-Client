@@ -1,5 +1,8 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState } from '../../store';
+import { mdiShield } from '@mdi/js';
+import { InteractionMode } from '@/types/GeneralType';
+import { roots } from 'protobufjs';
 /**
  * Types
  * 
@@ -7,7 +10,7 @@ import { RootState } from '../../store';
 export interface User {
   id: string,
   name: string,
-  color:string
+  color: string
 }
 
 export interface Room {
@@ -17,9 +20,10 @@ export interface Room {
   participants: User[],
   isRecording: boolean,
   maxDurationRecord: number,
+  recordingNamePrefix: string
 }
 
-export enum RoomState{
+export enum RoomState {
   Create = "Create",
   Enter = "Enter",
   Configure = "Configure"
@@ -36,8 +40,10 @@ export type State = {
   description: string,
   participants: User[],
   user: User,
-  isRecording: boolean,
+  // isRecording: boolean,
   maxDuration: number,
+  mode: InteractionMode
+  recordingNamePrefix: string
 };
 
 export const state: State = {
@@ -46,9 +52,11 @@ export const state: State = {
   roomName: "",
   description: "",
   participants: [],
-  user: { id: "", name: "", color:"" },
-  isRecording: false,
+  user: { id: "", name: "", color: "" },
+  // isRecording: false,
   maxDuration: 5000,
+  mode: InteractionMode.Jamming,
+  recordingNamePrefix: ""
 };
 /**
  * mutations
@@ -74,7 +82,7 @@ export type Mutations<S = State> = {
   [RoomMutations.UPDATE_USER](state: S, user: User): void
   [RoomMutations.UPDATE_USER_NAME](state: S, userName: string): void
   [RoomMutations.UPDATE_PARTICIPANTS](state: S, participants: User[]): void
-  [RoomMutations.UPDATE_RECORD_MODE](state: S, shouldRecord: boolean): void
+  [RoomMutations.UPDATE_RECORD_MODE](state: S, mode: InteractionMode): void
   [RoomMutations.UPDATE_MAX_DURATION_TACTON](state: S, maxDuration: number): void
 }
 
@@ -85,8 +93,9 @@ export const mutations: MutationTree<State> & Mutations = {
     state.roomName = props.roomInfo.name;
     state.description = props.roomInfo.description;
     state.participants = props.roomInfo.participants;
-    state.isRecording = props.roomInfo.isRecording;
+    // state.isRecording = props.roomInfo.isRecording;
     state.maxDuration = props.roomInfo.maxDurationRecord;
+    state.recordingNamePrefix = props.roomInfo.recordingNamePrefix
   },
   [RoomMutations.UPDATE_ROOM_NAME](state, roomName) {
     state.roomName = roomName;
@@ -106,8 +115,8 @@ export const mutations: MutationTree<State> & Mutations = {
   [RoomMutations.UPDATE_PARTICIPANTS](state, participants) {
     state.participants = participants;
   },
-  [RoomMutations.UPDATE_RECORD_MODE](state, shouldRecord) {
-    state.isRecording = shouldRecord;
+  [RoomMutations.UPDATE_RECORD_MODE](state, mode) {
+    state.mode = mode
   },
   [RoomMutations.UPDATE_MAX_DURATION_TACTON](state, maxDuration) {
     state.maxDuration = maxDuration;
@@ -146,7 +155,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
     const user = props.participants.find(participant => participant.id == props.userId);
 
     if (user !== undefined)
-      commit(RoomMutations.UPDATE_USER, { id: user.id, name: user.name, color:user.color});
+      commit(RoomMutations.UPDATE_USER, { id: user.id, name: user.name, color: user.color });
 
     commit(RoomMutations.CHANGE_ROOM, {
       roomState: RoomState.Enter,
@@ -157,11 +166,13 @@ export const actions: ActionTree<State, RootState> & Actions = {
         participants: props.participants,
         isRecording: props.room.isRecording,
         maxDurationRecord: props.room.maxDurationRecord,
+        recordingNamePrefix: props.room.recordingNamePrefix
       }
     })
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
   [RoomSettingsActionTypes.updateRoom]({ commit }, props: { room: Room, participants: User[] }) {
+    console.log(props.room)
     commit(RoomMutations.CHANGE_ROOM, {
       roomState: RoomState.Enter,
       roomInfo: {
@@ -171,6 +182,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
         participants: props.participants,
         isRecording: props.room.isRecording,
         maxDurationRecord: props.room.maxDurationRecord,
+        recordingNamePrefix: props.room.recordingNamePrefix
       }
     })
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);

@@ -6,6 +6,8 @@ import router from "@/renderer/router";
 import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
+import { TactonPlaybackActionTypes, createTacton, createTactonInstructionsFromPayload } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
+import { Tacton } from "@/types/TactonTypes";
 import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index"
 
 export interface SocketMessage {
@@ -34,7 +36,8 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 *   } as payload
          */
         case WS_MSG_TYPE.ROOM_INFO_CLI: {
-            //console.log("ROOM_INFO_CLI")
+            console.log("ROOM_INFO_CLI")
+            console.log(msg.payload)
             if (store.state.generalSettings.currentView == RouterNames.ROOM) {
                 let roomState = RoomState.Create;
                 if (msg.payload.existRoom == true)
@@ -70,7 +73,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 }
             }
             break;
-        }
+    }
         /**
          * get called if some metadata of the room has to be changed
          * update and set all metadata
@@ -80,8 +83,8 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 *   } as payload
          */
         case WS_MSG_TYPE.UPDATE_ROOM_CLI: {
-            //console.log("UPDATE_ROOM_CLI")
-            //console.log(msg.payload)
+            console.log("UPDATE_ROOM_CLI")
+            console.log(msg.payload)
             store.dispatch(RoomSettingsActionTypes.updateRoom, msg.payload)
             break;
         }
@@ -127,17 +130,49 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
             break;
         }
         /**
-       * get called if record mode is changed
-       * * recieve {
-           *    shouldRecord: boolean
-           *   } as payload
-       */
-        case WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI: {
-            //console.log("UPDATE_RECORD_MODE_CLI")
+* get called if record mode is changed
+* * recieve {
+   *    shouldRecord: boolean
+   *   } as payload
+*/
+        case WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI: {
+            console.log(`Record mode: ${msg.payload}`)
+            
             store.commit(RoomMutations.UPDATE_RECORD_MODE, msg.payload)
-            store.commit(TactonMutations.UPDATE_INSERT_VALUES, !msg.payload);
+            //TODO Change tacton state based on received update!
+
+            // if (msg.payload) {
+            //     //Recording
+            //     console.log("Recording")
+            // } else {
+            //     console.log("Playback")
+            // }
+            // //Clear current record buffer
+            // store.commit(TactonMutations.UPDATE_INSERT_VALUES, !msg.payload);
             break;
         }
+        //     /**
+        //    * get called if record mode is changed
+        //    * * recieve {
+        //        *    shouldRecord: boolean
+        //        *   } as payload
+        //    */
+        //     case WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI: {
+        //         //console.log("UPDATE_RECORD_MODE_CLI")
+        //         // true = recording, false = not recording
+        //         console.log(`Recording: ${msg.payload}`)
+        //         store.commit(RoomMutations.UPDATE_RECORD_MODE, msg.payload)
+
+        //         if (msg.payload) {
+        //             //Recording
+        //             console.log("Recording")
+        //         } else {
+        //             console.log("Playback")
+        //         }
+        //         //Clear current record buffer
+        //         store.commit(TactonMutations.UPDATE_INSERT_VALUES, !msg.payload);
+        //         break;
+        //     }
         /**
         * get called if max duration of time profile is changed
         * * recieve {
@@ -156,14 +191,16 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
         *   } as payload
         */
         case WS_MSG_TYPE.GET_TACTON_CLI: {
-            //console.log("GET_TACTON_CLI")
+            console.log("GET_TACTON_CLI")
             console.log(msg.payload)
             if (msg.payload.length == 0) {
                 store.dispatch(GeneralSettingsActionTypes.tactonLengthChanged);
             } else {
-                window.api.send(IPC_CHANNELS.main.saveTacton,
-                    msg.payload
-                );
+                const t : Tacton = msg.payload as Tacton
+                // const t = createTacton()
+                // t.instructions = createTactonInstructionsFromPayload(msg.payload)
+                store.dispatch(TactonPlaybackActionTypes.addTacton, t)
+                store.dispatch(TactonPlaybackActionTypes.selectTacton, t.uuid)
             }
             break;
         }

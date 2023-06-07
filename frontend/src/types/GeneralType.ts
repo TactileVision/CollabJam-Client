@@ -30,6 +30,14 @@ export interface TactileTask {
 }
 
 
+
+export enum InteractionMode {
+  Jamming = 1,
+  Recording,
+  Playback
+}
+
+
 export interface InstructionToClient {
   channelIds: number[],
   intensity: number,

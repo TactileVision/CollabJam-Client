@@ -1,4 +1,5 @@
 <template>
+  
   <v-row
     no-gutters
     align="center"
@@ -6,26 +7,28 @@
     id="tactonHeader"
   >
     <v-col style="max-width: fit-content">
-      <v-btn @click="changeRecordMode" color="primary">
-        {{ store.state.roomSettings.isRecording ? "Stop" : "Start" }} Record
-      </v-btn>
+      
+      <!-- <v-btn @click="changeRecordMode" color="primary">
+        {{ store.state.roomSettings.isRecording ? "Stop" : "Record" }} 
+      </v-btn> -->
     </v-col>
     <v-col style="max-width: fit-content">
       <v-row align="center">
-        Duration:
+        Display:
         <v-select
           class="durationBox"
           :items="items"
           v-model="duration"
-          :disabled="store.state.roomSettings.isRecording"
         ></v-select>
       </v-row>
     </v-col>
     <v-col style="max-width: fit-content">
-      <v-btn @click="saveTacton" color="primary"> Save </v-btn>
+
     </v-col>
   </v-row>
   <TactonGraph :isMounted="isMounted" />
+<!-- </v-col> -->
+
 </template>
 
 <style lang="scss">
@@ -67,57 +70,43 @@ import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws
 import TactonGraph from "./TactonGraph.vue";
 
 export default defineComponent({
-  name: "TactonScreen",
-  components: {
-    TactonGraph,
-  },
-  props: {
-    isMounted: {
-      type: Boolean,
+    name: "TactonScreen",
+    components: {TactonGraph/* , TactonSelectionList */},
+    props: {
+        isMounted: {
+            type: Boolean,
+        },
     },
-  },
-  data() {
-    return {
-      store: useStore(),
-      items: ["5s", "10s", "15s"],
-    };
-  },
-  computed: {
-    maxDurationStore(): number {
-      return this.store.state.roomSettings.maxDuration;
+    data() {
+        return {
+            store: useStore(),
+            items: ["5s", "10s", "15s", "60s"],
+        };
     },
-    duration: {
-      get(): string {
-        return (this.maxDurationStore / 1000).toString() + "s";
-      },
-      set(newValue: any) {
-        sendSocketMessage(WS_MSG_TYPE.CHANGE_DURATION_SERV, {
-          roomId: this.store.state.roomSettings.id,
-          duration: newValue.substring(0, newValue.length - 1) * 1000,
-        });
-      },
+    computed: {
+        maxDurationStore(): number {
+            return this.store.state.roomSettings.maxDuration;
+        },
+        duration: {
+            get(): string {
+                return (this.maxDurationStore / 1000).toString() + "s";
+            },
+            set(newValue: any) {
+                sendSocketMessage(WS_MSG_TYPE.CHANGE_DURATION_SERV, {
+                    roomId: this.store.state.roomSettings.id,
+                    duration: newValue.substring(0, newValue.length - 1) * 1000,
+                });
+            },
+        },
     },
-  },
-  methods: {
-    changeRecordMode() {
-      if (this.store.state.roomSettings.isRecording) {
-        sendSocketMessage(WS_MSG_TYPE.UPDATE_RECORD_MODE_SERV, {
-          roomId: this.store.state.roomSettings.id,
-          shouldRecord: false,
-        });
-      } else {
-        sendSocketMessage(WS_MSG_TYPE.UPDATE_RECORD_MODE_SERV, {
-          roomId: this.store.state.roomSettings.id,
-          shouldRecord: true,
-        });
-      }
+    methods: {
+
+        saveTacton() {
+            sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
+                roomId: this.store.state.roomSettings.id,
+                shouldRecord: false,
+            });
+        },
     },
-    saveTacton() {
-      sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
-        roomId: this.store.state.roomSettings.id,
-        shouldRecord: false,
-      });
-    },
-  },
 });
 </script>

@@ -120,6 +120,20 @@ ipcMain.on(IPC_CHANNELS.main.saveTacton, async (event, payload: any) => {
     }
 });
 
+// receive tacton to play back
+ipcMain.on(IPC_CHANNELS.main.getRecordedTacton, async (event, payload: any) => {
+    // let p = payload as [InstructionServerPayload]
+    // let t: TactonInstruction[] = []
+    // p.forEach(inst => {
+    //     if (isInstructionWait(inst.Instruction) || isInstructionSetParameter(inst.Instruction)) {
+    //         t.push(inst.Instruction)
+    //     } else {
+    //         console.log("Unknown payload")
+    //     }
+    // })
+    // playbackRecordedTacton(t)
+});
+
 //generell function, which get called if on module want to communicate with the renderer
 export function sendMessageToRenderer(channel: string, payload: any): void {
     _win.webContents.send(channel, payload)

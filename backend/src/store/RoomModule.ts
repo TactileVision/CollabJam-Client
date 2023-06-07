@@ -1,4 +1,4 @@
-import { Channel, Room } from "../types";
+import { InteractionMode, Room, User } from "../types";
 
 //contain all metadata of one room
 let roomList: Map<string, Room> = new Map<string, Room>();
@@ -35,8 +35,9 @@ const createRoom = (room: Room): string => {
         id: roomId,
         name: room.name,
         description: room.description,
-        isRecording: false,
+        mode: InteractionMode.Jamming,
         maxDurationRecord: 5000,
+        recordingNamePrefix: "tacton"
     });
 
     return roomId;
@@ -63,20 +64,43 @@ const removeRoom = (roomId: string) => {
     console.log("Delete Room: " + roomList.size)
 }
 
-const updateRecordMode = (roomId: string, shouldRecord: boolean): boolean => {
+
+const updateRoomMode = (roomId: string, newMode: InteractionMode): boolean => {
     const room = roomList.get(roomId);
     if (room == undefined) return false;
 
-    room.isRecording = shouldRecord;
+    // if(room.mode == InteractionMode.Jamming){
+
+    /* } else */
+    if (room.mode == InteractionMode.Recording) {
+        if (newMode == InteractionMode.Playback) return false
+
+    } else if (room.mode == InteractionMode.Playback) {
+        if (newMode == InteractionMode.Recording) return false
+    }
+    room.mode = newMode;
     return true;
 }
+// const updateRecordMode = (roomId: string, shouldRecord: boolean): boolean => {
+//     const room = roomList.get(roomId);
+//     if (room == undefined) return false;
+
+//     room.isRecording = shouldRecord;
+//     return true;
+// }
 
 const updateMaxDuration = (roomId: string, maxDuration: number): boolean => {
     const room = roomList.get(roomId);
     if (room == undefined) return false;
-    if (room.isRecording) return false;
+    if (room.mode == InteractionMode.Recording) return false;
 
     room.maxDurationRecord = maxDuration;
+    return true
+}
+const updateRecordingPrefix = (roomId: string, prefix: string): boolean => {
+    const room = roomList.get(roomId);
+    if (room == undefined) return false;
+    room.recordingNamePrefix = prefix;
     return true
 }
 
@@ -86,6 +110,7 @@ export default {
     getNewRoomName,
     updateRoomInformation,
     removeRoom,
-    updateRecordMode,
+    updateRecordingPrefix,
+    updateRoomMode,
     updateMaxDuration
 }

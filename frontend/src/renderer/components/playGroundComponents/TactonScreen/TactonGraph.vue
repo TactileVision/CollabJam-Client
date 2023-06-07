@@ -9,6 +9,7 @@ import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/renderer/store/store";
 import { TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { User } from "@/renderer/store/modules/roomSettings/roomSettings";
+import { InteractionMode } from "@/types/GeneralType";
 
 interface IntensityObject {
   intensity: number;
@@ -55,7 +56,7 @@ export default defineComponent({
       growRatio: 0,
       currentTime: 0,
       dropdownDisabled: false,
-      items: ["5s", "10s", "15s"],
+      items: ["5s", "10s", "15s","60s"],
     };
   },
   computed: {
@@ -66,7 +67,7 @@ export default defineComponent({
       return this.store.state.tactonSettings.insertValues;
     },
     isRecordingStore(): boolean {
-      return this.store.state.roomSettings.isRecording;
+      return this.store.state.roomSettings.mode == InteractionMode.Recording
     },
     numberOfOutputs(): number {
       return this.store.getters.getNumberOfOutputs;
@@ -104,7 +105,7 @@ export default defineComponent({
     newStoreItem() {
       // console.log("newStoreItem " + newValue);
       if (this.newStoreItem == true) {
-        if (this.store.state.roomSettings.isRecording == true)
+        if (this.store.state.roomSettings.mode == InteractionMode.Recording)
           this.ticker?.start();
       }
     },
