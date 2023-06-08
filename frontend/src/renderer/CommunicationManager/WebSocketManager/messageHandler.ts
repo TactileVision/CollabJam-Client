@@ -9,6 +9,7 @@ import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSett
 import { TactonPlaybackActionTypes, createTacton, createTactonInstructionsFromPayload } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
 import { Tacton } from "@/types/TactonTypes";
 import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index"
+import { InteractionMode } from "@/types/GeneralType";
 
 export interface SocketMessage {
     type: WS_MSG_TYPE;
@@ -73,7 +74,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 }
             }
             break;
-    }
+        }
         /**
          * get called if some metadata of the room has to be changed
          * update and set all metadata
@@ -122,8 +123,9 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
         case WS_MSG_TYPE.SEND_INSTRUCTION_CLI: {
             //console.log("SEND_INSTRUCTION_CLI")
             //console.log(msg.payload)
-            store.dispatch(TactonSettingsActionTypes.modifySpecificChannel, msg.payload)
-            store.commit(TactonMutations.UPDATE_INSERT_VALUES, true);
+            if (store.state.roomSettings.mode != InteractionMode.Playback) {
+                store.dispatch(TactonSettingsActionTypes.modifySpecificChannel, msg.payload)
+            }
             if (store.state.generalSettings.currentView == RouterNames.PLAY_GROUND && !store.state.playGround.inEditMode) {
                 window.api.send(IPC_CHANNELS.main.executeTask, msg.payload);
             }
@@ -136,43 +138,16 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
    *   } as payload
 */
         case WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI: {
-            console.log(`Record mode: ${msg.payload}`)
-            
             store.commit(RoomMutations.UPDATE_RECORD_MODE, msg.payload)
             //TODO Change tacton state based on received update!
-
-            // if (msg.payload) {
-            //     //Recording
-            //     console.log("Recording")
-            // } else {
-            //     console.log("Playback")
-            // }
-            // //Clear current record buffer
-            // store.commit(TactonMutations.UPDATE_INSERT_VALUES, !msg.payload);
+            if (msg.payload == 2) {
+                store.commit(TactonMutations.UPDATE_INSERT_VALUES, true);
+            } else {
+                store.commit(TactonMutations.UPDATE_INSERT_VALUES, false);
+            }
             break;
         }
-        //     /**
-        //    * get called if record mode is changed
-        //    * * recieve {
-        //        *    shouldRecord: boolean
-        //        *   } as payload
-        //    */
-        //     case WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI: {
-        //         //console.log("UPDATE_RECORD_MODE_CLI")
-        //         // true = recording, false = not recording
-        //         console.log(`Recording: ${msg.payload}`)
-        //         store.commit(RoomMutations.UPDATE_RECORD_MODE, msg.payload)
 
-        //         if (msg.payload) {
-        //             //Recording
-        //             console.log("Recording")
-        //         } else {
-        //             console.log("Playback")
-        //         }
-        //         //Clear current record buffer
-        //         store.commit(TactonMutations.UPDATE_INSERT_VALUES, !msg.payload);
-        //         break;
-        //     }
         /**
         * get called if max duration of time profile is changed
         * * recieve {
@@ -196,7 +171,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
             if (msg.payload.length == 0) {
                 store.dispatch(GeneralSettingsActionTypes.tactonLengthChanged);
             } else {
-                const t : Tacton = msg.payload as Tacton
+                const t: Tacton = msg.payload as Tacton
                 // const t = createTacton()
                 // t.instructions = createTactonInstructionsFromPayload(msg.payload)
                 store.dispatch(TactonPlaybackActionTypes.addTacton, t)

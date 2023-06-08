@@ -1,54 +1,47 @@
 <template>
-  
-  <v-row
-    no-gutters
-    align="center"
-    style="justify-content: space-evenly; margin: 5px 0"
-    id="tactonHeader"
-  >
+  <v-row no-gutters align="center" style="justify-content: space-evenly; margin: 5px 0" id="tactonHeader">
     <v-col style="max-width: fit-content">
-      
+
       <!-- <v-btn @click="changeRecordMode" color="primary">
         {{ store.state.roomSettings.isRecording ? "Stop" : "Record" }} 
       </v-btn> -->
     </v-col>
-    <v-col style="max-width: fit-content">
+    <!-- <v-col style="max-width: fit-content">
       <v-row align="center">
         Display:
-        <v-select
-          class="durationBox"
-          :items="items"
-          v-model="duration"
-        ></v-select>
+        <v-select class="durationBox" :items="items" v-model="duration"></v-select>
       </v-row>
-    </v-col>
+    </v-col> -->
     <v-col style="max-width: fit-content">
 
     </v-col>
   </v-row>
   <TactonGraph :isMounted="isMounted" />
-<!-- </v-col> -->
-
+  <!-- </v-col> -->
 </template>
 
 <style lang="scss">
 .durationBox {
   padding-left: 10px;
   max-width: 100px;
+
   .v-input__control {
     height: 40px !important;
     max-height: 40px !important;
     display: flex;
+
     .v-field {
       .v-label {
         display: none;
       }
+
       .v-field__append-inner {
         display: flex;
         height: 40px !important;
         align-items: center;
         padding-top: 0;
       }
+
       .v-field__field {
         height: 40px !important;
         max-height: 40px !important;
@@ -57,6 +50,7 @@
       }
     }
   }
+
   .v-input__details {
     display: none;
   }
@@ -70,43 +64,43 @@ import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws
 import TactonGraph from "./TactonGraph.vue";
 
 export default defineComponent({
-    name: "TactonScreen",
-    components: {TactonGraph/* , TactonSelectionList */},
-    props: {
-        isMounted: {
-            type: Boolean,
-        },
+  name: "TactonScreen",
+  components: { TactonGraph/* , TactonSelectionList */ },
+  props: {
+    isMounted: {
+      type: Boolean,
     },
-    data() {
-        return {
-            store: useStore(),
-            items: ["5s", "10s", "15s", "60s"],
-        };
+  },
+  data() {
+    return {
+      store: useStore(),
+      // items: ["5s", "10s", "15s", "60s"],
+    };
+  },
+  computed: {
+    maxDurationStore(): number {
+      return this.store.state.roomSettings.maxDuration;
     },
-    computed: {
-        maxDurationStore(): number {
-            return this.store.state.roomSettings.maxDuration;
-        },
-        duration: {
-            get(): string {
-                return (this.maxDurationStore / 1000).toString() + "s";
-            },
-            set(newValue: any) {
-                sendSocketMessage(WS_MSG_TYPE.CHANGE_DURATION_SERV, {
-                    roomId: this.store.state.roomSettings.id,
-                    duration: newValue.substring(0, newValue.length - 1) * 1000,
-                });
-            },
-        },
+    duration: {
+      get(): string {
+        return (this.maxDurationStore / 1000).toString() + "s";
+      },
+      set(newValue: any) {
+        sendSocketMessage(WS_MSG_TYPE.CHANGE_DURATION_SERV, {
+          roomId: this.store.state.roomSettings.id,
+          duration: newValue.substring(0, newValue.length - 1) * 1000,
+        });
+      },
     },
-    methods: {
+  },
+  methods: {
 
-        saveTacton() {
-            sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
-                roomId: this.store.state.roomSettings.id,
-                shouldRecord: false,
-            });
-        },
+    saveTacton() {
+      sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
+        roomId: this.store.state.roomSettings.id,
+        shouldRecord: false,
+      });
     },
+  },
 });
 </script>

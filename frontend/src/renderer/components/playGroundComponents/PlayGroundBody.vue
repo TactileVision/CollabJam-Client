@@ -2,7 +2,7 @@
   <v-container class="playGroundView" ref="container" tabindex="-1">
     <v-row no-gutters>
 
-      <v-col cols="1" id="tactonScreen">
+      <v-col cols="2">
         <TactonSelectionList></TactonSelectionList>
       </v-col>
       <v-col cols="5" id="tactonScreen">

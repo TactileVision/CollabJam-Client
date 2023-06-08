@@ -46,7 +46,7 @@ export interface Channel {
 // }
 interface InstructionSetParameter {
     setParameter: {
-        channelId: number[];
+        channelIds: number[];
         intensity: number;
     }
 }

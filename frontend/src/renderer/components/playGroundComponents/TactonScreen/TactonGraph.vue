@@ -7,9 +7,11 @@ import * as PIXI from "pixi.js";
 import { PRECISION } from "@pixi/constants";
 import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/renderer/store/store";
-import { TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
+import { TactonSettingsActionTypes, DeviceChannel } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { User } from "@/renderer/store/modules/roomSettings/roomSettings";
 import { InteractionMode } from "@/types/GeneralType";
+import { Tacton, TactonInstruction, isInstructionSetParameter, InstructionSetParameter, InstructionWait } from "@/types/TactonTypes";
+import { isInstructionWait } from "@/types/TactonTypes";
 
 interface IntensityObject {
   intensity: number;
@@ -23,9 +25,31 @@ interface GraphicObject {
   channelId: number;
   container: PIXI.Container;
 }
-
 interface ChannelGraph extends GraphicObject {
   intensities: IntensityObject[];
+}
+class Cursor {
+  graphic: PIXI.Graphics = new PIXI.Graphics();
+  container: PIXI.Container = new PIXI.Container()
+  position = 0
+  hasDrawnCursor = false
+
+  constructor() {
+    this.container.addChild(this.graphic)
+  }
+
+  getContainer(): PIXI.Container {
+    return this.container
+  }
+
+  drawCursor(height: number) {
+    this.graphic.beginFill(0xec660c);
+    this.graphic.drawRect(0, 0, 2, height);
+    this.hasDrawnCursor = true
+  }
+  moveToPosition(xPosition: number) {
+    this.container.position.set(xPosition, 0);
+  }
 }
 export default defineComponent({
   name: "TactonGraph",
@@ -56,7 +80,7 @@ export default defineComponent({
       growRatio: 0,
       currentTime: 0,
       dropdownDisabled: false,
-      items: ["5s", "10s", "15s","60s"],
+      cursor: new Cursor()
     };
   },
   computed: {
@@ -66,8 +90,11 @@ export default defineComponent({
     newStoreItem(): boolean {
       return this.store.state.tactonSettings.insertValues;
     },
-    isRecordingStore(): boolean {
-      return this.store.state.roomSettings.mode == InteractionMode.Recording
+    interactionMode(): InteractionMode {
+      return this.store.state.roomSettings.mode
+    },
+    tacton(): Tacton | null {
+      return this.store.state.tactonPlayback.currentTacton
     },
     numberOfOutputs(): number {
       return this.store.getters.getNumberOfOutputs;
@@ -86,29 +113,40 @@ export default defineComponent({
       this.resizeRectangles();
     },
     //update store from server, response retrieved
-    isRecordingStore(recordMode) {
-      if (recordMode) {
-        this.currentTime = 0;
-        this.channelGraphs.forEach((graph) => {
-          graph.container.removeChildren();
-        });
-        this.channelGraphs = [];
-        if (this.ticker !== null && this.ticker.count > 0)
-          this.ticker?.remove(this.loop);
-        this.ticker?.add(this.loop);
+    interactionMode(mode) {
+      console.log(`Record mode ${mode}`)
+      console.log("foo")
+      if (mode == InteractionMode.Recording) {
+        console.log("InteractionMode.Recording")
+        this.clearGraph()
+
+        console.log(this.ticker)
       } else {
+
+        console.log("stopped recording")
         this.ticker?.stop();
         this.ticker?.remove(this.loop);
       }
     },
     //start the drawing of figures, if there are the first user input
     newStoreItem() {
-      // console.log("newStoreItem " + newValue);
+      console.log("newStoreItem");
       if (this.newStoreItem == true) {
         if (this.store.state.roomSettings.mode == InteractionMode.Recording)
-          this.ticker?.start();
+          console.log("recording");
+        this.ticker?.start();
       }
     },
+    tacton(tacton) {
+      console.log("Tacton")
+      if (tacton == null) return
+      if (this.interactionMode == InteractionMode.Jamming) {
+        const t = tacton as Tacton
+        this.clearGraph()
+        this.drawStoredGraph(t.instructions)
+      }
+
+    }
   },
   mounted() {
     //listener to recalculate time profiles
@@ -318,6 +356,247 @@ export default defineComponent({
         }
       }
     },
+    clearGraph() {
+      this.currentTime = 0;
+      this.channelGraphs.forEach((graph) => {
+        graph.container.removeChildren();
+      });
+      this.channelGraphs = [];
+      if (this.ticker !== null && this.ticker.count > 0) {
+        console.log('stopped ticker')
+        this.ticker?.remove(this.loop);
+      }
+      console.log('starting ticker')
+      this.ticker?.add(this.loop);
+    },
+    drawStoredGraph(instructions: TactonInstruction[]) {
+
+      /* 
+      ["Nano","Volvo","BMW","Nano","VW","Nano"].reduce(function(a, e, i) {
+    if (e === 'Nano')
+        a.push(i);
+    return a;
+}, []);   // [0, 3, 5]
+ */
+      console.log(instructions)
+
+      const getMillisForIndex = (instructions: TactonInstruction[], from: number, to: number): number => {
+        let ms = 0
+        for (let index = from; index < to; index++) {
+          const instruction = instructions[index];
+          if (isInstructionWait(instruction)) {
+            const wi = instruction as InstructionWait
+            ms += wi.wait.miliseconds
+          }
+        }
+
+        return ms
+      }
+
+      //Work on each channel
+      for (let i = 0; i < this.numberOfOutputs; i++) {
+        let accumulatedMs = 0
+        /*  */
+        //Find all setParameter Instructions that are associated with the channel Id (i)
+        var indices = instructions.map((instruction, index) => isInstructionSetParameter(instruction) ? index : -1).filter(e => {
+          if (e == -1) return false
+          const sp = instructions[e] as InstructionSetParameter
+          return sp.setParameter.channelIds.includes(i)
+        })
+
+
+        // Für die  erste Instruction muss auch der Startpunkt in MS bestimmt werden   
+        let channelBeginningMs = getMillisForIndex(instructions, 0, indices[0])
+        accumulatedMs = channelBeginningMs
+        //Instead of using a timer, use the accumulated wait instructions to get the millisecond value for drawing the boxes
+        for (let j = 0; j < indices.length - 1; j++) {
+          let timeBetweenInstructionsMs = getMillisForIndex(instructions, indices[j], indices[j + 1])
+
+          const graph = this.channelGraphs.find(
+            (graph) => graph.channelId == i
+          );
+          const additionalWidth = this.growRatio * timeBetweenInstructionsMs
+          // console.log(instructions[indices[j]])
+
+          if (graph == undefined) {
+            const container = new PIXI.Container();
+
+            let xPosition = this.width.original - this.paddingRL;
+            if (accumulatedMs < this.maxDurationStore)
+              xPosition =
+                (xPosition * accumulatedMs) / this.maxDurationStore +
+                this.paddingRL;
+            //Go thorugh InstructionToClient object, for each channel in channelIds
+            const intensityObject = this.drawRectangle(
+              i,
+              xPosition,
+              additionalWidth,
+              (instructions[indices[j]] as InstructionSetParameter).setParameter.intensity,
+              container,
+              undefined
+            );
+            this.channelGraphs.push({
+              channelId: i,
+              container: container,
+              intensities: [
+                {
+                  ...intensityObject,
+                  startTime: accumulatedMs,
+                  endTime: accumulatedMs + accumulatedMs,
+                },
+              ],
+            });
+
+            this.graphContainer?.addChild(container);
+            ///this.ticker?.stop();
+          } else {
+            //intensity or author changed, draw new rectangle
+            const xPosition =
+              ((this.width.original - 2 * this.paddingRL) * accumulatedMs) /
+              this.maxDurationStore +
+              this.paddingRL;
+
+            const intensityObject = this.drawRectangle(
+              i,
+              xPosition,
+              additionalWidth,
+              (instructions[indices[j]] as InstructionSetParameter).setParameter.intensity,
+              graph.container as PIXI.Container,
+              undefined
+            );
+
+            graph.intensities.push({
+              ...intensityObject,
+              startTime: accumulatedMs,
+              endTime: accumulatedMs + accumulatedMs,
+            });
+          }
+
+          // console.log(timeBetweenInstructionsMs)
+          // console.log(accumulatedMs)
+          accumulatedMs += timeBetweenInstructionsMs
+          console.log(`Starts at ${channelBeginningMs}ms, curently ${timeBetweenInstructionsMs} ending at ${accumulatedMs}`)
+
+        }
+
+
+      }
+      /* 
+        filter the instructions for each channel, also get the index
+        calaculate the time between each change by summing up all wait instructions between the first and the second instruction
+      */
+     console.log(instructions)
+
+
+    },
+    drawLiveGraph(channels: DeviceChannel[]) {
+      const additionalWidth = this.growRatio * this.ticker!.elapsedMS;
+      for (let i = 0; i < channels.length; i++) {
+        const graph = this.channelGraphs.find(
+          (graph) => graph.channelId == channels[i].channelId
+        );
+        if (graph == undefined) {
+          /**
+           * draw for every row a container,
+           * if there are no items, just enter 0 for the intensity as default
+           * the container is needed, to move the starting point later on, also if there are no figures
+           */
+          //if (channels[i].intensity == 0) continue;
+          //there is currently no rectangle
+          const container = new PIXI.Container();
+
+          let xPosition = this.width.original - this.paddingRL;
+          if (this.currentTime < this.maxDurationStore)
+            xPosition =
+              (xPosition * this.currentTime) / this.maxDurationStore +
+              this.paddingRL;
+
+          //Go thorugh InstructionToClient object, for each channel in channelIds
+          const intensityObject = this.drawRectangle(
+            i,
+            xPosition,
+            additionalWidth,
+            channels[i].intensity,
+            container,
+            channels[i].author
+          );
+          this.channelGraphs.push({
+            channelId: channels[i].channelId,
+            container: container,
+            intensities: [
+              {
+                ...intensityObject,
+                startTime: this.currentTime,
+                endTime: this.currentTime + this.ticker!.elapsedMS,
+              },
+            ],
+          });
+
+          this.graphContainer?.addChild(container);
+          ///this.ticker?.stop();
+        } else {
+          //push the container to left, to have place for new values
+          if (this.currentTime >= this.maxDurationStore) {
+            graph.container.x -= additionalWidth;
+          }
+          //get the last figure object
+          const index = graph.intensities.length - 1;
+          const lastIntensityObject = graph.intensities[index];
+
+          // if the new intensity is 0, dont draw a figure, just enter the new intensity
+          if (channels[i].intensity == 0) {
+            if (lastIntensityObject.intensity !== 0) {
+              graph.intensities.push({ intensity: 0 });
+            }
+            continue;
+          }
+
+          if (
+            lastIntensityObject.intensity == channels[i].intensity &&
+            lastIntensityObject.author == channels[i].author
+          ) {
+            //could use same figure, update width and the new endtime
+            lastIntensityObject.object!.width =
+              lastIntensityObject.object!.width + additionalWidth;
+
+            graph.intensities[index] = {
+              ...lastIntensityObject,
+              endTime: lastIntensityObject.endTime! + this.ticker!.elapsedMS,
+            };
+          } else {
+            //intensity or author changed, draw new rectangle
+            const xPosition =
+              ((this.width.original - 2 * this.paddingRL) * this.currentTime) /
+              this.maxDurationStore +
+              this.paddingRL;
+
+            const intensityObject = this.drawRectangle(
+              i,
+              xPosition,
+              additionalWidth,
+              channels[i].intensity,
+              graph.container as PIXI.Container,
+              channels[i].author
+            );
+
+            graph.intensities.push({
+              ...intensityObject,
+              startTime: this.currentTime,
+              endTime: this.currentTime + this.ticker!.elapsedMS,
+            });
+          }
+        }
+      }
+    },
+    drawCursor() {
+      //TODO Only show when recording or playing back
+      if (!this.cursor.hasDrawnCursor) {
+        //TODO update height when resizing
+        this.cursor.drawCursor(this.height.actual)
+      }
+      this.cursor.moveToPosition(this.currentTime * this.growRatio + this.paddingRL)
+      this.graphContainer?.addChild(this.cursor.getContainer())
+    },
     /**
      * method to draw a new rectangle
      * idGraph = number at which row to draw figure; start at 0
@@ -375,116 +654,17 @@ export default defineComponent({
      * method wich will called every frame, to draw and update figures
      */
     loop() {
+      console.log("loop")
       //calculate the additional width, which has to add for the time frame
-      const additionalWidth = this.growRatio * this.ticker!.elapsedMS;
-      const channels = this.store.state.tactonSettings.deviceChannel;
-      /**      console.log(
-        "startTime: " +
-          this.currentTime +
-          " additionalWidth: " +
-          additionalWidth
-      );
-       */
-
-      for (let i = 0; i < channels.length; i++) {
-        const graph = this.channelGraphs.find(
-          (graph) => graph.channelId == channels[i].channelId
-        );
-        if (graph == undefined) {
-          /**
-           * draw for every row a container,
-           * if there are no items, just enter 0 for the intensity as default
-           * the container is needed, to move the starting point later on, also if there are no figures
-           */
-          //if (channels[i].intensity == 0) continue;
-          //there is currently no rectangle
-          const container = new PIXI.Container();
-
-          let xPosition = this.width.original - this.paddingRL;
-          if (this.currentTime < this.maxDurationStore)
-            xPosition =
-              (xPosition * this.currentTime) / this.maxDurationStore +
-              this.paddingRL;
-
-          const intensityObject = this.drawRectangle(
-            i,
-            xPosition,
-            additionalWidth,
-            channels[i].intensity,
-            container,
-            channels[i].author
-          );
-          this.channelGraphs.push({
-            channelId: channels[i].channelId,
-            container: container,
-            intensities: [
-              {
-                ...intensityObject,
-                startTime: this.currentTime,
-                endTime: this.currentTime + this.ticker!.elapsedMS,
-              },
-            ],
-          });
-
-          this.graphContainer?.addChild(container);
-          ///this.ticker?.stop();
-        } else {
-          //push the container to left, to have place for new values
-          if (this.currentTime >= this.maxDurationStore) {
-            graph.container.x -= additionalWidth;
-          }
-          //get the last figure object
-          const index = graph.intensities.length - 1;
-          const lastIntensityObject = graph.intensities[index];
-
-          // if the new intensity is 0, dont draw a figure, just enter the new intensity
-          if (channels[i].intensity == 0) {
-            if (lastIntensityObject.intensity !== 0) {
-              graph.intensities.push({ intensity: 0 });
-            }
-            continue;
-          }
-
-          if (
-            lastIntensityObject.intensity == channels[i].intensity &&
-            lastIntensityObject.author == channels[i].author
-          ) {
-            //could use same figure, update width and the new endtime
-            lastIntensityObject.object!.width =
-              lastIntensityObject.object!.width + additionalWidth;
-
-            graph.intensities[index] = {
-              ...lastIntensityObject,
-              endTime: lastIntensityObject.endTime! + this.ticker!.elapsedMS,
-            };
-          } else {
-            //intensity or author changed, draw new rectangle
-            const xPosition =
-              ((this.width.original - 2 * this.paddingRL) * this.currentTime) /
-                this.maxDurationStore +
-              this.paddingRL;
-
-            const intensityObject = this.drawRectangle(
-              i,
-              xPosition,
-              additionalWidth,
-              channels[i].intensity,
-              graph.container as PIXI.Container,
-              channels[i].author
-            );
-
-            graph.intensities.push({
-              ...intensityObject,
-              startTime: this.currentTime,
-              endTime: this.currentTime + this.ticker!.elapsedMS,
-            });
-          }
-        }
+      const numOfInst = this.channelGraphs.reduce((acc, val) => acc + val.intensities.length, 0)
+      if (numOfInst == this.numberOfOutputs) {
+        this.currentTime = 0;
       }
-
-      //calculate the new time
+      const channels = this.store.state.tactonSettings.deviceChannel;
+      this.drawLiveGraph(channels)
+      this.drawCursor()
       this.currentTime += this.ticker!.elapsedMS;
-      //this.ticker!.stop();
+      // console.log(this.currentTime)
     },
   },
 });

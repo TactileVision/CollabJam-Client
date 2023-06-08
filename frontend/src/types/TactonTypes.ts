@@ -56,11 +56,17 @@ export interface InstructionWait {
 
 export interface InstructionSetParameter {
 	setParameter: {
-		channelId: number;
+		channelIds: number[];
 		intensity: number;
 	}
 }
+export const isInstructionWait = (instruction: TactonInstruction) => {
+	return 'wait' in instruction
+}
 
+export const isInstructionSetParameter = (instruction: TactonInstruction) => {
+	return 'setParameter' in instruction
+}
 export type TactonInstruction = InstructionSetParameter | InstructionWait;
 
 export interface InstructionServerPayload {

@@ -3,20 +3,15 @@ import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../store';
 import { User } from '../roomSettings/roomSettings';
 import { stat } from 'original-fs';
-import { InstructionServerPayload, TactonInstruction, Tacton } from '@/types/TactonTypes';
+import { InstructionServerPayload, TactonInstruction, Tacton, isInstructionSetParameter, isInstructionWait } from '@/types/TactonTypes';
+import { TactonMutations, TactonSettingsActionTypes } from '../tactonSettings/tactonSettings';
 /**
  * Types
  * 
  */
 
 
-export const isInstructionWait = (instruction: TactonInstruction) => {
-  return 'wait' in instruction
-}
 
-export const isInstructionSetParameter = (instruction: TactonInstruction) => {
-  return 'setParameter' in instruction
-}
 
 
 export const createTactonInstructionsFromPayload = (payload: InstructionServerPayload[]): TactonInstruction[] => {
@@ -125,7 +120,6 @@ export const actions: ActionTree<State, RootState> & Actions = {
     console.log(x)
     if (state.tactons.findIndex(t => t.uuid === uuid) != -1) {
       commit(TactonPlaybackMutations.SELECT_TACTON, uuid);
-      console.log("[TactonPlayback] Selected tacton")
     } else {
       console.log("[TactonPlayback] Can't select tacton, unknown uuid")
     }

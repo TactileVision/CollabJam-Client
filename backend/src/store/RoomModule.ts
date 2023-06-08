@@ -36,7 +36,7 @@ const createRoom = (room: Room): string => {
         name: room.name,
         description: room.description,
         mode: InteractionMode.Jamming,
-        maxDurationRecord: 5000,
+        maxDurationRecord: 20000,
         recordingNamePrefix: "tacton"
     });
 

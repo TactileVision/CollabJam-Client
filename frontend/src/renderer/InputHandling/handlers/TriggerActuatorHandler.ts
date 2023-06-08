@@ -39,7 +39,7 @@ const TriggerActuatorHandler = (): InputHandler => {
           }
         }
       }
-        return instructions
+      return instructions
     }
   }
 }

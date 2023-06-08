@@ -8,7 +8,7 @@ import { InstructionToClient } from '@/types/GeneralType';
  * Types
  * 
  */
-interface DeviceChannel {
+export interface DeviceChannel {
   channelId: number,
   intensity: number,
   author?: User,
@@ -19,6 +19,7 @@ interface DeviceChannel {
  */
 
 export type State = {
+  // deviceChannel: DeviceChannel[],
   deviceChannel: DeviceChannel[],
   insertValues: boolean,
   instructions: Instruction[]

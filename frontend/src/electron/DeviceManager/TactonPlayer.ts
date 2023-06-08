@@ -1,6 +1,6 @@
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
 import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
-import { isInstructionWait, isInstructionSetParameter } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
+import { isInstructionWait, isInstructionSetParameter } from "@/types/TactonTypes";
 import { store } from "@/renderer/store/store";
 import { InteractionMode } from "@/types/GeneralType";
 import { TactonInstruction, InstructionWait, InstructionSetParameter } from "@/types/TactonTypes";
@@ -30,20 +30,20 @@ export const executeInstruction = (tacton: TactonInstruction[], index: number) =
 	if (isInstructionWait(tacton[index])) {
 		const x = tacton[index] as InstructionWait
 		setTimeout(f, x.wait.miliseconds)
-	} 
-	else
-	if (isInstructionSetParameter(tacton[index])) {
-		const x = tacton[index] as InstructionSetParameter
-		const c: number[] = []
-		c.push(x.setParameter.channelId)
-
-		sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-			roomId: store.state.roomSettings.id,
-			instructions: [{ keyId: "REC", channels: c, intensity: x.setParameter.intensity }]
-		});
-		// sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {})
-		// console.log( store.state.roomSettings.id)
-
-		executeInstruction(tacton, index + 1)
 	}
+	else
+		if (isInstructionSetParameter(tacton[index])) {
+			const x = tacton[index] as InstructionSetParameter
+			const c: number[] = x.setParameter.channelIds
+			// c.push(x.setParameter.channelId)
+
+			sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
+				roomId: store.state.roomSettings.id,
+				instructions: [{ keyId: "REC", channels: c, intensity: x.setParameter.intensity }]
+			});
+			// sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {})
+			// console.log( store.state.roomSettings.id)
+
+			executeInstruction(tacton, index + 1)
+		}
 }

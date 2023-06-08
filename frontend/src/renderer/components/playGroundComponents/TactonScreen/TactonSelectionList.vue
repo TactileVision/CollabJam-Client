@@ -38,6 +38,10 @@
 	margin: 1em auto;
 }
 
+.tacton-list {
+	overflow: scroll;
+}
+
 .tacton-list>li {
 	/* margin: 1em 0; */
 	padding: 1em;
@@ -59,6 +63,7 @@ import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws
 import { InteractionMode } from "@/types/GeneralType";
 import { InstructionWait, Tacton } from "@/types/TactonTypes";
 import { Text } from "vue";
+import { TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 
 export default defineComponent({
 	name: "TactonSelectionList",
@@ -77,10 +82,10 @@ export default defineComponent({
 				//TODO Send 0 to all available channels
 				sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
 					roomId: this.store.state.roomSettings.id,
-					instructions : [
+					instructions: [
 						{
-							keyId : "",
-							channels: [0,1,2,3,4],
+							keyId: "",
+							channels: [0, 1, 2, 3, 4],
 							intensity: 0
 						}
 					]
@@ -103,6 +108,7 @@ export default defineComponent({
 		selectTacton(tacton: Tacton) {
 			console.log(tacton);
 			this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
+			// this.store.dispatch(TactonSettingsActionTypes.instantiateArray)
 		},
 		playRecordedTacton() {
 			if (this.store.state.tactonPlayback.currentTacton != null) {

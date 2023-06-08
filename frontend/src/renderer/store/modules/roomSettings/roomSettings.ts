@@ -54,7 +54,7 @@ export const state: State = {
   participants: [],
   user: { id: "", name: "", color: "" },
   // isRecording: false,
-  maxDuration: 5000,
+  maxDuration: 20000,
   mode: InteractionMode.Jamming,
   recordingNamePrefix: ""
 };
