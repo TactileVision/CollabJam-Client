@@ -1,10 +1,10 @@
-import { InputBinding, InputDeviceBindings } from '@/types/InputBindings';
+import { InputProfile } from '@/types/InputBindings';
 
 
-export const initSettings = {
+export const initSettings: CustomSettings = {
     userName: "",
     // TODO: Define defaults
-    deviceBindings: []
+    profiles: []
     // buttons: [{
     //     i: uuidv4(),
     //     channels: [0],
@@ -128,6 +128,6 @@ export const initSettings = {
 }
 
 export interface CustomSettings {
-    userName: string,
-    deviceBindings: InputDeviceBindings[]
+    userName: string;
+    profiles: InputProfile[];
 }

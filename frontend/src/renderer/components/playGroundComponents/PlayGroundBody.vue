@@ -10,16 +10,8 @@
       </v-col>
     </v-row>
 
-    <v-dialog
-      v-model="playGroundDialog"
-      max-width="50%"
-      class="tesing"
-      @click:outside="closeDialog"
-    >
-      <PlayGroundDialog
-        @closeDialog="closeDialog"
-        :keyButtonId="idOfEditableButton"
-      />
+    <v-dialog v-model="playGroundDialog" max-width="50%" class="tesing" @click:outside="closeDialog">
+      <PlayGroundDialog @closeDialog="closeDialog" :keyButtonId="idOfEditableButton" />
     </v-dialog>
   </v-container>
 </template>
@@ -37,8 +29,9 @@
   outline: none;
 }
 
-#tactonScreen{
-  border-right: 1px solid rgba(0, 0, 0, .2);;
+#tactonScreen {
+  border-right: 1px solid rgba(0, 0, 0, .2);
+  ;
 }
 </style>
 

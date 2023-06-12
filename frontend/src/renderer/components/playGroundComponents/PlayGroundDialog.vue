@@ -141,8 +141,9 @@ import { lightenDarkenColor, defaultColors } from "../../lib/colors";
 import { createInputDetection } from "@/renderer/InputDetection";
 import { InputEvent } from "@/renderer/InputDetection/types";
 import { UserInput, UserInputType, KeyInput } from "@/types/InputDetection";
-import { InputBinding, InputDevice, KeyboardDevice, isIntensityAction, isActuatorAction } from "@/types/InputBindings";
+import { InputBinding, isIntensityAction, isActuatorAction } from "@/types/InputBindings";
 import getInputName from "@/renderer/InputDetection/getInputName";
+import { StateProfile, state } from "@/renderer/store/modules/playGround/playGround";
 
 export default defineComponent({
   name: "PlayGroundDialog",
@@ -161,7 +162,7 @@ export default defineComponent({
       name: "",
       key: "",
       input: null as UserInput | null,
-      device: null as InputDevice | null,
+      profile: null as StateProfile | null,
       intensity: 1,
       colorButtons: defaultColors[1],
       channelActive: new Array(0).fill(false),
@@ -186,12 +187,14 @@ export default defineComponent({
     /**
     set channels active, if the area button get modified
     */
-    if (this.keyButtonId == undefined) return;
+    if (this.keyButtonId == undefined) {
+      this.profile = state.profiles[0];
+      return;
+    }
     const result = this.store.getters.getKeyButton(this.keyButtonId);
     if (result == undefined) return;
-
-    const { device, binding } = result;
-    this.device = device;
+    const { profile, binding } = result;
+    this.profile = profile;
 
     //insert values in dialog of found button
     if (binding.name !== undefined) this.name = binding.name;
@@ -246,21 +249,17 @@ export default defineComponent({
         key: e.key.toUpperCase(),
       }
 
-      const device: KeyboardDevice = { type: "keyboard" };
-
       this.input = keyInput;
-      this.device = device;
       this.onUserInput();
     },
     onDetectionInput(e: InputEvent) {
       this.input = e.input;
-      this.device = e.device;
       this.onUserInput()
     },
     onUserInput() {
       this.keyIsRequired = false;
 
-      if (this.input && this.device && this.store.getters.isKeyAlreadyTaken(this.keyButtonId, this.device, this.input)) {
+      if (this.input && this.profile && this.store.getters.isInputAlreadyTaken(this.keyButtonId, this.profile, this.input)) {
         this.keyIsTaken = true;
         return;
       }
@@ -271,16 +270,16 @@ export default defineComponent({
     },
     deleteButton() {
       if (this.keyButtonId == undefined) return;
-      if (!this.device) return;
+      if (!this.profile) return;
 
       this.store.commit(
         PlayGroundMutations.DELETE_ITEM_FROM_GRID,
-        { uid: this.keyButtonId, device: this.device }
+        { uid: this.keyButtonId, profileUid: this.profile.uid }
       );
       this.$emit("closeDialog");
     },
     modifyButton() {
-      if (!this.input || !this.device) {
+      if (!this.input || !this.profile) {
         this.keyIsRequired = true;
         return;
       }
@@ -304,13 +303,13 @@ export default defineComponent({
       }
 
       if (this.keyButtonId == undefined) {
-        this.store.dispatch(PlayGroundActionTypes.addButtonToGrid, { device: this.device, binding });
+        this.store.dispatch(PlayGroundActionTypes.addButtonToGrid, { profile: this.profile, binding });
         this.$emit("closeDialog");
       } else {
-        console.log("updating ", this.device, binding, this.keyButtonId);
+        console.log("updating ", this.profile, binding, this.keyButtonId);
         this.store.dispatch(PlayGroundActionTypes.updateKeyButton, {
           id: this.keyButtonId,
-          device: this.device,
+          profileUid: this.profile.uid,
           props: binding,
         });
         this.$emit("closeDialog");

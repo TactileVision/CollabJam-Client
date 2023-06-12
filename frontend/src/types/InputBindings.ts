@@ -28,21 +28,21 @@ export const isIntensityAction = (action: TactileAction): action is IntensityAct
 }
 
 export interface InputDevice {
-  type: string;
+  type: DeviceType;
 }
 
 export interface GamepadDevice extends InputDevice {
-  type: "gamepad";
+  type: DeviceType.StandardGamepad;
   name: string;
   index: number;
 }
 
 export interface KeyboardDevice extends InputDevice {
-  type: "keyboard";
+  type: DeviceType.Keyboard;
 }
 
 export const isGamepadDevice = (device: InputDevice): device is GamepadDevice => {
-  return device.type == "gamepad";
+  return device.type == DeviceType.StandardGamepad;
 }
 
 export const compareDevices = (a: InputDevice, b: InputDevice) => {
@@ -52,6 +52,18 @@ export const compareDevices = (a: InputDevice, b: InputDevice) => {
 
 export interface InputDeviceBindings {
   device: InputDevice;
+  bindings: InputBinding[];
+}
+
+export enum DeviceType {
+  Keyboard = "keyboard",
+  StandardGamepad = "standard_gamepad",
+}
+
+export interface InputProfile {
+  uid: string;
+  name: string;
+  deviceType: DeviceType;
   bindings: InputBinding[];
 }
 

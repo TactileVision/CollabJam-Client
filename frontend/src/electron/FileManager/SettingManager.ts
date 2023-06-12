@@ -18,7 +18,6 @@ class SettingManager {
         this.pathSettings = path.join(userDataPath, 'configCollaborativeTacton.json');
         this.customSettings = initSettings;
         this.sendSettings()
-
     }
 
     sendSettings() {
@@ -66,23 +65,19 @@ class SettingManager {
         this.writeFile();
     }
 
-    updateButton(device: InputDevice, binding: InputBinding) {
-        const deviceBindingsIndex = this.customSettings.deviceBindings.findIndex(deviceBinding => compareDevices(deviceBinding.device, device));
-        if (deviceBindingsIndex == -1) {
-            this.customSettings.deviceBindings.push({ device, bindings: [binding] });
-        } else {
-            const index = this.customSettings.deviceBindings[deviceBindingsIndex].bindings.findIndex(storedBinding => storedBinding.uid === binding.uid);
+    updateBinding(profileUid: string, binding: InputBinding) {
+        const profileIndex = this.customSettings.profiles.findIndex(profile => profile.uid === profileUid);
+        if (profileIndex !== -1) {
+            const index = this.customSettings.profiles[profileIndex].bindings.findIndex(storedBinding => storedBinding.uid === binding.uid);
             if(index == -1) {
-                this.customSettings.deviceBindings[deviceBindingsIndex].bindings.push(binding);
+                this.customSettings.profiles[profileIndex].bindings.push(binding);
             } else {
-                this.customSettings.deviceBindings[deviceBindingsIndex].bindings[index] = binding;
+                this.customSettings.profiles[profileIndex].bindings[index] = binding;
             }
         }
 
         this.writeFile();
     }
-
-
 };
 
 export default SettingManager

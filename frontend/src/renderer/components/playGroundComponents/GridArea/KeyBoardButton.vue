@@ -54,7 +54,7 @@ import { InputDevice, isActuatorAction, isIntensityAction } from "@/types/InputB
 import getInputName from "@/renderer/InputDetection/getInputName";
 import { lightenDarkenColor } from "../../../lib/colors";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/playGround/types";
-import { StateInputBinding } from "@/renderer/store/modules/playGround/playGround";
+import { StateInputBinding, StateProfile } from "@/renderer/store/modules/playGround/playGround";
 
 export default defineComponent({
   name: "KeyBoardButton",
@@ -69,8 +69,8 @@ export default defineComponent({
       type: Object as () => StateInputBinding,
       required: true,
     },
-    device: {
-      type: Object as () => InputDevice,
+    profile: {
+      type: Object as () => StateProfile,
       required: true,
     },
     isMoved: {
@@ -103,7 +103,7 @@ export default defineComponent({
       if (!this.store.state.playGround.inEditMode) {
         this.buttonPressed = false;
         this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
-          device: this.device,
+          profile: this.profile,
           input: this.binding.inputs[0]
         });
       }
@@ -125,7 +125,7 @@ export default defineComponent({
           //button clicked
           this.buttonPressed = true;
           this.store.dispatch(PlayGroundActionTypes.activateKey, {
-            device: this.device,
+            profile: this.profile,
             input: this.binding.inputs[0],
             value: 1,
             wasActive: false,
@@ -134,7 +134,7 @@ export default defineComponent({
           if (this.buttonPressed) {
             this.buttonPressed = false;
             this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
-              device: this.device,
+              profile: this.profile,
               input: this.binding.inputs[0],
             });
           }

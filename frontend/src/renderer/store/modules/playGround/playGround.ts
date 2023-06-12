@@ -6,7 +6,7 @@ import { sendSocketMessage } from '@/renderer/CommunicationManager/WebSocketMana
 import { WS_MSG_TYPE } from '@/renderer/CommunicationManager/WebSocketManager/ws_types';
 import { PlayGroundActionTypes, PlayGroundMutations } from './types';
 import { IPC_CHANNELS } from '@/electron/IPCMainManager/IPCChannels';
-import { GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, TactileAction, compareDevices } from '@/types/InputBindings';
+import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, InputProfile, TactileAction, compareDevices } from '@/types/InputBindings';
 import { GamepadAxisInput, GamepadButtonInput, UserInput, UserInputType, compareInputs } from '@/types/InputDetection';
 import { executeAllInputHandlers } from '@/renderer/InputHandling/InputHandlerManager';
 
@@ -23,93 +23,105 @@ export interface StateInputBinding extends InputBinding {
     activeTriggers: number;
 }
 
-export interface StateDeviceBindings extends InputDeviceBindings {
+export interface StateProfile extends InputProfile {
     bindings: StateInputBinding[];
 }
 
 export type State = {
     gridLayout: Layout
-    deviceBindings: StateDeviceBindings[],
+    profiles: StateProfile[],
+    // The value is the index into the profiles array.
+    selectedProfiles: { device: InputDevice, profileIndex: number }[]
     globalIntensity: number,
     inEditMode: boolean
 };
 
+const profile = {
+    uid: uuidv4(),
+    name: "Default",
+    deviceType: DeviceType.StandardGamepad,
+    bindings: [
+        {
+            inputs: [{ type: UserInputType.GamepadAxis, index: 0 } as GamepadAxisInput],
+            activeTriggers: 0,
+            uid: "UNIQUE",
+            position: { x: 5, y: 5, w: 1, h: 1 },
+            name: "dynamic",
+            color: "#ff0000",
+            actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 0 } as TactileAction]
+        },
+        {
+            inputs: [{ type: UserInputType.GamepadButton, index: 6 } as GamepadButtonInput],
+            activeTriggers: 0,
+            uid: "SET_INTENSITY",
+            position: { x: 4, y: 4, w: 1, h: 1 },
+            name: "set",
+            color: "#00ffff",
+            actions: [{ type: "set_intensity_action", name: "intensity_test" } as TactileAction]
+        },
+        {
+            inputs: [{ type: UserInputType.GamepadButton, index: 0 } as GamepadButtonInput],
+            activeTriggers: 0,
+            uid: "USE_INTENSITY",
+            position: { x: 3, y: 4, w: 1, h: 1 },
+            name: "get",
+            color: "#00ffff",
+            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 0 } as TactileAction]
+        },
+        {
+            inputs: [{ type: UserInputType.GamepadButton, index: 7 } as GamepadButtonInput],
+            activeTriggers: 0,
+            uid: "LOCATION",
+            position: { x: 7, y: 4, w: 1, h: 1 },
+            name: "set",
+            color: "#7CFC00",
+            actions: [
+                {
+                    type: "dynamic_actuator_action",
+                    name: "dynamic actuator",
+                    actuators: [
+                        {
+                            channels: [0, 4],
+                            minValue: 0,
+                            maxValue: 0.2
+                        },
+                        {
+                            channels: [1, 3],
+                            minValue: 0.2,
+                            maxValue: 0.4
+                        },
+                        {
+                            channels: [2],
+                            minValue: 0.4,
+                            maxValue: 0.6
+                        },
+                        {
+                            channels: [3, 1],
+                            minValue: 0.6,
+                            maxValue: 0.8
+                        },
+                        {
+                            channels: [4, 0],
+                            minValue: 0.8,
+                            maxValue: 1
+                        }
+                    ]
+                } as TactileAction
+            ]
+
+        }
+    ]
+}
+
 export const state: State = {
     gridLayout: { x: 11, y: 8 },
-    deviceBindings: [{
-        device: { type: "gamepad", name: "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)", index: 0 } as GamepadDevice,
-        bindings: [
-            {
-                inputs: [{ type: UserInputType.GamepadAxis, index: 0 } as GamepadAxisInput],
-                activeTriggers: 0,
-                uid: "UNIQUE",
-                position: { x: 5, y: 5, w: 1, h: 1 },
-                name: "dynamic",
-                color: "#ff0000",
-                actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 0 } as TactileAction]
-            },
-            {
-                inputs: [{ type: UserInputType.GamepadButton, index: 6 } as GamepadButtonInput],
-                activeTriggers: 0,
-                uid: "SET_INTENSITY",
-                position: { x: 4, y: 4, w: 1, h: 1 },
-                name: "set",
-                color: "#00ffff",
-                actions: [{ type: "set_intensity_action", name: "intensity_test" } as TactileAction]
-            },
-            {
-                inputs: [{ type: UserInputType.GamepadButton, index: 0 } as GamepadButtonInput],
-                activeTriggers: 0,
-                uid: "USE_INTENSITY",
-                position: { x: 3, y: 4, w: 1, h: 1 },
-                name: "get",
-                color: "#00ffff",
-                actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 0 } as TactileAction]
-            },
-            {
-                inputs: [{ type: UserInputType.GamepadButton, index: 7 } as GamepadButtonInput],
-                activeTriggers: 0,
-                uid: "LOCATION",
-                position: { x: 7, y: 4, w: 1, h: 1 },
-                name: "set",
-                color: "#7CFC00",
-                actions: [
-                    {
-                        type: "dynamic_actuator_action",
-                        name: "dynamic actuator",
-                        actuators: [
-                            {
-                                channels: [0, 4],
-                                minValue: 0,
-                                maxValue: 0.2
-                            },
-                            {
-                                channels: [1, 3],
-                                minValue: 0.2,
-                                maxValue: 0.4
-                            },
-                            {
-                                channels: [2],
-                                minValue: 0.4,
-                                maxValue: 0.6
-                            },
-                            {
-                                channels: [3, 1],
-                                minValue: 0.6,
-                                maxValue: 0.8
-                            },
-                            {
-                                channels: [4, 0],
-                                minValue: 0.8,
-                                maxValue: 1
-                            }
-                        ]
-                    } as TactileAction
-                ]
-
-            }
-        ]
-    }],
+    profiles: [profile],
+    selectedProfiles: [
+        {
+            device: { type: DeviceType.StandardGamepad, name: "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)", index: 0 } as GamepadDevice,
+            profileIndex: 0
+        }
+    ],
     globalIntensity: 1,
     inEditMode: false,
 };
@@ -118,39 +130,42 @@ export const state: State = {
  *
  */
 export type Mutations<S = State> = {
-    [PlayGroundMutations.BULK_GRID_UPDATE](state: S, deviceBindings: InputDeviceBindings[]): void
-    [PlayGroundMutations.UPDATE_GRID_ITEM](state: S, payload: { index: number, deviceIndex: number, binding: StateInputBinding }): void
-    [PlayGroundMutations.ADD_ITEM_TO_GRID](state: S, payload: { device: InputDevice, binding: StateInputBinding }): void
-    [PlayGroundMutations.DELETE_ITEM_FROM_GRID](state: S, payload: { device: InputDevice, uid: string }): void
+    [PlayGroundMutations.BULK_GRID_UPDATE](state: S, deviceBindings: InputProfile[]): void
+    [PlayGroundMutations.UPDATE_GRID_ITEM](state: S, payload: { index: number, profile: StateProfile, binding: StateInputBinding }): void
+    [PlayGroundMutations.ADD_ITEM_TO_GRID](state: S, payload: { profile: StateProfile, binding: StateInputBinding }): void
+    [PlayGroundMutations.DELETE_ITEM_FROM_GRID](state: S, payload: { profileUid: string, uid: string }): void
     [PlayGroundMutations.UPDATE_GLOBAL_INTENSITY](state: S, intensity: number): void
     [PlayGroundMutations.UPDATE_EDIT_MDOE](state: S, edditModeOn: boolean): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
-    [PlayGroundMutations.BULK_GRID_UPDATE](state, deviceBindings) {
-        state.deviceBindings = deviceBindings.map(deviceBinding => (
+    [PlayGroundMutations.BULK_GRID_UPDATE](state, profiles) {
+        state.profiles = profiles.map(profile => (
             {
-                device: deviceBinding.device,
-                bindings: deviceBinding.bindings.map(binding => ({ ...binding, activeTriggers: 0 }))
+                ...profile,
+                bindings: profile.bindings.map(binding => ({ ...binding, activeTriggers: 0 }))
             }
         ))
     },
     [PlayGroundMutations.UPDATE_GRID_ITEM](state, payload) {
-        state.deviceBindings[payload.deviceIndex].bindings[payload.index] = payload.binding;
+        const profileIndex = state.profiles.findIndex(profile => profile.uid === payload.profile.uid);
+        if(profileIndex === -1)
+            return;
+        state.profiles[profileIndex].bindings[payload.index] = payload.binding;
     },
     [PlayGroundMutations.ADD_ITEM_TO_GRID](state, payload) {
-        const index = state.deviceBindings.findIndex(deviceBinding => compareDevices(deviceBinding.device, payload.device));
+        const index = state.profiles.findIndex(profile => profile.uid === payload.profile.uid);
         if(index == -1) {
-            state.deviceBindings.push({ device: payload.device, bindings: [payload.binding] })
+            state.profiles.push({ ...payload.profile, bindings: [payload.binding] })
         } else {
-            state.deviceBindings[index].bindings.push(payload.binding);
+            state.profiles[index].bindings.push(payload.binding);
         }
     },
     [PlayGroundMutations.DELETE_ITEM_FROM_GRID](state, payload) {
-        const deviceIndex = state.deviceBindings.findIndex(deviceBinding => compareDevices(deviceBinding.device, payload.device));
-        const index = state.deviceBindings[deviceIndex].bindings.findIndex(binding => binding.uid === payload.uid);
+        const deviceIndex = state.profiles.findIndex(profile => profile.uid === payload.profileUid);
+        const index = state.profiles[deviceIndex].bindings.findIndex(binding => binding.uid === payload.uid);
         if (index != -1)
-            state.deviceBindings[deviceIndex].bindings.splice(index, 1);
+            state.profiles[deviceIndex].bindings.splice(index, 1);
     },
     [PlayGroundMutations.UPDATE_GLOBAL_INTENSITY](state, intensity) {
         state.globalIntensity = intensity;
@@ -175,19 +190,19 @@ type AugmentedActionContext = {
 export interface Actions {
     [PlayGroundActionTypes.activateKey](
         { commit }: AugmentedActionContext,
-        payload: { device: InputDevice, input: UserInput, value: number, wasActive: boolean }, // Obsolete in here but left as an example
+        payload: { profile: StateProfile, input: UserInput, value: number, wasActive: boolean }, // Obsolete in here but left as an example
     ): void;
     [PlayGroundActionTypes.deactivateKey](
         { commit }: AugmentedActionContext,
-        payload: { device: InputDevice, input: UserInput }, // Obsolete in here but left as an example
+        payload: { profile: StateProfile, input: UserInput }, // Obsolete in here but left as an example
     ): void;
     [PlayGroundActionTypes.addButtonToGrid](
         { commit }: AugmentedActionContext,
-        payload: { binding: Omit<InputBinding, "uid" | "position">, device: InputDevice }, // Obsolete in here but left as an example
+        payload: { binding: Omit<InputBinding, "uid" | "position">, profile: StateProfile }, // Obsolete in here but left as an example
     ): void;
     [PlayGroundActionTypes.updateKeyButton](
         { commit }: AugmentedActionContext,
-        payload: { id: string, device: InputDevice, props: any }, // Obsolete in here but left as an example
+        payload: { id: string, profileUid: string, props: any }, // Obsolete in here but left as an example
     ): void;
     [PlayGroundActionTypes.modifyGlobalIntensity](
         { commit }: AugmentedActionContext,
@@ -196,14 +211,11 @@ export interface Actions {
 }
 
 export const actions: ActionTree<State, RootState> & Actions = {
-    [PlayGroundActionTypes.activateKey]({ commit }, payload: { device: InputDevice, input: UserInput, value: number, wasActive: boolean }) {
-        const deviceIndex = state.deviceBindings.findIndex((deviceBinding) => compareDevices(deviceBinding.device, payload.device));
-        if (deviceIndex == -1) return;
-
-        const index = state.deviceBindings[deviceIndex].bindings.findIndex(binding => compareInputs(binding.inputs[0], payload.input));
+    [PlayGroundActionTypes.activateKey]({ commit }, payload: { profile: StateProfile, input: UserInput, value: number, wasActive: boolean }) {
+        const index = payload.profile.bindings.findIndex(binding => compareInputs(binding.inputs[0], payload.input));
         if(index == -1) return;
 
-        const binding = state.deviceBindings[deviceIndex].bindings[index];
+        const binding = payload.profile.bindings[index];
 
         const store = useStore();
         const newBinding = { ...binding, activeTriggers: binding.activeTriggers + 1 };
@@ -223,16 +235,13 @@ export const actions: ActionTree<State, RootState> & Actions = {
         }
 
         if(!payload.wasActive)
-            commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, deviceIndex, binding: newBinding });
+            commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: payload.profile, binding: newBinding });
     },
-    [PlayGroundActionTypes.deactivateKey]({ commit }, payload: { device: InputDevice, input: UserInput }) {
-        const deviceIndex = state.deviceBindings.findIndex((deviceBinding) => compareDevices(deviceBinding.device, payload.device));
-        if (deviceIndex == -1) return;
-
-        const index = state.deviceBindings[deviceIndex].bindings.findIndex(binding => compareInputs(binding.inputs[0], payload.input));
+    [PlayGroundActionTypes.deactivateKey]({ commit }, payload: { profile: StateProfile, input: UserInput }) {
+        const index = payload.profile.bindings.findIndex(binding => compareInputs(binding.inputs[0], payload.input));
         if(index == -1) return;
 
-        const binding = state.deviceBindings[deviceIndex].bindings[index];
+        const binding = payload.profile.bindings[index];
 
         const store = useStore();
         const newBinding = { ...binding, activeTriggers: binding.activeTriggers - 1 };
@@ -245,14 +254,14 @@ export const actions: ActionTree<State, RootState> & Actions = {
             });
         }
 
-        commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, deviceIndex, binding: newBinding });
+        commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: payload.profile, binding: newBinding });
     },
-    [PlayGroundActionTypes.addButtonToGrid]({ commit }, payload: { binding: Omit<InputBinding, "uid" | "position">, device: InputDevice }) {
+    [PlayGroundActionTypes.addButtonToGrid]({ commit }, payload: { binding: Omit<InputBinding, "uid" | "position">, profile: StateProfile }) {
         const uid = uuidv4();
         /**function to find free Space at start,
          * if there is no space set it x:0,y:0
          * */
-        const usedPositions = state.deviceBindings.flatMap(deviceBinding => deviceBinding.bindings).map(binding => binding.position);
+        const usedPositions = state.profiles.flatMap(profile => profile.bindings).map(binding => binding.position);
         let space = { x: 0, y: 0 };
         loop1: for (let posY = 0; posY < state.gridLayout.y; posY++) {
             for (let posX = 0; posX < state.gridLayout.x; posX++) {
@@ -271,29 +280,30 @@ export const actions: ActionTree<State, RootState> & Actions = {
         }
         const inputBinding = { uid, position: { h: 1, w: 1, ...space }, ...payload.binding }
         //save updated keyBoard inside of config
+        // get profile by device -> add profile uid to ipc call
         window.api.send(
             IPC_CHANNELS.main.saveKeyBoardButton,
-            { device: { ...payload.device }, binding: inputBinding },
+            { profileUid: payload.profile.uid, binding: inputBinding },
         );
         //save it in store
-        commit(PlayGroundMutations.ADD_ITEM_TO_GRID, { device: payload.device, binding: { activeTriggers: 0, ...inputBinding } });
+        commit(PlayGroundMutations.ADD_ITEM_TO_GRID, { profile: payload.profile, binding: { activeTriggers: 0, ...inputBinding } });
     },
-    [PlayGroundActionTypes.updateKeyButton]({ commit }, payload: { id: string, device: InputDevice, props: any }) {
-        const deviceIndex = state.deviceBindings.findIndex((deviceBinding) => compareDevices(deviceBinding.device, payload.device));
-        if (deviceIndex == -1) return;
+    [PlayGroundActionTypes.updateKeyButton]({ commit }, payload: { id: string, profileUid: string, props: any }) {
+        const profileIndex = state.profiles.findIndex(profile => profile.uid === payload.profileUid);
+        if (profileIndex == -1) return;
 
-        const index = state.deviceBindings[deviceIndex].bindings.findIndex(binding => binding.uid === payload.id);
+        const index = state.profiles[profileIndex].bindings.findIndex(binding => binding.uid === payload.id);
         if(index == -1) return;
 
-        const { activeTriggers, ...oldBinding } = state.deviceBindings[deviceIndex].bindings[index];
+        const { activeTriggers, ...oldBinding } = state.profiles[profileIndex].bindings[index];
         const binding = { ...oldBinding, ...payload.props };
 
         //save updated keyBoard inside of config
         window.api.send(
             IPC_CHANNELS.main.saveKeyBoardButton,
-            { device: { ...payload.device }, binding },
+            { profileUid: payload.profileUid, binding },
         );
-        commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, deviceIndex, binding: { activeTriggers, ...binding} });
+        commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: state.profiles[profileIndex], binding: { activeTriggers, ...binding} });
     },
     [PlayGroundActionTypes.modifyGlobalIntensity]({ commit }, intensity: number) {
         console.log("intensity " + intensity);
@@ -305,8 +315,8 @@ export const actions: ActionTree<State, RootState> & Actions = {
             intensity: number
         }[] = []
 
-        state.deviceBindings.forEach(deviceBinding => {
-            deviceBinding.bindings.forEach(item => {
+        state.profiles.forEach(profile => {
+            profile.bindings.forEach(item => {
                 if (item.activeTriggers > 0) {
                     instructionList.push(
                         ...executeAllInputHandlers({ binding: item, value: 1, wasActive: false, globalIntensity: intensity })
@@ -330,40 +340,41 @@ export const actions: ActionTree<State, RootState> & Actions = {
  * Getters
  */
 export type Getters = {
-    getKeyButton(state: State): (id: string) => { device: InputDevice, binding: StateInputBinding } | undefined,
+    getKeyButton(state: State): (id: string) => { binding: StateInputBinding, profile: StateProfile } | undefined,
+    getProfileByDevice(state: State): (device: InputDevice) => StateProfile | undefined,
     isActiveKey(state: State): (id: string) => boolean,
-    isKeyAlreadyTaken(state: State): (originalId: string | undefined, device: InputDevice, input: UserInput) => boolean,
+    isInputAlreadyTaken(state: State): (originalId: string | undefined, profile: StateProfile, input: UserInput) => boolean,
 }
 
 export const getters: GetterTree<State, RootState> & Getters = {
     getKeyButton: (state) => (id) => {
-        for(const deviceBinding of state.deviceBindings) {
-            for(const binding of deviceBinding.bindings) {
+        for(const profile of state.profiles) {
+            for(const binding of profile.bindings) {
                 if(binding.uid === id)
-                    return { device: deviceBinding.device, binding };
+                    return { binding, profile };
             }
         }
     },
+    getProfileByDevice: (state) => (device) => {
+        const selection = state.selectedProfiles.find(({ device: profileDevice }) => compareDevices(profileDevice, device));
+        if(!selection) return undefined;
+
+        return state.profiles[selection.profileIndex];
+    },
     isActiveKey: (state) => (id) => {
-        const binding = state.deviceBindings.flatMap(deviceBinding => deviceBinding.bindings).find(binding => binding.uid === id);
+        const binding = state.profiles.flatMap(profile => profile.bindings).find(binding => binding.uid === id);
         if (!binding)
             return false;
 
         return binding.activeTriggers > 0;
     },
-    isKeyAlreadyTaken: (state) => (originalId, device, input) => {
-        const deviceIndex = state.deviceBindings.findIndex((deviceBinding) => compareDevices(deviceBinding.device, device));
-        if (deviceIndex == -1) return false;
-
-        const index = state.deviceBindings[deviceIndex].bindings.findIndex(binding => compareInputs(binding.inputs[0], input));
-        if(index == -1) return false;
-
-        if (index == -1)
-            return false;
+    isInputAlreadyTaken: (state) => (originalId, profile, input) => {
+        const binding = profile.bindings.find(binding => compareInputs(binding.inputs[0], input));
+        if(!binding) return false;
 
         if (originalId !== undefined) {
             //find the same button as updated, its valid to change
-            return state.deviceBindings[deviceIndex].bindings[index].uid !== originalId
+            return binding.uid !== originalId
         }
 
         return true;

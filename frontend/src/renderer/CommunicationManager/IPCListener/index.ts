@@ -25,7 +25,7 @@ export const initIPCListener = () => {
   });
 
   window.api.receive(IPC_CHANNELS.renderer.initConfig, (setting: CustomSettings) => {
-    store.commit(PlayGroundMutations.BULK_GRID_UPDATE, setting.deviceBindings);
+    store.commit(PlayGroundMutations.BULK_GRID_UPDATE, setting.profiles);
     store.commit(RoomMutations.UPDATE_USER_NAME, setting.userName);
   });
 

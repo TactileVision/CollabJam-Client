@@ -1,17 +1,9 @@
 import { UserInput } from "@/types/InputDetection";
 import { InputAdapter, InputAdapterConfig } from "./InputAdapter";
-
-export enum InputDeviceType {
-  Keyboard = "keyboard",
-  Gamepad = "gamepad",
-}
-
-export interface InputDevice {
-  type: InputDeviceType;
-}
+import { DeviceType, InputDevice } from "@/types/InputBindings";
 
 export interface GamepadDevice extends InputDevice {
-  type: InputDeviceType.Gamepad;
+  type: DeviceType.StandardGamepad;
   name: string;
   index: number;
 }
