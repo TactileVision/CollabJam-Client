@@ -19,13 +19,17 @@ export interface ActuatorAction extends TactileAction {
   channel: number;
 }
 
-export const isActuatorAction = (action: TactileAction): action is ActuatorAction => {
+export const isActuatorAction = (
+  action: TactileAction
+): action is ActuatorAction => {
   return (action as ActuatorAction).channel !== undefined;
-}
+};
 
-export const isIntensityAction = (action: TactileAction): action is IntensityAction => {
+export const isIntensityAction = (
+  action: TactileAction
+): action is IntensityAction => {
   return (action as IntensityAction).intensity !== undefined;
-}
+};
 
 export interface InputDevice {
   type: DeviceType;
@@ -41,14 +45,22 @@ export interface KeyboardDevice extends InputDevice {
   type: DeviceType.Keyboard;
 }
 
-export const isGamepadDevice = (device: InputDevice): device is GamepadDevice => {
-  return device.type == DeviceType.StandardGamepad;
-}
+export const isKeyboardDevice = (
+  device: InputDevice
+): device is KeyboardDevice => {
+  return device.type === DeviceType.Keyboard;
+};
+
+export const isGamepadDevice = (
+  device: InputDevice
+): device is GamepadDevice => {
+  return device.type === DeviceType.StandardGamepad;
+};
 
 export const compareDevices = (a: InputDevice, b: InputDevice) => {
-  if(isGamepadDevice(a) && isGamepadDevice(b)) return a.name === b.name;
+  if (isGamepadDevice(a) && isGamepadDevice(b)) return a.name === b.name;
   return a.type === b.type;
-}
+};
 
 export interface InputDeviceBindings {
   device: InputDevice;

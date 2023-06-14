@@ -6,6 +6,8 @@ import router from "./renderer/router";
 import { useStore } from "./renderer/store/store";
 import { initWebsocket } from "./renderer/CommunicationManager/WebSocketManager";
 import { initIPCListener } from "./renderer/CommunicationManager/IPCListener";
+import { registerInputAdapter } from "./renderer/InputDetection/InputAdapter/InputAdapterRegistry";
+import GamepadAdapter from "./renderer/InputDetection/InputAdapter/GamepadAdapter";
 import { registerInputHandler } from "./renderer/InputHandling/InputHandlerManager";
 import VariableIntensityHandler from "./renderer/InputHandling/handlers/VariableIntensityHandler";
 import TriggerActuatorHandler from "./renderer/InputHandling/handlers/TriggerActuatorHandler";
@@ -14,6 +16,8 @@ import DynamicActuatorHandler from "./renderer/InputHandling/handlers/DynamicAct
 
 loadFonts()
 const store = useStore();
+
+registerInputAdapter(GamepadAdapter);
 
 registerInputHandler(VariableIntensityHandler());
 registerInputHandler(TriggerActuatorHandler());

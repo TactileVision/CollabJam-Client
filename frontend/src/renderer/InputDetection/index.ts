@@ -1,27 +1,52 @@
-import { InputDevice } from "@/types/InputBindings";
-import { createGamepadAdapter } from "./InputAdapter/GamepadAdapter";
 import { InputDetection, InputDetectionConfig } from "./types";
+import {
+  InputAdapter,
+  getInputAdapters,
+} from "./InputAdapter/InputAdapterRegistry";
+import { DeviceType, InputDevice } from "@/types/InputBindings";
 
-export const createInputDetection = (config: Partial<InputDetectionConfig> & Pick<InputDetectionConfig, "onInput">): InputDetection => {
-  const configWithDefaults: InputDetectionConfig = { ...defaultConfig(), ...config };
+const defaultConfig: Omit<InputDetectionConfig, "onInput"> = Object.freeze({
+  adapters: getInputAdapters(),
+  axesThreshold: 0.2,
+  buttonThreshold: 0.2,
+  throttleTimeout: 100,
+});
 
-  const { buttonThreshold, axesThreshold, throttleTimeout, onInput } = configWithDefaults
-  const adapters = configWithDefaults.adapters.map(adapterFn => adapterFn({ buttonThreshold, axesThreshold, throttleTimeout, onInput }));
+export const createInputDetection = (
+  config: Partial<InputDetectionConfig> & Pick<InputDetectionConfig, "onInput">
+): InputDetection => {
+  const configWithDefaults: InputDetectionConfig = {
+    ...defaultConfig,
+    ...config,
+  };
+
+  const { buttonThreshold, axesThreshold, throttleTimeout, onInput } =
+    configWithDefaults;
+  const adapters = configWithDefaults.adapters.map((adapter) =>
+    adapter.createDetection({
+      buttonThreshold,
+      axesThreshold,
+      throttleTimeout,
+      onInput,
+    })
+  );
 
   return Object.freeze({
     config: configWithDefaults,
     start: () => {
-      adapters.forEach(adapter => adapter.startDetection());
+      adapters.forEach((adapter) => adapter.startDetection());
     },
     stop: () => {
-      adapters.forEach(adapter => adapter.stopDetection());
-    }
-  })
-}
+      adapters.forEach((adapter) => adapter.stopDetection());
+    },
+  });
+};
 
-const defaultConfig = (): Omit<InputDetectionConfig, "onInput"> =>  Object.freeze({
-  adapters: [createGamepadAdapter],
-  axesThreshold: 0.2,
-  buttonThreshold: 0.2,
-  throttleTimeout: 100
-})
+export const getAllDevices = (
+  adapters: InputAdapter[] | undefined = undefined
+): InputDevice[] => {
+  const adaptersWithDefaults = adapters || defaultConfig.adapters;
+  return adaptersWithDefaults
+    .flatMap((adapter) => adapter.getDevices())
+    .concat({ type: DeviceType.Keyboard });
+};

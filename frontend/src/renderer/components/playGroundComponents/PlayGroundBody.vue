@@ -5,8 +5,11 @@
         <TactonScreen :isMounted="isMounted" />
       </v-col>
       <v-col>
-        <GridHeader @openDialog="startDialog" />
-        <GridArea @editButton="startDialog" />
+        <!-- <GridHeader @openDialog="startDialog" />
+        <GridArea @editButton="startDialog" /> -->
+        <div v-for="device in devices" :key="getDeviceKey(device)">
+          {{ getDeviceName(device) }}
+        </div>
       </v-col>
     </v-row>
 
@@ -45,12 +48,15 @@ import { GeneralMutations } from "../../store/modules/generalSettings/generalSet
 import { RouterNames } from "@/types/Routernames";
 import { useStore } from "../../store/store";
 import { PlayGroundMutations } from "../../store/modules/playGround/types";
+import { getAllDevices } from "@/renderer/InputDetection";
+import { InputDevice, isGamepadDevice, isKeyboardDevice } from "@/types/InputBindings";
+import getDeviceName from "@/renderer/InputDetection/getDeviceName";
 
 export default defineComponent({
   name: "PlayGroundBody",
   components: {
-    GridHeader,
-    GridArea,
+    // GridHeader,
+    // GridArea,
     TactonScreen,
     PlayGroundDialog,
   },
@@ -68,6 +74,11 @@ export default defineComponent({
     this.$nextTick(() => container.$el.focus());
     this.isMounted = true;
     this.store.commit(PlayGroundMutations.UPDATE_EDIT_MDOE, false);
+  },
+  computed: {
+    devices(): InputDevice[] {
+      return getAllDevices();
+    }
   },
   methods: {
     closeDialog() {
@@ -89,6 +100,13 @@ export default defineComponent({
       this.idOfEditableButton = id;
       this.playGroundDialog = true;
     },
+    getDeviceName(device: InputDevice) {
+      return getDeviceName(device);
+    },
+    getDeviceKey(device: InputDevice) {
+      if(isKeyboardDevice(device)) return "keyboard"
+      else if(isGamepadDevice(device)) return `gamepad-${device.name}`
+    }
   },
 });
 </script>
