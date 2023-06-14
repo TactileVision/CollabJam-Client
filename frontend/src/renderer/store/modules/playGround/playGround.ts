@@ -44,7 +44,7 @@ const profile = {
             inputs: [{ type: UserInputType.GamepadAxis, index: 0 } as GamepadAxisInput],
             activeTriggers: 0,
             uid: "UNIQUE",
-            position: { x: 5, y: 5, w: 1, h: 1 },
+            position: { x: 5, y: 3, w: 1, h: 1 },
             name: "dynamic",
             color: "#ff0000",
             actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 0 } as TactileAction]
@@ -53,7 +53,7 @@ const profile = {
             inputs: [{ type: UserInputType.GamepadButton, index: 6 } as GamepadButtonInput],
             activeTriggers: 0,
             uid: "SET_INTENSITY",
-            position: { x: 4, y: 4, w: 1, h: 1 },
+            position: { x: 1, y: 1, w: 1, h: 1 },
             name: "set",
             color: "#00ffff",
             actions: [{ type: "set_intensity_action", name: "intensity_test" } as TactileAction]
@@ -62,10 +62,37 @@ const profile = {
             inputs: [{ type: UserInputType.GamepadButton, index: 0 } as GamepadButtonInput],
             activeTriggers: 0,
             uid: "USE_INTENSITY",
-            position: { x: 3, y: 4, w: 1, h: 1 },
+            position: { x: 1, y: 2, w: 1, h: 1 },
             name: "get",
             color: "#00ffff",
             actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 1 } as TactileAction]
+        },
+        {
+            inputs: [{ type: UserInputType.GamepadButton, index: 1 } as GamepadButtonInput],
+            activeTriggers: 0,
+            uid: "USE_INTENSITY2",
+            position: { x: 2, y: 1, w: 1, h: 1 },
+            name: "get",
+            color: "#00ffff",
+            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 2 } as TactileAction]
+        },
+        {
+            inputs: [{ type: UserInputType.GamepadButton, index: 2 } as GamepadButtonInput],
+            activeTriggers: 0,
+            uid: "USE_INTENSITY3",
+            position: { x: 1, y: 0, w: 1, h: 1 },
+            name: "get",
+            color: "#00ffff",
+            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 3 } as TactileAction]
+        },
+        {
+            inputs: [{ type: UserInputType.GamepadButton, index: 3 } as GamepadButtonInput],
+            activeTriggers: 0,
+            uid: "USE_INTENSITY4",
+            position: { x: 0, y: 1, w: 1, h: 1 },
+            name: "get",
+            color: "#00ffff",
+            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 4 } as TactileAction]
         },
         {
             inputs: [{ type: UserInputType.GamepadButton, index: 7 } as GamepadButtonInput],
@@ -118,7 +145,7 @@ const keyboardProfile = {
     bindings: [
         {
             inputs: [{ type: UserInputType.Key, index: 0, key: 'S' } as KeyInput],
-            
+
             activeTriggers: 0,
             uid: "UNIQUE",
             position: { x: 5, y: 5, w: 1, h: 1 },
@@ -134,6 +161,10 @@ export const state: State = {
     selectedProfiles: [
         {
             device: { type: DeviceType.StandardGamepad, name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)", index: 0 } as GamepadDevice,
+            profileIndex: 0
+        },
+        {
+            device: { type: DeviceType.StandardGamepad, name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)", index: 1 } as GamepadDevice,
             profileIndex: 0
         },
         {
