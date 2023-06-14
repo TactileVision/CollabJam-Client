@@ -7,7 +7,7 @@ import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { TactonPlaybackActionTypes, createTacton, createTactonInstructionsFromPayload } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
-import { Tacton } from "@/types/TactonTypes";
+import { Tacton, getDuration } from "@/types/TactonTypes";
 import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index"
 import { InteractionMode } from "@/types/GeneralType";
 
@@ -67,8 +67,9 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 //TODO Start periodic sending of input data
                 if (store.state.roomSettings.id != undefined) {
 
+                    //MARK: Start the debouncing of inputs
                     setInterval(() => {
-                        bufferedSending(store.state.roomSettings.id || "", store.state.tactonSettings.instructions)
+                        bufferedSending(store.state.roomSettings.id || "", store.state.tactonSettings.debounceInstructionsBuffer)
                         store.dispatch(TactonSettingsActionTypes.clearDebounceBuffer)
                     }, 20)
                 }
@@ -117,7 +118,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
         * get called if one user controll his vibrotactile device
         * IPC_CHANNELS.main.executeTask --> only called if you want to feel the vibration
         * * recieve {
-            *    channels: DeviceChannel[] ==> all instructions in custom format
+            *    channels: OutputChannelState[] ==> all instructions in custom format
             *   } as payload
         */
         case WS_MSG_TYPE.SEND_INSTRUCTION_CLI: {
@@ -140,10 +141,23 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
         case WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI: {
             store.commit(RoomMutations.UPDATE_RECORD_MODE, msg.payload)
             //TODO Change tacton state based on received update!
-            if (msg.payload == 2) {
-                store.commit(TactonMutations.UPDATE_INSERT_VALUES, true);
-            } else {
-                store.commit(TactonMutations.UPDATE_INSERT_VALUES, false);
+            const rm = msg.payload as InteractionMode
+            switch (rm) {
+                case InteractionMode.Jamming:
+                    console.log("Jamming")
+                    store.commit(TactonMutations.TRACK_STATE_CHANGES, false);
+                    break;
+                case InteractionMode.Recording:
+                    console.log("Recording")
+                    store.commit(TactonMutations.TRACK_STATE_CHANGES, true);
+                    break;
+                case InteractionMode.Playback:
+                    console.log("Playback")
+                    store.commit(TactonMutations.TRACK_STATE_CHANGES, false);
+                    break;
+
+                default:
+                    break;
             }
             break;
         }
@@ -172,10 +186,11 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 store.dispatch(GeneralSettingsActionTypes.tactonLengthChanged);
             } else {
                 const t: Tacton = msg.payload as Tacton
-                // const t = createTacton()
-                // t.instructions = createTactonInstructionsFromPayload(msg.payload)
-                store.dispatch(TactonPlaybackActionTypes.addTacton, t)
-                store.dispatch(TactonPlaybackActionTypes.selectTacton, t.uuid)
+                //Check tacton validity
+                if (getDuration(t) > 0) {
+                    store.dispatch(TactonPlaybackActionTypes.addTacton, t)
+                    store.dispatch(TactonPlaybackActionTypes.selectTacton, t.uuid)
+                }
             }
             break;
         }

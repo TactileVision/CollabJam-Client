@@ -47,11 +47,13 @@ export const createTacton = () => {
 export type State = {
   tactons: Tacton[]
   currentTacton: Tacton | null
+  playbackTime: number
 };
 
 export const state: State = {
   tactons: [],
-  currentTacton: null
+  currentTacton: null,
+  playbackTime: 0
 };
 
 /**
@@ -61,13 +63,15 @@ export const state: State = {
 export enum TactonPlaybackMutations {
   ADD_TACTON = "ADD_TACTON",
   DESELECT_TACTON = "DELETE_TACTON",
-  SELECT_TACTON = "SELECT_TACTON"
+  SELECT_TACTON = "SELECT_TACTON",
+  UPDATE_TIME = "UPDATE_TIME",
 }
 
 export type Mutations<S = State> = {
   [TactonPlaybackMutations.ADD_TACTON](state: S, tacton: Tacton): void
   [TactonPlaybackMutations.DESELECT_TACTON](state: S): void
   [TactonPlaybackMutations.SELECT_TACTON](state: S, uuid: string): void
+  [TactonPlaybackMutations.UPDATE_TIME](state: S, newTime: number): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -82,6 +86,9 @@ export const mutations: MutationTree<State> & Mutations = {
   [TactonPlaybackMutations.SELECT_TACTON](state, uuid) {
     const t = state.tactons.find(t => t.uuid === uuid)
     t == undefined ? state.currentTacton = null : state.currentTacton = t
+  },
+  [TactonPlaybackMutations.UPDATE_TIME](state, newTime) {
+    state.playbackTime = newTime
   }
 };
 
@@ -92,7 +99,8 @@ export const mutations: MutationTree<State> & Mutations = {
 export enum TactonPlaybackActionTypes {
 
   selectTacton = 'selectTacton',
-  addTacton = 'addTacton'
+  addTacton = 'addTacton',
+  updateTime = 'updateTime'
 
 }
 
@@ -111,6 +119,10 @@ export interface Actions {
   [TactonPlaybackActionTypes.addTacton](
     { commit }: AugmentedActionContext,
     payload: Tacton
+  ): void;
+  [TactonPlaybackActionTypes.updateTime](
+    { commit }: AugmentedActionContext,
+    payload: number
   ): void;
 }
 
@@ -132,6 +144,10 @@ export const actions: ActionTree<State, RootState> & Actions = {
     } else {
       console.log("[TactonPlayback] Can't add tacton, uuid already stored")
     }
+  },
+
+  [TactonPlaybackActionTypes.updateTime]({ commit }, newTime: number) {
+    commit(TactonPlaybackMutations.UPDATE_TIME, newTime)
   }
 };
 

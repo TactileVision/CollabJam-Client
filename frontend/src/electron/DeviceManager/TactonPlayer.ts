@@ -4,18 +4,32 @@ import { isInstructionWait, isInstructionSetParameter } from "@/types/TactonType
 import { store } from "@/renderer/store/store";
 import { InteractionMode } from "@/types/GeneralType";
 import { TactonInstruction, InstructionWait, InstructionSetParameter } from "@/types/TactonTypes";
+import { useStore } from "@/renderer/store/store";
+import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
+
+
+const updateTimeInterval = 10
+// Store current playback time in the client store to move the cursor when playing back and stop playback after 20s
+let cursorTimer: NodeJS.Timeout | null = null
 
 //TODO Define a type that will allow to differentiate between wait and execute instructions
 export const playbackRecordedTacton = (tacton: TactonInstruction[]) => {
 	executeInstruction(tacton, 0)
-
-
+	cursorTimer = setInterval(() => {
+		const s = useStore()
+		s.dispatch(TactonPlaybackActionTypes.updateTime, s.state.tactonPlayback.playbackTime + updateTimeInterval)
+	}, updateTimeInterval)
 }
 
 export const executeInstruction = (tacton: TactonInstruction[], index: number) => {
 
 	if (index == tacton.length) {
 		console.log("[TactonPlayer] Done")
+		if (cursorTimer != null) {
+			clearInterval(cursorTimer as NodeJS.Timeout)
+		}
+		const s = useStore()
+		s.dispatch(TactonPlaybackActionTypes.updateTime, 0)
 		sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
 			roomId: store.state.roomSettings.id,
 			newMode: InteractionMode.Jamming

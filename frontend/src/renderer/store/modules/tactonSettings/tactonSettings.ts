@@ -8,7 +8,7 @@ import { InstructionToClient } from '@/types/GeneralType';
  * Types
  * 
  */
-export interface DeviceChannel {
+export interface OutputChannelState {
   channelId: number,
   intensity: number,
   author?: User,
@@ -18,17 +18,17 @@ export interface DeviceChannel {
  * 
  */
 
+
 export type State = {
-  // deviceChannel: DeviceChannel[],
-  deviceChannel: DeviceChannel[],
-  insertValues: boolean,
-  instructions: Instruction[]
+  outputChannelState: OutputChannelState[],
+  trackStateChanges: boolean,
+  debounceInstructionsBuffer: Instruction[]
 };
 
 export const state: State = {
-  deviceChannel: [],
-  insertValues: false,
-  instructions: []
+  outputChannelState: [],
+  trackStateChanges: false,
+  debounceInstructionsBuffer: []
 };
 /**
  * mutations
@@ -37,34 +37,34 @@ export const state: State = {
 export enum TactonMutations {
   UDPATE_CHANNELS = "UDPATE_CHANNELS",
   UPDATE_SPECIFIC_CHANNEL = "UPDATE_SPECIFIC_CHANNEL",
-  UPDATE_INSERT_VALUES = "UPDATE_INSERT_VALUES",
+  TRACK_STATE_CHANGES = "TRACK_STATE_CHANGES",
   APPEND_DEBOUNCE_BUFFER = "APPEND_DEBOUNCE_BUFFER",
   SET_DEBOUNCE_BUFFER = "SET_DEBOUNCE_BUFFER"
 }
 
 export type Mutations<S = State> = {
-  [TactonMutations.UDPATE_CHANNELS](state: S, channels: DeviceChannel[]): void
-  [TactonMutations.UPDATE_SPECIFIC_CHANNEL](state: S, payload: { index: number, channel: DeviceChannel }): void
-  [TactonMutations.UPDATE_INSERT_VALUES](state: S, insertFirtsValue: boolean): void
+  [TactonMutations.UDPATE_CHANNELS](state: S, channels: OutputChannelState[]): void
+  [TactonMutations.UPDATE_SPECIFIC_CHANNEL](state: S, payload: { index: number, channel: OutputChannelState }): void
+  [TactonMutations.TRACK_STATE_CHANGES](state: S, trackStateChanges: boolean): void
   [TactonMutations.APPEND_DEBOUNCE_BUFFER](state: S, newInstructions: Instruction[]): void
   [TactonMutations.SET_DEBOUNCE_BUFFER](state: S, newDebounceBuffer: Instruction[]): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
   [TactonMutations.UDPATE_CHANNELS](state, channels) {
-    state.deviceChannel = channels;
+    state.outputChannelState = channels;
   },
   [TactonMutations.UPDATE_SPECIFIC_CHANNEL](state, payload) {
-    state.deviceChannel[payload.index] = payload.channel;
+    state.outputChannelState[payload.index] = payload.channel;
   },
-  [TactonMutations.UPDATE_INSERT_VALUES](state, insertFirtsValue) {
-    state.insertValues = insertFirtsValue;
+  [TactonMutations.TRACK_STATE_CHANGES](state, trackStateChanges) {
+    state.trackStateChanges = trackStateChanges;
   },
   [TactonMutations.APPEND_DEBOUNCE_BUFFER](state, newInstructions) {
-    newInstructions.forEach(n => { state.instructions.push(n) })
+    newInstructions.forEach(n => { state.debounceInstructionsBuffer.push(n) })
   },
   [TactonMutations.SET_DEBOUNCE_BUFFER](state, newDebounceBuffer) {
-    state.instructions = newDebounceBuffer
+    state.debounceInstructionsBuffer = newDebounceBuffer
   },
 };
 
@@ -109,20 +109,20 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
     const numberOfOutputs = store.getters.getNumberOfOutputs;
     //console.log("instantiate channels: " + numberOfOutputs)
-    const deviceChannelArray: DeviceChannel[] = [];
+    const outputChannelStateArray: OutputChannelState[] = [];
     for (let i = 0; i < numberOfOutputs; i++) {
-      deviceChannelArray.push({ channelId: i, intensity: 0 })
+      outputChannelStateArray.push({ channelId: i, intensity: 0 })
     }
-    commit(TactonMutations.UDPATE_CHANNELS, deviceChannelArray);
+    commit(TactonMutations.UDPATE_CHANNELS, outputChannelStateArray);
   },
   [TactonSettingsActionTypes.modifySpecificChannel]({ commit }, channels: InstructionToClient[]) {
-    //console.log("action " + state.deviceChannel)
+    //console.log("action " + state.outputChannelState)
     // Iterate through all channels
     const uniqueChannels = [...new Set(channels.map(item => item.channelIds).flat())]; // [ 'A', 'B']
     //Get last item with containing channel;
     uniqueChannels.forEach(c => {
-      const index = state.deviceChannel.findIndex(channelDevice => channelDevice.channelId == c);
-      commit(TactonMutations.UPDATE_INSERT_VALUES, true);
+      const index = state.outputChannelState.findIndex(channelDevice => channelDevice.channelId == c);
+      commit(TactonMutations.TRACK_STATE_CHANGES, true);
 
       channels.filter(i => { return i.channelIds.includes(c) == true }).forEach(ch => {
         //TODO Only add the last of the array?
@@ -131,8 +131,8 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
     })
   },
-  [TactonSettingsActionTypes.addInstructionsToDebounceBuffer]({ commit }, instructions: Instruction[]) {
-    commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructions)
+  [TactonSettingsActionTypes.addInstructionsToDebounceBuffer]({ commit }, debounceInstructionsBuffer: Instruction[]) {
+    commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, debounceInstructionsBuffer)
 
   },
   [TactonSettingsActionTypes.clearDebounceBuffer]({ commit }) {
@@ -149,12 +149,12 @@ export type Getters = {
 
 export const getters: GetterTree<State, RootState> & Getters = {
   getIntensityOfChannel: (state) => (id) => {
-    const index = state.deviceChannel.findIndex(
+    const index = state.outputChannelState.findIndex(
       (channel) => channel.channelId === id
     );
     if (index == -1)
       return 0;
 
-    return state.deviceChannel[index].intensity;
+    return state.outputChannelState[index].intensity;
   },
 };

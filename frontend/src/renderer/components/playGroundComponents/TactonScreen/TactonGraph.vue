@@ -7,10 +7,10 @@ import * as PIXI from "pixi.js";
 import { PRECISION } from "@pixi/constants";
 import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/renderer/store/store";
-import { TactonSettingsActionTypes, DeviceChannel } from "@/renderer/store/modules/tactonSettings/tactonSettings";
+import { TactonSettingsActionTypes, OutputChannelState } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { User } from "@/renderer/store/modules/roomSettings/roomSettings";
 import { InteractionMode } from "@/types/GeneralType";
-import { Tacton, TactonInstruction, isInstructionSetParameter, InstructionSetParameter, InstructionWait } from "@/types/TactonTypes";
+import { Tacton, TactonInstruction, isInstructionSetParameter, InstructionSetParameter, InstructionWait, getDuration } from "@/types/TactonTypes";
 import { isInstructionWait } from "@/types/TactonTypes";
 
 interface IntensityObject {
@@ -33,9 +33,11 @@ class Cursor {
   container: PIXI.Container = new PIXI.Container()
   position = 0
   hasDrawnCursor = false
+  color: number
 
-  constructor() {
+  constructor(color: number) {
     this.container.addChild(this.graphic)
+    this.color = color
   }
 
   getContainer(): PIXI.Container {
@@ -43,7 +45,7 @@ class Cursor {
   }
 
   drawCursor(height: number) {
-    this.graphic.beginFill(0xec660c);
+    this.graphic.beginFill(this.color);
     this.graphic.drawRect(0, 0, 2, height);
     this.hasDrawnCursor = true
   }
@@ -80,7 +82,8 @@ export default defineComponent({
       growRatio: 0,
       currentTime: 0,
       dropdownDisabled: false,
-      cursor: new Cursor()
+      cursor: new Cursor(0xec660c),
+      endOfTactonIndicator: new Cursor(0x83be63)
     };
   },
   computed: {
@@ -88,7 +91,7 @@ export default defineComponent({
       return this.store.state.roomSettings.maxDuration;
     },
     newStoreItem(): boolean {
-      return this.store.state.tactonSettings.insertValues;
+      return this.store.state.tactonSettings.trackStateChanges;
     },
     interactionMode(): InteractionMode {
       return this.store.state.roomSettings.mode
@@ -99,6 +102,9 @@ export default defineComponent({
     numberOfOutputs(): number {
       return this.store.getters.getNumberOfOutputs;
     },
+    playbackTime(): number {
+      return this.store.state.tactonPlayback.playbackTime
+    }
   },
   watch: {
     //start to drawing if all components are mounted
@@ -114,27 +120,19 @@ export default defineComponent({
     },
     //update store from server, response retrieved
     interactionMode(mode) {
-      console.log(`Record mode ${mode}`)
-      console.log("foo")
       if (mode == InteractionMode.Recording) {
-        console.log("InteractionMode.Recording")
+        //Coming into recording mode
+        this.store.dispatch(TactonSettingsActionTypes.instantiateArray)
         this.clearGraph()
-
+        this.ticker?.start();
         console.log(this.ticker)
       } else {
-
-        console.log("stopped recording")
         this.ticker?.stop();
         this.ticker?.remove(this.loop);
-      }
-    },
-    //start the drawing of figures, if there are the first user input
-    newStoreItem() {
-      console.log("newStoreItem");
-      if (this.newStoreItem == true) {
-        if (this.store.state.roomSettings.mode == InteractionMode.Recording)
-          console.log("recording");
-        this.ticker?.start();
+
+        if (mode == InteractionMode.Jamming) {
+          this.cursor.moveToPosition(0)
+        }
       }
     },
     tacton(tacton) {
@@ -144,8 +142,14 @@ export default defineComponent({
         const t = tacton as Tacton
         this.clearGraph()
         this.drawStoredGraph(t.instructions)
+        this.endOfTactonIndicator.moveToPosition(getDuration(tacton) * this.growRatio + this.paddingRL)
+        this.endOfTactonIndicator.drawCursor(this.height.actual)
+        this.graphContainer?.addChild(this.endOfTactonIndicator.getContainer())
       }
 
+    },
+    playbackTime(time) {
+      this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
     }
   },
   mounted() {
@@ -310,7 +314,7 @@ export default defineComponent({
      * method to resize the figures, if the max duration is changed
      */
     resizeRectangles() {
-      const channels = this.store.state.tactonSettings.deviceChannel;
+      const channels = this.store.state.tactonSettings.outputChannelState;
       for (let i = 0; i < channels.length; i++) {
         const graph = this.channelGraphs.find(
           (graph) => graph.channelId == channels[i].channelId
@@ -361,6 +365,7 @@ export default defineComponent({
       this.channelGraphs.forEach((graph) => {
         graph.container.removeChildren();
       });
+      this.graphContainer?.removeChild(this.endOfTactonIndicator.getContainer())
       this.channelGraphs = [];
       if (this.ticker !== null && this.ticker.count > 0) {
         console.log('stopped ticker')
@@ -370,14 +375,6 @@ export default defineComponent({
       this.ticker?.add(this.loop);
     },
     drawStoredGraph(instructions: TactonInstruction[]) {
-
-      /* 
-      ["Nano","Volvo","BMW","Nano","VW","Nano"].reduce(function(a, e, i) {
-    if (e === 'Nano')
-        a.push(i);
-    return a;
-}, []);   // [0, 3, 5]
- */
       console.log(instructions)
 
       const getMillisForIndex = (instructions: TactonInstruction[], from: number, to: number): number => {
@@ -472,10 +469,8 @@ export default defineComponent({
             });
           }
 
-          // console.log(timeBetweenInstructionsMs)
-          // console.log(accumulatedMs)
           accumulatedMs += timeBetweenInstructionsMs
-          console.log(`Starts at ${channelBeginningMs}ms, curently ${timeBetweenInstructionsMs} ending at ${accumulatedMs}`)
+          // console.log(`Starts at ${channelBeginningMs}ms, curently ${timeBetweenInstructionsMs} ending at ${accumulatedMs}`)
 
         }
 
@@ -485,11 +480,11 @@ export default defineComponent({
         filter the instructions for each channel, also get the index
         calaculate the time between each change by summing up all wait instructions between the first and the second instruction
       */
-     console.log(instructions)
+      console.log(instructions)
 
 
     },
-    drawLiveGraph(channels: DeviceChannel[]) {
+    drawLiveGraph(channels: OutputChannelState[]) {
       const additionalWidth = this.growRatio * this.ticker!.elapsedMS;
       for (let i = 0; i < channels.length; i++) {
         const graph = this.channelGraphs.find(
@@ -596,7 +591,9 @@ export default defineComponent({
       }
       this.cursor.moveToPosition(this.currentTime * this.growRatio + this.paddingRL)
       this.graphContainer?.addChild(this.cursor.getContainer())
+
     },
+
     /**
      * method to draw a new rectangle
      * idGraph = number at which row to draw figure; start at 0
@@ -660,7 +657,7 @@ export default defineComponent({
       if (numOfInst == this.numberOfOutputs) {
         this.currentTime = 0;
       }
-      const channels = this.store.state.tactonSettings.deviceChannel;
+      const channels = this.store.state.tactonSettings.outputChannelState;
       this.drawLiveGraph(channels)
       this.drawCursor()
       this.currentTime += this.ticker!.elapsedMS;

@@ -12,7 +12,7 @@
 	</div>
 
 	<div class="controls">
-		<v-btn :disabled="store.state.roomSettings.mode == 2 || store.state.tactonPlayback.currentTacton == null"
+		<v-btn :disabled="store.state.roomSettings.mode != 1 || store.state.tactonPlayback.currentTacton == null"
 			@click="playRecordedTacton" color="primary"> Play </v-btn>
 		<v-btn :disabled="store.state.roomSettings.mode == 3" @click="changeRecordMode" color="primary">
 			{{ store.state.roomSettings.mode == 2 ? "Stop" : "Record" }}
@@ -21,14 +21,14 @@
 
 	<ul class="tacton-list">
 		<li v-for="(tacton, index) of store.state.tactonPlayback.tactons" @click="selectTacton(tacton)" :key=tacton.uuid
-			:class="{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid }">
+			:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid },{ 'disabled' : store.state.roomSettings.mode != 1}]">
 			{{ tacton.name }}
 			<span>({{ calculateDuration(tacton) / 1000 }} s)</span>
 		</li>
 	</ul>
 </template>
 
-<style>
+<style lang="scss">
 .selected {
 	font-weight: bold;
 	background-color: gainsboro
@@ -40,15 +40,22 @@
 
 .tacton-list {
 	overflow: scroll;
+
+	>li {
+		padding: 1em;
+
+		border-bottom: 1px solid grey;
+
+		&.disabled {
+			pointer-events: none;
+			opacity: 0.6;
+		}
+	}
+
+
 }
 
-.tacton-list>li {
-	/* margin: 1em 0; */
-	padding: 1em;
-	border-bottom: 1px solid grey
-}
-
-#prefix-input {
+.tacton-list #prefix-input {
 	border-style: solid;
 }
 </style>
@@ -79,7 +86,6 @@ export default defineComponent({
 	methods: {
 		changeRecordMode() {
 			if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
-				//TODO Send 0 to all available channels
 				sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
 					roomId: this.store.state.roomSettings.id,
 					instructions: [

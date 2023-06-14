@@ -73,8 +73,10 @@ export interface InstructionServerPayload {
 	Instruction: TactonInstruction
 }
 
-// export type Tacton = {
-// 	uuid: string
-// 	recordDate: Date
-// 	instructions: TactonInstruction[]
-// }
+export function getDuration(tacton: Tacton): number {
+	let d = 0
+	tacton.instructions.filter(i => { return isInstructionWait(i) == true }).forEach(i => {
+		d += (i as InstructionWait).wait.miliseconds
+	})
+	return d
+}

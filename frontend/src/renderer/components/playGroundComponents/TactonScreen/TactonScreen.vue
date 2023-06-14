@@ -1,26 +1,46 @@
 <template>
   <v-row no-gutters align="center" style="justify-content: space-evenly; margin: 5px 0" id="tactonHeader">
-    <v-col style="max-width: fit-content">
-
-      <!-- <v-btn @click="changeRecordMode" color="primary">
-        {{ store.state.roomSettings.isRecording ? "Stop" : "Record" }} 
-      </v-btn> -->
-    </v-col>
-    <!-- <v-col style="max-width: fit-content">
-      <v-row align="center">
-        Display:
-        <v-select class="durationBox" :items="items" v-model="duration"></v-select>
-      </v-row>
-    </v-col> -->
-    <v-col style="max-width: fit-content">
-
-    </v-col>
+    <!-- <v-col style="max-width: fit-content"> -->
+    <div class="mode-indicator" :class="[getModeString().toLowerCase()]"> <span>
+        {{ getModeString() }}
+      </span> </div>
+    <!-- </v-col> -->
   </v-row>
   <TactonGraph :isMounted="isMounted" />
   <!-- </v-col> -->
 </template>
 
 <style lang="scss">
+.mode-indicator {
+  display: block;
+  width: 100%;
+  user-select: none;
+  &.recording {
+    >span {
+      color: white;
+    }
+
+    background-color: red;
+  }
+
+  &.jamming {
+    background-color: green;
+  }
+
+  &.playback {
+    background-color: yellow;
+  }
+
+  >span {
+    display: block;
+    margin: auto;
+    padding: 1em;
+    text-align: center;
+    font-weight: bold;
+  }
+}
+
+
 .durationBox {
   padding-left: 10px;
   max-width: 100px;
@@ -62,6 +82,7 @@ import { useStore } from "@/renderer/store/store";
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
 import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
 import TactonGraph from "./TactonGraph.vue";
+import { InteractionMode } from "@/types/GeneralType";
 
 export default defineComponent({
   name: "TactonScreen",
@@ -74,7 +95,6 @@ export default defineComponent({
   data() {
     return {
       store: useStore(),
-      // items: ["5s", "10s", "15s", "60s"],
     };
   },
   computed: {
@@ -92,9 +112,24 @@ export default defineComponent({
         });
       },
     },
+    mode(): InteractionMode {
+      return this.store.state.roomSettings.mode
+    }
   },
   methods: {
+    getModeString() {
 
+      switch (this.mode) {
+        case InteractionMode.Jamming:
+          return "Jamming"
+        case InteractionMode.Recording:
+          return "Recording"
+        case InteractionMode.Playback:
+          return "Playback"
+        default:
+          return "Unkwown"
+      }
+    },
     saveTacton() {
       sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
         roomId: this.store.state.roomSettings.id,

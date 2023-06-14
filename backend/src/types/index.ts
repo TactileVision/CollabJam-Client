@@ -44,7 +44,7 @@ export interface Channel {
 // interface InstructionSetParameter {
 //     setParameter: any
 // }
-interface InstructionSetParameter {
+export interface InstructionSetParameter {
     setParameter: {
         channelIds: number[];
         intensity: number;
@@ -56,6 +56,12 @@ interface InstructionWait {
     }
 }
 
+export const isInstructionWait = (instruction: TactonInstruction) => {
+	return 'wait' in instruction
+}
+export const isInstructionSetParameter = (instruction: TactonInstruction) => {
+	return 'setParameter' in instruction
+}
 export type TactonInstruction = InstructionSetParameter | InstructionWait;
 
 // type Instructions = InstructionSetParameter | InstructionWait;
