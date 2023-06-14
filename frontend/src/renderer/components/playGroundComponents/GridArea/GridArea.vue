@@ -4,7 +4,7 @@
     :vertical-compact="false" :prevent-collision="true">
     <grid-item v-for="item in gridItems" :key="item.i" :static="false" :x="item.x" :y="item.y" :w="item.w" :h="item.h"
       :i="item.i" @moved="(i, x, y) => movedEvent(item.binding, item.device, x, y)" @move="moveEvent">
-      <KeyBoardButton :binding="item.binding" :device="item.device" :isMoved="isMoved" @updateisMoved="updateisMoved"
+      <KeyBoardButton :binding="item.binding" :profile="item.profile" :isMoved="isMoved" @updateisMoved="updateisMoved"
         @editButton="(id) => $emit('editButton', id)" />
     </grid-item>
   </grid-layout>
@@ -36,10 +36,10 @@ export default defineComponent({
   },
   computed: {
     gridItems() {
-      return this.store.state.playGround.deviceBindings.flatMap(deviceBinding => deviceBinding.bindings.map(binding => ({
+      return this.store.state.playGround.profiles.flatMap(profile => profile.bindings.map(binding => ({
         i: binding.uid,
         binding,
-        device: deviceBinding.device,
+        profile,
         ...binding.position
       })))
     }

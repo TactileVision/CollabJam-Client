@@ -152,7 +152,7 @@ import { PlayGroundActionTypes } from "./store/modules/playGround/types";
 import { createInputDetection } from "./InputDetection";
 import { InputEvent } from "./InputDetection/types";
 import { KeyInput, UserInputType } from "@/types/InputDetection";
-import { KeyboardDevice } from "@/types/InputBindings";
+import { DeviceType, KeyboardDevice } from "@/types/InputBindings";
 export default defineComponent({
   name: "App",
   data() {
@@ -188,29 +188,39 @@ export default defineComponent({
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
       const input: KeyInput = { type: UserInputType.Key, key: e.key.toUpperCase() };
-      const device: KeyboardDevice = { type: "keyboard" };
+      const device: KeyboardDevice = { type: DeviceType.Keyboard };
 
-      this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input, value: 1, wasActive: false });
+      const profile = this.store.getters.getProfileByDevice(device);
+      if (!profile) return;
+
+      this.store.dispatch(PlayGroundActionTypes.activateKey, { profile, input, value: 1, wasActive: false });
     },
     buttonUp(e: any) {
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
       const input: KeyInput = { type: UserInputType.Key, key: e.key.toUpperCase() };
-      const device: KeyboardDevice = { type: "keyboard" };
+      const device: KeyboardDevice = { type: DeviceType.Keyboard };
 
-      this.store.dispatch(PlayGroundActionTypes.deactivateKey, { device, input });
+      const profile = this.store.getters.getProfileByDevice(device);
+      if (!profile) return;
+
+      this.store.dispatch(PlayGroundActionTypes.deactivateKey, { profile, input });
     },
     onUserInput(e: InputEvent) {
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
 
-      const input = e.input;
-      const device = e.device;
+      const { input, device, value, wasActive } = e;
 
-      if (e.value === 0) {
-        this.store.dispatch(PlayGroundActionTypes.deactivateKey, { device, input });
+      const profile = this.store.getters.getProfileByDevice(device);
+      if (!profile) return;
+
+      if (value === 0) {
+        this.store.dispatch(PlayGroundActionTypes.deactivateKey, { profile, input });
       } else {
-        this.store.dispatch(PlayGroundActionTypes.activateKey, { device, input, value: e.value, wasActive: e.wasActive });
+        this.store.dispatch(PlayGroundActionTypes.activateKey, {
+          profile, input, value, wasActive
+        });
       }
     }
   },

@@ -1,6 +1,7 @@
-import { GamepadDevice, InputDeviceType } from "../types";
+import { GamepadDevice } from "../types";
 import { InputAdapter, InputAdapterConfig } from "../InputAdapter";
 import { GamepadAxisInput, GamepadButtonInput, UserInputType } from "@/types/InputDetection";
+import { DeviceType } from "@/types/InputBindings";
 
 export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter => {
   let isDetecting = false;
@@ -14,8 +15,9 @@ export const createGamepadAdapter = (config: InputAdapterConfig): InputAdapter =
   const scanGamepads = () => {
     for(const [gamepadIndex, gamepad] of [...navigator.getGamepads()].entries()) {
       if(!gamepad) continue;
+      if(gamepad.mapping != "standard") continue;
 
-      const device: GamepadDevice = { type: InputDeviceType.Gamepad, index: gamepadIndex, name: gamepad.id  }
+      const device: GamepadDevice = { type: DeviceType.StandardGamepad, index: gamepadIndex, name: gamepad.id  }
 
       activeButtons[gamepadIndex] ||= new Set
       activeAxes[gamepadIndex] ||= new Set

@@ -86,9 +86,8 @@ ipcMain.on(IPC_CHANNELS.main.saveUserName, (event, userName: string) => {
 });
 
 //save one updated keyboard buttton
-ipcMain.on(IPC_CHANNELS.main.saveKeyBoardButton, (event, payload: { device: InputDevice, binding: InputBinding }) => {
-    //console.log("saveKeyBoardButton");
-    _settingManager.updateButton(payload.device, payload.binding);
+ipcMain.on(IPC_CHANNELS.main.saveKeyBoardButton, (event, payload: { profileUid: string, binding: InputBinding }) => {
+    _settingManager.updateBinding(payload.profileUid, payload.binding);
 });
 
 //log informations
