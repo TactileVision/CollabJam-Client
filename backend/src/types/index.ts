@@ -4,7 +4,7 @@
 export interface User {
     id: string,
     name: string,
-    color:string
+    color: string
 }
 
 export interface RoomMetaData {
@@ -13,9 +13,9 @@ export interface RoomMetaData {
     description: string,
 }
 
-export interface Room extends RoomMetaData{
-    isRecording:boolean,
-    maxDurationRecord:number,
+export interface Room extends RoomMetaData {
+    isRecording: boolean,
+    maxDurationRecord: number,
 }
 
 export interface TactileTask {
@@ -44,7 +44,7 @@ interface InstructionSetParameter {
 
 interface InstructionWait {
     wait: {
-        miliseconds:number
+        miliseconds: number
     }
 }
 type Instructions = InstructionSetParameter | InstructionWait;
@@ -53,8 +53,14 @@ export type TactonInstruction = {
     Instruction: Instructions
 }
 
-export interface ClientInstrution{
-    channelId: string, 
-    intensity: number, 
-    author: User | undefined 
+export interface InstructionToClient {
+    channelIds: number[],
+    intensity: number,
+    author: User | undefined
 }
+
+export interface InstructionFromClient {
+    keyId: string;
+    channels: number[];
+    intensity: number;
+};

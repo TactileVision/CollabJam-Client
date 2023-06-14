@@ -2,13 +2,12 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../store';
 import { v4 as uuidv4 } from 'uuid';
-import { sendSocketMessage } from '@/renderer/CommunicationManager/WebSocketManager';
-import { WS_MSG_TYPE } from '@/renderer/CommunicationManager/WebSocketManager/ws_types';
 import { PlayGroundActionTypes, PlayGroundMutations } from './types';
 import { IPC_CHANNELS } from '@/electron/IPCMainManager/IPCChannels';
-import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, InputProfile, TactileAction, compareDevices } from '@/types/InputBindings';
-import { GamepadAxisInput, GamepadButtonInput, UserInput, UserInputType, compareInputs } from '@/types/InputDetection';
+import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, InputProfile, KeyboardDevice, TactileAction, compareDevices } from '@/types/InputBindings';
+import { GamepadAxisInput, GamepadButtonInput, KeyInput, UserInput, UserInputType, compareInputs } from '@/types/InputDetection';
 import { executeAllInputHandlers } from '@/renderer/InputHandling/InputHandlerManager';
+import { TactonMutations } from '../tactonSettings/tactonSettings';
 
 export interface Layout {
     x: number,
@@ -66,7 +65,7 @@ const profile = {
             position: { x: 3, y: 4, w: 1, h: 1 },
             name: "get",
             color: "#00ffff",
-            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 0 } as TactileAction]
+            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 1 } as TactileAction]
         },
         {
             inputs: [{ type: UserInputType.GamepadButton, index: 7 } as GamepadButtonInput],
@@ -112,14 +111,34 @@ const profile = {
         }
     ]
 }
-
+const keyboardProfile = {
+    uid: uuidv4(),
+    name: "Default",
+    deviceType: DeviceType.Keyboard,
+    bindings: [
+        {
+            inputs: [{ type: UserInputType.Key, index: 0, key: 'S' } as KeyInput],
+            
+            activeTriggers: 0,
+            uid: "UNIQUE",
+            position: { x: 5, y: 5, w: 1, h: 1 },
+            name: "dynamic",
+            color: "#ff0000",
+            actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 1 } as TactileAction]
+        }
+    ]
+}
 export const state: State = {
     gridLayout: { x: 11, y: 8 },
-    profiles: [profile],
+    profiles: [profile, keyboardProfile],
     selectedProfiles: [
         {
-            device: { type: DeviceType.StandardGamepad, name: "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)", index: 0 } as GamepadDevice,
+            device: { type: DeviceType.StandardGamepad, name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)", index: 0 } as GamepadDevice,
             profileIndex: 0
+        },
+        {
+            device: { type: DeviceType.Keyboard } as KeyboardDevice,
+            profileIndex: 1
         }
     ],
     globalIntensity: 1,
@@ -149,13 +168,13 @@ export const mutations: MutationTree<State> & Mutations = {
     },
     [PlayGroundMutations.UPDATE_GRID_ITEM](state, payload) {
         const profileIndex = state.profiles.findIndex(profile => profile.uid === payload.profile.uid);
-        if(profileIndex === -1)
+        if (profileIndex === -1)
             return;
         state.profiles[profileIndex].bindings[payload.index] = payload.binding;
     },
     [PlayGroundMutations.ADD_ITEM_TO_GRID](state, payload) {
         const index = state.profiles.findIndex(profile => profile.uid === payload.profile.uid);
-        if(index == -1) {
+        if (index == -1) {
             state.profiles.push({ ...payload.profile, bindings: [payload.binding] })
         } else {
             state.profiles[index].bindings.push(payload.binding);
@@ -213,7 +232,7 @@ export interface Actions {
 export const actions: ActionTree<State, RootState> & Actions = {
     [PlayGroundActionTypes.activateKey]({ commit }, payload: { profile: StateProfile, input: UserInput, value: number, wasActive: boolean }) {
         const index = payload.profile.bindings.findIndex(binding => compareInputs(binding.inputs[0], payload.input));
-        if(index == -1) return;
+        if (index == -1) return;
 
         const binding = payload.profile.bindings[index];
 
@@ -227,19 +246,16 @@ export const actions: ActionTree<State, RootState> & Actions = {
             globalIntensity: state.globalIntensity
         });
 
-        if(instructions.length > 0) {
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))
-            });
+        if (instructions.length > 0) {
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructions)
         }
 
-        if(!payload.wasActive)
+        if (!payload.wasActive)
             commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: payload.profile, binding: newBinding });
     },
     [PlayGroundActionTypes.deactivateKey]({ commit }, payload: { profile: StateProfile, input: UserInput }) {
         const index = payload.profile.bindings.findIndex(binding => compareInputs(binding.inputs[0], payload.input));
-        if(index == -1) return;
+        if (index == -1) return;
 
         const binding = payload.profile.bindings[index];
 
@@ -247,11 +263,8 @@ export const actions: ActionTree<State, RootState> & Actions = {
         const newBinding = { ...binding, activeTriggers: binding.activeTriggers - 1 };
 
         const instructions = executeAllInputHandlers({ binding: newBinding, value: 0, wasActive: true, globalIntensity: state.globalIntensity });
-        if(instructions.length > 0) {
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))
-            });
+        if (instructions.length > 0) {
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructions.map((instruction) => ({ keyId: binding.uid, ...instruction })))
         }
 
         commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: payload.profile, binding: newBinding });
@@ -293,7 +306,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
         if (profileIndex == -1) return;
 
         const index = state.profiles[profileIndex].bindings.findIndex(binding => binding.uid === payload.id);
-        if(index == -1) return;
+        if (index == -1) return;
 
         const { activeTriggers, ...oldBinding } = state.profiles[profileIndex].bindings[index];
         const binding = { ...oldBinding, ...payload.props };
@@ -303,7 +316,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
             IPC_CHANNELS.main.saveKeyBoardButton,
             { profileUid: payload.profileUid, binding },
         );
-        commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: state.profiles[profileIndex], binding: { activeTriggers, ...binding} });
+        commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: state.profiles[profileIndex], binding: { activeTriggers, ...binding } });
     },
     [PlayGroundActionTypes.modifyGlobalIntensity]({ commit }, intensity: number) {
         console.log("intensity " + intensity);
@@ -328,10 +341,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
         if (instructionList.length > 0) {
             const store = useStore();
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructionList
-            });
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructionList)
         }
     },
 };
@@ -348,16 +358,16 @@ export type Getters = {
 
 export const getters: GetterTree<State, RootState> & Getters = {
     getKeyButton: (state) => (id) => {
-        for(const profile of state.profiles) {
-            for(const binding of profile.bindings) {
-                if(binding.uid === id)
+        for (const profile of state.profiles) {
+            for (const binding of profile.bindings) {
+                if (binding.uid === id)
                     return { binding, profile };
             }
         }
     },
     getProfileByDevice: (state) => (device) => {
         const selection = state.selectedProfiles.find(({ device: profileDevice }) => compareDevices(profileDevice, device));
-        if(!selection) return undefined;
+        if (!selection) return undefined;
 
         return state.profiles[selection.profileIndex];
     },
@@ -370,7 +380,7 @@ export const getters: GetterTree<State, RootState> & Getters = {
     },
     isInputAlreadyTaken: (state) => (originalId, profile, input) => {
         const binding = profile.bindings.find(binding => compareInputs(binding.inputs[0], input));
-        if(!binding) return false;
+        if (!binding) return false;
 
         if (originalId !== undefined) {
             //find the same button as updated, its valid to change

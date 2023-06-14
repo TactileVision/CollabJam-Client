@@ -23,7 +23,7 @@ const isTriggerAction = (action: TactileAction): action is TriggerActuatorWithVa
 const VariableIntensityHandler = (): InputHandler => {
   const intensities: { [key: string]: number } = {};
   const lastIntensity: Map<string, Map<number, number>> = new Map<string, Map<number, number>>();
-  const sendThreshold = 1.0 / 32
+  const sendThreshold = 1.0 / 24
 
   const handler: InputHandler = {
     onInput: ({ binding, value, globalIntensity }) => {

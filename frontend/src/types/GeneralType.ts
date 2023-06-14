@@ -3,6 +3,8 @@
  * 
  */
 
+import { User } from "@/renderer/store/modules/roomSettings/roomSettings"
+
 export interface KeyBoardAttributes {
   channels: number[],
   color: string,
@@ -10,8 +12,8 @@ export interface KeyBoardAttributes {
   name?: string,
   key: string,
   isActive: {
-    mouse:boolean,
-    keyboard:boolean,
+    mouse: boolean,
+    keyboard: boolean,
   }
 }
 
@@ -23,6 +25,13 @@ export interface KeyBoardButton extends KeyBoardAttributes {
   w: number,
 }
 export interface TactileTask {
-  channelId: number,
+  channelIds: number[],
   intensity: number,
+}
+
+
+export interface InstructionToClient {
+  channelIds: number[],
+  intensity: number,
+  author: User | undefined
 }

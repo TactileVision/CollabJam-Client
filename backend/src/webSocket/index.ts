@@ -150,7 +150,7 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 * method to distribute one vibrotactile instruction
                 * recieve {
                 *      "roomId":string
-                *      instructions:[{ keyId: string, channels: string[], intensity: number }]
+                *      instructions:[InstructionFromClient]
                 *  } as payload
                 */
                 StorageManager.enterInstruction(msg.payload.roomId, client, msg.payload.instructions, msg.startTimeStamp)
