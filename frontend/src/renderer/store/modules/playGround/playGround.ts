@@ -2,13 +2,12 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../store';
 import { v4 as uuidv4 } from 'uuid';
-import { sendSocketMessage } from '@/renderer/CommunicationManager/WebSocketManager';
-import { WS_MSG_TYPE } from '@/renderer/CommunicationManager/WebSocketManager/ws_types';
 import { PlayGroundActionTypes, PlayGroundMutations } from './types';
 import { IPC_CHANNELS } from '@/electron/IPCMainManager/IPCChannels';
 import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, InputProfile, TactileAction, compareDevices } from '@/types/InputBindings';
 import { GamepadAxisInput, GamepadButtonInput, UserInput, UserInputType, compareInputs } from '@/types/InputDetection';
 import { executeAllInputHandlers } from '@/renderer/InputHandling/InputHandlerManager';
+import { TactonMutations } from '../tactonSettings/tactonSettings';
 
 export interface Layout {
     x: number,
@@ -227,11 +226,8 @@ export const actions: ActionTree<State, RootState> & Actions = {
             globalIntensity: state.globalIntensity
         });
 
-        if(instructions.length > 0) {
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))
-            });
+        if (instructions.length > 0) {
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructions)
         }
 
         if(!payload.wasActive)
@@ -247,11 +243,8 @@ export const actions: ActionTree<State, RootState> & Actions = {
         const newBinding = { ...binding, activeTriggers: binding.activeTriggers - 1 };
 
         const instructions = executeAllInputHandlers({ binding: newBinding, value: 0, wasActive: true, globalIntensity: state.globalIntensity });
-        if(instructions.length > 0) {
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructions.map((instruction) => ({ keyId: binding.uid, ...instruction }))
-            });
+        if (instructions.length > 0) {
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructions.map((instruction) => ({ keyId: binding.uid, ...instruction })))
         }
 
         commit(PlayGroundMutations.UPDATE_GRID_ITEM, { index, profile: payload.profile, binding: newBinding });
@@ -328,10 +321,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
         if (instructionList.length > 0) {
             const store = useStore();
-            sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-                roomId: store.state.roomSettings.id,
-                instructions: instructionList
-            });
+            store.commit(TactonMutations.APPEND_DEBOUNCE_BUFFER, instructionList)
         }
     },
 };
