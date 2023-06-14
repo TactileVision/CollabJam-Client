@@ -4,7 +4,7 @@ import { RootState, useStore } from '../../store';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayGroundActionTypes, PlayGroundMutations } from './types';
 import { IPC_CHANNELS } from '@/electron/IPCMainManager/IPCChannels';
-import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, InputProfile, KeyboardDevice, TactileAction, compareDevices } from '@/types/InputBindings';
+import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputProfile, KeyboardDevice, TactileAction, compareDevices } from '@/types/InputBindings';
 import { GamepadAxisInput, GamepadButtonInput, KeyInput, UserInput, UserInputType, compareInputs } from '@/types/InputDetection';
 import { executeAllInputHandlers } from '@/renderer/InputHandling/InputHandlerManager';
 import { TactonMutations } from '../tactonSettings/tactonSettings';
@@ -81,26 +81,31 @@ const profile = {
                     actuators: [
                         {
                             channels: [0, 4],
+                            intensity: 0.2,
                             minValue: 0,
                             maxValue: 0.2
                         },
                         {
                             channels: [1, 3],
+                            intensity: 0.4,
                             minValue: 0.2,
                             maxValue: 0.4
                         },
                         {
                             channels: [2],
+                            intensity: 0.4,
                             minValue: 0.4,
                             maxValue: 0.6
                         },
                         {
                             channels: [3, 1],
+                            intensity: 0.8,
                             minValue: 0.6,
                             maxValue: 0.8
                         },
                         {
                             channels: [4, 0],
+                            intensity: "intensity_test",
                             minValue: 0.8,
                             maxValue: 1
                         }
@@ -118,7 +123,7 @@ const keyboardProfile = {
     bindings: [
         {
             inputs: [{ type: UserInputType.Key, index: 0, key: 'S' } as KeyInput],
-            
+
             activeTriggers: 0,
             uid: "UNIQUE",
             position: { x: 5, y: 5, w: 1, h: 1 },
@@ -133,7 +138,7 @@ export const state: State = {
     profiles: [profile, keyboardProfile],
     selectedProfiles: [
         {
-            device: { type: DeviceType.StandardGamepad, name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)", index: 0 } as GamepadDevice,
+            device: { type: DeviceType.StandardGamepad, name: "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)", index: 0 } as GamepadDevice,
             profileIndex: 0
         },
         {

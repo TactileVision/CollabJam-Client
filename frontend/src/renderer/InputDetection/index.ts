@@ -1,4 +1,3 @@
-import { InputDevice } from "@/types/InputBindings";
 import { createGamepadAdapter } from "./InputAdapter/GamepadAdapter";
 import { InputDetection, InputDetectionConfig } from "./types";
 

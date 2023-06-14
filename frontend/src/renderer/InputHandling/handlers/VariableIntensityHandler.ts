@@ -1,5 +1,6 @@
 import { TactileAction } from "@/types/InputBindings";
 import { InputHandler, Instruction } from "../InputHandlerManager";
+import { setIntensity } from "../IntensityStore";
 
 interface SetIntensityAction extends TactileAction {
   type: "set_intensity_action";
@@ -31,6 +32,7 @@ const VariableIntensityHandler = (): InputHandler => {
 
       binding.actions.filter(isSetIntensityAction).forEach(action => {
         intensities[action.name] = Math.abs(value);
+        setIntensity(action.name, Math.abs(value));
       });
 
       const triggerActions = binding.actions.filter(isTriggerAction);
