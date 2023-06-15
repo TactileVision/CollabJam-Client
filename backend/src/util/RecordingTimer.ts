@@ -48,6 +48,7 @@ export class RecordingTimer {
         if (this.intervalHandle != null) {
             console.log("Stopping recording timer");
             clearInterval(this.intervalHandle);
+            this.intervalHandle = null
         }
     }
 
