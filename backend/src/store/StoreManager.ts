@@ -1,8 +1,11 @@
-import { InstructionFromClient, InstructionToClient,InteractionMode, Room, TactonRecording, User } from "../types";
+import { InstructionFromClient, InstructionToClient, InteractionMode, Room, TactonRecording, User } from "../types";
 import { WS_MSG_TYPE } from "../webSocket/ws_types";
 import RoomModule from "./RoomModule";
 import TactonModule from "./TactonModule";
 import UserModule from "./UserModule";
+import { RecordingTimer } from "../util/RecordingTimer";
+import { setName } from "../util/tacton";
+let recordingMetronome = new RecordingTimer(20, RoomModule.roomList, TactonModule.sessions, UserModule.wsRoomList)
 
 /**
  * Generel Module to handle different abstract operations with the 3 modules
@@ -13,6 +16,10 @@ const createSession = (room: Room): Room => {
     const roomId = RoomModule.createRoom(room);
     UserModule.createRoomRef(roomId)
     TactonModule.createRoomRef(roomId)
+
+    if (RoomModule.roomList.size == 1 && !recordingMetronome.isRunning()) {
+        recordingMetronome.start()
+    }
     return RoomModule.getRoomInfo(roomId)!;
 }
 
@@ -63,6 +70,10 @@ const removeUserOfSession = (roomId: string, user: User, startTimeStamp: number)
             RoomModule.removeRoom(roomId);
             UserModule.removeRoomRef(roomId)
             TactonModule.removeRoomRef(roomId)
+
+            if (RoomModule.roomList.size == 0 && recordingMetronome.isRunning()) {
+                recordingMetronome.stop()
+            }
         } else {
             const participants = UserModule.getParticipants(roomId);
             broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_USER_ACCOUNT_CLI, participants, startTimeStamp);
@@ -85,7 +96,7 @@ const changeRoomMode = (roomId: string, newMode: InteractionMode, startTimeStamp
 
         if (newMode == InteractionMode.Recording) { //Old Mode was Jamming
             // Start new Recording 
-            s.recording = new TactonRecording()
+            // s.recording = new TactonRecording()
             //TODO Broadcast information about recording to clients
 
 
@@ -94,16 +105,15 @@ const changeRoomMode = (roomId: string, newMode: InteractionMode, startTimeStamp
             //Old Mode was Jamming
         }
         else {
-            //Old Mode was reccording or playback, Store tacton in history and send item to client
-            //TODO Extract to own method
+            //Old Mode was recording or playback, Store tacton in history and send item to client
+            //TODO Only save well formed tactons and 
             if (rm == InteractionMode.Recording) {
-                const t = s.recording.getTacton()
-                const prefix = s.history.filter(e => {
-                    return e.name.startsWith(r.recordingNamePrefix + "-") == true
-                })
-                let len = prefix.length.toString()
-                t.name = r.recordingNamePrefix + "-" + len
-                s.history.push(t)
+                const isValidRecording = s.finishRecording()
+                if (isValidRecording) {
+                    const t = s.history[s.history.length - 1]
+                    setName(t, s, r.recordingNamePrefix)
+                    broadCastMessage(roomId, WS_MSG_TYPE.GET_TACTON_CLI, t, startTimeStamp)
+                }
             } else { // Playback
             }
         }

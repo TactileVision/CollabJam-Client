@@ -7,7 +7,7 @@ import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { TactonPlaybackActionTypes, createTacton, createTactonInstructionsFromPayload } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
-import { Tacton, getDuration } from "@/types/TactonTypes";
+import { Tacton} from "@/types/TactonTypes";
 import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index"
 import { InteractionMode } from "@/types/GeneralType";
 
@@ -186,11 +186,8 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 store.dispatch(GeneralSettingsActionTypes.tactonLengthChanged);
             } else {
                 const t: Tacton = msg.payload as Tacton
-                //Check tacton validity
-                if (getDuration(t) > 0) {
-                    store.dispatch(TactonPlaybackActionTypes.addTacton, t)
-                    store.dispatch(TactonPlaybackActionTypes.selectTacton, t.uuid)
-                }
+                store.dispatch(TactonPlaybackActionTypes.addTacton, t)
+                store.dispatch(TactonPlaybackActionTypes.selectTacton, t.uuid)
             }
             break;
         }

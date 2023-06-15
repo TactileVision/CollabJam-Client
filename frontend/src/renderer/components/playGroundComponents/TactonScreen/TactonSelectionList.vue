@@ -21,7 +21,7 @@
 
 	<ul class="tacton-list">
 		<li v-for="(tacton, index) of store.state.tactonPlayback.tactons" @click="selectTacton(tacton)" :key=tacton.uuid
-			:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid },{ 'disabled' : store.state.roomSettings.mode != 1}]">
+			:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid }, { 'disabled': store.state.roomSettings.mode != 1 }]">
 			{{ tacton.name }}
 			<span>({{ calculateDuration(tacton) / 1000 }} s)</span>
 		</li>
@@ -86,23 +86,11 @@ export default defineComponent({
 	methods: {
 		changeRecordMode() {
 			if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
-				sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
-					roomId: this.store.state.roomSettings.id,
-					instructions: [
-						{
-							keyId: "",
-							channels: [0, 1, 2, 3, 4],
-							intensity: 0
-						}
-					]
-				})
 				sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
 					roomId: this.store.state.roomSettings.id,
 					newMode: InteractionMode.Jamming
 				});
-				sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
-					roomId: this.store.state.roomSettings.id,
-				});
+
 			}
 			else {
 				sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {

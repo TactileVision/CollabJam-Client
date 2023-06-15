@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import { isWellFormed, processTactonInstructions } from "../util/tacton";
 
 /**
  * custom types used in the backend
@@ -13,12 +14,13 @@ export interface RoomMetaData {
     id: string,
     name: string,
     description: string,
-    recordingNamePrefix : string
+    recordingNamePrefix: string
 }
 
 export interface Room extends RoomMetaData {
     mode: InteractionMode,
     maxDurationRecord: number,
+    currentRecordingTime: number
 }
 
 export interface TactileTask {
@@ -50,24 +52,20 @@ export interface InstructionSetParameter {
         intensity: number;
     }
 }
-interface InstructionWait {
+export interface InstructionWait {
     wait: {
         miliseconds: number
     }
 }
 
 export const isInstructionWait = (instruction: TactonInstruction) => {
-	return 'wait' in instruction
+    return 'wait' in instruction
 }
 export const isInstructionSetParameter = (instruction: TactonInstruction) => {
-	return 'setParameter' in instruction
+    return 'setParameter' in instruction
 }
 export type TactonInstruction = InstructionSetParameter | InstructionWait;
 
-// type Instructions = InstructionSetParameter | InstructionWait;
-// export type TactonInstruction = {
-//     Instruction: Instructions
-// }
 
 export interface InstructionToClient {
     channelIds: number[],
@@ -90,15 +88,10 @@ export class TactonRecording {
     uuid: string = uuidv4().toString()
     name: string = ""
     favorite: boolean = false
-    // isRecording: boolean = false
     recordDate: Date | undefined = undefined
     instructions: TactonInstruction[] = [] as TactonInstruction[]
 
     getTacton(): Tacton {
-
-        const i = this.instructions[this.instructions.length -1] 
-        console.log(i)
-
         return impl<Tacton>({
             uuid: this.uuid,
             name: this.name,
@@ -113,20 +106,24 @@ export class TactonRecording {
 
 export class TactonRecordingSession {
     recording: TactonRecording = new TactonRecording()
+    startedRecording: boolean = false
     history: Tacton[] = [] as Tacton[]
     lastModified: number = new Date().getTime()
 
     updateModificationDate(): void {
         this.lastModified = new Date().getTime()
     }
-    //getTactonByUUID
-    //getTactonHistory
-    finishRecording(): Tacton {
+    // finishRecording(): Tacton {
+    finishRecording(): boolean {
         const t = this.recording.getTacton()
-        this.history.push(t)
+        processTactonInstructions(t, this.lastModified)
+        const isValid = isWellFormed(t)
+        if (isValid) {
+            this.history.push(t)
+        }
         this.recording = new TactonRecording()
         this.updateModificationDate()
-        return t
+        return isValid
     }
 }
 

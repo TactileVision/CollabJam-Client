@@ -4,7 +4,6 @@ import RoomModule from "../store/RoomModule";
 import UserModule from "../store/UserModule";
 import TactonModule from "../store/TactonModule";
 import { InteractionMode, isInstructionSetParameter, InstructionSetParameter, Tacton } from "../types";
-import { trimTacton } from "../util/tacton";
 
 interface SocketMessage {
     type: WS_MSG_TYPE;
@@ -218,18 +217,11 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 const s = TactonModule.sessions.get(msg.payload.roomId)
                 if (s == undefined) return
                 const t = s.history[s.history.length - 1]
-                //TODO Move trimTacton to the saving point 
-
-                trimTacton(t);
+                // removePauseFromEnd(t);
                 ws.send(JSON.stringify({
                     type: WS_MSG_TYPE.GET_TACTON_CLI,
-                    // payload: TactonModule.getTacton(msg.payload.roomId, "")
                     payload: t
                 }))
-                // ws.send(JSON.stringify({
-                //     type: WS_MSG_TYPE.GET_TACTON_CLI,
-                //     payload: TactonModule.getTacton(msg.payload.roomId)
-                // }))
                 break;
             }
             case WS_MSG_TYPE.CHANGE_ROOMINFO_TACTON_PREFIX_SERV: {

@@ -6,7 +6,7 @@ let participantList: Map<string, User[]> = new Map<string, User[]>();
 //custom array to distribute the user colours equally
 let usedColorsList: Map<string, number[]> = new Map<string, number[]>();
 //contain ws objects to communicate wit the clients
-let wsRoomList: Map<string, WebSocket[]> = new Map<string, WebSocket[]>();
+export let wsRoomList: Map<string, WebSocket[]> = new Map<string, WebSocket[]>();
 
 const createRoomRef = (roomId: string) => {
     console.log("createRoomRef")
@@ -172,6 +172,7 @@ const findRoomUserOfClient = (userId: string) => {
 }
 
 export default {
+    wsRoomList,
     getParticipants,
     getWsRoomList,
     createRoomRef,

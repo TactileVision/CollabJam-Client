@@ -1,9 +1,8 @@
 import { InteractionMode, Room, User } from "../types";
 
 //contain all metadata of one room
-let roomList: Map<string, Room> = new Map<string, Room>();
+export let roomList: Map<string, Room> = new Map<string, Room>();
 //custom list, to calculate the operations of the vibrotactile device for the distributon
-
 
 const getRoomInfo = (id: string): Room | undefined => {
     return roomList.get(id);
@@ -35,10 +34,12 @@ const createRoom = (room: Room): string => {
         id: roomId,
         name: room.name,
         description: room.description,
-        mode: InteractionMode.Jamming,
         maxDurationRecord: 20000,
+        currentRecordingTime: 0,
+        mode: InteractionMode.Jamming,
         recordingNamePrefix: "tacton"
     });
+
 
     return roomId;
 }
@@ -62,6 +63,7 @@ const updateRoomInformation = (id: string, name: string, description: string) =>
 const removeRoom = (roomId: string) => {
     roomList.delete(roomId);
     console.log("Delete Room: " + roomList.size)
+
 }
 
 
@@ -81,13 +83,6 @@ const updateRoomMode = (roomId: string, newMode: InteractionMode): boolean => {
     room.mode = newMode;
     return true;
 }
-// const updateRecordMode = (roomId: string, shouldRecord: boolean): boolean => {
-//     const room = roomList.get(roomId);
-//     if (room == undefined) return false;
-
-//     room.isRecording = shouldRecord;
-//     return true;
-// }
 
 const updateMaxDuration = (roomId: string, maxDuration: number): boolean => {
     const room = roomList.get(roomId);
@@ -106,6 +101,7 @@ const updateRecordingPrefix = (roomId: string, prefix: string): boolean => {
 
 export default {
     createRoom,
+    roomList,
     getRoomInfo,
     getNewRoomName,
     updateRoomInformation,
