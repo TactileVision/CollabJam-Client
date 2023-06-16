@@ -1,10 +1,11 @@
 import { InstructionToClient, Tacton, TactonInstruction, TactonRecordingSession, impl } from "../types"
+import { loadTactonsFromJSON } from "../util/FileStorage"
 
 
 let sessions: Map<string, TactonRecordingSession> = new Map<string, TactonRecordingSession>()
 
 const createRoomRef = (roomId: string) => {
-    sessions.set(roomId, new TactonRecordingSession())
+    sessions.set(roomId, new TactonRecordingSession(loadTactonsFromJSON(roomId)))
     console.log(sessions)
 }
 

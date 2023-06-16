@@ -1,10 +1,11 @@
-import { InstructionFromClient, InstructionToClient, InteractionMode, Room, TactonRecording, User } from "../types";
+import { InstructionFromClient, InstructionToClient, InteractionMode, Room, Tacton, TactonRecording, User } from "../types";
 import { WS_MSG_TYPE } from "../webSocket/ws_types";
 import RoomModule from "./RoomModule";
 import TactonModule from "./TactonModule";
 import UserModule from "./UserModule";
 import { RecordingTimer } from "../util/RecordingTimer";
 import { setName } from "../util/tacton";
+import { saveTactonAsJson } from "../util/FileStorage";
 let recordingMetronome = new RecordingTimer(20, RoomModule.roomList, TactonModule.sessions, UserModule.wsRoomList)
 
 /**
@@ -37,7 +38,7 @@ const updateSession = (roomAttributes: { id: string, name: string, description: 
  * method what one user enter a room initial
  * notify all users about new participant
  */
-const enterSession = (ws: WebSocket, userID: string, userName: string, roomInfo: Room, startTimeStamp: number) => {
+const enterSession = (ws: WebSocket, userID: string, userName: string, roomInfo: Room, recordings: Tacton[], startTimeStamp: number) => {
     const userData = UserModule.enterUserInRoom(ws, userID, userName, roomInfo.id);
     //its about entering should never return at this point
     if (userData == undefined) return;
@@ -46,8 +47,8 @@ const enterSession = (ws: WebSocket, userID: string, userName: string, roomInfo:
 
     //send the new user all data of the room, participants and his own userId
     ws.send(JSON.stringify({
-        type: WS_MSG_TYPE.ENTER_UPDATE_ROOM_CLI,
-        payload: { room: roomInfo, userId: userID, participants: participantList },
+        type: WS_MSG_TYPE.ENTER_ROOM_CLI,
+        payload: { room: roomInfo, userId: userID, participants: participantList, recordings: recordings },
         startTimeStamp: startTimeStamp
     }))
 
@@ -63,13 +64,14 @@ const enterSession = (ws: WebSocket, userID: string, userName: string, roomInfo:
  * if there are still participants --> notify the other users
  * if the room is now empty --> close the room
  */
-const removeUserOfSession = (roomId: string, user: User, startTimeStamp: number) => {
+const removeUserFromSession = (roomId: string, user: User, startTimeStamp: number) => {
     const userInRoom = UserModule.removeParticipant(roomId, user.id);
     if (userInRoom !== undefined) {
         if (userInRoom == 0) {
-            RoomModule.removeRoom(roomId);
-            UserModule.removeRoomRef(roomId)
-            TactonModule.removeRoomRef(roomId)
+            //TODO Add a mechanism to specify wheter a room is temporary or permanent
+            // RoomModule.removeRoom(roomId);
+            // UserModule.removeRoomRef(roomId)
+            // TactonModule.removeRoomRef(roomId)
 
             if (RoomModule.roomList.size == 0 && recordingMetronome.isRunning()) {
                 recordingMetronome.stop()
@@ -113,6 +115,7 @@ const changeRoomMode = (roomId: string, newMode: InteractionMode, startTimeStamp
                     const t = s.history[s.history.length - 1]
                     setName(t, s, r.recordingNamePrefix)
                     broadCastMessage(roomId, WS_MSG_TYPE.GET_TACTON_CLI, t, startTimeStamp)
+                    saveTactonAsJson(roomId, t)
                 }
             } else { // Playback
             }
@@ -190,14 +193,15 @@ const processInstructionsFromClient = (roomId: string, clienId: string, instruct
     }
 }
 
+
 export default {
     createSession,
     broadCastMessage,
     enterSession,
     updateSession,
-    removeUserOfSession,
+    removeUserFromSession,
     changeRecordMode,
     changeRoomMode,
     changeDuration,
-    processInstructionsFromClient
+    processInstructionsFromClient,
 }

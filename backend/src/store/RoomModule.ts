@@ -29,19 +29,20 @@ const generateRoomId = (): string => {
 
 const createRoom = (room: Room): string => {
     console.log("createRoom")
-    const roomId = generateRoomId();
-    roomList.set(roomId, {
-        id: roomId,
-        name: room.name,
-        description: room.description,
-        maxDurationRecord: 20000,
-        currentRecordingTime: 0,
-        mode: InteractionMode.Jamming,
-        recordingNamePrefix: "tacton"
-    });
+    // const roomId = generateRoomId();
+    // roomList.set(room.id, {
+    //     id: room.id,
+    //     name: room.name,
+    //     description: room.description,
+    //     maxDurationRecord: 20000,
+    //     currentRecordingTime: 0,
+    //     mode: InteractionMode.Jamming,
+    //     recordingNamePrefix: "tacton"
+    // });
+    roomList.set(room.id, room)
 
 
-    return roomId;
+    return room.id;
 }
 
 const updateRoomInformation = (id: string, name: string, description: string) => {

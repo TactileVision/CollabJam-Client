@@ -8,13 +8,15 @@ export class RecordingTimer {
     rooms: Map<string, Room>
     recordings: Map<string, TactonRecordingSession>
     websockets: Map<string, WebSocket[]>
-    lastCallMs: number = 0
+    // lastCallMs = new Map<string, number>()
+    lastCallMs = 0
+    //TODO Add a lastCallMS for each session!!
 
     isRunning(): boolean { return this.intervalHandle != null; }
     loop() {
+        const now = new Date().getTime()
+        const deltaT = now - this.lastCallMs
         this.rooms.forEach(room => {
-            const now = new Date().getTime()
-            const deltaT = now - this.lastCallMs
             const t = this.recordings.get(room.id)
             if (t == undefined || t == null) return
             const u = this.websockets.get(room.id)
@@ -25,6 +27,7 @@ export class RecordingTimer {
             //Only track time if recording started
             if (room.mode == InteractionMode.Recording && t.recording.instructions.length > 0) {
                 room.currentRecordingTime = room.currentRecordingTime + deltaT;
+                console.log(`${room.currentRecordingTime / 1000} seconds recorded`);
                 if (room.currentRecordingTime >= room.maxDurationRecord) {
                     console.log(`${room.id} stopping recording after ${room.currentRecordingTime / 1000} seconds`);
                     StoreManager.changeRoomMode(room.id, InteractionMode.Jamming, new Date().getTime())

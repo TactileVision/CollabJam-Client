@@ -25,8 +25,17 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
     //console.log(`Received message from user ${client}`);
     try {
         let msg: SocketMessage = JSON.parse(data);
-        //console.log(msg.payload)
+        console.log(msg)
         switch (msg.type) {
+            case WS_MSG_TYPE.GET_AVAILABLE_ROOMS_SERV: {
+                /**
+                 * Get the list of available rooms, the received payload is empty
+                 */
+                ws.send(JSON.stringify({
+                    type: WS_MSG_TYPE.GET_AVAILABLE_ROOMS_CLI,
+                    payload: Array.from(RoomModule.roomList.values())
+                }))
+            }
             case WS_MSG_TYPE.UPDATE_ROOM_SERV: {
                 /**
                  * method if one user, which is still part of the room, update the medata
@@ -63,18 +72,28 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 * method if one user enter the room
                 * metadata and participants get updated
                 * recieve {
-                *       room:RoomMetaData, 
+                *       id: string,
+                *       userName : string
                 *   } as payload
                 */
-                const updateRoom = RoomModule.updateRoomInformation(msg.payload.room.id, msg.payload.room.name, msg.payload.room.description)
-                let roomInfo = null;
-                if (updateRoom == undefined) {
-                    roomInfo = StorageManager.createSession(msg.payload.room);
-                } else {
-                    roomInfo = RoomModule.getRoomInfo(msg.payload.room.id)!
+                // const updateRoom = RoomModule.updateRoomInformation(msg.payload.room.id, msg.payload.room.name, msg.payload.room.description)
+                // let roomInfo = null;
+                // if (updateRoom == undefined) {
+                //     roomInfo = StorageManager.createSession(msg.payload.room);
+                // } else {
+                //     roomInfo = RoomModule.getRoomInfo(msg.payload.room.id)!
+                // }
+                const room = RoomModule.roomList.get(msg.payload.id)
+                if (room != undefined) {
+                    const tactonRecordingSession = TactonModule.sessions.get(room.id)
+                    let tactons: Tacton[] = []
+                    if (tactonRecordingSession != undefined) {
+                        tactons = tactonRecordingSession.history
+                    }
+
+                    StorageManager.enterSession(ws, client, msg.payload.userName, room, tactons, msg.payload.startTimeStamp);
                 }
 
-                StorageManager.enterSession(ws, client, msg.payload.userName, roomInfo, msg.payload.startTimeStamp);
 
                 break;
             }
@@ -91,7 +110,8 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 let existRoom = true;
                 let roomInfo = undefined;
 
-                const id = getID(msg.payload);
+                // const id = getID(msg.payload);
+                const id = msg.payload
                 if (id !== undefined)
                     roomInfo = RoomModule.getRoomInfo(id);
 
@@ -113,6 +133,11 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                     payload: { existRoom: existRoom, roomInfo: roomInfo, participants: partipantList },
                     startTimeStamp: msg.startTimeStamp
                 }))
+
+                // ws.send(JSON.stringify({
+                //     type: WS_MSG_TYPE.ENTER_ROOM_CLI,
+                //     payload: Array.from(RoomModule.roomList.values())
+                // }))
                 break;
             }
             case WS_MSG_TYPE.UPDATE_USER_ACCOUNT_SERV: {
@@ -143,7 +168,7 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 *      user: User
                 *  } as payload
                 */
-                StorageManager.removeUserOfSession(msg.payload.roomId, msg.payload.user, msg.startTimeStamp);
+                StorageManager.removeUserFromSession(msg.payload.roomId, msg.payload.user, msg.startTimeStamp);
                 break;
             }
             case WS_MSG_TYPE.SEND_INSTRUCTION_SERV: {
@@ -259,6 +284,6 @@ export const onClose = (client: string) => {
     console.log(`Received close message  from user ${client}`);
     const payload = UserModule.findRoomUserOfClient(client);
     if (payload !== undefined && payload.user !== undefined) {
-        StorageManager.removeUserOfSession(payload.roomId, payload.user, new Date().getTime());
+        StorageManager.removeUserFromSession(payload.roomId, payload.user, new Date().getTime());
     }
 }

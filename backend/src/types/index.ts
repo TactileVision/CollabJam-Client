@@ -110,6 +110,10 @@ export class TactonRecordingSession {
     history: Tacton[] = [] as Tacton[]
     lastModified: number = new Date().getTime()
 
+    constructor(history : Tacton[]) {
+        this.history = history
+    }
+
     updateModificationDate(): void {
         this.lastModified = new Date().getTime()
     }

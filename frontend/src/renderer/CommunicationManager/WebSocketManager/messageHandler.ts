@@ -7,7 +7,7 @@ import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { TactonPlaybackActionTypes, createTacton, createTactonInstructionsFromPayload } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
-import { Tacton} from "@/types/TactonTypes";
+import { Tacton } from "@/types/TactonTypes";
 import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index"
 import { InteractionMode } from "@/types/GeneralType";
 
@@ -24,6 +24,14 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
      * msg.startTimeStamp:number ==> initial timestamp, when one user send the request to the server
      */
     switch (msg.type) {
+        /**
+         * receives an array of all available rooms in server
+         * payload: Room[]
+         */
+        case WS_MSG_TYPE.GET_AVAILABLE_ROOMS_CLI: {
+            store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, { rooms: msg.payload })
+            break;
+        }
         /**
          * method to enter the setup view and display the metadata of the room
          * * recieve {
@@ -59,14 +67,15 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 *    participants: User[] ==> all users in the room, also own profile
                 *   } as payload
          */
-        case WS_MSG_TYPE.ENTER_UPDATE_ROOM_CLI: {
+        case WS_MSG_TYPE.ENTER_ROOM_CLI: {
             console.log("ENTER_UPDATE_ROOM_CLI")
             store.dispatch(RoomSettingsActionTypes.enterRoom, msg.payload)
+            //TODO Add action to set the list of tactons for a specific room id!
+            store.dispatch(TactonPlaybackActionTypes.setTactonList, msg.payload.recordings)
             if (store.state.generalSettings.currentView == RouterNames.SETUP) {
                 router.push("/playGround");
                 //TODO Start periodic sending of input data
                 if (store.state.roomSettings.id != undefined) {
-
                     //MARK: Start the debouncing of inputs
                     setInterval(() => {
                         bufferedSending(store.state.roomSettings.id || "", store.state.tactonSettings.debounceInstructionsBuffer)
@@ -90,18 +99,19 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
             store.dispatch(RoomSettingsActionTypes.updateRoom, msg.payload)
             break;
         }
-        /**
-           * method to enter the playground view, if you are currently in the setup view
-           * only get called if you are still part of the room
-           * contain no payload
-           * 
-           */
-        case WS_MSG_TYPE.ENTER_ROOM_CLI: {
-            console.log("NO_CHANGE_ROOM_CLI")
-            if (store.state.generalSettings.currentView == RouterNames.SETUP)
-                router.push("/playGround");
-            break;
-        }
+        // /**
+        //    * method to enter the playground view, if you are currently in the setup view
+        //    * only get called if you are still part of the room
+        //    * contain no payload
+        //    * 
+        //    */
+        // case WS_MSG_TYPE.ENTER_ROOM_CLI: {
+        //     // console.log("NO_CHANGE_ROOM_CLI")
+        //     // store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, { rooms: msg.payload })
+        //     // if (store.state.generalSettings.currentView == RouterNames.SETUP)
+        //     //     router.push("/playGround");
+        //     break;
+        // }
         /**
          * get called if the userlist get changed, in cause of someone change the username inside of the playground or left the room
          * * recieve {

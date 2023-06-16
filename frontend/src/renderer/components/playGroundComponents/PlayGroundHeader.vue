@@ -2,11 +2,9 @@
   <div id="headerPlayGround" class="headerPlayGround" no-gutters>
     <v-row class="align-center" no-gutters>
       <v-col style="padding: 0px 0px 0px 10px; flex-grow: 1">
-        {{
-          `${store.state.roomSettings.roomName}#${store.state.roomSettings.id}`
-        }}
-        <v-btn variant="text" icon="mdi-content-copy" @click="copyAdress">
-        </v-btn>
+        Room: {{ store.state.roomSettings.roomName }}
+        <!-- <v-btn variant="text" icon="mdi-content-copy" @click="copyAdress">
+        </v-btn> -->
       </v-col>
       <UserMenu />
 

@@ -1,6 +1,9 @@
 import { createServer, IncomingMessage } from 'http';
 import { WebSocketServer } from 'ws';
 import { onMessage, onClose } from './webSocket';
+import { defaultRooms } from './util/DefaultRooms';
+import StoreManager from './store/StoreManager';
+import { loadTactonsFromJSON } from './util/FileStorage';
 var uuid = require('uuid');
 
 const server = createServer();
@@ -14,7 +17,7 @@ const wss = new WebSocketServer({ noServer: true });
 wss.on('connection', function connection(ws: WebSocket, request: string, client: string) {
     ws.onmessage = (ev) => onMessage(ws, ev.data, client)
     ws.onclose = (ev) => onClose(client);
-    
+
 });
 
 /**
@@ -45,8 +48,7 @@ server.on('upgrade', function upgrade(request, socket, head) {
     // This function is not defined on purpose. Implement it with your own logic.
     //console.log(socket)
     authenticate(request, function next(err: any, client: any) {
-        console.log(client)
-        console.log(!client)
+        console.log(`Client ${client} requsted authentication`)
         if (err || !client) {
             console.log("error")
             socket.write('commandersfaws');
@@ -59,11 +61,16 @@ server.on('upgrade', function upgrade(request, socket, head) {
         });
     });
 });
-server.on("request", function (req,res){
+server.on("request", function (req, res) {
     console.log(req);
 })
-server.on("connect", function (req,res){
+server.on("connect", function (req, res) {
     console.log(req);
+})
+
+//TODO Create initial amount of rooms 
+defaultRooms.forEach(room => {
+    StoreManager.createSession(room)
 })
 
 server.listen(3333);

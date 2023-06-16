@@ -9,44 +9,24 @@
     <v-row class="subRow">
       <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Name</v-col>
       <v-col cols="5">
-        <v-text-field
-          variant="underlined"
-          hide-details="auto"
-          no-resize
-          v-model="roomName"
-        ></v-text-field>
+        <v-text-field disabled variant="underlined" hide-details="auto" no-resize v-model="roomName"></v-text-field>
       </v-col>
     </v-row>
     <v-row class="subRow">
-      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px"
-        >Description</v-col
-      >
+      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Description</v-col>
       <v-col cols="5">
-        <v-textarea
-          variant="underlined"
-          hide-details="auto"
-          no-resize
-          rows="3"
-          v-model="description"
-        ></v-textarea>
+        <v-textarea disabled variant="underlined" hide-details="auto" no-resize rows="3"
+          v-model="description"></v-textarea>
       </v-col>
     </v-row>
     <v-row class="subRow">
-      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px"
-        >Username</v-col
-      >
+      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Username</v-col>
       <v-col cols="5">
-        <v-text-field
-          variant="underlined"
-          hide-details="auto"
-          v-model="userName"
-        ></v-text-field>
+        <v-text-field variant="underlined" hide-details="auto" v-model="userName"></v-text-field>
       </v-col>
     </v-row>
     <v-row class="subRow">
-      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px"
-        >Connected Device</v-col
-      >
+      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Connected Device</v-col>
       <v-col cols="5">
         {{ store.getters.getConnectedDevice?.name }}
       </v-col>
@@ -71,16 +51,16 @@
           <v-btn elevation="2" color="primary" @click="cancelRoomEnter">
             {{
               store.state.roomSettings.roomState == configureState
-                ? "Log Out"
-                : "Cancel"
+              ? "Log Out"
+              : "Cancel"
             }}
           </v-btn>
           <v-spacer />
           <v-btn elevation="2" color="primary" @click="enterRoom">
             {{
               store.state.roomSettings.roomState == configureState
-                ? "Finish Configuration"
-                : "Enter Room"
+              ? "Finish Configuration"
+              : "Enter Room"
             }}
           </v-btn>
         </v-row>
@@ -99,6 +79,7 @@
   font-size: 1.3em;
   flex-shrink: 0;
 }
+
 .title {
   justify-content: center;
   font-size: 1.5em;
@@ -106,17 +87,20 @@
   text-decoration: underline;
   padding-bottom: 20px;
 }
+
 .subheader {
   text-decoration: underline;
   justify-content: center;
   font-weight: bold;
   padding-bottom: 10px;
 }
+
 .subRow {
   flex: 0;
   margin: 0;
   justify-content: center;
 }
+
 .expandRow {
   margin: 0;
   flex-grow: 1;
@@ -179,10 +163,10 @@ export default defineComponent({
   methods: {
     cancelRoomEnter() {
       window.api.send(IPC_CHANNELS.main.changeScan, false);
-      sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
-        roomId: this.store.state.roomSettings.id,
-        user: this.store.state.roomSettings.user,
-      });
+      // sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
+      //   roomId: this.store.state.roomSettings.id,
+      //   user: this.store.state.roomSettings.user,
+      // });
       router.push("/");
     },
     enterRoom() {
@@ -202,11 +186,7 @@ export default defineComponent({
         });
       } else {
         sendSocketMessage(WS_MSG_TYPE.ENTER_ROOM_SERV, {
-          room: {
-            id: this.store.state.roomSettings.id,
-            name: this.store.state.roomSettings.roomName,
-            description: this.description,
-          },
+          id: this.store.state.roomSettings.id,
           userName: this.userName,
         });
       }

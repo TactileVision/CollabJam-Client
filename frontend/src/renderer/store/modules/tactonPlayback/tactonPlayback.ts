@@ -65,13 +65,17 @@ export enum TactonPlaybackMutations {
   DESELECT_TACTON = "DELETE_TACTON",
   SELECT_TACTON = "SELECT_TACTON",
   UPDATE_TIME = "UPDATE_TIME",
+  SET_TACTON_LIST = "SET_TACTON_LIST",
+
 }
 
 export type Mutations<S = State> = {
+
   [TactonPlaybackMutations.ADD_TACTON](state: S, tacton: Tacton): void
   [TactonPlaybackMutations.DESELECT_TACTON](state: S): void
   [TactonPlaybackMutations.SELECT_TACTON](state: S, uuid: string): void
   [TactonPlaybackMutations.UPDATE_TIME](state: S, newTime: number): void
+  [TactonPlaybackMutations.SET_TACTON_LIST](state: S, tactons: Tacton[]): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -89,7 +93,10 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [TactonPlaybackMutations.UPDATE_TIME](state, newTime) {
     state.playbackTime = newTime
-  }
+  },
+  [TactonPlaybackMutations.SET_TACTON_LIST](state, tactons) {
+    state.tactons = tactons
+  },
 };
 
 /**
@@ -100,7 +107,8 @@ export enum TactonPlaybackActionTypes {
 
   selectTacton = 'selectTacton',
   addTacton = 'addTacton',
-  updateTime = 'updateTime'
+  updateTime = 'updateTime',
+  setTactonList = 'setTactonList'
 
 }
 
@@ -123,6 +131,10 @@ export interface Actions {
   [TactonPlaybackActionTypes.updateTime](
     { commit }: AugmentedActionContext,
     payload: number
+  ): void;
+  [TactonPlaybackActionTypes.setTactonList](
+    { commit }: AugmentedActionContext,
+    payload: Tacton[]
   ): void;
 }
 
@@ -148,6 +160,9 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
   [TactonPlaybackActionTypes.updateTime]({ commit }, newTime: number) {
     commit(TactonPlaybackMutations.UPDATE_TIME, newTime)
+  },
+  [TactonPlaybackActionTypes.setTactonList]({ commit }, tactons: Tacton[]) {
+    commit(TactonPlaybackMutations.SET_TACTON_LIST, tactons)
   }
 };
 

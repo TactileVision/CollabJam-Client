@@ -1,8 +1,6 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState } from '../../store';
-import { mdiShield } from '@mdi/js';
 import { InteractionMode } from '@/types/GeneralType';
-import { roots } from 'protobufjs';
 /**
  * Types
  * 
@@ -44,6 +42,8 @@ export type State = {
   maxDuration: number,
   mode: InteractionMode
   recordingNamePrefix: string
+
+  availableRooms: Room[]
 };
 
 export const state: State = {
@@ -56,7 +56,8 @@ export const state: State = {
   // isRecording: false,
   maxDuration: 20000,
   mode: InteractionMode.Jamming,
-  recordingNamePrefix: ""
+  recordingNamePrefix: "",
+  availableRooms: []
 };
 /**
  * mutations
@@ -72,6 +73,7 @@ export enum RoomMutations {
   UPDATE_PARTICIPANTS = "UPDATE_PARTICIPANTS",
   UPDATE_RECORD_MODE = "UPDATE_RECORD_MODE",
   UPDATE_MAX_DURATION_TACTON = "UPDATE_MAX_DURATION_TACTON",
+  SET_AVAILABLE_ROOMS = "SET_AVAILABLE_ROOMS"
 }
 
 export type Mutations<S = State> = {
@@ -84,6 +86,7 @@ export type Mutations<S = State> = {
   [RoomMutations.UPDATE_PARTICIPANTS](state: S, participants: User[]): void
   [RoomMutations.UPDATE_RECORD_MODE](state: S, mode: InteractionMode): void
   [RoomMutations.UPDATE_MAX_DURATION_TACTON](state: S, maxDuration: number): void
+  [RoomMutations.SET_AVAILABLE_ROOMS](state: S, rooms: Room[]): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -121,6 +124,9 @@ export const mutations: MutationTree<State> & Mutations = {
   [RoomMutations.UPDATE_MAX_DURATION_TACTON](state, maxDuration) {
     state.maxDuration = maxDuration;
   },
+  [RoomMutations.SET_AVAILABLE_ROOMS](state, rooms) {
+    state.availableRooms = rooms
+  }
 };
 
 /**
@@ -130,6 +136,7 @@ export const mutations: MutationTree<State> & Mutations = {
 export enum RoomSettingsActionTypes {
   enterRoom = "enterRoom",
   updateRoom = "updateRoom",
+  setAvailableRoomList = "setAvailableRoomList"
 }
 
 type AugmentedActionContext = {
@@ -147,6 +154,10 @@ export interface Actions {
   [RoomSettingsActionTypes.updateRoom](
     { commit }: AugmentedActionContext,
     payload: { room: Room, participants: User[] },
+  ): void;
+  [RoomSettingsActionTypes.setAvailableRoomList](
+    { commit }: AugmentedActionContext,
+    payload: { rooms: Room[] }
   ): void;
 }
 
@@ -187,6 +198,9 @@ export const actions: ActionTree<State, RootState> & Actions = {
     })
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
+  [RoomSettingsActionTypes.setAvailableRoomList]({ commit }, props: { rooms: Room[] }) {
+    commit(RoomMutations.SET_AVAILABLE_ROOMS, props.rooms) 
+  }
 };
 
 /**

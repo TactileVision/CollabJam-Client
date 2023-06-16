@@ -68,9 +68,7 @@ import { playbackRecordedTacton } from "@/electron/DeviceManager/TactonPlayer";
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
 import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
 import { InteractionMode } from "@/types/GeneralType";
-import { InstructionWait, Tacton } from "@/types/TactonTypes";
-import { Text } from "vue";
-import { TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
+import { Tacton } from "@/types/TactonTypes";
 
 export default defineComponent({
 	name: "TactonSelectionList",
@@ -102,7 +100,6 @@ export default defineComponent({
 		selectTacton(tacton: Tacton) {
 			console.log(tacton);
 			this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
-			// this.store.dispatch(TactonSettingsActionTypes.instantiateArray)
 		},
 		playRecordedTacton() {
 			if (this.store.state.tactonPlayback.currentTacton != null) {
