@@ -13,6 +13,7 @@ import VariableIntensityHandler from "./renderer/InputHandling/handlers/Variable
 import TriggerActuatorHandler from "./renderer/InputHandling/handlers/TriggerActuatorHandler";
 import TriggerActuatorWithDynamicIntensityHandler from "./renderer/InputHandling/handlers/TriggerActuatorWithDynamicIntensityHandler";
 import DynamicActuatorHandler from "./renderer/InputHandling/handlers/DynamicActuatorHandler";
+import InlineSvg from 'vue-inline-svg';
 
 loadFonts()
 const store = useStore();
@@ -28,6 +29,7 @@ createApp(App)
   .use(vuetify)
   .use(store)
   .use(router)
+  .component('inline-svg', InlineSvg)
   .mount('#app')
 
 initIPCListener();

@@ -5,18 +5,19 @@ import {
 } from "./InputAdapter/InputAdapterRegistry";
 import { DeviceType, InputDevice } from "@/types/InputBindings";
 
-const defaultConfig: Omit<InputDetectionConfig, "onInput"> = Object.freeze({
-  adapters: getInputAdapters(),
-  axesThreshold: 0.2,
-  buttonThreshold: 0.2,
-  throttleTimeout: 100,
-});
+const defaultConfig = (): Omit<InputDetectionConfig, "onInput"> =>
+  Object.freeze({
+    adapters: getInputAdapters(),
+    axesThreshold: 0.2,
+    buttonThreshold: 0.2,
+    throttleTimeout: 100,
+  });
 
 export const createInputDetection = (
   config: Partial<InputDetectionConfig> & Pick<InputDetectionConfig, "onInput">
 ): InputDetection => {
   const configWithDefaults: InputDetectionConfig = {
-    ...defaultConfig,
+    ...defaultConfig(),
     ...config,
   };
 
@@ -45,7 +46,7 @@ export const createInputDetection = (
 export const getAllDevices = (
   adapters: InputAdapter[] | undefined = undefined
 ): InputDevice[] => {
-  const adaptersWithDefaults = adapters || defaultConfig.adapters;
+  const adaptersWithDefaults = adapters || defaultConfig().adapters;
   return adaptersWithDefaults
     .flatMap((adapter) => adapter.getDevices())
     .concat({ type: DeviceType.Keyboard });

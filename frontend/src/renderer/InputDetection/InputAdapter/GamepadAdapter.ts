@@ -1,10 +1,9 @@
-import { GamepadDevice } from "../types";
 import {
   GamepadAxisInput,
   GamepadButtonInput,
   UserInputType,
 } from "@/types/InputDetection";
-import { DeviceType, InputDevice } from "@/types/InputBindings";
+import { DeviceType, GamepadDevice, InputDevice } from "@/types/InputBindings";
 import { InputAdapterDetection, InputAdapterDetectionConfig } from ".";
 
 const createDetection = (

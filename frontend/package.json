@@ -27,6 +27,7 @@
     "uuid": "^8.3.2",
     "vue": "^3.2.13",
     "vue-grid-layout": "git+https://github.com/lvjunhao/vue-grid-layout.git",
+    "vue-inline-svg": "^3.1.2",
     "vue-router": "^4.0.3",
     "vuetify": "3.0.0-beta.1",
     "vuex": "^4.0.0",

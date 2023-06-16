@@ -62,11 +62,6 @@ export const compareDevices = (a: InputDevice, b: InputDevice) => {
   return a.type === b.type;
 };
 
-export interface InputDeviceBindings {
-  device: InputDevice;
-  bindings: InputBinding[];
-}
-
 export enum DeviceType {
   Keyboard = "keyboard",
   StandardGamepad = "standard_gamepad",
@@ -75,6 +70,7 @@ export enum DeviceType {
 export interface InputProfile {
   uid: string;
   name: string;
+  imagePath: string;
   deviceType: DeviceType;
   bindings: InputBinding[];
 }

@@ -1,12 +1,6 @@
 import { UserInput } from "@/types/InputDetection";
-import { DeviceType, InputDevice } from "@/types/InputBindings";
+import { InputDevice } from "@/types/InputBindings";
 import { InputAdapter } from "./InputAdapter/InputAdapterRegistry";
-
-export interface GamepadDevice extends InputDevice {
-  type: DeviceType.StandardGamepad;
-  name: string;
-  index: number;
-}
 
 export interface InputEvent {
   device: InputDevice;
