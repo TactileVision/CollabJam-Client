@@ -7,6 +7,7 @@ import { handleMessage } from "./messageHandler";
 import { WS_MSG_TYPE } from "./ws_types";
 import { Instruction } from "@/renderer/InputHandling/InputHandlerManager";
 import { debouncedHandling } from "@/renderer/InputHandling/Debouincing";
+import router from "@/renderer/router";
 
 let clientWs = null as WebSocket | null;
 
@@ -14,18 +15,18 @@ let clientWs = null as WebSocket | null;
  * method to calculate the latency to the server every 30second 
  * result get logged
  */
-function heartbeat(store:Store) {
-    if(!store.state.generalSettings.socketConnectionStatus) return;
+function heartbeat(store: Store) {
+    if (!store.state.generalSettings.socketConnectionStatus) return;
 
     //for(let i=0; i<5;i++){
-        clientWs?.send(JSON.stringify({
-            type: WS_MSG_TYPE.PING,
-            startTimeStamp: new Date().getTime(),
-        }));
+    clientWs?.send(JSON.stringify({
+        type: WS_MSG_TYPE.PING,
+        startTimeStamp: new Date().getTime(),
+    }));
     //}
     setTimeout(() => (heartbeat(store)), 30000);
     //setInterval(heartbeat(store),1000*5)
-  }
+}
 
 
 export const bufferedSending = (roomId: string, instructions: Instruction[]) => {
@@ -58,6 +59,7 @@ export const initWebsocket = (store: Store) => {
         };
         clientWs.onclose = function (event: Event) {
             store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, false);
+            router.push("/")
             console.log("Closed websocket  connection " + event);
         };
         clientWs.onerror = function (event: Event) {

@@ -8,6 +8,7 @@ import DeviceManager from "./DeviceManager";
  */
 let blueToothState = "";
 
+
 noble.on("stateChange", (state: any) => {
     blueToothState = state;
 });
@@ -26,7 +27,7 @@ export const startBluetoothScan = () => {
         // clear list
         console.log("[Bluetooth] Starting Scan");
         // start scan
-        noble.startScanning(knownServiceUuids, false, (error?: Error) => {
+        noble.startScanning(knownServiceUuids, true, (error?: Error) => {
             if (!error) return;
             throw error;
         });
@@ -41,12 +42,12 @@ export const stopBluetoothScan = () => {
     noble.stopScanning();
 }
 
-const setOnCharacteristicsDiscover = (service: noble.Service) => {
+const setOnCharacteristicsDiscover = (device: Peripheral, service: noble.Service) => {
     service.once("characteristicsDiscover", (characteristics) => {
         if (characteristics.length <= 0) {
             console.log("[Bluetooth] No characteristics found");
             // disconnect, since we dont know anything about that device
-            DeviceManager.disconnectDevice();
+            DeviceManager.disconnectDevice(device.uuid);
             return;
         }
 
@@ -74,15 +75,15 @@ const setOnCharacteristicsDiscover = (service: noble.Service) => {
                             }
                         }
                         characteristic.once("descriptorsDiscover", (descriptors) => {
-                                // console.log(descriptors)
-                                // descriptors.forEach((d) =>{
-                                //     d.readValue((error, data)=>{
-                                //         // console.log("decriptor read")
-                                //         // console.log(data)
-                                //         // console.log(error)
-                                //     })
-                                // })
-                        } )
+                            // console.log(descriptors)
+                            // descriptors.forEach((d) =>{
+                            //     d.readValue((error, data)=>{
+                            //         // console.log("decriptor read")
+                            //         // console.log(data)
+                            //         // console.log(error)
+                            //     })
+                            // })
+                        })
                         characteristic.discoverDescriptors()
                     }
                 }
@@ -103,7 +104,7 @@ const discoverServices = (device: Peripheral) => {
         services.forEach((service) => {
             // Let each service add its specific event callbacks, callbacks are stored in service object, in callback array
 
-            setOnCharacteristicsDiscover(service);
+            setOnCharacteristicsDiscover(device, service);
             service.discoverCharacteristics();
         });
     });

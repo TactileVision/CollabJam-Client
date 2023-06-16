@@ -1,21 +1,14 @@
 <template>
-  <div id="headerPlayGround" class="headerPlayGround" no-gutters>
-    <v-row class="align-center" no-gutters>
-      <v-col style="padding: 0px 0px 0px 10px; flex-grow: 1">
-        Room: {{ store.state.roomSettings.roomName }}
-        <!-- <v-btn variant="text" icon="mdi-content-copy" @click="copyAdress">
-        </v-btn> -->
-      </v-col>
+  <v-app-bar id="headerPlayGround" :elevation="3" :title="store.state.roomSettings.roomName">
+    <template v-slot:append>
       <UserMenu />
-
-      <v-btn variant="text" style="margin-right: 20px" @click="settings">
+      <!-- <v-btn variant="text" style="margin-right: 20px" @click="devices">
         Settings <v-icon right> mdi-cog-outline </v-icon>
-      </v-btn>
-      <v-btn variant="text" style="margin-right: 20px" @click="logOut">
-        Log out <v-icon right> mdi-logout </v-icon>
-      </v-btn>
-    </v-row>
-  </div>
+      </v-btn> -->
+      <DeviceDialog></DeviceDialog>
+      <v-btn prepend-icon="mdi-logout" @click="logOut">Log out</v-btn>
+    </template>
+  </v-app-bar>
 </template>
 
 <style lang="scss" scoped>
@@ -41,11 +34,13 @@ import { defineComponent } from "@vue/runtime-core";
 import { sendSocketMessage } from "../../CommunicationManager/WebSocketManager";
 import { WS_MSG_TYPE } from "../../CommunicationManager/WebSocketManager/ws_types";
 import UserMenu from "./UserMenu/UserMenu.vue";
+import DeviceDialog from "@/renderer/views/DeviceDialog.vue";
 
 export default defineComponent({
   name: "PlayGroundHeader",
   components: {
     UserMenu,
+    DeviceDialog
   },
   data: () => ({
     store: useStore(),
@@ -70,6 +65,11 @@ export default defineComponent({
       this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Configure);
       router.push("/setup");
     },
-  },
+    devices() {
+      router.push("/devices");
+    },
+
+  }
+
 });
 </script>

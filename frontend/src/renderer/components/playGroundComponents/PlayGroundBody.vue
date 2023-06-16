@@ -1,6 +1,5 @@
 <template>
   <v-container class="playGroundView" ref="container" tabindex="-1">
-    <v-row no-gutters>
 
       <v-col cols="2">
         <TactonSelectionList></TactonSelectionList>
@@ -8,11 +7,10 @@
       <v-col cols="5" id="tactonScreen">
         <TactonScreen :isMounted="isMounted" />
       </v-col>
-      <v-col>
+      <v-col cols="5">
         <GridHeader @openDialog="startDialog" />
         <GridArea @editButton="startDialog" />
       </v-col>
-    </v-row>
 
     <v-dialog v-model="playGroundDialog" max-width="50%" class="tesing" @click:outside="closeDialog">
       <PlayGroundDialog @closeDialog="closeDialog" :keyButtonId="idOfEditableButton" />

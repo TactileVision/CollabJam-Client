@@ -1,34 +1,77 @@
 <template>
-	<h1>Tactons</h1>
-	<!-- TODO Disable when recording -->
+	<!-- <h1>Tactons</h1> -->
+	<!-- <v-card :title="'Filename:' + store.state.roomSettings.recordingNamePrefix"> -->
 
-	Filename: {{ store.state.roomSettings.recordingNamePrefix }}
-	<v-btn @click="showEditPrefix = !showEditPrefix" color="primary"> {{ showEditPrefix ? "Close" : "Edit" }}
-	</v-btn>
-	<div v-if="showEditPrefix" class="editPrefix">
-		<input v-model="editPrefixText" id="edit-prefix-input" type="text" />
-		<v-btn :disabled="editPrefixText == '' || editPrefixText == store.state.roomSettings.recordingNamePrefix"
-			@click="updatePrefix" color="primary"> Save </v-btn>
-	</div>
+	<v-row>
+		<v-col>
 
-	<div class="controls">
+			Filename: {{ store.state.roomSettings.recordingNamePrefix }}
+			<v-btn variant="text" @click="showEditPrefix = !showEditPrefix" color="primary"> {{ showEditPrefix ? "Close" :
+				"Edit" }}
+			</v-btn>
+			<div v-if="showEditPrefix" class="editPrefix">
+							<v-text-field  v-model="editPrefixText" id="edit-prefix-input" type="text" label="Enter prefix" variant="outlined"></v-text-field>
+				<v-btn :disabled="editPrefixText == '' || editPrefixText == store.state.roomSettings.recordingNamePrefix"
+					@click="updatePrefix" color="primary"> Save </v-btn>
+			</div>
+		</v-col>
+	</v-row>
+	<v-row>
+		<v-spacer></v-spacer>
 		<v-btn :disabled="store.state.roomSettings.mode != 1 || store.state.tactonPlayback.currentTacton == null"
-			@click="playRecordedTacton" color="primary"> Play </v-btn>
-		<v-btn :disabled="store.state.roomSettings.mode == 3" @click="changeRecordMode" color="primary">
+			@click="playRecordedTacton" color="primary" prepend-icon="mdi-play"> Play </v-btn>
+
+		<v-btn @click="changeRecordMode" color="error"
+			:prepend-icon="store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'" x>
 			{{ store.state.roomSettings.mode == 2 ? "Stop" : "Record" }}
 		</v-btn>
-	</div>
+	</v-row>
+	<v-row>
+		<v-col>
+			<h2>Recorded tactons</h2>
+			<v-switch v-model="filteredView" :disabled="store.state.tactonPlayback.tactons.length == 0" hide-details
+				label="Favorites only" color="primary"></v-switch>
+			<v-list lines="one" class="tacton-list">
+				<v-list-item v-for="(tacton, index) of getTactons()" :disabled="store.state.roomSettings.mode != 1"
+					:key=tacton.uuid
+					:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid }, { 'disabled': store.state.roomSettings.mode != 1 }]">
+					<v-row align-content="left" align="center" v-if="shouldDisplay(tacton)">
+						<v-col cols="2">
+							<v-btn :icon="tacton.favorite ? 'mdi-star' : 'mdi-star-outline'" variant="plain"
+								@click="toggleFavorite(tacton)"> Button </v-btn>
 
-	<ul class="tacton-list">
-		<li v-for="(tacton, index) of store.state.tactonPlayback.tactons" @click="selectTacton(tacton)" :key=tacton.uuid
-			:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid }, { 'disabled': store.state.roomSettings.mode != 1 }]">
-			{{ tacton.name }}
-			<span>({{ calculateDuration(tacton) / 1000 }} s)</span>
-		</li>
-	</ul>
+						</v-col>
+						<v-col cols="10" @click="selectTacton(tacton)">
+							{{ tacton.name }}
+							{{ calculateDuration(tacton) / 1000 }} s
+						</v-col>
+
+					</v-row>
+				</v-list-item>
+			</v-list>
+			<!-- <ul class="selection-list tacton-list">
+			<li v-for="(tacton, index) of store.state.tactonPlayback.tactons" @click="selectTacton(tacton)" :key=tacton.uuid
+				:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid }, { 'disabled': store.state.roomSettings.mode != 1 }]">
+				{{ tacton.name }}
+				<span>({{ calculateDuration(tacton) / 1000 }} s)</span>
+			</li>
+		</ul> -->
+			<!-- </div> -->
+		</v-col>
+
+	</v-row>
 </template>
 
 <style lang="scss">
+.tacton-ui-element {
+	margin: 1em;
+}
+
+.tacton-list {
+	height: 80%;
+	overflow: scroll;
+}
+
 .selected {
 	font-weight: bold;
 	background-color: gainsboro
@@ -38,24 +81,8 @@
 	margin: 1em auto;
 }
 
-.tacton-list {
-	overflow: scroll;
 
-	>li {
-		padding: 1em;
-
-		border-bottom: 1px solid grey;
-
-		&.disabled {
-			pointer-events: none;
-			opacity: 0.6;
-		}
-	}
-
-
-}
-
-.tacton-list #prefix-input {
+#prefix-input {
 	border-style: solid;
 }
 </style>
@@ -69,6 +96,7 @@ import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketMana
 import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
 import { InteractionMode } from "@/types/GeneralType";
 import { Tacton } from "@/types/TactonTypes";
+import { getTrailingCommentRanges } from "typescript";
 
 export default defineComponent({
 	name: "TactonSelectionList",
@@ -77,10 +105,12 @@ export default defineComponent({
 		return {
 			store: useStore(),
 			showEditPrefix: false,
-			editPrefixText: ""
+			editPrefixText: "",
+			filteredView: false
 		};
 	},
-	computed: {},
+	computed: {
+	},
 	methods: {
 		changeRecordMode() {
 			if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
@@ -127,6 +157,20 @@ export default defineComponent({
 				prefix: this.editPrefixText
 			});
 			return
+		},
+		toggleFavorite(tacton: Tacton) {
+			tacton.favorite = !tacton.favorite
+
+		},
+		shouldDisplay(tacton: Tacton) {
+			if (!this.filteredView) return true
+			return tacton.favorite
+		},
+		getTactons() {
+			if (this.filteredView) {
+				return this.store.state.tactonPlayback.tactons.filter(t => { return this.shouldDisplay(t) })
+			}
+			return this.store.state.tactonPlayback.tactons
 		}
 	},
 }

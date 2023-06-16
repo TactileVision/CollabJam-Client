@@ -151,6 +151,7 @@ const removeParticipant = (roomId: string, userId: string): number | undefined =
         }
     }
 
+    console.log(`Removed user from ${roomId}, ${participants.length} users left`)
     return participants.length;
 }
 

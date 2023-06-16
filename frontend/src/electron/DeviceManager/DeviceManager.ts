@@ -11,11 +11,12 @@ import { executeInstruction } from "./VTProtoTransformer";
  */
 let discoveredDevices = [] as Peripheral[]
 let connectedDevice: Peripheral | undefined = undefined;
-let connectedDevices = new Set<Peripheral>();
+// let connectedDevices = new Set<Peripheral>();
+let connectedDevices = new Map<string, Peripheral>();
 
 const startScan = () => {
     discoveredDevices = [];
-    disconnectDevice()
+    // disconnectDevice()
     startBluetoothScan()
 }
 
@@ -24,6 +25,7 @@ const stopScan = () => {
 }
 
 const addDevice = (peripheral: Peripheral) => {
+    //TODO Check if not alreadt connected
     discoveredDevices.push(peripheral);
     sendMessageToRenderer(IPC_CHANNELS.renderer.foundDevice, {
         id: peripheral.id,
@@ -35,11 +37,12 @@ const addDevice = (peripheral: Peripheral) => {
 
 const updateConnectedDevice = async (peripheral: Peripheral) => {
     if (peripheral.state == "connected") {
+        connectedDevices.set(peripheral.uuid, peripheral);
         // connectedDevice = peripheral;
-        connectedDevices.add(peripheral);
     } else {
+        connectedDevices.delete(peripheral.uuid);
         // connectedDevice = undefined;
-        connectedDevices.delete(peripheral);
+        // connectedDevices.delete(peripheral);
     }
     sendMessageToRenderer(IPC_CHANNELS.renderer.deviceStatusChanged, {
         id: peripheral.id,
@@ -62,16 +65,18 @@ const connectDevice = (deviceID: string) => {
     //     disconnectBlutetoothDevice(connectedDevice);
 
     //if number of connected devies is at maximum ignore
-    if (!connectedDevices.has(device)) {
+    if (!connectedDevices.has(device.uuid)) {
         console.log("Device not in list yet");
         connectBlutetoothDevice(device);
     }
 }
 
 //TODO: Add id or device instant to remove a specific device
-const disconnectDevice = () => {
-    if (connectedDevice == null) return;
-    disconnectBlutetoothDevice(connectedDevice)
+const disconnectDevice = (deviceID: string) => {
+    const d = connectedDevices.get(deviceID)
+    if (d != null) {
+        disconnectBlutetoothDevice(d)
+    }
 }
 
 let n = 0

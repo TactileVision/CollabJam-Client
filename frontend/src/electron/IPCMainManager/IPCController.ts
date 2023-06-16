@@ -51,14 +51,14 @@ ipcMain.on(IPC_CHANNELS.main.changeScan, (event, scanStatus: boolean) => {
 
 //connect with specific device
 ipcMain.on(IPC_CHANNELS.main.connectDevice, (event, deviceID: string) => {
-    //console.log("Starting Connection");
+    // console.log("Starting Connection");
     DeviceManager.connectDevice(deviceID);
 });
 
 //disconnect with specific device
-ipcMain.on(IPC_CHANNELS.main.disconnectDevice, () => {
-    //console.log("Starting Discconnect");
-    DeviceManager.disconnectDevice();
+ipcMain.on(IPC_CHANNELS.main.disconnectDevice, (event, deviceID: string) => {
+    // console.log("Starting Discconnect");
+    DeviceManager.disconnectDevice(deviceID);
 });
 
 //controll the vibrotactile device
