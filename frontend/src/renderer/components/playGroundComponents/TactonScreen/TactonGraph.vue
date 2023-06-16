@@ -125,7 +125,6 @@ export default defineComponent({
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray)
         this.clearGraph()
         this.ticker?.start();
-        console.log(this.ticker)
       } else {
         this.ticker?.stop();
         this.ticker?.remove(this.loop);
@@ -136,20 +135,18 @@ export default defineComponent({
       }
     },
     tacton(tacton) {
-      console.log("Tacton")
       if (tacton == null) return
-      if (this.interactionMode == InteractionMode.Jamming) {
-        const t = tacton as Tacton
-        this.clearGraph()
-        this.drawStoredGraph(t.instructions)
-        this.endOfTactonIndicator.moveToPosition(getDuration(tacton) * this.growRatio + this.paddingRL)
-        this.endOfTactonIndicator.drawCursor(this.height.actual)
-        this.graphContainer?.addChild(this.endOfTactonIndicator.getContainer())
-      }
-
+      const t = tacton as Tacton
+      this.clearGraph()
+      this.drawStoredGraph(t.instructions)
+      this.endOfTactonIndicator.moveToPosition(getDuration(tacton) * this.growRatio + this.paddingRL)
+      this.endOfTactonIndicator.drawCursor(this.height.actual)
+      this.graphContainer?.addChild(this.endOfTactonIndicator.getContainer())
     },
     playbackTime(time) {
-      this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
+      console.log(time)
+      // this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
+      this.positionCursor(time)
     }
   },
   mounted() {
@@ -375,8 +372,6 @@ export default defineComponent({
       this.ticker?.add(this.loop);
     },
     drawStoredGraph(instructions: TactonInstruction[]) {
-      console.log(instructions)
-
       const getMillisForIndex = (instructions: TactonInstruction[], from: number, to: number): number => {
         let ms = 0
         for (let index = from; index < to; index++) {
@@ -583,13 +578,11 @@ export default defineComponent({
         }
       }
     },
-    drawCursor() {
-      //TODO Only show when recording or playing back
+    positionCursor(time: number) {
       if (!this.cursor.hasDrawnCursor) {
-        //TODO update height when resizing
         this.cursor.drawCursor(this.height.actual)
       }
-      this.cursor.moveToPosition(this.currentTime * this.growRatio + this.paddingRL)
+      this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
       this.graphContainer?.addChild(this.cursor.getContainer())
 
     },
@@ -659,9 +652,8 @@ export default defineComponent({
       }
       const channels = this.store.state.tactonSettings.outputChannelState;
       this.drawLiveGraph(channels)
-      this.drawCursor()
+      this.positionCursor(this.currentTime)
       this.currentTime += this.ticker!.elapsedMS;
-      // console.log(this.currentTime)
     },
   },
 });
