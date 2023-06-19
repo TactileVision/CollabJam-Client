@@ -36,12 +36,13 @@ export type State = {
     inEditMode: boolean
 };
 
+
 export const state: State = {
     gridLayout: { x: 11, y: 8 },
     profiles: profiles,
     selectedProfiles: [
         {
-            device: { type: DeviceType.StandardGamepad, name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)", index: 0 } as GamepadDevice,
+            device: { type: DeviceType.StandardGamepad, name: "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)", index: 0 } as GamepadDevice,
             profileIndex: 0
         },
         {
