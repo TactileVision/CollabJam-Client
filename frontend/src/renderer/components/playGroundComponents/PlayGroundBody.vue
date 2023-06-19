@@ -4,9 +4,10 @@
       <v-col cols="5" id="tactonScreen">
         <TactonScreen :isMounted="isMounted" />
       </v-col>
-      <v-col>
-        <GridHeader @openDialog="startDialog" />
-        <GridArea @editButton="startDialog" />
+      <v-col class="devices">
+        <!-- <GridHeader @openDialog="startDialog" />
+        <GridArea @editButton="startDialog" /> -->
+        <DeviceProfile v-for="device in devices" :key="getDeviceKey(device)" :device="device"/>
       </v-col>
     </v-row>
 
@@ -31,26 +32,31 @@
 
 #tactonScreen {
   border-right: 1px solid rgba(0, 0, 0, .2);
-  ;
+}
+
+.devices {
+  margin: 2rem;
 }
 </style>
 
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
-import GridArea from "./GridArea/GridArea.vue";
-import GridHeader from "./GridArea/GridHeader.vue";
 import TactonScreen from "./TactonScreen/TactonScreen.vue";
 import PlayGroundDialog from "./PlayGroundDialog.vue";
+import DeviceProfile from "./DeviceProfile.vue";
 import { GeneralMutations } from "../../store/modules/generalSettings/generalSettings";
 import { RouterNames } from "@/types/Routernames";
 import { useStore } from "../../store/store";
 import { PlayGroundMutations } from "../../store/modules/playGround/types";
+import { getAllDevices } from "@/renderer/InputDetection";
+import { InputDevice, isGamepadDevice, isKeyboardDevice } from "@/types/InputBindings";
 
 export default defineComponent({
   name: "PlayGroundBody",
   components: {
-    GridHeader,
-    GridArea,
+    // GridHeader,
+    // GridArea,
+    DeviceProfile,
     TactonScreen,
     PlayGroundDialog,
   },
@@ -60,6 +66,8 @@ export default defineComponent({
       playGroundDialog: false,
       idOfEditableButton: "",
       isMounted: false,
+      devices: [] as InputDevice[],
+      pollDevices: -1
     };
   },
   mounted() {
@@ -68,6 +76,19 @@ export default defineComponent({
     this.$nextTick(() => container.$el.focus());
     this.isMounted = true;
     this.store.commit(PlayGroundMutations.UPDATE_EDIT_MDOE, false);
+    this.devices = getAllDevices();
+
+    const pollFunction = () => {
+      this.devices = getAllDevices();
+      this.pollDevices = requestAnimationFrame(pollFunction)
+    }
+
+    this.pollDevices = requestAnimationFrame(pollFunction)
+  },
+  unmounted() {
+    if(this.pollDevices !== -1) {
+      cancelAnimationFrame(this.pollDevices);
+    }
   },
   methods: {
     closeDialog() {
@@ -89,6 +110,10 @@ export default defineComponent({
       this.idOfEditableButton = id;
       this.playGroundDialog = true;
     },
+    getDeviceKey(device: InputDevice) {
+      if(isKeyboardDevice(device)) return "keyboard"
+      else if(isGamepadDevice(device)) return `gamepad-${device.name}`
+    }
   },
 });
 </script>

@@ -1,13 +1,13 @@
 import { InputEvent } from "../types";
 
-export interface InputAdapterConfig {
+export interface InputAdapterDetectionConfig {
   axesThreshold: number;
   buttonThreshold: number;
   throttleTimeout: number;
   onInput: (event: InputEvent) => void;
 }
 
-export interface InputAdapter {
+export interface InputAdapterDetection {
   startDetection: () => void;
   stopDetection: () => void;
 }
