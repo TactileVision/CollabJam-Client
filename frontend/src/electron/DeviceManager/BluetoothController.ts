@@ -1,4 +1,4 @@
-import noble, { Descriptor, Peripheral } from "@abandonware/noble";
+import noble, {  Peripheral } from "@abandonware/noble";
 import { isKnownService, knownServices, knownServiceUuids } from "./Services"
 import DeviceManager from "./DeviceManager";
 
@@ -51,7 +51,7 @@ const setOnCharacteristicsDiscover = (device: Peripheral, service: noble.Service
             return;
         }
 
-        var s = knownServices.find(
+        const s = knownServices.find(
             (knownService) => knownService.service.uuid === service.uuid
         );
 

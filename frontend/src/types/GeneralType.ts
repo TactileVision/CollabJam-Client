@@ -3,8 +3,6 @@
  * 
  */
 
-import { User } from "@/renderer/store/modules/roomSettings/roomSettings"
-
 export interface KeyBoardAttributes {
   channels: number[],
   color: string,
@@ -23,23 +21,4 @@ export interface KeyBoardButton extends KeyBoardAttributes {
   y: number,
   h: number,
   w: number,
-}
-export interface TactileTask {
-  channelIds: number[],
-  intensity: number,
-}
-
-
-
-export enum InteractionMode {
-  Jamming = 1,
-  Recording,
-  Playback
-}
-
-
-export interface InstructionToClient {
-  channelIds: number[],
-  intensity: number,
-  author: User | undefined
 }

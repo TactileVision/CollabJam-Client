@@ -1,8 +1,7 @@
-import { TactileTask } from "@/types/GeneralType";
+import { TactileTask } from "@sharedTypes/tactonTypes";
 import { Peripheral } from "@abandonware/noble";
 import protobuf from "protobufjs";
 import { tactileDisplayService } from "./Services";
-import path from "path";
 
 enum InstructionType {
     channelId = "channelId",
@@ -20,7 +19,7 @@ type Instruction = {
 }
 
 const buildMessages = (instructions: Instruction[], definition: protobuf.Type) => {
-    var messages: protobuf.Message[] = [];
+    const messages: protobuf.Message[] = [];
     instructions.forEach((instruction: Instruction) => {
         const errMsg = definition.verify(instruction);
         if (errMsg) {
@@ -32,7 +31,7 @@ const buildMessages = (instructions: Instruction[], definition: protobuf.Type) =
 }
 
 const buildWriter = (messages: protobuf.Message[], instructionDef: protobuf.Type): Buffer => {
-    var writer: any = null;
+    let writer: any = null;
     messages.forEach((message: protobuf.Message) => {
         writer = instructionDef.encodeDelimited(message, writer);
     });
@@ -72,7 +71,7 @@ export const executeInstruction = (device: Peripheral, taskList: TactileTask[]) 
         const characteristic = service.characteristics.find((characteristic) => characteristic.uuid === tactileDisplayService.characteristics!.vtprotoBuffer.uuid);
         if (characteristic !== undefined) {
             //TODO Change hardcoded number to channel variable in in vue store
-            let output = new Uint8Array(5).fill(255);
+            const output = new Uint8Array(5).fill(255);
 
             const map = (value: number, x1: number, y1: number, x2: number, y2: number) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
             taskList.forEach(task => {

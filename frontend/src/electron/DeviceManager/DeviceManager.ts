@@ -1,4 +1,4 @@
-import { TactileTask } from "@/types/GeneralType";
+import { TactileTask } from "@sharedTypes/tactonTypes";
 import { Peripheral } from "@abandonware/noble";
 import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
 import { sendMessageToRenderer } from "../IPCMainManager/IPCController";
@@ -10,9 +10,9 @@ import { executeInstruction } from "./VTProtoTransformer";
  * it will controll the device with the bluetooth controller and and the vtproto transformer
  */
 let discoveredDevices = [] as Peripheral[]
-let connectedDevice: Peripheral | undefined = undefined;
+const connectedDevice: Peripheral | undefined = undefined;
 // let connectedDevices = new Set<Peripheral>();
-let connectedDevices = new Map<string, Peripheral>();
+const connectedDevices = new Map<string, Peripheral>();
 
 const startScan = () => {
     discoveredDevices = [];

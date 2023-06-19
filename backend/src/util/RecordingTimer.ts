@@ -1,6 +1,6 @@
+import { Room, InteractionMode } from "@sharedTypes/roomTypes";
+import { TactonRecordingSession } from "src/types";
 import StoreManager from "../store/StoreManager";
-import { InteractionMode, Room, TactonRecordingSession } from "../types";
-import { WS_MSG_TYPE } from "../webSocket/ws_types";
 
 export class RecordingTimer {
     intervalHandle: NodeJS.Timer | null = null

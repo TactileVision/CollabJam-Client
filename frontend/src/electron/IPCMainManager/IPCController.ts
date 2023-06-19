@@ -1,13 +1,13 @@
 const { ipcMain, clipboard } = require('electron');
 import fs from 'fs';
-import { app, BrowserWindow, dialog } from "electron";
+import { BrowserWindow, dialog } from "electron";
 import { IPC_CHANNELS } from "./IPCChannels";
 import DeviceManager from "../DeviceManager/DeviceManager"
-import { TactileTask } from "@/types/GeneralType";
+import { TactileTask} from "@sharedTypes/tactonTypes";
 import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
-import { InputBinding, InputDevice } from '@/types/InputBindings';
+import { InputBinding } from '@/types/InputBindings';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -104,7 +104,7 @@ ipcMain.on(IPC_CHANNELS.main.logMessageInfos, (event, payload: {
 //save one tacton as json in vtproto format
 ipcMain.on(IPC_CHANNELS.main.saveTacton, async (event, payload: any) => {
     //console.log("saveKeyBoardButton");
-    let file = await dialog.showSaveDialog(_win, {
+    const file = await dialog.showSaveDialog(_win, {
         title: 'Download to File…',
         filters: [
             { name: 'Json', extensions: ['.json'] }

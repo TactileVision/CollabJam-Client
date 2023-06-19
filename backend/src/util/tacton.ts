@@ -1,4 +1,5 @@
-import { InstructionSetParameter, InstructionWait, Tacton, TactonRecordingSession, isInstructionSetParameter, isInstructionWait } from "../types";
+import { Tacton, isInstructionSetParameter, InstructionSetParameter, isInstructionWait, InstructionWait } from "@sharedTypes/tactonTypes";
+import { TactonRecordingSession } from "../types";
 
 
 
@@ -37,10 +38,10 @@ export function processTactonInstructions(tacton: Tacton, lastModified: number) 
 
 export function setName(tacton: Tacton, session: TactonRecordingSession, recordingNamePrefix: string) {
 	const prefix = session.history.filter(e => {
-		return e.name.startsWith(recordingNamePrefix + "-") == true
+		return e.metadata.name.startsWith(recordingNamePrefix + "-") == true
 	})
 	let len = prefix.length.toString()
-	tacton.name = recordingNamePrefix + "-" + len
+	tacton.metadata.name = recordingNamePrefix + "-" + len
 }
 export function getDuration(tacton: Tacton): number {
 	let d = 0

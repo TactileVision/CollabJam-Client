@@ -27,7 +27,7 @@ import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "../store/store";
 import { RoomMutations } from "../store/modules/roomSettings/roomSettings";
 import { sendSocketMessage } from "../CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "../CommunicationManager/WebSocketManager/ws_types";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
   name: "RoomView",

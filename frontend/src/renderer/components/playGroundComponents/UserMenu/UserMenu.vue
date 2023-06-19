@@ -147,9 +147,9 @@ import { useStore } from "@/renderer/store/store";
 import { RouterNames } from "@/types/Routernames";
 import { defineComponent } from "@vue/runtime-core";
 import { sendSocketMessage } from "../../../CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "../../../CommunicationManager/WebSocketManager/ws_types";
 import CustomProfile from "./CustomProfile.vue";
 import DefaultProfile from "./DefaultProfile.vue";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
   name: "UserMenu",

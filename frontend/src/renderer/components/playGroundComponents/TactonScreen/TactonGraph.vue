@@ -8,10 +8,8 @@ import { PRECISION } from "@pixi/constants";
 import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/renderer/store/store";
 import { TactonSettingsActionTypes, OutputChannelState } from "@/renderer/store/modules/tactonSettings/tactonSettings";
-import { User } from "@/renderer/store/modules/roomSettings/roomSettings";
-import { InteractionMode } from "@/types/GeneralType";
-import { Tacton, TactonInstruction, isInstructionSetParameter, InstructionSetParameter, InstructionWait, getDuration } from "@/types/TactonTypes";
-import { isInstructionWait } from "@/types/TactonTypes";
+import { User, InteractionMode } from "@sharedTypes/roomTypes";
+import { Tacton, TactonInstruction, isInstructionSetParameter, InstructionSetParameter, InstructionWait, getDuration, isInstructionWait } from "@sharedTypes/tactonTypes";
 
 interface IntensityObject {
   intensity: number;

@@ -1,4 +1,4 @@
-import { User } from "../types";
+import { User } from "@sharedTypes/roomTypes";
 import { defaultColorUsers } from "../types/defaultColorUsers";
 
 //contain all metadata of one user

@@ -32,9 +32,9 @@ import {
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "@vue/runtime-core";
 import { sendSocketMessage } from "../../CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "../../CommunicationManager/WebSocketManager/ws_types";
 import UserMenu from "./UserMenu/UserMenu.vue";
 import DeviceDialog from "@/renderer/views/DeviceDialog.vue";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
   name: "PlayGroundHeader",

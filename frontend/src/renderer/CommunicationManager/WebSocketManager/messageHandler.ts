@@ -1,15 +1,16 @@
-import { Store } from "../../store/store";
 import { RoomMutations, RoomSettingsActionTypes, RoomState } from "../../store/modules/roomSettings/roomSettings";
-import { WS_MSG_TYPE } from "./ws_types";
-import { RouterNames } from "@/types/Routernames";
-import router from "@/renderer/router";
+import { Store } from "../../store/store";
 import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
-import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
+import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index";
+import router from "@/renderer/router";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
-import { TactonPlaybackActionTypes, createTacton, createTactonInstructionsFromPayload } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
-import { Tacton } from "@/types/TactonTypes";
-import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index"
-import { InteractionMode } from "@/types/GeneralType";
+import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
+import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
+import { RouterNames } from "@/types/Routernames";
+import { InteractionMode } from "@sharedTypes/roomTypes";
+import { Tacton } from "@sharedTypes/tactonTypes";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+
 
 export interface SocketMessage {
     type: WS_MSG_TYPE;

@@ -1,11 +1,10 @@
 import fs from 'fs';
 const path = require('path');
-const util = require('util');
 import { app } from "electron";
 import { initSettings, CustomSettings } from './initSettings';
 import { sendMessageToRenderer } from '../IPCMainManager/IPCController';
 import { IPC_CHANNELS } from '../IPCMainManager/IPCChannels';
-import { InputBinding, InputDevice, compareDevices } from '@/types/InputBindings';
+import { InputBinding} from '@/types/InputBindings';
 
 //Manager to handle all user configurations and save them locally
 class SettingManager {
@@ -21,7 +20,7 @@ class SettingManager {
     }
 
     sendSettings() {
-        let readSuccessfully = this.readSettings();
+        const readSuccessfully = this.readSettings();
 
         if (readSuccessfully == false)
             this.initConfigFile();
@@ -78,6 +77,6 @@ class SettingManager {
 
         this.writeFile();
     }
-};
+}
 
 export default SettingManager

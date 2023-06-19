@@ -80,9 +80,9 @@
 import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/renderer/store/store";
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
 import TactonGraph from "./TactonGraph.vue";
-import { InteractionMode } from "@/types/GeneralType";
+import { InteractionMode } from "@sharedTypes/roomTypes";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
   name: "TactonScreen",

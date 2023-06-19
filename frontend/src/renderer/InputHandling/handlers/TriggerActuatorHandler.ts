@@ -19,24 +19,20 @@ const TriggerActuatorHandler = (): InputHandler => {
       const actions = binding.actions.filter(isTriggerActuatorAction);
       if (binding.activeTriggers > 0) {
         if (!wasActive) {
-          if (binding.activeTriggers > 0) {
-            if (!wasActive) {
-              actions.forEach(action => {
-                const intensity = action.intensity * globalIntensity;
-                instructions.push({
-                  intensity,
-                  channels: [action.channel]
-                })
-              })
-            }
-          } else {
-            if (actions.length > 0) {
-              instructions.push({
-                channels: actions.map(action => action.channel),
-                intensity: 0
-              })
-            }
-          }
+          actions.forEach(action => {
+            const intensity = action.intensity * globalIntensity;
+            instructions.push({
+              intensity,
+              channels: [action.channel]
+            })
+          })
+        }
+      } else {
+        if (actions.length > 0) {
+          instructions.push({
+            channels: actions.map(action => action.channel),
+            intensity: 0
+          })
         }
       }
       return instructions

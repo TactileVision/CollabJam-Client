@@ -1,10 +1,7 @@
 
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../store';
-import { User } from '../roomSettings/roomSettings';
-import { stat } from 'original-fs';
-import { InstructionServerPayload, TactonInstruction, Tacton, isInstructionSetParameter, isInstructionWait } from '@/types/TactonTypes';
-import { TactonMutations, TactonSettingsActionTypes } from '../tactonSettings/tactonSettings';
+import { InstructionServerPayload, TactonInstruction, Tacton, isInstructionSetParameter, isInstructionWait } from '@sharedTypes/tactonTypes';
 /**
  * Types
  * 
@@ -32,10 +29,12 @@ export const createTactonInstructionsFromPayload = (payload: InstructionServerPa
 export const createTacton = () => {
   const t: Tacton = {
     uuid: Date.now().toString(36) + Math.random().toString(36).substring(2),
-    recordDate: new Date(),
+    metadata: {
+      recordDate: new Date(),
+      name: 'unnamed_tacton',
+      favorite: false
+    },
     instructions: [] as TactonInstruction[],
-    name: 'unnamed_tacton',
-    favorite: false
   }
   return t
 }

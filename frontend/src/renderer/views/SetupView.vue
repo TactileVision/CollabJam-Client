@@ -119,7 +119,7 @@ import {
 import DeviceSection from "../components/deviceComponents/DeviceSection.vue";
 import ParticipantSection from "../components/deviceComponents/ParticipantSection.vue";
 import { sendSocketMessage } from "../CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "../CommunicationManager/WebSocketManager/ws_types";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 
 export default defineComponent({

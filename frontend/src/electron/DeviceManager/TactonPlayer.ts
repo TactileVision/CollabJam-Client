@@ -1,12 +1,9 @@
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
-import { isInstructionWait, isInstructionSetParameter } from "@/types/TactonTypes";
-import { store } from "@/renderer/store/store";
-import { InteractionMode } from "@/types/GeneralType";
-import { TactonInstruction, InstructionWait, InstructionSetParameter } from "@/types/TactonTypes";
-import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
-
+import { store, useStore } from "@/renderer/store/store";
+import { InteractionMode } from "@sharedTypes/roomTypes";
+import { InstructionSetParameter, InstructionWait, TactonInstruction, isInstructionSetParameter, isInstructionWait } from "@sharedTypes/tactonTypes";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 const updateTimeInterval = 10
 // Store current playback time in the client store to move the cursor when playing back and stop playback after 20s

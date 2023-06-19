@@ -1,4 +1,4 @@
-import { InteractionMode, Room, User } from "../types";
+import { InteractionMode, Room } from "@sharedTypes/roomTypes";
 
 //contain all metadata of one room
 export let roomList: Map<string, Room> = new Map<string, Room>();

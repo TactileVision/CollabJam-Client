@@ -4,10 +4,10 @@ import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import { GeneralMutations } from "../../store/modules/generalSettings/generalSettings";
 import { Store } from "../../store/store";
 import { handleMessage } from "./messageHandler";
-import { WS_MSG_TYPE } from "./ws_types";
 import { Instruction } from "@/renderer/InputHandling/InputHandlerManager";
 import { debouncedHandling } from "@/renderer/InputHandling/Debouincing";
 import router from "@/renderer/router";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 let clientWs = null as WebSocket | null;
 

@@ -1,32 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 import { isWellFormed, processTactonInstructions } from "../util/tacton";
+import { TactileTask, Tacton, TactonInstruction, impl } from "@sharedTypes/tactonTypes";
 
-/**
- * custom types used in the backend
- */
-export interface User {
-    id: string,
-    name: string,
-    color: string
-}
 
-export interface RoomMetaData {
-    id: string,
-    name: string,
-    description: string,
-    recordingNamePrefix: string
-}
-
-export interface Room extends RoomMetaData {
-    mode: InteractionMode,
-    maxDurationRecord: number,
-    currentRecordingTime: number
-}
-
-export interface TactileTask {
-    channel: number[],
-    intensity: number
-}
 
 export interface ServerInstruction extends TactileTask {
     keyId: string
@@ -43,47 +19,6 @@ export interface Channel {
     intensityList: Intensity[],
 }
 
-// interface InstructionSetParameter {
-//     setParameter: any
-// }
-export interface InstructionSetParameter {
-    setParameter: {
-        channelIds: number[];
-        intensity: number;
-    }
-}
-export interface InstructionWait {
-    wait: {
-        miliseconds: number
-    }
-}
-
-export const isInstructionWait = (instruction: TactonInstruction) => {
-    return 'wait' in instruction
-}
-export const isInstructionSetParameter = (instruction: TactonInstruction) => {
-    return 'setParameter' in instruction
-}
-export type TactonInstruction = InstructionSetParameter | InstructionWait;
-
-
-export interface InstructionToClient {
-    channelIds: number[],
-    intensity: number,
-    author: User | undefined
-}
-
-
-export interface Tacton {
-    uuid: string
-    name: string
-    favorite: boolean
-    recordDate: Date
-    instructions: TactonInstruction[]
-}
-
-export function impl<I>(i: I) { return i; }
-
 export class TactonRecording {
     uuid: string = uuidv4().toString()
     name: string = ""
@@ -94,9 +29,11 @@ export class TactonRecording {
     getTacton(): Tacton {
         return impl<Tacton>({
             uuid: this.uuid,
-            name: this.name,
-            favorite: this.favorite,
-            recordDate: this.recordDate == undefined ? new Date() : this.recordDate,
+            metadata: {
+                name: this.name,
+                favorite: this.favorite,
+                recordDate: this.recordDate == undefined ? new Date() : this.recordDate,
+            },
             instructions: this.instructions
         })
 
@@ -110,7 +47,7 @@ export class TactonRecordingSession {
     history: Tacton[] = [] as Tacton[]
     lastModified: number = new Date().getTime()
 
-    constructor(history : Tacton[]) {
+    constructor(history: Tacton[]) {
         this.history = history
     }
 
@@ -130,14 +67,6 @@ export class TactonRecordingSession {
         return isValid
     }
 }
-
-
-export enum InteractionMode {
-    Jamming = 1,
-    Recording,
-    Playback
-}
-
 export interface InstructionFromClient {
     keyId: string;
     channels: number[];

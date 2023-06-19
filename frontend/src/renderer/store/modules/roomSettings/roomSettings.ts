@@ -1,25 +1,11 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState } from '../../store';
-import { InteractionMode } from '@/types/GeneralType';
+import { InteractionMode, User, Room } from '@sharedTypes/roomTypes';
 /**
  * Types
  * 
  */
-export interface User {
-  id: string,
-  name: string,
-  color: string
-}
 
-export interface Room {
-  id: string,
-  name: string,
-  description: string,
-  participants: User[],
-  isRecording: boolean,
-  maxDurationRecord: number,
-  recordingNamePrefix: string
-}
 
 export enum RoomState {
   Create = "Create",
@@ -175,9 +161,10 @@ export const actions: ActionTree<State, RootState> & Actions = {
         name: props.room.name,
         description: props.room.description,
         participants: props.participants,
-        isRecording: props.room.isRecording,
         maxDurationRecord: props.room.maxDurationRecord,
-        recordingNamePrefix: props.room.recordingNamePrefix
+        recordingNamePrefix: props.room.recordingNamePrefix,
+        mode: props.room.mode,
+        currentRecordingTime: 0
       }
     })
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
@@ -191,15 +178,17 @@ export const actions: ActionTree<State, RootState> & Actions = {
         name: props.room.name,
         description: props.room.description,
         participants: props.participants,
-        isRecording: props.room.isRecording,
+        // isRecording: props.room.isRecording,
         maxDurationRecord: props.room.maxDurationRecord,
-        recordingNamePrefix: props.room.recordingNamePrefix
+        recordingNamePrefix: props.room.recordingNamePrefix,
+        mode: props.room.mode,
+        currentRecordingTime: 0
       }
     })
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
   [RoomSettingsActionTypes.setAvailableRoomList]({ commit }, props: { rooms: Room[] }) {
-    commit(RoomMutations.SET_AVAILABLE_ROOMS, props.rooms) 
+    commit(RoomMutations.SET_AVAILABLE_ROOMS, props.rooms)
   }
 };
 

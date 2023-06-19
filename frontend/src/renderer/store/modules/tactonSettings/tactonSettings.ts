@@ -1,9 +1,9 @@
 
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../store';
-import { User } from '../roomSettings/roomSettings';
+import { User } from '@sharedTypes/roomTypes';
 import { Instruction } from '@/renderer/InputHandling/InputHandlerManager';
-import { InstructionToClient } from '@/types/GeneralType';
+import { InstructionToClient } from '@sharedTypes/tactonTypes';
 /**
  * Types
  * 

@@ -3,7 +3,7 @@
 //store tacton in file system
 import { readdir, writeJSON, ensureDir, readJSON, pathExists } from 'fs-extra'
 
-import { Tacton } from "../types"
+import { Tacton } from "@sharedTypes/tactonTypes"
 const basePath = "./userData"
 
 export function saveTactonAsJson(roomId: string, tacton: Tacton) {

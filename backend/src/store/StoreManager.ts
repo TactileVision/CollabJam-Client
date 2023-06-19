@@ -1,11 +1,13 @@
-import { InstructionFromClient, InstructionToClient, InteractionMode, Room, Tacton, TactonRecording, User } from "../types";
-import { WS_MSG_TYPE } from "../webSocket/ws_types";
+import { WS_MSG_TYPE } from "../../../shared/websocketTypes";
 import RoomModule from "./RoomModule";
 import TactonModule from "./TactonModule";
 import UserModule from "./UserModule";
 import { RecordingTimer } from "../util/RecordingTimer";
 import { setName } from "../util/tacton";
 import { saveTactonAsJson } from "../util/FileStorage";
+import { Room, User, InteractionMode } from "@sharedTypes/roomTypes";
+import { Tacton, InstructionToClient } from "@sharedTypes/tactonTypes";
+import { InstructionFromClient } from "src/types";
 let recordingMetronome = new RecordingTimer(20, RoomModule.roomList, TactonModule.sessions, UserModule.wsRoomList)
 
 /**

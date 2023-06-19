@@ -1,4 +1,5 @@
-import { InstructionToClient, Tacton, TactonInstruction, TactonRecordingSession, impl } from "../types"
+import { InstructionToClient } from "@sharedTypes/tactonTypes"
+import { TactonRecordingSession } from "../types"
 import { loadTactonsFromJSON } from "../util/FileStorage"
 
 

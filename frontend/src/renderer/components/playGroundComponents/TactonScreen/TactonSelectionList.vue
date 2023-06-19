@@ -10,7 +10,8 @@
 				"Edit" }}
 			</v-btn>
 			<div v-if="showEditPrefix" class="editPrefix">
-							<v-text-field  v-model="editPrefixText" id="edit-prefix-input" type="text" label="Enter prefix" variant="outlined"></v-text-field>
+				<v-text-field v-model="editPrefixText" id="edit-prefix-input" type="text" label="Enter prefix"
+					variant="outlined"></v-text-field>
 				<v-btn :disabled="editPrefixText == '' || editPrefixText == store.state.roomSettings.recordingNamePrefix"
 					@click="updatePrefix" color="primary"> Save </v-btn>
 			</div>
@@ -93,10 +94,9 @@ import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
 import { playbackRecordedTacton } from "@/electron/DeviceManager/TactonPlayer";
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "@/renderer/CommunicationManager/WebSocketManager/ws_types";
-import { InteractionMode } from "@/types/GeneralType";
-import { Tacton } from "@/types/TactonTypes";
-import { getTrailingCommentRanges } from "typescript";
+import { InteractionMode } from "@sharedTypes/roomTypes";
+import { Tacton } from "@sharedTypes/tactonTypes";
+import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
 	name: "TactonSelectionList",
@@ -159,12 +159,16 @@ export default defineComponent({
 			return
 		},
 		toggleFavorite(tacton: Tacton) {
-			tacton.favorite = !tacton.favorite
-
+			// tacton.metadata.favorite = !tacton.metadata.favorite
+			sendSocketMessage(WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV, {
+				roomId: this.store.state.roomSettings.id,
+				tactonId: tacton.uuid,
+				metadata: tacton.metadata
+			})
 		},
 		shouldDisplay(tacton: Tacton) {
 			if (!this.filteredView) return true
-			return tacton.favorite
+			return tacton.metadata.favorite
 		},
 		getTactons() {
 			if (this.filteredView) {
