@@ -1,8 +1,10 @@
 import { TactileAction } from "@/types/InputBindings";
 import { InputHandler, Instruction } from "../InputHandlerManager";
+import { resolveIntensity } from "../IntensityStore";
 
 interface ActuatorConfig {
   channels: number[];
+  intensity: number | string;
   minValue: number;
   maxValue: number;
 }
@@ -17,26 +19,51 @@ const isDynamicActuatorAction = (action: TactileAction): action is DynamicActuat
 }
 
 const DynamicActuatorHandler = (): InputHandler => {
+  const lastIntensities = new Map<number, number>();
   const activeChannels = new Set<number>();
+  const sendThreshold = 1.0 / 32;
+
   return {
     onInput: ({ binding, value, globalIntensity }) => {
       const instructions: Instruction[] = [];
 
       binding.actions.filter(isDynamicActuatorAction).forEach(action => {
-        const active = action.actuators.filter(config => config.minValue < value && config.maxValue >= value).flatMap(config => config.channels);
-        const inactive = [...activeChannels].filter(channel => !active.includes(channel));
+        const configsWithIndex = action.actuators.map((config, index) => ({ config, index }));
+        const active = configsWithIndex.filter(({ config }) => config.minValue < value && config.maxValue >= value).map(({ index }) => index);
+        const inactive = configsWithIndex.filter(({ index }) => !active.includes(index)).map(({ index }) => index);
 
-        const newActive = active.filter(channel => !activeChannels.has(channel));
-        if(newActive.length > 0) {
-          newActive.forEach(channel => activeChannels.add(channel));
-          instructions.push({ channels: newActive, intensity: globalIntensity });
+        const stillActiveChannels = new Set(active.flatMap(configIndex => action.actuators[configIndex].channels));
+        if(active.length > 0) {
+          active.forEach(configIndex => {
+            const config = action.actuators[configIndex];
+            const intensity = resolveIntensity(config.intensity) * globalIntensity;
+            const lastIntensity = lastIntensities.get(configIndex) || 0
+
+            if(intensity > lastIntensity + sendThreshold || intensity < lastIntensity - sendThreshold) {
+              lastIntensities.set(configIndex, intensity);
+              config.channels.forEach(channel => activeChannels.add(channel));
+              instructions.push({
+                channels: [...config.channels],
+                intensity
+              });
+            }
+          });
         }
 
         if(inactive.length > 0) {
-          inactive.forEach(channel => activeChannels.delete(channel));
-          instructions.push({ channels: inactive, intensity: 0 })
+          inactive.forEach(configIndex => {
+            lastIntensities.set(configIndex, 0);
+          });
+
+          const maybeInactiveChannels = inactive.flatMap(configIndex => action.actuators[configIndex].channels);
+          const inactiveChannels = new Set(maybeInactiveChannels.filter(channel => activeChannels.has(channel) && !stillActiveChannels.has(channel)));
+
+          if(inactiveChannels.size > 0) {
+            inactiveChannels.forEach(channel => activeChannels.delete(channel));
+            instructions.push({ channels: [...inactiveChannels], intensity: 0 })
+          }
         }
-      })
+      });
 
       return instructions;
     }
