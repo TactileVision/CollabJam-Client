@@ -19,107 +19,154 @@ const profiles: StateProfile[] = [
     imagePath: mappingAImage,
     deviceType: DeviceType.StandardGamepad,
     bindings: [
+            //MARK: Face buttons
       {
         inputs: [
-          { type: UserInputType.GamepadAxis, index: 0 } as GamepadAxisInput,
+          { type: UserInputType.GamepadButton, index: 0 } as GamepadButtonInput,
         ],
         activeTriggers: 0,
-        uid: "UNIQUE",
-        position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "dynamic",
+        uid: "Mapping_A_A",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 2,
+            intensity: 1.0,
+          } as TactileAction,
+        ],
+        //grid properties
+        name: "Trigger Actuator 3 with face button A",
         color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
+      },
+      {
+        inputs: [
+          { type: UserInputType.GamepadButton, index: 1 } as GamepadButtonInput,
+        ],
+        activeTriggers: 0,
+        uid: "Mapping_A_B",
         actions: [
           {
-            type: "trigger_actuator_with_dynamic_intensity",
+            type: "trigger_actuator",
+            channel: 1,
+            intensity: 1.0,
+          } as TactileAction,
+        ],
+        //grid properties
+        name: "Trigger Actuator 2 with face button B",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
+      },
+      {
+        inputs: [
+          { type: UserInputType.GamepadButton, index: 2 } as GamepadButtonInput,
+        ],
+        activeTriggers: 0,
+        uid: "Mapping_A_X",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 3,
+            intensity: 1.0,
+          } as TactileAction,
+        ],
+        //grid properties
+        name: "Trigger Actuator 1 with face button X",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
+      },
+      {
+        inputs: [
+          { type: UserInputType.GamepadButton, index: 3 } as GamepadButtonInput,
+        ],
+        activeTriggers: 0,
+        uid: "Mapping_A_Y",
+        actions: [
+          {
+            type: "trigger_actuator",
             channel: 0,
+            intensity: 1.0,
           } as TactileAction,
         ],
+        //grid properties
+        name: "Trigger Actuator 1 with face button Y",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
       },
+      //MARK: DPAD
       {
         inputs: [
-          {
-            type: UserInputType.GamepadButton,
-            index: 6,
-          } as GamepadButtonInput,
+          { type: UserInputType.GamepadButton, index: 12 } as GamepadButtonInput,
         ],
         activeTriggers: 0,
-        uid: "SET_INTENSITY",
-        position: { x: 4, y: 4, w: 1, h: 1 },
-        name: "set",
-        color: "#00ffff",
+        uid: "Mapping_A_DUp",
         actions: [
           {
-            type: "set_intensity_action",
-            name: "intensity_test",
-          } as TactileAction,
-        ],
-      },
-      {
-        inputs: [
-          {
-            type: UserInputType.GamepadButton,
-            index: 0,
-          } as GamepadButtonInput,
-        ],
-        activeTriggers: 0,
-        uid: "USE_INTENSITY",
-        position: { x: 3, y: 4, w: 1, h: 1 },
-        name: "get",
-        color: "#00ffff",
-        actions: [
-          {
-            type: "trigger_actuator_with_variable_intensity_action",
-            name: "intensity_test",
+            type: "trigger_actuator",
             channel: 0,
+            intensity: 1.0,
           } as TactileAction,
         ],
+        //grid properties
+        name: "Trigger Actuator 1 with D-Pad Up",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
       },
       {
         inputs: [
-          {
-            type: UserInputType.GamepadButton,
-            index: 7,
-          } as GamepadButtonInput,
+          { type: UserInputType.GamepadButton, index: 13} as GamepadButtonInput,
         ],
         activeTriggers: 0,
-        uid: "LOCATION",
-        position: { x: 7, y: 4, w: 1, h: 1 },
-        name: "set",
-        color: "#7CFC00",
+        uid: "Mapping_A_DDown",
         actions: [
           {
-            type: "dynamic_actuator_action",
-            name: "dynamic actuator",
-            actuators: [
-              {
-                channels: [0, 4],
-                minValue: 0,
-                maxValue: 0.2,
-              },
-              {
-                channels: [1, 3],
-                minValue: 0.2,
-                maxValue: 0.4,
-              },
-              {
-                channels: [2],
-                minValue: 0.4,
-                maxValue: 0.6,
-              },
-              {
-                channels: [3, 1],
-                minValue: 0.6,
-                maxValue: 0.8,
-              },
-              {
-                channels: [4, 0],
-                minValue: 0.8,
-                maxValue: 1,
-              },
-            ],
+            type: "trigger_actuator",
+            channel: 2,
+            intensity: 1.0,
           } as TactileAction,
         ],
+        //grid properties
+        name: "Trigger Actuator 3 with D-Pad Down",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
       },
+      {
+        inputs: [
+          { type: UserInputType.GamepadButton, index: 14 } as GamepadButtonInput,
+        ],
+        activeTriggers: 0,
+        uid: "Mapping_A_DLeft",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 1,
+            intensity: 1.0,
+          } as TactileAction,
+        ],
+        //grid properties
+        name: "Trigger Actuator 2 with D-Pad Left",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
+      },
+      {
+        inputs: [
+          { type: UserInputType.GamepadButton, index: 15 } as GamepadButtonInput,
+        ],
+        activeTriggers: 0,
+        uid: "Mapping_A_DRight",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 3,
+            intensity: 1.0,
+          } as TactileAction,
+        ],
+        //grid properties
+        name: "Trigger Actuator 4 with with D-Pad Right",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
+      },
+
+
     ],
   },
   {
@@ -130,7 +177,7 @@ const profiles: StateProfile[] = [
     bindings: [
       {
         inputs: [
-          { type: UserInputType.GamepadButton, index: 0 } as GamepadButtonInput,
+          { type: UserInputType.GamepadButton, index: 0 } as GamepadButtonInput, // A
         ],
         activeTriggers: 0,
         uid: "UNIQUE_1",
