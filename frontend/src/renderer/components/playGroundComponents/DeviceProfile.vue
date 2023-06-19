@@ -1,0 +1,74 @@
+<template>
+  <h3>{{ name }}</h3>
+  <v-row>
+    <v-col>
+      <inline-svg :src="imagePath" />
+    </v-col>
+    <v-col>
+      <v-select v-model="selectedProfileUid" label="Profile" :items="allProfileOptions"></v-select>
+      <v-btn @click="updateProfile" color="success">Update</v-btn>
+    </v-col>
+  </v-row>
+</template>
+
+<script lang="ts">
+import getDeviceName from "@/renderer/InputDetection/getDeviceName";
+import { useStore } from "@/renderer/store/store";
+import { InputDevice } from "@/types/InputBindings";
+import { defineComponent } from "@vue/runtime-core";
+import defaultImagePath from "@/renderer/assets/controller.svg";
+import { PlayGroundMutations } from "@/renderer/store/modules/playGround/types";
+
+export default defineComponent({
+  name: "DeviceProfile",
+  props: {
+    device: {
+      type: Object as () => InputDevice,
+      required: true,
+    },
+  },
+  data() {
+    return {
+      store: useStore(),
+      selectedProfileUid: null as string | null,
+    };
+  },
+  mounted() {
+    const profile = this.currentProfile;
+    if(profile)
+      this.selectedProfileUid = profile.uid;
+    else
+      this.selectedProfileUid = this.allProfileOptions[0]?.value;
+  },
+  computed: {
+    selectedProfile() {
+      return this.store.state.playGround.profiles.find(profile => profile.uid == this.selectedProfileUid);
+    },
+    currentProfile() {
+      return this.store.getters.getProfileByDevice(this.device);
+    },
+    name() {
+      return getDeviceName(this.device);
+    },
+    imagePath() {
+      if(this.selectedProfile) {
+        return this.selectedProfile.imagePath
+      } else {
+        return defaultImagePath;
+      }
+    },
+    allProfileOptions() {
+      const allProfiles = this.store.state.playGround.profiles;
+      return allProfiles
+        .filter(profile => profile.deviceType === this.device.type)
+        .map(profile => ({ title: profile.name, value: profile.uid }));
+    },
+  },
+  methods: {
+    updateProfile() {
+      if(!this.selectedProfileUid) return;
+      this.store.commit(PlayGroundMutations.UPDATE_PROFILE, { device: this.device, profileUid: this.selectedProfileUid })
+    }
+  },
+});
+</script>

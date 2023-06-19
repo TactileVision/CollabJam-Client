@@ -1,12 +1,6 @@
 import { UserInput } from "@/types/InputDetection";
-import { InputAdapter, InputAdapterConfig } from "./InputAdapter";
-import { DeviceType, InputDevice } from "@/types/InputBindings";
-
-export interface GamepadDevice extends InputDevice {
-  type: DeviceType.StandardGamepad;
-  name: string;
-  index: number;
-}
+import { InputDevice } from "@/types/InputBindings";
+import { InputAdapter } from "./InputAdapter/InputAdapterRegistry";
 
 export interface InputEvent {
   device: InputDevice;
@@ -16,11 +10,11 @@ export interface InputEvent {
 }
 
 export interface InputDetectionConfig {
-  adapters: ((config: InputAdapterConfig) => InputAdapter)[];
+  adapters: readonly InputAdapter[];
   axesThreshold: number;
   buttonThreshold: number;
   throttleTimeout: number;
-  onInput: (event: InputEvent) => void
+  onInput: (event: InputEvent) => void;
 }
 
 export interface InputDetection {

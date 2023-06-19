@@ -50,7 +50,7 @@
 <script lang="ts">
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "@vue/runtime-core";
-import { InputDevice, isActuatorAction, isIntensityAction } from "@/types/InputBindings";
+import { isActuatorAction, isIntensityAction } from "@/types/InputBindings";
 import getInputName from "@/renderer/InputDetection/getInputName";
 import { lightenDarkenColor } from "../../../lib/colors";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/playGround/types";

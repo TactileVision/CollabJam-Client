@@ -1,5 +1,6 @@
 import { TactileAction } from "@/types/InputBindings";
 import { InputHandler, Instruction } from "../InputHandlerManager";
+import { getIntensity, setIntensity } from "../IntensityStore";
 
 interface SetIntensityAction extends TactileAction {
   type: "set_intensity_action";
@@ -21,7 +22,6 @@ const isTriggerAction = (action: TactileAction): action is TriggerActuatorWithVa
 }
 
 const VariableIntensityHandler = (): InputHandler => {
-  const intensities: { [key: string]: number } = {};
   const lastIntensity: Map<string, Map<number, number>> = new Map<string, Map<number, number>>();
   const sendThreshold = 1.0 / 24
 
@@ -30,7 +30,7 @@ const VariableIntensityHandler = (): InputHandler => {
       const instructions: Instruction[] = [];
 
       binding.actions.filter(isSetIntensityAction).forEach(action => {
-        intensities[action.name] = Math.abs(value);
+        setIntensity(action.name, Math.abs(value));
       });
 
       const triggerActions = binding.actions.filter(isTriggerAction);
@@ -50,18 +50,19 @@ const VariableIntensityHandler = (): InputHandler => {
           //only update channels that have differing intensities in comparison to last iteration
           const changedVibratingChannels: number[] = []
           const changedDeactivatedChannels: number[] = []
+          const storedIntensity = getIntensity(name);
           channels.forEach(c => {
             let int = li.get(c)
             if (int == undefined) {
-              int = binding.activeTriggers == 0 ? 0 : intensities[name];
+              int = binding.activeTriggers == 0 ? 0 : storedIntensity;
               li.set(c, int);
             }
             if (binding.activeTriggers == 0 && li.get(c) != 0) {
               changedDeactivatedChannels.push(c)
               li.set(c, 0)
-            } else if (((int > intensities[name] + sendThreshold) || (int < intensities[name] - sendThreshold))) {
+            } else if (((int > storedIntensity + sendThreshold) || (int < storedIntensity - sendThreshold))) {
               changedVibratingChannels.push(c)
-              li.set(c, intensities[name])
+              li.set(c, storedIntensity)
             }
             lastIntensity.set(name, li)
           })
@@ -69,7 +70,7 @@ const VariableIntensityHandler = (): InputHandler => {
           if (changedVibratingChannels.length > 0) {
             instructions.push({
               channels: changedVibratingChannels,
-              intensity: (intensities[name] || 0) * globalIntensity,
+              intensity: (storedIntensity || 0) * globalIntensity,
             })
           }
           if (changedDeactivatedChannels.length > 0) {

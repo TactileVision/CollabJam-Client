@@ -4,10 +4,11 @@ import { RootState, useStore } from '../../store';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayGroundActionTypes, PlayGroundMutations } from './types';
 import { IPC_CHANNELS } from '@/electron/IPCMainManager/IPCChannels';
-import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputDeviceBindings, InputProfile, KeyboardDevice, TactileAction, compareDevices } from '@/types/InputBindings';
+import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputProfile, KeyboardDevice, TactileAction, compareDevices } from '@/types/InputBindings';
 import { GamepadAxisInput, GamepadButtonInput, KeyInput, UserInput, UserInputType, compareInputs } from '@/types/InputDetection';
 import { executeAllInputHandlers } from '@/renderer/InputHandling/InputHandlerManager';
 import { TactonMutations } from '../tactonSettings/tactonSettings';
+import profiles from './profiles';
 
 export interface Layout {
     x: number,
@@ -35,142 +36,19 @@ export type State = {
     inEditMode: boolean
 };
 
-const profile = {
-    uid: uuidv4(),
-    name: "Default",
-    deviceType: DeviceType.StandardGamepad,
-    bindings: [
-        {
-            inputs: [{ type: UserInputType.GamepadAxis, index: 0 } as GamepadAxisInput],
-            activeTriggers: 0,
-            uid: "UNIQUE",
-            position: { x: 5, y: 3, w: 1, h: 1 },
-            name: "dynamic",
-            color: "#ff0000",
-            actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 0 } as TactileAction]
-        },
-        {
-            inputs: [{ type: UserInputType.GamepadButton, index: 6 } as GamepadButtonInput],
-            activeTriggers: 0,
-            uid: "SET_INTENSITY",
-            position: { x: 1, y: 1, w: 1, h: 1 },
-            name: "set",
-            color: "#00ffff",
-            actions: [{ type: "set_intensity_action", name: "intensity_test" } as TactileAction]
-        },
-        {
-            inputs: [{ type: UserInputType.GamepadButton, index: 0 } as GamepadButtonInput],
-            activeTriggers: 0,
-            uid: "USE_INTENSITY",
-            position: { x: 1, y: 2, w: 1, h: 1 },
-            name: "get",
-            color: "#00ffff",
-            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 1 } as TactileAction]
-        },
-        {
-            inputs: [{ type: UserInputType.GamepadButton, index: 1 } as GamepadButtonInput],
-            activeTriggers: 0,
-            uid: "USE_INTENSITY2",
-            position: { x: 2, y: 1, w: 1, h: 1 },
-            name: "get",
-            color: "#00ffff",
-            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 2 } as TactileAction]
-        },
-        {
-            inputs: [{ type: UserInputType.GamepadButton, index: 2 } as GamepadButtonInput],
-            activeTriggers: 0,
-            uid: "USE_INTENSITY3",
-            position: { x: 1, y: 0, w: 1, h: 1 },
-            name: "get",
-            color: "#00ffff",
-            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 3 } as TactileAction]
-        },
-        {
-            inputs: [{ type: UserInputType.GamepadButton, index: 3 } as GamepadButtonInput],
-            activeTriggers: 0,
-            uid: "USE_INTENSITY4",
-            position: { x: 0, y: 1, w: 1, h: 1 },
-            name: "get",
-            color: "#00ffff",
-            actions: [{ type: "trigger_actuator_with_variable_intensity_action", name: "intensity_test", channel: 4 } as TactileAction]
-        },
-        {
-            inputs: [{ type: UserInputType.GamepadButton, index: 7 } as GamepadButtonInput],
-            activeTriggers: 0,
-            uid: "LOCATION",
-            position: { x: 7, y: 4, w: 1, h: 1 },
-            name: "set",
-            color: "#7CFC00",
-            actions: [
-                {
-                    type: "dynamic_actuator_action",
-                    name: "dynamic actuator",
-                    actuators: [
-                        {
-                            channels: [0, 4],
-                            minValue: 0,
-                            maxValue: 0.2
-                        },
-                        {
-                            channels: [1, 3],
-                            minValue: 0.2,
-                            maxValue: 0.4
-                        },
-                        {
-                            channels: [2],
-                            minValue: 0.4,
-                            maxValue: 0.6
-                        },
-                        {
-                            channels: [3, 1],
-                            minValue: 0.6,
-                            maxValue: 0.8
-                        },
-                        {
-                            channels: [4, 0],
-                            minValue: 0.8,
-                            maxValue: 1
-                        }
-                    ]
-                } as TactileAction
-            ]
 
-        }
-    ]
-}
-const keyboardProfile = {
-    uid: uuidv4(),
-    name: "Default",
-    deviceType: DeviceType.Keyboard,
-    bindings: [
-        {
-            inputs: [{ type: UserInputType.Key, index: 0, key: 'S' } as KeyInput],
-
-            activeTriggers: 0,
-            uid: "UNIQUE",
-            position: { x: 5, y: 5, w: 1, h: 1 },
-            name: "dynamic",
-            color: "#ff0000",
-            actions: [{ type: "trigger_actuator_with_dynamic_intensity", channel: 1 } as TactileAction]
-        }
-    ]
-}
 export const state: State = {
     gridLayout: { x: 11, y: 8 },
-    profiles: [profile, keyboardProfile],
+    profiles: profiles,
     selectedProfiles: [
         {
-            device: { type: DeviceType.StandardGamepad, name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 02fd)", index: 0 } as GamepadDevice,
+            device: { type: DeviceType.StandardGamepad, name: "©Microsoft Corporation Controller (STANDARD GAMEPAD Vendor: 045e Product: 028e)", index: 0 } as GamepadDevice,
             profileIndex: 0
         },
         {
-            device: { type: DeviceType.StandardGamepad, name: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)", index: 1 } as GamepadDevice,
-            profileIndex: 0
+            device: { type: DeviceType.Keyboard },
+            profileIndex: 3,
         },
-        {
-            device: { type: DeviceType.Keyboard } as KeyboardDevice,
-            profileIndex: 1
-        }
     ],
     globalIntensity: 1,
     inEditMode: false,
@@ -186,6 +64,7 @@ export type Mutations<S = State> = {
     [PlayGroundMutations.DELETE_ITEM_FROM_GRID](state: S, payload: { profileUid: string, uid: string }): void
     [PlayGroundMutations.UPDATE_GLOBAL_INTENSITY](state: S, intensity: number): void
     [PlayGroundMutations.UPDATE_EDIT_MDOE](state: S, edditModeOn: boolean): void
+    [PlayGroundMutations.UPDATE_PROFILE](state: S, payload: { device: InputDevice; profileUid: string }): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -223,6 +102,22 @@ export const mutations: MutationTree<State> & Mutations = {
     [PlayGroundMutations.UPDATE_EDIT_MDOE](state, edditModeOn) {
         state.inEditMode = edditModeOn;
     },
+    [PlayGroundMutations.UPDATE_PROFILE](state, { device, profileUid }) {
+        const profileIndex = state.profiles.findIndex(
+            (profile) => profile.uid === profileUid
+        );
+        if (profileIndex == -1) return;
+
+        const selectedProfileIndex = state.selectedProfiles.findIndex(
+            ({ device: selectedDevice }) => compareDevices(selectedDevice, device)
+        );
+
+        if (selectedProfileIndex === -1) {
+          state.selectedProfiles.push({ device, profileIndex });
+        } else {
+          state.selectedProfiles[selectedProfileIndex].profileIndex = profileIndex;
+        }
+    }
 };
 
 /**
