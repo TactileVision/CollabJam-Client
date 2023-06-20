@@ -78,6 +78,25 @@ const profiles: StateProfile[] = [
         inputs: [
           {
             type: UserInputType.GamepadButton,
+            index: 1,
+          } as GamepadButtonInput
+        ],
+        activeTriggers: 0,
+        uid: "LOCK_INTENSITY",
+        position: { x: 3, y:  5, w: 1, h: 1 },
+        name: "lock",
+        color: "#00ffff",
+        actions: [
+          {
+            type: "lock_intensity_action",
+            name: "intensity_test",
+          } as TactileAction
+        ]
+      },
+      {
+        inputs: [
+          {
+            type: UserInputType.GamepadButton,
             index: 7,
           } as GamepadButtonInput,
         ],
