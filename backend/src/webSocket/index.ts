@@ -1,9 +1,11 @@
-import { WS_MSG_TYPE } from "./ws_types";
 import StorageManager from "../store/StoreManager"
 import RoomModule from "../store/RoomModule";
 import UserModule from "../store/UserModule";
 import TactonModule from "../store/TactonModule";
-import { InteractionMode, isInstructionSetParameter, InstructionSetParameter, Tacton } from "../types";
+import { InteractionMode } from "@sharedTypes/roomTypes";
+import { saveTactonAsJson } from "../util/FileStorage";
+import { Tacton } from "../../../shared/tactonTypes"
+import { WS_MSG_TYPE, ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
 
 interface SocketMessage {
     type: WS_MSG_TYPE;
@@ -25,7 +27,6 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
     //console.log(`Received message from user ${client}`);
     try {
         let msg: SocketMessage = JSON.parse(data);
-        console.log(msg)
         switch (msg.type) {
             case WS_MSG_TYPE.GET_AVAILABLE_ROOMS_SERV: {
                 /**
@@ -181,7 +182,6 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 */
                 // const r = RoomModule.getRoomInfo(msg.payload.roomId)
                 // if (r?.isRecording) {
-                console.log(msg.payload.instructions)
                 StorageManager.processInstructionsFromClient(msg.payload.roomId, client, msg.payload.instructions, msg.startTimeStamp)
                 // }
                 break;
@@ -264,6 +264,25 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                             payload: { room: r, participants: UserModule.getParticipants(msg.payload.roomId) }
                         }))
                     }
+                }
+
+                break;
+            }
+            case WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV: {
+                const d = msg.payload as ChangeTactonMetadata
+                // console.log(d)
+                const s = TactonModule.sessions.get(d.roomId)
+                // console.log(s)
+                if (s == undefined) return
+                const t = s.history.find(e => { return e.uuid == d.tactonId })
+                if (t == undefined) return
+
+                if (d.metadata.favorite != t.metadata.favorite || d.metadata.name != t.metadata.name || d.metadata.recordDate != t.metadata.recordDate) {
+                    const index = s.history.findIndex(e => { return e.uuid == d.tactonId })
+                    // console.log(`Detected change in metadata at index ${index}`)
+                    s.history[index].metadata = d.metadata
+                    StorageManager.broadCastMessage(d.roomId, WS_MSG_TYPE.CHANGE_TACTON_METADATA_CLI, d, msg.startTimeStamp)
+                    saveTactonAsJson(d.roomId, s.history[index])
                 }
 
                 break;

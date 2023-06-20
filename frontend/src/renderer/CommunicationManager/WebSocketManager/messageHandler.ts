@@ -9,7 +9,7 @@ import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/mod
 import { RouterNames } from "@/types/Routernames";
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { Tacton } from "@sharedTypes/tactonTypes";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { ChangeTactonMetadata, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 
 export interface SocketMessage {
@@ -199,6 +199,14 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 const t: Tacton = msg.payload as Tacton
                 store.dispatch(TactonPlaybackActionTypes.addTacton, t)
                 store.dispatch(TactonPlaybackActionTypes.selectTacton, t.uuid)
+            }
+            break;
+        }
+        case WS_MSG_TYPE.CHANGE_TACTON_METADATA_CLI: {
+            const d: ChangeTactonMetadata = msg.payload
+            const t = store.state.tactonPlayback.tactons.find(e => e.uuid === d.tactonId)
+            if (t != undefined) {
+                store.dispatch(TactonPlaybackActionTypes.updateMetadata, { tactonUuid: d.tactonId, metadata: d.metadata })
             }
             break;
         }

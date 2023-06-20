@@ -38,12 +38,12 @@
 					:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid }, { 'disabled': store.state.roomSettings.mode != 1 }]">
 					<v-row align-content="left" align="center" v-if="shouldDisplay(tacton)">
 						<v-col cols="2">
-							<v-btn :icon="tacton.favorite ? 'mdi-star' : 'mdi-star-outline'" variant="plain"
+							<v-btn :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'" variant="plain"
 								@click="toggleFavorite(tacton)"> Button </v-btn>
 
 						</v-col>
 						<v-col cols="10" @click="selectTacton(tacton)">
-							{{ tacton.name }}
+							{{ tacton.metadata.name }}
 							{{ calculateDuration(tacton) / 1000 }} s
 						</v-col>
 
@@ -95,8 +95,8 @@ import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayba
 import { playbackRecordedTacton } from "@/electron/DeviceManager/TactonPlayer";
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
 import { InteractionMode } from "@sharedTypes/roomTypes";
-import { Tacton } from "@sharedTypes/tactonTypes";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
+import { ChangeTactonMetadata, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
 	name: "TactonSelectionList",
@@ -128,7 +128,6 @@ export default defineComponent({
 			}
 		},
 		selectTacton(tacton: Tacton) {
-			console.log(tacton);
 			this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
 		},
 		playRecordedTacton() {
@@ -159,12 +158,19 @@ export default defineComponent({
 			return
 		},
 		toggleFavorite(tacton: Tacton) {
-			// tacton.metadata.favorite = !tacton.metadata.favorite
-			sendSocketMessage(WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV, {
-				roomId: this.store.state.roomSettings.id,
-				tactonId: tacton.uuid,
-				metadata: tacton.metadata
-			})
+			const m: TactonMetadata = {
+				name: tacton.metadata.name,
+				favorite: !tacton.metadata.favorite,
+				recordDate: tacton.metadata.recordDate
+			}
+			if (this.store.state.roomSettings.id != undefined) {
+				const payload: ChangeTactonMetadata = {
+					roomId: this.store.state.roomSettings.id,
+					tactonId: tacton.uuid,
+					metadata: m
+				}
+				sendSocketMessage(WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV, payload)
+			}
 		},
 		shouldDisplay(tacton: Tacton) {
 			if (!this.filteredView) return true

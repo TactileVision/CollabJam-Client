@@ -1,15 +1,8 @@
 
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
-import { RootState, useStore } from '../../store';
-import { InstructionServerPayload, TactonInstruction, Tacton, isInstructionSetParameter, isInstructionWait } from '@sharedTypes/tactonTypes';
-/**
- * Types
- * 
- */
-
-
-
-
+import { RootState } from '../../store';
+import { InstructionServerPayload, TactonInstruction, Tacton, isInstructionSetParameter, isInstructionWait, TactonMetadata } from '@sharedTypes/tactonTypes';
+import { TactonMutations } from '../tactonSettings/tactonSettings';
 
 export const createTactonInstructionsFromPayload = (payload: InstructionServerPayload[]): TactonInstruction[] => {
   const t: TactonInstruction[] = []
@@ -38,11 +31,8 @@ export const createTacton = () => {
   }
   return t
 }
-/**
- * state
- * 
- */
 
+/**state**/
 export type State = {
   tactons: Tacton[]
   currentTacton: Tacton | null
@@ -61,8 +51,10 @@ export const state: State = {
  */
 export enum TactonPlaybackMutations {
   ADD_TACTON = "ADD_TACTON",
-  DESELECT_TACTON = "DELETE_TACTON",
+  DESELECT_TACTON = "DESELECT_TACTON",
   SELECT_TACTON = "SELECT_TACTON",
+  UPDATE_TACTON_METADATA = "UPDATE_TACTON_METADATA",
+  DELETE_TACTON = "DELETE_TACTON",
   UPDATE_TIME = "UPDATE_TIME",
   SET_TACTON_LIST = "SET_TACTON_LIST",
 
@@ -75,6 +67,8 @@ export type Mutations<S = State> = {
   [TactonPlaybackMutations.SELECT_TACTON](state: S, uuid: string): void
   [TactonPlaybackMutations.UPDATE_TIME](state: S, newTime: number): void
   [TactonPlaybackMutations.SET_TACTON_LIST](state: S, tactons: Tacton[]): void
+  [TactonPlaybackMutations.DELETE_TACTON](state: S, uuid: string): void
+  [TactonPlaybackMutations.UPDATE_TACTON_METADATA](state: S, props: { uuid: string, metadata: TactonMetadata }): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -96,6 +90,16 @@ export const mutations: MutationTree<State> & Mutations = {
   [TactonPlaybackMutations.SET_TACTON_LIST](state, tactons) {
     state.tactons = tactons
   },
+  [TactonPlaybackMutations.UPDATE_TACTON_METADATA](state, props) {
+    const i = state.tactons.findIndex(e => e.uuid == props.uuid)
+    if (i == undefined) return
+    state.tactons[i].metadata = { ...props.metadata }
+  },
+  [TactonPlaybackMutations.DELETE_TACTON](state, uuid) {
+    const i = state.tactons.findIndex(e => e.uuid == uuid)
+    if (i == undefined) return
+    state.tactons.splice(i, 1)
+  }
 };
 
 /**
@@ -107,7 +111,9 @@ export enum TactonPlaybackActionTypes {
   selectTacton = 'selectTacton',
   addTacton = 'addTacton',
   updateTime = 'updateTime',
-  setTactonList = 'setTactonList'
+  setTactonList = 'setTactonList',
+  updateMetadata = 'updateMetadata',
+  deleteTacton = 'deleteTacton'
 
 }
 
@@ -135,6 +141,15 @@ export interface Actions {
     { commit }: AugmentedActionContext,
     payload: Tacton[]
   ): void;
+  [TactonPlaybackActionTypes.updateMetadata](
+    { commit }: AugmentedActionContext,
+    payload: { tactonUuid: string, metadata: TactonMetadata }
+  ): void;
+  [TactonPlaybackActionTypes.deleteTacton](
+    { commit }: AugmentedActionContext,
+    payload: string
+  ): void;
+
 }
 
 export const actions: ActionTree<State, RootState> & Actions = {
@@ -162,6 +177,13 @@ export const actions: ActionTree<State, RootState> & Actions = {
   },
   [TactonPlaybackActionTypes.setTactonList]({ commit }, tactons: Tacton[]) {
     commit(TactonPlaybackMutations.SET_TACTON_LIST, tactons)
+  },
+  [TactonPlaybackActionTypes.updateMetadata]({ commit }, props: { tactonUuid: string, metadata: TactonMetadata }) {
+    commit(TactonPlaybackMutations.UPDATE_TACTON_METADATA, { uuid: props.tactonUuid, metadata: props.metadata })
+
+  },
+  [TactonPlaybackActionTypes.deleteTacton]({ commit }, tactonUuid: string) {
+    commit(TactonPlaybackMutations.DELETE_TACTON, tactonUuid)
   }
 };
 
