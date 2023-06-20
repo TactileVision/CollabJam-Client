@@ -1,5 +1,5 @@
 
-export const enum InteractionMode {
+export enum InteractionMode {
     Jamming = 1,
     Recording,
     Playback

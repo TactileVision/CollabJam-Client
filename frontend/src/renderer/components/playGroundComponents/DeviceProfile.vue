@@ -1,16 +1,42 @@
 <template>
-  <h3>{{ name }}</h3>
-  <v-row>
-    <v-col>
-      <inline-svg :src="imagePath" />
-    </v-col>
-    <v-col>
-      <v-select v-model="selectedProfileUid" label="Profile" :items="allProfileOptions"></v-select>
-      <v-btn @click="updateProfile" color="success">Update</v-btn>
-    </v-col>
-  </v-row>
+  <div class="input-device-info mb-8">
+    <v-card class="mx-auto">
+      <v-card-title>
+        {{ name.indexOf('(') == -1 ? name : name.substring(0, name.indexOf('(')) }}
+        <!-- {{ name }} -->
+      </v-card-title>
+      <inline-svg class="input-device-illustration" :src="imagePath" />
+      <v-card-actions>
+        <v-select hide-details v-model="selectedProfileUid" label="Profile" :items="allProfileOptions"></v-select>
+        <v-btn @click="updateProfile" color="primary">Update</v-btn>
+      </v-card-actions>
+    </v-card>
+    <!-- <h3>{{ name }}</h3>
+    <v-row>
+      <v-col>
+        <inline-svg :src="imagePath" />
+      </v-col>
+      <v-col>
+        <v-select v-model="selectedProfileUid" label="Profile" :items="allProfileOptions"></v-select>
+        <v-btn @click="updateProfile" color="primary">Update</v-btn>
+      </v-col>
+    </v-row> -->
+  </div>
 </template>
 
+<style lang="scss" scoped >
+// .input-device-info {
+//   // max-width: 100%;
+//   // max-height: 20vh;
+//   // height: 33.3%;
+// }
+
+.input-device-illustration {
+  // max-height: 25vh 
+  // max-width: 90%;
+
+}
+</style>
 <script lang="ts">
 import getDeviceName from "@/renderer/InputDetection/getDeviceName";
 import { useStore } from "@/renderer/store/store";
@@ -35,7 +61,7 @@ export default defineComponent({
   },
   mounted() {
     const profile = this.currentProfile;
-    if(profile)
+    if (profile)
       this.selectedProfileUid = profile.uid;
     else
       this.selectedProfileUid = this.allProfileOptions[0]?.value;
@@ -51,7 +77,7 @@ export default defineComponent({
       return getDeviceName(this.device);
     },
     imagePath() {
-      if(this.selectedProfile) {
+      if (this.selectedProfile) {
         return this.selectedProfile.imagePath
       } else {
         return defaultImagePath;
@@ -66,7 +92,7 @@ export default defineComponent({
   },
   methods: {
     updateProfile() {
-      if(!this.selectedProfileUid) return;
+      if (!this.selectedProfileUid) return;
       this.store.commit(PlayGroundMutations.UPDATE_PROFILE, { device: this.device, profileUid: this.selectedProfileUid })
     }
   },

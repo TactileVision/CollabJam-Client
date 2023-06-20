@@ -1,12 +1,21 @@
 <template>
-  <v-app-bar id="headerPlayGround" :elevation="3" :title="store.state.roomSettings.roomName">
+  <v-app-bar id="headerPlayGround" :elevation="2">
+    <!-- <template v-slot:prepend>
+      <v-app-bar-nav-icon></v-app-bar-nav-icon>
+    </template> -->
+
+    <v-app-bar-title>
+      {{ store.state.roomSettings.roomName }}
+    </v-app-bar-title>
+    <v-spacer></v-spacer>
+    <InteractionModeIndicator :mode="store.state.roomSettings.mode"></InteractionModeIndicator>
+    <v-spacer></v-spacer>
     <template v-slot:append>
-      <UserMenu />
-      <!-- <v-btn variant="text" style="margin-right: 20px" @click="devices">
-        Settings <v-icon right> mdi-cog-outline </v-icon>
-      </v-btn> -->
-      <DeviceDialog></DeviceDialog>
-      <v-btn prepend-icon="mdi-logout" @click="logOut">Log out</v-btn>
+      <UserTooltip :users="store.state.roomSettings.participants"></UserTooltip>
+      <!-- <UserMenu /> -->
+      <DeviceDialog :num-connected-devices="numConnectedDevices">
+      </DeviceDialog>
+      <v-btn color="primary" prepend-icon="mdi-logout" @click="logOut">Log out</v-btn>
     </template>
   </v-app-bar>
 </template>
@@ -24,7 +33,7 @@
 <script lang="ts">
 import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import router from "@/renderer/router";
-import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
+import { DeviceStatus, GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
 import {
   RoomMutations,
   RoomState,
@@ -32,19 +41,25 @@ import {
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "@vue/runtime-core";
 import { sendSocketMessage } from "../../CommunicationManager/WebSocketManager";
-import UserMenu from "./UserMenu/UserMenu.vue";
+import UserTooltip from "./UserMenu/UserTooltip.vue";
 import DeviceDialog from "@/renderer/views/DeviceDialog.vue";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
-
+import InteractionModeIndicator from "@/renderer/components/playGroundComponents/InteractionModeIndicator.vue"
 export default defineComponent({
   name: "PlayGroundHeader",
   components: {
-    UserMenu,
-    DeviceDialog
+    UserTooltip,
+    DeviceDialog,
+    InteractionModeIndicator
   },
   data: () => ({
     store: useStore(),
   }),
+  computed: {
+    numConnectedDevices(): number {
+      return this.store.state.generalSettings.deviceList.filter(d => { return d.state == DeviceStatus.connected }).length
+    }
+  },
   methods: {
     logOut() {
       sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {

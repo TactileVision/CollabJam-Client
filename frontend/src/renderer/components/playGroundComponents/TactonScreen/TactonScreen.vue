@@ -1,10 +1,5 @@
 <template>
   <v-row no-gutters align="center" style="justify-content: space-evenly; margin: 5px 0" id="tactonHeader">
-    <!-- <v-col style="max-width: fit-content"> -->
-    <div class="mode-indicator" :class="[getModeString().toLowerCase()]"> <span>
-        {{ getModeString() }}
-      </span> </div>
-    <!-- </v-col> -->
   </v-row>
   <TactonGraph :isMounted="isMounted" />
   <!-- </v-col> -->
@@ -117,19 +112,6 @@ export default defineComponent({
     }
   },
   methods: {
-    getModeString() {
-
-      switch (this.mode) {
-        case InteractionMode.Jamming:
-          return "Jamming"
-        case InteractionMode.Recording:
-          return "Recording"
-        case InteractionMode.Playback:
-          return "Playback"
-        default:
-          return "Unkwown"
-      }
-    },
     saveTacton() {
       sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
         roomId: this.store.state.roomSettings.id,

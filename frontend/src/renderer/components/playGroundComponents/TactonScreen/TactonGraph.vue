@@ -76,7 +76,7 @@ export default defineComponent({
         original: -1,
         actual: -1,
       },
-      paddingRL: 20,
+      paddingRL: 32,
       growRatio: 0,
       currentTime: 0,
       dropdownDisabled: false,
@@ -185,17 +185,18 @@ export default defineComponent({
        * you will calculate the original position, width still and the scaling will position it relative
        */
       const newWidth = document.getElementById("tactonScreen")!.clientWidth;
-      const newHight =
-        window.innerHeight -
-        document.getElementById("tactonHeader")!.clientHeight -
-        document.getElementById("headerPlayGround")!.clientHeight;
+      const newHeight =
+        document.getElementById("tactonScreenHeight")!.clientHeight
+      // window.innerHeight -
+      // document.getElementById("tactonHeader")!.clientHeight -
+      // document.getElementById("headerPlayGround")!.clientHeight;
 
       if (this.width.original == -1) {
         this.width.original = newWidth;
         this.width.actual = newWidth;
 
-        this.height.original = newHight;
-        this.height.actual = newHight;
+        this.height.original = newHeight;
+        this.height.actual = newHeight;
 
         this.pixiApp!.stage.removeChildren;
         this.coordinateContainer = new PIXI.Container();
@@ -212,25 +213,27 @@ export default defineComponent({
 
       //recalculate the size if of the container if something is changed
       const xRatio = newWidth / this.width.actual;
-      const yRatio = newHight / this.height.actual;
+      const yRatio = newHeight / this.height.actual;
+      console.log(`newHeight: ${newHeight} / this.height.actual ${this.height.actual} =  ${yRatio}`)
       this.width.actual = newWidth;
-      this.height.actual = newHight;
+      this.height.actual = newHeight;
 
+      // console.log(`height: ${this.height.actual}, Y ratio: ${yRatio}`)
       this.graphContainer!.width = this.graphContainer!.width * xRatio;
       this.graphContainer!.height = this.graphContainer!.height * yRatio;
-      /**        console.log(
-          "x value " +
-            this.graphContainer!.x +
-            "   " +
-            this.graphContainer!.width
-        );
-        console.log(
-          "y value " +
-            this.graphContainer!.y +
-            "   " +
-            this.graphContainer!.height
-        );
-         */
+      /*       console.log(
+              "x value " +
+              this.graphContainer!.x +
+              "   " +
+              this.graphContainer!.width
+            );
+            console.log(
+              "y value " +
+              this.graphContainer!.y +
+              "   " +
+              this.graphContainer!.height
+            );
+       */
 
       this.pixiApp?.renderer.resize(this.width.actual, this.height.actual);
       this.createMask();
@@ -265,13 +268,14 @@ export default defineComponent({
      * draw the legend every time new, because numbers get blurry at scaling
      */
     calcLegend() {
+      const parts = 20
       this.coordinateContainer?.removeChildren();
       let xPosition = this.width.actual - this.paddingRL;
       let yPosition = 0;
       const distLinesY = this.height.actual / (this.numberOfOutputs + 1 + 1);
-      const distLinesX = (this.width.actual - 2 * this.paddingRL) / 5;
+      const distLinesX = (this.width.actual - 2 * this.paddingRL) / parts;
       let duration = this.maxDurationStore / 1000;
-      const timeInterval = duration / 5;
+      const timeInterval = duration / parts;
 
       const graphics = new PIXI.Graphics();
       graphics.lineStyle(1, 0x000000, 1);
@@ -283,8 +287,8 @@ export default defineComponent({
         graphics.lineTo(this.width.actual - this.paddingRL, yPosition);
       }
 
-      //draw vertical lines and labels
-      for (let i = 0; i <= 5; i++) {
+      //draw vertil lines and labels
+      for (let i = 0; i <= parts; i++) {
         graphics.moveTo(xPosition, yPosition - 10);
         graphics.lineTo(xPosition, yPosition + 10);
         const label = new PIXI.Text(duration.toString() + " s", {

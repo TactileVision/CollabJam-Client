@@ -1,17 +1,29 @@
 <template>
   <v-container class="playGroundView" ref="container" tabindex="-1">
 
-      <v-col cols="2">
+    <v-col cols="2">
+      <v-sheet elevation="0" class="mr-2 pa-4">
         <TactonSelectionList></TactonSelectionList>
-      </v-col>
-      <v-col cols="5" id="tactonScreen">
-        <TactonScreen :isMounted="isMounted" />
-      </v-col>
-      <v-col class="devices">
-        <!-- <GridHeader @openDialog="startDialog" />
-        <GridArea @editButton="startDialog" /> -->
-        <DeviceProfile v-for="device in devices" :key="getDeviceKey(device)" :device="device"/>
-      </v-col>
+      </v-sheet>
+    </v-col>
+
+    <v-col cols="10">
+
+      <v-row>
+
+        <v-col id="tactonScreenHeight" class="tactonScreenWrapper" cols="12">
+          <div id="tactonScreen">
+            <TactonScreen :isMounted="isMounted" />
+          </div>
+          <!-- <v-sheet id="tactonScreen" elevation="0" class="mr-2 pa-4"> -->
+          <!-- </v-sheet> -->
+        </v-col>
+        <v-col class="inputDeviceWrapper" cols="4" v-for="device in devices" :key="getDeviceKey(device)">
+          <DeviceProfile clas="flex-grow-1" :device="device" />
+        </v-col>
+
+      </v-row>
+    </v-col>
 
     <v-dialog v-model="playGroundDialog" max-width="50%" class="tesing" @click:outside="closeDialog">
       <PlayGroundDialog @closeDialog="closeDialog" :keyButtonId="idOfEditableButton" />
@@ -34,6 +46,10 @@
 
 #tactonScreen {
   border-right: 1px solid rgba(0, 0, 0, .2);
+}
+
+.tactonScreenWrapper,.inputDeviceWrapper {
+  height: 45vh;
 }
 
 .devices {
@@ -90,7 +106,7 @@ export default defineComponent({
     this.pollDevices = requestAnimationFrame(pollFunction)
   },
   unmounted() {
-    if(this.pollDevices !== -1) {
+    if (this.pollDevices !== -1) {
       cancelAnimationFrame(this.pollDevices);
     }
   },
@@ -115,8 +131,8 @@ export default defineComponent({
       this.playGroundDialog = true;
     },
     getDeviceKey(device: InputDevice) {
-      if(isKeyboardDevice(device)) return "keyboard"
-      else if(isGamepadDevice(device)) return `gamepad-${device.name}`
+      if (isKeyboardDevice(device)) return "keyboard"
+      else if (isGamepadDevice(device)) return `gamepad-${device.name}`
     }
   },
 });

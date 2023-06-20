@@ -35,7 +35,7 @@ const getUser = (roomId: string, userId: string): User | undefined => {
     return user
 }
 
-const getParticipants = (roomId: string): { id: string, name: string, color: string }[] => {
+const getParticipants = (roomId: string): User[] => {
     const participants = participantList.get(roomId);
     if (participants == undefined)
         return [];
