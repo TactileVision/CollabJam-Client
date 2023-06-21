@@ -14,6 +14,7 @@ import TriggerActuatorHandler from "./renderer/InputHandling/handlers/TriggerAct
 import TriggerActuatorWithDynamicIntensityHandler from "./renderer/InputHandling/handlers/TriggerActuatorWithDynamicIntensityHandler";
 import DynamicActuatorHandler from "./renderer/InputHandling/handlers/DynamicActuatorHandler";
 import LockIntensityHandler from "./renderer/InputHandling/handlers/LockIntensityHandler";
+import ChangeInteractionModeHandler from "./renderer/InputHandling/handlers/ChangeInteractionModeHandler"
 import InlineSvg from 'vue-inline-svg';
 
 loadFonts()
@@ -26,6 +27,7 @@ registerInputHandler(TriggerActuatorHandler());
 registerInputHandler(TriggerActuatorWithDynamicIntensityHandler());
 registerInputHandler(DynamicActuatorHandler());
 registerInputHandler(LockIntensityHandler());
+registerInputHandler(ChangeInteractionModeHandler());
 
 createApp(App)
   .use(vuetify)

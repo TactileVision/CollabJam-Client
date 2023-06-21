@@ -11,6 +11,7 @@ import {
   UserInputType,
 } from "@/types/InputDetection";
 import { StateProfile } from "./playGround";
+import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 
 const mappingBTriggerActuators = [
   {
@@ -90,6 +91,41 @@ const profiles: StateProfile[] = [
     imagePath: mappingAImage,
     deviceType: DeviceType.StandardGamepad,
     bindings: [
+      //MARK: Function Buttons
+      {
+        inputs: [
+          { type: UserInputType.GamepadButton, index: 8 } as GamepadButtonInput,
+        ],
+        activeTriggers: 0,
+        uid: "Mapping_A_Select",
+        actions: [
+          {
+            type: "change_interaction_mode",
+            change : InteractionModeChange.toggleRecording
+          } as TactileAction,
+        ],
+        //grid properties
+        name: "Change interaction Mode",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
+      },
+       {
+        inputs: [
+          { type: UserInputType.GamepadButton, index: 9 } as GamepadButtonInput,
+        ],
+        activeTriggers: 0,
+        uid: "Mapping_A_Start",
+        actions: [
+          {
+            type: "change_interaction_mode",
+            change: InteractionModeChange.startPlayback
+          } as TactileAction,
+        ],
+        //grid properties
+        name: "Change interaction Mode",
+        color: "#ff0000",
+        position: { x: 5, y: 5, w: 1, h: 1 },
+      },
       //MARK: Face buttons
       {
         inputs: [
@@ -186,26 +222,7 @@ const profiles: StateProfile[] = [
         inputs: [
           {
             type: UserInputType.GamepadButton,
-            index: 1,
-          } as GamepadButtonInput
-        ],
-        activeTriggers: 0,
-        uid: "LOCK_INTENSITY",
-        position: { x: 3, y: 5, w: 1, h: 1 },
-        name: "lock",
-        color: "#00ffff",
-        actions: [
-          {
-            type: "lock_intensity_action",
-            name: "intensity_test",
-          } as TactileAction
-        ]
-      },
-      {
-        inputs: [
-          {
-            type: UserInputType.GamepadButton,
-            index: 7,
+            index: 13,
           } as GamepadButtonInput,
         ],
         activeTriggers: 0,
@@ -268,6 +285,41 @@ const profiles: StateProfile[] = [
     imagePath: mappingBImage,
     deviceType: DeviceType.StandardGamepad,
     bindings: [
+           //MARK: Function Buttons
+           {
+            inputs: [
+              { type: UserInputType.GamepadButton, index: 8 } as GamepadButtonInput,
+            ],
+            activeTriggers: 0,
+            uid: "Mapping_B_Select",
+            actions: [
+              {
+                type: "change_interaction_mode",
+                change : InteractionModeChange.toggleRecording
+              } as TactileAction,
+            ],
+            //grid properties
+            name: "Change interaction Mode",
+            color: "#ff0000",
+            position: { x: 5, y: 5, w: 1, h: 1 },
+          },
+           {
+            inputs: [
+              { type: UserInputType.GamepadButton, index: 9 } as GamepadButtonInput,
+            ],
+            activeTriggers: 0,
+            uid: "Mapping_B_Start",
+            actions: [
+              {
+                type: "change_interaction_mode",
+                change: InteractionModeChange.startPlayback
+              } as TactileAction,
+            ],
+            //grid properties
+            name: "Change interaction Mode",
+            color: "#ff0000",
+            position: { x: 5, y: 5, w: 1, h: 1 },
+          },
       //MARK: Face buttons
       {
         inputs: [

@@ -3,7 +3,7 @@
 	<v-sheet class="pa-1">
 		<div class="text-overline">Create Tacton</div>
 		<div class="ma-1">
-			<v-btn block @click="changeRecordMode" :disabled="store.state.roomSettings.mode == 3" color="error"
+			<v-btn block @click="toggleRecording" :disabled="store.state.roomSettings.mode == 3" color="error"
 				:prepend-icon="store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'" x>
 				{{ store.state.roomSettings.mode == 2 ? "Stop" : "Record" }}
 			</v-btn>
@@ -70,9 +70,10 @@ import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
 import { playbackRecordedTacton } from "@/electron/DeviceManager/TactonPlayer";
 import { sendSocketMessage } from "@/renderer/CommunicationManager/WebSocketManager";
-import { InteractionMode } from "@sharedTypes/roomTypes";
+import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { changeRecordMode } from "@/renderer/lib/recordMode";
 
 export default defineComponent({
 	name: "TactonSelectionList",
@@ -88,32 +89,34 @@ export default defineComponent({
 	computed: {
 	},
 	methods: {
-		changeRecordMode() {
-			if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
-				sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
-					roomId: this.store.state.roomSettings.id,
-					newMode: InteractionMode.Jamming
-				});
+		toggleRecording() {
+			changeRecordMode(this.store, InteractionModeChange.toggleRecording)
+			// if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
+			// 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
+			// 		roomId: this.store.state.roomSettings.id,
+			// 		newMode: InteractionMode.Jamming
+			// 	});
 
-			}
-			else {
-				sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
-					roomId: this.store.state.roomSettings.id,
-					newMode: InteractionMode.Recording
-				});
-			}
+			// }
+			// else {
+			// 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
+			// 		roomId: this.store.state.roomSettings.id,
+			// 		newMode: InteractionMode.Recording
+			// 	});
+			// }
 		},
 		selectTacton(tacton: Tacton) {
 			this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
 		},
 		playRecordedTacton() {
-			if (this.store.state.tactonPlayback.currentTacton != null) {
-				playbackRecordedTacton(this.store.state.tactonPlayback.currentTacton.instructions);
-				sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
-					roomId: this.store.state.roomSettings.id,
-					newMode: InteractionMode.Playback
-				})
-			}
+			changeRecordMode(this.store, InteractionModeChange.startPlayback)
+			// if (this.store.state.tactonPlayback.currentTacton != null) {
+			// 	playbackRecordedTacton(this.store.state.tactonPlayback.currentTacton.instructions);
+			// 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
+			// 		roomId: this.store.state.roomSettings.id,
+			// 		newMode: InteractionMode.Playback
+			// 	})
+			// }
 		},
 		calculateDuration(tacton: Tacton): number {
 			let d = 0;
