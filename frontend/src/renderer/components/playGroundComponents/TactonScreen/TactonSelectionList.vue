@@ -33,13 +33,11 @@
 			@click="playRecordedTacton" color="primary" prepend-icon="mdi-play"> Play </v-btn>
 		<v-switch v-model="filteredView" :disabled="store.state.tactonPlayback.tactons.length == 0" hide-details
 			label="Show Favorites only" color="primary"></v-switch>
-		<v-list lines="one" class="selection-list">
+		<v-list lines="one" class="selection-list" :selected="selectedItems" active-color="primary" density="compact">
 			<v-list-item v-for="(tacton, index) of getTactons()" :disabled="store.state.roomSettings.mode != 1"
-				:key=tacton.uuid class="non-selectable"
-				:class="[{ 'selected': tacton.uuid == store.state.tactonPlayback.currentTacton?.uuid }, { 'disabled': store.state.roomSettings.mode != 1 }]"
-				:title="tacton.metadata.name" :subtitle="`${(calculateDuration(tacton) / 1000).toFixed(2)} s`"
-				:value="tacton.uuid" @click="selectTacton(tacton)">
-
+				:key=tacton.uuid class="non-selectable" :title="tacton.metadata.name"
+				:subtitle="`${(calculateDuration(tacton) / 1000).toFixed(2)} s`" :active="tacton.uuid == selection"
+				@click="selectTacton(tacton)">
 				<v-list-item-action start>
 					<v-btn :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'" variant="plain"
 						@click="toggleFavorite(tacton)"> Button </v-btn>
@@ -83,10 +81,22 @@ export default defineComponent({
 			store: useStore(),
 			showEditPrefix: false,
 			editPrefixText: "",
-			filteredView: false
+			filteredView: false,
+			selection: null as null | string,
+			selectedItems: [] // don't know why this has to exist
 		};
 	},
 	computed: {
+		currentTacton(): Tacton | null {
+			return this.store.state.tactonPlayback.currentTacton
+		}
+	},
+	watch: {
+		currentTacton(tacton) {
+			console.log("Active tacton changed")
+			this.selection = tacton.uuid
+		}
+
 	},
 	methods: {
 		toggleRecording() {
@@ -106,17 +116,11 @@ export default defineComponent({
 			// }
 		},
 		selectTacton(tacton: Tacton) {
+			this.selection = tacton.uuid
 			this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
 		},
 		playRecordedTacton() {
 			changeRecordMode(this.store, InteractionModeChange.startPlayback)
-			// if (this.store.state.tactonPlayback.currentTacton != null) {
-			// 	playbackRecordedTacton(this.store.state.tactonPlayback.currentTacton.instructions);
-			// 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
-			// 		roomId: this.store.state.roomSettings.id,
-			// 		newMode: InteractionMode.Playback
-			// 	})
-			// }
 		},
 		calculateDuration(tacton: Tacton): number {
 			let d = 0;
