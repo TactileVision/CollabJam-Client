@@ -31,7 +31,7 @@
 		<div class="text-overline">History</div>
 		<v-btn block @click="togglePlayback" :disabled="store.state.roomSettings.mode == 2" color="primary"
 			:prepend-icon="store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'" x>
-			{{ store.state.roomSettings.mode == 3 ? "Stop" : "Play" }}
+			{{ store.state.roomSettings.mode == 3 ? "Stop" : `Play ${store.state.tactonPlayback.currentTacton?.metadata.name}` }}
 		</v-btn>
 		<v-switch v-model="filteredView" :disabled="store.state.tactonPlayback.tactons.length == 0" hide-details
 			label="Show Favorites only" color="primary"></v-switch>
