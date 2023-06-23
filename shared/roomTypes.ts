@@ -7,7 +7,7 @@ export enum InteractionMode {
 
 export enum InteractionModeChange {
     toggleRecording = 1,
-    startPlayback
+    togglePlayback,
 }
 
 export interface User {

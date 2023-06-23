@@ -94,39 +94,42 @@ const updateRoomMode = (update: UpdateRoomMode, startTimeStamp: number) => {
     const r = RoomModule.getRoomInfo(update.roomId)
     if (r == undefined) return
     const rm = r.mode
-    if (RoomModule.updateRoomMode(update.roomId, update.newMode)) {
-        console.log(`Changing interaction mode to ${update.newMode}`)
-        const s = TactonModule.sessions.get(update.roomId)
-        if (s == undefined) return
+    // if (RoomModule.updateRoomMode(update.roomId, update.newMode)) {
+    console.log(`Changing interaction mode from ${rm} to ${update.newMode}`)
+    const s = TactonModule.sessions.get(update.roomId)
+    if (s == undefined) return
 
-        if (rm == InteractionMode.Jamming) {
-            // StartPlayback
-            if (update.newMode == InteractionMode.Playback && update.tactonId != undefined) {
+    if (rm == InteractionMode.Jamming) {
+        // StartPlayback
+        if (update.newMode == InteractionMode.Playback && update.tactonId != undefined) {
 
-            } else if (update.newMode == InteractionMode.Recording) {
+        } else if (update.newMode == InteractionMode.Recording) {
 
-            } else {
-                return
-            }
-        } else if (rm == InteractionMode.Recording) {
-            if (update.newMode == InteractionMode.Jamming) {
-                const isValidRecording = s.finishRecording()
-                if (isValidRecording) {
-                    const t = s.history[s.history.length - 1]
-                    setName(t, s, r.recordingNamePrefix)
-
-                    broadCastMessage(update.roomId, WS_MSG_TYPE.GET_TACTON_CLI, t, startTimeStamp)
-                    saveTactonAsJson(update.roomId, t)
-                }
-            } else { return }
-
-        } else { //rm ==Playback
-            if (update.newMode == InteractionMode.Jamming) {
-
-            } else { return }
+        } else {
+            return
         }
-        broadCastMessage(update.roomId, WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI, res, startTimeStamp)
+    } else if (rm == InteractionMode.Recording) {
+        if (update.newMode == InteractionMode.Jamming) {
+            const isValidRecording = s.finishRecording()
+            if (isValidRecording) {
+                const t = s.history[s.history.length - 1]
+                setName(t, s, r.recordingNamePrefix)
+
+                broadCastMessage(update.roomId, WS_MSG_TYPE.GET_TACTON_CLI, t, startTimeStamp)
+                saveTactonAsJson(update.roomId, t)
+            }
+        } else { return }
+
+    } else { //rm ==Playback
+        if (update.newMode == InteractionMode.Jamming) {
+            //Stop Playback in Room by broacasting change to jamming mode to all clients. Let the client that initiated playback stop it
+        } else { return }
     }
+    console.log("Sending:")
+    console.log(res)
+    r.mode = res.newMode
+    broadCastMessage(update.roomId, WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI, res, startTimeStamp)
+    // }
 
 }
 

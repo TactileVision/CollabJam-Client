@@ -29,6 +29,12 @@ export const changeRecordMode = function (store: Store, change: InteractionModeC
 				tactonId: store.state.tactonPlayback.currentTacton.uuid
 			} as UpdateRoomMode);
 			// playbackRecordedTacton(store.state.tactonPlayback.currentTacton.instructions)
+		} else if (currentMode == InteractionMode.Playback) {
+			sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
+				roomId: store.state.roomSettings.id,
+				newMode: InteractionMode.Jamming,
+				tactonId: undefined
+			} as UpdateRoomMode);
 		}
 	}
 }

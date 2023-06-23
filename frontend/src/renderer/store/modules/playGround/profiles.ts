@@ -118,7 +118,7 @@ const profiles: StateProfile[] = [
         actions: [
           {
             type: "change_interaction_mode",
-            change: InteractionModeChange.startPlayback
+            change: InteractionModeChange.togglePlayback
           } as TactileAction,
         ],
         //grid properties
@@ -312,7 +312,7 @@ const profiles: StateProfile[] = [
             actions: [
               {
                 type: "change_interaction_mode",
-                change: InteractionModeChange.startPlayback
+                change: InteractionModeChange.togglePlayback
               } as TactileAction,
             ],
             //grid properties

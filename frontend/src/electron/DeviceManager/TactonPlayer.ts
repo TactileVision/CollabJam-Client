@@ -8,6 +8,7 @@ import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 const updateTimeInterval = 10
 // Store current playback time in the client store to move the cursor when playing back and stop playback after 20s
 let cursorTimer: NodeJS.Timeout | null = null
+let instructionTimer: NodeJS.Timeout | null = null
 
 //TODO Define a type that will allow to differentiate between wait and execute instructions
 export const playbackRecordedTacton = (tacton: TactonInstruction[]) => {
@@ -18,6 +19,20 @@ export const playbackRecordedTacton = (tacton: TactonInstruction[]) => {
 	}, updateTimeInterval)
 }
 
+export function stopPlayback() {
+
+	if (instructionTimer != null) {
+		clearTimeout(instructionTimer as NodeJS.Timeout)
+		instructionTimer = null
+	}
+	if (cursorTimer != null) {
+		clearInterval(cursorTimer as NodeJS.Timeout)
+		const s = useStore()
+		s.dispatch(TactonPlaybackActionTypes.updateTime, 0)
+	}
+
+}
+
 export const executeInstruction = (tacton: TactonInstruction[], index: number) => {
 
 	if (index == tacton.length) {
@@ -25,6 +40,7 @@ export const executeInstruction = (tacton: TactonInstruction[], index: number) =
 		if (cursorTimer != null) {
 			clearInterval(cursorTimer as NodeJS.Timeout)
 		}
+		instructionTimer = null
 		const s = useStore()
 		s.dispatch(TactonPlaybackActionTypes.updateTime, 0)
 		sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
@@ -40,7 +56,7 @@ export const executeInstruction = (tacton: TactonInstruction[], index: number) =
 
 	if (isInstructionWait(tacton[index])) {
 		const x = tacton[index] as InstructionWait
-		setTimeout(f, x.wait.miliseconds)
+		instructionTimer = setTimeout(f, x.wait.miliseconds)
 	}
 	else
 		if (isInstructionSetParameter(tacton[index])) {

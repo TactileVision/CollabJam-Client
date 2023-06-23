@@ -68,23 +68,6 @@ const removeRoom = (roomId: string) => {
 }
 
 
-const updateRoomMode = (roomId: string, newMode: InteractionMode): boolean => {
-    const room = roomList.get(roomId);
-    if (room == undefined) return false;
-
-    // if(room.mode == InteractionMode.Jamming){
-
-    /* } else */
-    if (room.mode == InteractionMode.Recording) {
-        if (newMode == InteractionMode.Playback) return false
-
-    } else if (room.mode == InteractionMode.Playback) {
-        if (newMode == InteractionMode.Recording) return false
-    }
-    room.mode = newMode;
-    return true;
-}
-
 const updateMaxDuration = (roomId: string, maxDuration: number): boolean => {
     const room = roomList.get(roomId);
     if (room == undefined) return false;
@@ -108,6 +91,5 @@ export default {
     updateRoomInformation,
     removeRoom,
     updateRecordingPrefix,
-    updateRoomMode,
     updateMaxDuration
 }

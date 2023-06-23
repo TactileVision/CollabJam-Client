@@ -29,15 +29,17 @@
 
 	<v-sheet class="pa-1">
 		<div class="text-overline">History</div>
-		<v-btn block :disabled="store.state.roomSettings.mode != 1 || store.state.tactonPlayback.currentTacton == null"
-			@click="playRecordedTacton" color="primary" prepend-icon="mdi-play"> Play </v-btn>
+		<v-btn block @click="togglePlayback" :disabled="store.state.roomSettings.mode == 2" color="primary"
+			:prepend-icon="store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'" x>
+			{{ store.state.roomSettings.mode == 3 ? "Stop" : "Play" }}
+		</v-btn>
 		<v-switch v-model="filteredView" :disabled="store.state.tactonPlayback.tactons.length == 0" hide-details
 			label="Show Favorites only" color="primary"></v-switch>
 		<v-list lines="one" class="selection-list" :selected="selectedItems" active-color="primary" density="compact">
 			<v-list-item v-for="(tacton, index) of getTactons()" :disabled="store.state.roomSettings.mode != 1"
 				:key=tacton.uuid class="non-selectable" :title="tacton.metadata.name"
-				:subtitle="`${(calculateDuration(tacton) / 1000).toFixed(2)} s    ${tacton.metadata.recordDate}`" :active="tacton.uuid == selection"
-				@click="selectTacton(tacton)">
+				:subtitle="`${(calculateDuration(tacton) / 1000).toFixed(2)} s    ${tacton.metadata.recordDate}`"
+				:active="tacton.uuid == selection" @click="selectTacton(tacton)">
 				<v-list-item-action start>
 					<v-btn :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'" variant="plain"
 						@click="toggleFavorite(tacton)"> Button </v-btn>
@@ -119,8 +121,8 @@ export default defineComponent({
 			this.selection = tacton.uuid
 			this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
 		},
-		playRecordedTacton() {
-			changeRecordMode(this.store, InteractionModeChange.startPlayback)
+		togglePlayback() {
+			changeRecordMode(this.store, InteractionModeChange.togglePlayback)
 		},
 		calculateDuration(tacton: Tacton): number {
 			let d = 0;
