@@ -1,15 +1,16 @@
+import { playbackRecordedTacton } from "@/electron/DeviceManager/TactonPlayer";
 import { RoomMutations, RoomSettingsActionTypes, RoomState } from "../../store/modules/roomSettings/roomSettings";
 import { Store } from "../../store/store";
 import { IPC_CHANNELS } from "@/electron/IPCMainManager/IPCChannels";
 import { bufferedSending } from "@/renderer/CommunicationManager/WebSocketManager/index";
 import router from "@/renderer/router";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
-import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
+import { TactonPlaybackActionTypes, TactonPlaybackMutations } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
 import { TactonMutations, TactonSettingsActionTypes } from "@/renderer/store/modules/tactonSettings/tactonSettings";
 import { RouterNames } from "@/types/Routernames";
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { Tacton } from "@sharedTypes/tactonTypes";
-import { ChangeTactonMetadata, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { ChangeTactonMetadata, UpdateRoomMode, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 
 export interface SocketMessage {
@@ -150,9 +151,13 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
    *   } as payload
 */
         case WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI: {
-            store.commit(RoomMutations.UPDATE_RECORD_MODE, msg.payload)
             //TODO Change tacton state based on received update!
-            const rm = msg.payload as InteractionMode
+            const update = msg.payload as UpdateRoomMode
+            const rm = update.newMode
+            store.commit(RoomMutations.UPDATE_RECORD_MODE, rm)
+            // console.log("Update Record Mode!")
+            // console.log(msg.payload)
+            // console.log(update)
             switch (rm) {
                 case InteractionMode.Jamming:
                     console.log("Jamming")
@@ -164,6 +169,12 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                     break;
                 case InteractionMode.Playback:
                     console.log("Playback")
+                    if (update.tactonId != undefined) {
+                        store.dispatch(TactonPlaybackActionTypes.selectTacton, update.tactonId)
+                        if (store.state.tactonPlayback.currentTacton != undefined) {
+                            playbackRecordedTacton(store.state.tactonPlayback.currentTacton.instructions)
+                        }
+                    }
                     store.commit(TactonMutations.TRACK_STATE_CHANGES, false);
                     break;
 

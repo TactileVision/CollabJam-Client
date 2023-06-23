@@ -30,7 +30,7 @@ export class RecordingTimer {
                 console.log(`${room.currentRecordingTime / 1000} seconds recorded`);
                 if (room.currentRecordingTime >= room.maxDurationRecord) {
                     console.log(`${room.id} stopping recording after ${room.currentRecordingTime / 1000} seconds`);
-                    StoreManager.changeRoomMode(room.id, InteractionMode.Jamming, new Date().getTime())
+                    StoreManager.updateRoomMode({ roomId: room.id, newMode: InteractionMode.Jamming, tactonId: undefined }, new Date().getTime())
                 }
             } else {
                 room.currentRecordingTime = 0

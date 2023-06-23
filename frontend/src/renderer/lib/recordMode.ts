@@ -1,6 +1,6 @@
 import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 import { sendSocketMessage } from "../CommunicationManager/WebSocketManager";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { UpdateRoomMode, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import { Store } from "../store/store";
 import { playbackRecordedTacton } from "@/electron/DeviceManager/TactonPlayer";
 
@@ -14,20 +14,21 @@ export const changeRecordMode = function (store: Store, change: InteractionModeC
 			sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
 				roomId: store.state.roomSettings.id,
 				newMode: InteractionMode.Jamming
-			});
+			} as UpdateRoomMode);
 		} else if (currentMode == InteractionMode.Jamming) {
 			sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
 				roomId: store.state.roomSettings.id,
 				newMode: InteractionMode.Recording
-			});
+			} as UpdateRoomMode);
 		}
 	} else {
 		if (currentMode == InteractionMode.Jamming && store.state.tactonPlayback.currentTacton != null) {
 			sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
 				roomId: store.state.roomSettings.id,
-				newMode: InteractionMode.Playback
-			});
-			playbackRecordedTacton(store.state.tactonPlayback.currentTacton.instructions)
+				newMode: InteractionMode.Playback,
+				tactonId: store.state.tactonPlayback.currentTacton.uuid
+			} as UpdateRoomMode);
+			// playbackRecordedTacton(store.state.tactonPlayback.currentTacton.instructions)
 		}
 	}
 }

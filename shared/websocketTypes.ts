@@ -1,3 +1,4 @@
+import { InteractionMode, InteractionModeChange } from "./roomTypes"
 import { TactonMetadata } from "./tactonTypes"
 
 export enum WS_MSG_TYPE {
@@ -36,4 +37,10 @@ export interface ChangeTactonMetadata {
 	roomId: string
 	tactonId: string
 	metadata: TactonMetadata
+}
+
+export interface UpdateRoomMode {
+	roomId: string
+	newMode: InteractionMode
+	tactonId: string | undefined
 }

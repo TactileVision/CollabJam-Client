@@ -1,4 +1,4 @@
-import { WS_MSG_TYPE } from "../../../shared/websocketTypes";
+import { UpdateRoomMode, WS_MSG_TYPE } from "../../../shared/websocketTypes";
 import RoomModule from "./RoomModule";
 import TactonModule from "./TactonModule";
 import UserModule from "./UserModule";
@@ -86,60 +86,47 @@ const removeUserFromSession = (roomId: string, user: User, startTimeStamp: numbe
 
 }
 
-const changeRoomMode = (roomId: string, newMode: InteractionMode, startTimeStamp: number) => {
+const updateRoomMode = (update: UpdateRoomMode, startTimeStamp: number) => {
 
     // const isValidModeChange  = RoomModule.
     // if(newMode == InteractionMode.Jamming)
-    const r = RoomModule.getRoomInfo(roomId)
+    let res: UpdateRoomMode = { ...update }
+    const r = RoomModule.getRoomInfo(update.roomId)
     if (r == undefined) return
     const rm = r.mode
-    if (RoomModule.updateRoomMode(roomId, newMode)) {
-        console.log(`Changing interaction mode to ${newMode}`)
-        const s = TactonModule.sessions.get(roomId)
+    if (RoomModule.updateRoomMode(update.roomId, update.newMode)) {
+        console.log(`Changing interaction mode to ${update.newMode}`)
+        const s = TactonModule.sessions.get(update.roomId)
         if (s == undefined) return
 
-        if (newMode == InteractionMode.Recording) { //Old Mode was Jamming
-            // Start new Recording 
-            // s.recording = new TactonRecording()
-            //TODO Broadcast information about recording to clients
+        if (rm == InteractionMode.Jamming) {
+            // StartPlayback
+            if (update.newMode == InteractionMode.Playback && update.tactonId != undefined) {
 
+            } else if (update.newMode == InteractionMode.Recording) {
 
-        }
-        else if (newMode == InteractionMode.Playback) {
-            //Old Mode was Jamming
-        }
-        else {
-            //Old Mode was recording or playback, Store tacton in history and send item to client
-            //TODO Only save well formed tactons and 
-            if (rm == InteractionMode.Recording) {
+            } else {
+                return
+            }
+        } else if (rm == InteractionMode.Recording) {
+            if (update.newMode == InteractionMode.Jamming) {
                 const isValidRecording = s.finishRecording()
                 if (isValidRecording) {
                     const t = s.history[s.history.length - 1]
                     setName(t, s, r.recordingNamePrefix)
-                    broadCastMessage(roomId, WS_MSG_TYPE.GET_TACTON_CLI, t, startTimeStamp)
-                    saveTactonAsJson(roomId, t)
+
+                    broadCastMessage(update.roomId, WS_MSG_TYPE.GET_TACTON_CLI, t, startTimeStamp)
+                    saveTactonAsJson(update.roomId, t)
                 }
-            } else { // Playback
-            }
+            } else { return }
+
+        } else { //rm ==Playback
+            if (update.newMode == InteractionMode.Jamming) {
+
+            } else { return }
         }
-
-        broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI, newMode, startTimeStamp)
+        broadCastMessage(update.roomId, WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI, res, startTimeStamp)
     }
-
-}
-
-const changeRecordMode = (roomId: string, shouldRecord: boolean, startTimeStamp: number) => {
-    // const needUpdate = RoomModule.updateRecordMode(roomId, shouldRecord)
-    // if (needUpdate == true) {
-    //     if (shouldRecord == true){
-    //         console.log("Starting to record now")
-    //         TactonModule.deleteTactonInstructions(roomId);
-    //     } else {
-    //         console.log("Stopping the recording now")
-    //     }
-
-    //     broadCastMessage(roomId, WS_MSG_TYPE.UPDATE_RECORD_MODE_CLI, shouldRecord, startTimeStamp)
-    // }
 
 }
 
@@ -202,8 +189,7 @@ export default {
     enterSession,
     updateSession,
     removeUserFromSession,
-    changeRecordMode,
-    changeRoomMode,
+    updateRoomMode,
     changeDuration,
     processInstructionsFromClient,
 }

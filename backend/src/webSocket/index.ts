@@ -5,7 +5,7 @@ import TactonModule from "../store/TactonModule";
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { saveTactonAsJson } from "../util/FileStorage";
 import { Tacton } from "../../../shared/tactonTypes"
-import { WS_MSG_TYPE, ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
+import { WS_MSG_TYPE, ChangeTactonMetadata, UpdateRoomMode } from "@sharedTypes/websocketTypes";
 
 interface SocketMessage {
     type: WS_MSG_TYPE;
@@ -186,17 +186,6 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 // }
                 break;
             }
-            // case WS_MSG_TYPE.UPDATE_RECORD_MODE_SERV: {
-            //     /**
-            //     * method to update all clients with the new recordmode
-            //     * recieve {
-            //     *      "roomId":string
-            //     *      shouldRecord:boolen
-            //     *  } as payload
-            //     */
-            //     StorageManager.changeRecordMode(msg.payload.roomId, msg.payload.shouldRecord, msg.startTimeStamp)
-            //     break;
-            // }
             case WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV: {
                 /**
                 * method to update all clients with the new recordmode
@@ -205,7 +194,7 @@ export const onMessage = (ws: WebSocket, data: any, client: string) => {
                 *      "newMode": InteractionMode
                 *  } as payload
                 */
-                StorageManager.changeRoomMode(msg.payload.roomId, msg.payload.newMode as InteractionMode, msg.startTimeStamp)
+                StorageManager.updateRoomMode(msg.payload as UpdateRoomMode, msg.startTimeStamp)
                 break;
             }
             case WS_MSG_TYPE.CHANGE_DURATION_SERV: {

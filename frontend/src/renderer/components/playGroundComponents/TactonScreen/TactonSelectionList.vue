@@ -36,7 +36,7 @@
 		<v-list lines="one" class="selection-list" :selected="selectedItems" active-color="primary" density="compact">
 			<v-list-item v-for="(tacton, index) of getTactons()" :disabled="store.state.roomSettings.mode != 1"
 				:key=tacton.uuid class="non-selectable" :title="tacton.metadata.name"
-				:subtitle="`${(calculateDuration(tacton) / 1000).toFixed(2)} s`" :active="tacton.uuid == selection"
+				:subtitle="`${(calculateDuration(tacton) / 1000).toFixed(2)} s    ${tacton.metadata.recordDate}`" :active="tacton.uuid == selection"
 				@click="selectTacton(tacton)">
 				<v-list-item-action start>
 					<v-btn :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'" variant="plain"
