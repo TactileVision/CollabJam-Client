@@ -1,5 +1,7 @@
-import { User } from "@sharedTypes/roomTypes";
+import { InteractionMode, User } from "@sharedTypes/roomTypes";
 import { defaultColorUsers } from "../types/defaultColorUsers";
+import RoomModule from "./RoomModule";
+import StoreManager from "./StoreManager";
 
 //contain all metadata of one user
 let participantList: Map<string, User[]> = new Map<string, User[]>();
@@ -152,6 +154,15 @@ const removeParticipant = (roomId: string, userId: string): number | undefined =
     }
 
     console.log(`Removed user from ${roomId}, ${participants.length} users left`)
+    if (participants.length == 0) {
+        const room = RoomModule.getRoomInfo(roomId)
+        if (room != undefined) {
+            if (room.mode != InteractionMode.Jamming) {
+                StoreManager.updateRoomMode({ roomId: room.id, newMode: InteractionMode.Jamming, tactonId: undefined }, new Date().getTime())
+            }
+
+        }
+    }
     return participants.length;
 }
 

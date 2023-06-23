@@ -15,7 +15,8 @@
       <!-- <UserMenu /> -->
       <DeviceDialog :num-connected-devices="numConnectedDevices">
       </DeviceDialog>
-      <v-btn color="primary" prepend-icon="mdi-logout" @click="logOut">Log out</v-btn>
+      <v-btn color="primary" :disabled="store.state.roomSettings.mode != 1" prepend-icon="mdi-logout" @click="logOut">Log
+        out</v-btn>
     </template>
   </v-app-bar>
 </template>
@@ -45,6 +46,7 @@ import UserTooltip from "./UserMenu/UserTooltip.vue";
 import DeviceDialog from "@/renderer/views/DeviceDialog.vue";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import InteractionModeIndicator from "@/renderer/components/playGroundComponents/InteractionModeIndicator.vue"
+
 export default defineComponent({
   name: "PlayGroundHeader",
   components: {
