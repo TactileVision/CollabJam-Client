@@ -3,24 +3,15 @@
     <v-card class="mx-auto">
       <v-card-title>
         {{ name.indexOf('(') == -1 ? name : name.substring(0, name.indexOf('(')) }}
-        <!-- {{ name }} -->
       </v-card-title>
       <inline-svg class="input-device-illustration" :src="imagePath" />
       <v-card-actions>
-        <v-select hide-details v-model="selectedProfileUid" label="Profile" :items="allProfileOptions"></v-select>
-        <v-btn @click="updateProfile" color="primary">Update</v-btn>
+        <v-radio-group inline hide-details color="primary" v-model="selectedProfileUid">
+          <v-radio v-for="profile in allProfileOptions" v-bind:key="profile.value" :label="profile.title"
+            :value="profile.value"></v-radio>
+        </v-radio-group>
       </v-card-actions>
     </v-card>
-    <!-- <h3>{{ name }}</h3>
-    <v-row>
-      <v-col>
-        <inline-svg :src="imagePath" />
-      </v-col>
-      <v-col>
-        <v-select v-model="selectedProfileUid" label="Profile" :items="allProfileOptions"></v-select>
-        <v-btn @click="updateProfile" color="primary">Update</v-btn>
-      </v-col>
-    </v-row> -->
   </div>
 </template>
 
@@ -44,6 +35,7 @@ import { InputDevice } from "@/types/InputBindings";
 import { defineComponent } from "@vue/runtime-core";
 import defaultImagePath from "@/renderer/assets/controller.svg";
 import { PlayGroundMutations } from "@/renderer/store/modules/playGround/types";
+import { StateProfile } from "@/renderer/store/modules/playGround/playGround";
 
 export default defineComponent({
   name: "DeviceProfile",
@@ -57,6 +49,7 @@ export default defineComponent({
     return {
       store: useStore(),
       selectedProfileUid: null as string | null,
+      profileCheckbox: null as string | null
     };
   },
   mounted() {
@@ -96,5 +89,14 @@ export default defineComponent({
       this.store.commit(PlayGroundMutations.UPDATE_PROFILE, { device: this.device, profileUid: this.selectedProfileUid })
     }
   },
+  watch: {
+    selectedProfileUid(val) {
+      this.updateProfile()
+    },
+    selectedProfile(val) {
+      const p = val as StateProfile
+      this.selectedProfileUid = p.uid
+    }
+  }
 });
 </script>
