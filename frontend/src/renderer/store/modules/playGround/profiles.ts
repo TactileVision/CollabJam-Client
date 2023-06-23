@@ -979,7 +979,7 @@ const profiles: StateProfile[] = [
   },
   {
     uid: uuidv4(),
-    name: "Keyboard",
+    name: "QWERTY Keyboard",
     imagePath: keyboardImage,
     deviceType: DeviceType.Keyboard,
     bindings: [
@@ -1046,22 +1046,6 @@ const profiles: StateProfile[] = [
         //grid properties
         position: { x: 5, y: 5, w: 1, h: 1 },
         name: "Channel 4 - 100%",
-        color: "#ff0000",
-      },
-      {
-        inputs: [{ type: UserInputType.Key, key: "5" } as KeyInput],
-        activeTriggers: 0,
-        uid: "KB_5",
-        actions: [
-          {
-            type: "trigger_actuator",
-            channel: 4,
-            intensity: 1.0,
-          } as TactileAction,
-        ],
-        //grid properties
-        position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 5 - 100%",
         color: "#ff0000",
       },
       {
@@ -1139,13 +1123,13 @@ const profiles: StateProfile[] = [
           } as TactileAction,
           {
             type: "trigger_actuator",
-            channel: 4,
+            channel: 0,
             intensity: 1.0,
           } as TactileAction,
         ],
         //grid properties
         position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 4,5 - 100%",
+        name: "Channel 4,1 - 100%",
         color: "#ff0000",
       },
       //MARK: Row 2
@@ -1213,22 +1197,7 @@ const profiles: StateProfile[] = [
         name: "Channel 4 - 80%",
         color: "#ff0000",
       },
-      {
-        inputs: [{ type: UserInputType.Key, key: "T" } as KeyInput],
-        activeTriggers: 0,
-        uid: "KB_T",
-        actions: [
-          {
-            type: "trigger_actuator",
-            channel: 4,
-            intensity: 0.8,
-          } as TactileAction,
-        ],
-        //grid properties
-        position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 5 - 80%",
-        color: "#ff0000",
-      },
+
       {
         inputs: [{ type: UserInputType.Key, key: "U" } as KeyInput],
         activeTriggers: 0,
@@ -1304,13 +1273,13 @@ const profiles: StateProfile[] = [
           } as TactileAction,
           {
             type: "trigger_actuator",
-            channel: 4,
+            channel: 0,
             intensity: 0.8,
           } as TactileAction,
         ],
         //grid properties
         position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 4,5 - 80%",
+        name: "Channel 4,1 - 80%",
         color: "#ff0000",
       },
       //MARK: Row 3
@@ -1376,22 +1345,6 @@ const profiles: StateProfile[] = [
         //grid properties
         position: { x: 5, y: 5, w: 1, h: 1 },
         name: "Channel 4 - 60%",
-        color: "#ff0000",
-      },
-      {
-        inputs: [{ type: UserInputType.Key, key: "G" } as KeyInput],
-        activeTriggers: 0,
-        uid: "KB_G",
-        actions: [
-          {
-            type: "trigger_actuator",
-            channel: 4,
-            intensity: 0.6,
-          } as TactileAction,
-        ],
-        //grid properties
-        position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 5 - 60%",
         color: "#ff0000",
       },
       {
@@ -1469,13 +1422,13 @@ const profiles: StateProfile[] = [
           } as TactileAction,
           {
             type: "trigger_actuator",
-            channel: 4,
+            channel: 0,
             intensity: 0.6,
           } as TactileAction,
         ],
         //grid properties
         position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 4,5 - 60%",
+        name: "Channel 4,1 - 60%",
         color: "#ff0000",
       },
       //MARK: Row 4
@@ -1541,22 +1494,6 @@ const profiles: StateProfile[] = [
         //grid properties
         position: { x: 5, y: 5, w: 1, h: 1 },
         name: "Channel 4 - 40%",
-        color: "#ff0000",
-      },
-      {
-        inputs: [{ type: UserInputType.Key, key: "B" } as KeyInput],
-        activeTriggers: 0,
-        uid: "KB_B",
-        actions: [
-          {
-            type: "trigger_actuator",
-            channel: 4,
-            intensity: 0.4,
-          } as TactileAction,
-        ],
-        //grid properties
-        position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 5 - 40%",
         color: "#ff0000",
       },
       {
@@ -1634,13 +1571,146 @@ const profiles: StateProfile[] = [
           } as TactileAction,
           {
             type: "trigger_actuator",
-            channel: 4,
+            channel: 0,
             intensity: 0.4,
           } as TactileAction,
         ],
         //grid properties
         position: { x: 5, y: 5, w: 1, h: 1 },
-        name: "Channel 4,5 - 40%",
+        name: "Channel 4,1 - 40%",
+        color: "#ff0000",
+      },
+      //100 % Column
+      {
+        inputs: [{ type: UserInputType.Key, key: "6" } as KeyInput],
+        activeTriggers: 0,
+        uid: "KB_6",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 0,
+            intensity: 1,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 1,
+            intensity: 1,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 2,
+            intensity: 1,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 3,
+            intensity: 1,
+          } as TactileAction,
+        ],
+        //grid properties
+        position: { x: 5, y: 5, w: 1, h: 1 },
+        name: "All Channels - 100%",
+        color: "#ff0000",
+      },
+      {
+        inputs: [
+          {
+            type: UserInputType.Key, key: "Y"
+          } as KeyInput],
+        activeTriggers: 0,
+        uid: "KB_Y",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 0,
+            intensity: 0.8,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 1,
+            intensity: 0.8,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 2,
+            intensity: 0.8,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 3,
+            intensity: 0.8,
+          } as TactileAction,
+        ],
+        //grid properties
+        position: { x: 5, y: 5, w: 1, h: 1 },
+        name: "All Channels - 80%",
+        color: "#ff0000",
+      }, {
+        inputs: [
+          {
+            type: UserInputType.Key, key: "H"
+          } as KeyInput],
+        activeTriggers: 0,
+        uid: "KB_H",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 0,
+            intensity: 0.6,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 1,
+            intensity: 0.6,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 2,
+            intensity: 0.6,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 3,
+            intensity: 0.6,
+          } as TactileAction,
+        ],
+        //grid properties
+        position: { x: 5, y: 5, w: 1, h: 1 },
+        name: "All Channels - 60%",
+        color: "#ff0000",
+      },
+      {
+        inputs: [
+          {
+            type: UserInputType.Key, key: "N"
+          } as KeyInput],
+        activeTriggers: 0,
+        uid: "KB_N",
+        actions: [
+          {
+            type: "trigger_actuator",
+            channel: 0,
+            intensity: 0.4,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 1,
+            intensity: 0.4,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 2,
+            intensity: 0.4,
+          } as TactileAction,
+          {
+            type: "trigger_actuator",
+            channel: 3,
+            intensity: 0.4,
+          } as TactileAction,
+        ],
+        //grid properties
+        position: { x: 5, y: 5, w: 1, h: 1 },
+        name: "All Channels - 40%",
         color: "#ff0000",
       },
 
