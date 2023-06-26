@@ -109,6 +109,7 @@ export const mutations: MutationTree<State> & Mutations = {
 export enum TactonPlaybackActionTypes {
 
   selectTacton = 'selectTacton',
+  deselectTacton = 'deselectTacton',
   addTacton = 'addTacton',
   updateTime = 'updateTime',
   setTactonList = 'setTactonList',
@@ -128,6 +129,9 @@ export interface Actions {
   [TactonPlaybackActionTypes.selectTacton](
     { commit }: AugmentedActionContext,
     payload: string
+  ): void;
+  [TactonPlaybackActionTypes.deselectTacton](
+    { commit }: AugmentedActionContext,
   ): void;
   [TactonPlaybackActionTypes.addTacton](
     { commit }: AugmentedActionContext,
@@ -160,6 +164,11 @@ export const actions: ActionTree<State, RootState> & Actions = {
       commit(TactonPlaybackMutations.SELECT_TACTON, uuid);
     } else {
       console.log("[TactonPlayback] Can't select tacton, unknown uuid")
+    }
+  },
+  [TactonPlaybackActionTypes.deselectTacton]({ commit }) {
+    if (state.currentTacton != null) {
+      commit(TactonPlaybackMutations.DESELECT_TACTON, undefined)
     }
   },
 

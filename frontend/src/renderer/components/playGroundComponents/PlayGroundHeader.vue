@@ -46,6 +46,7 @@ import UserTooltip from "./UserMenu/UserTooltip.vue";
 import DeviceDialog from "@/renderer/views/DeviceDialog.vue";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import InteractionModeIndicator from "@/renderer/components/playGroundComponents/InteractionModeIndicator.vue"
+import { TactonPlaybackActionTypes } from "@/renderer/store/modules/tactonPlayback/tactonPlayback";
 
 export default defineComponent({
   name: "PlayGroundHeader",
@@ -64,6 +65,8 @@ export default defineComponent({
   },
   methods: {
     logOut() {
+      const s = useStore()
+      // s.dispatch(TactonPlaybackActionTypes.deselectTacton)
       sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
         roomId: this.store.state.roomSettings.id,
         user: this.store.state.roomSettings.user,
