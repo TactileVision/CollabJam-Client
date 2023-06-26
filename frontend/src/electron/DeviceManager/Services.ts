@@ -68,10 +68,10 @@ const tactileDisplayService:Service = {
                             console.log(error);
                         }
                         // console.log("im A characteristic")
-                        sendMessageToRenderer(IPC_CHANNELS.renderer.numberOfOutputsDiscovered, {
-                            deviceId:characteristic._peripheralId,
-                            numOfOutputs:data.readUInt8()
-                        })
+                        // sendMessageToRenderer(IPC_CHANNELS.renderer.numberOfOutputsDiscovered, {
+                        //     deviceId:characteristic._peripheralId,
+                        //     numOfOutputs:data.readUInt8()
+                        // })
                         /**
                         webSocketServer.broadcastData(WS_BT.numberOfOutputsDiscovered, {
                             [WS_DEVICE_INFO.id]: characteristic._peripheralId,

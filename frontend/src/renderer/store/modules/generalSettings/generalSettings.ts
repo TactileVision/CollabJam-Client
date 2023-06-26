@@ -224,10 +224,11 @@ export const getters: GetterTree<State, RootState> & Getters = {
  * for testing we use only 8 actauators always just, uncomment the code to set default to 12 and use the number you get from the device
   return 8;
 */
-    const device = getters.getConnectedDevice(state);
-    if (device == undefined) return 5;
-    if (device.numOfOutputs == undefined) return 5;
-    return device.numOfOutputs;
+    return 4
+    // const device = getters.getConnectedDevice(state);
+    // if (device == undefined) return 5;
+    // if (device.numOfOutputs == undefined) return 5;
+    // return device.numOfOutputs;
 
 
   }
