@@ -13,7 +13,6 @@
   },
   "main": "background.js",
   "dependencies": {
-    // "@abandonware/noble": "^1.9.2-15",
     "@abandonware/noble": "git+https://github.com/sidecutter/noble.git",
     "@ckpack/vue-color": "^1.1.8",
     "@mdi/font": "5.9.55",
