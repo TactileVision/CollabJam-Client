@@ -1,5 +1,5 @@
 "use strict";
-import { setBrowserWindow,initSettingManager } from './electron/IPCMainManager/IPCController';
+import { setBrowserWindow,initSettingManager } from './core/IPCMainManager/IPCController';
 import { app, protocol, BrowserWindow } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
