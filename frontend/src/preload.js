@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld(
     },
     receive: (channel, func) => {
         //get messages from main
-        let validChannels = ['tactile-jam.renderer']
+        let validChannels = [ 'collabjam.renderer','tactile-jam.renderer',]
         const isValid = validChannels.some(el => isValidChannel(el, channel));
 
         if (isValid == true) {

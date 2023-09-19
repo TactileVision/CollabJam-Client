@@ -12,7 +12,7 @@ let instructionTimer: NodeJS.Timeout | null = null
 
 //TODO Define a type that will allow to differentiate between wait and execute instructions
 export const playbackRecordedTacton = (tacton: TactonInstruction[]) => {
-	executeInstruction(tacton, 0)
+	writeAmplitudeBuffer(tacton, 0)
 	cursorTimer = setInterval(() => {
 		const s = useStore()
 		s.dispatch(TactonPlaybackActionTypes.updateTime, s.state.tactonPlayback.playbackTime + updateTimeInterval)
@@ -33,7 +33,7 @@ export function stopPlayback() {
 
 }
 
-export const executeInstruction = (tacton: TactonInstruction[], index: number) => {
+export const writeAmplitudeBuffer = (tacton: TactonInstruction[], index: number) => {
 
 	if (index == tacton.length) {
 		console.log("[TactonPlayer] Done")
@@ -51,7 +51,7 @@ export const executeInstruction = (tacton: TactonInstruction[], index: number) =
 	}
 
 	const f = () => {
-		executeInstruction(tacton, index + 1)
+		writeAmplitudeBuffer(tacton, index + 1)
 	}
 
 	if (isInstructionWait(tacton[index])) {
@@ -71,6 +71,6 @@ export const executeInstruction = (tacton: TactonInstruction[], index: number) =
 			// sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {})
 			// console.log( store.state.roomSettings.id)
 
-			executeInstruction(tacton, index + 1)
+			writeAmplitudeBuffer(tacton, index + 1)
 		}
 }

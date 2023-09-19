@@ -1,6 +1,9 @@
-import noble, {  Peripheral } from "@abandonware/noble";
+import noble, { Peripheral } from "@abandonware/noble";
 import { isKnownService, knownServices, knownServiceUuids } from "./Services"
 import DeviceManager from "./DeviceManager";
+import { sendMessageToRenderer } from "../IPCMainManager/IPCController";
+import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
+import { TactileDisplay } from "./store/DeviceManagerStore";
 
 /**
  * generell methods to establish a ble connection
@@ -114,7 +117,18 @@ export const connectBlutetoothDevice = (device: Peripheral) => {
     // setup events
     device.once("connect", async () => {
         console.log(`[Bluetooth][${device.id}]: ${device.advertisement.localName} connected`);
+        const d: TactileDisplay = {
+            info: {
+                id: device.id,
+                name: device.advertisement.localName,
+                rssi: device.rssi,
+                connectionState: device.state
+            },
+            numOfOutputs: 0,
+            outputParameter: []
+        }
         DeviceManager.updateConnectedDevice(device);
+        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.connectedToDevice, d)
         discoverServices(device);
     });
     device.once("disconnect", () => {

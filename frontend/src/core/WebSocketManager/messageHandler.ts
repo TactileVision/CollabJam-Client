@@ -128,7 +128,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
         }
         /**
         * get called if one user controll his vibrotactile device
-        * IPC_CHANNELS.main.executeTask --> only called if you want to feel the vibration
+        * IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers --> only called if you want to feel the vibration
         * * recieve {
             *    channels: OutputChannelState[] ==> all instructions in custom format
             *   } as payload
@@ -140,7 +140,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 store.dispatch(TactonSettingsActionTypes.modifySpecificChannel, msg.payload)
             }
             if (store.state.generalSettings.currentView == RouterNames.PLAY_GROUND && !store.state.playGround.inEditMode) {
-                window.api.send(IPC_CHANNELS.main.executeTask, msg.payload);
+                window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, msg.payload);
             }
             break;
         }
@@ -165,7 +165,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                         // Set all outputs to 0
                         store.state.generalSettings.deviceList.forEach(device => {
                             const tt : TactileTask = {channelIds : [...Array(device.numOfOutputs).keys()], intensity: 0}
-                            window.api.send(IPC_CHANNELS.main.executeTask, [tt]);
+                            window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, [tt]);
                         })
                         
                     }

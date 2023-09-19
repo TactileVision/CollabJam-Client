@@ -32,9 +32,13 @@ module.exports = {
     },
   },
   configureWebpack: {
+    // target: 'electron-main',
     resolve: {
+      fallback: {
+        path: require.resolve("path-browserify")
+      },
       alias: {
-        "@sharedTypes" : path.resolve(__dirname, '../shared/')
+        "@sharedTypes": path.resolve(__dirname, '../shared/')
       },
       extensions: ["", ".ts", ".tsx", ".js"]
     },

@@ -1,5 +1,6 @@
 import fs from 'fs';
-const path = require('path');
+// const path = require('path');
+import path from "path";
 import { app } from "electron";
 import { initSettings, CustomSettings } from './initSettings';
 import { sendMessageToRenderer } from '../IPCMainManager/IPCController';

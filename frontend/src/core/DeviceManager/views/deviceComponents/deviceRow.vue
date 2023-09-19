@@ -60,7 +60,7 @@ export default defineComponent({
     },
     async vibrateDevice() {
       this.isVibrating = true;
-      window.api.send(IPC_CHANNELS.main.executeTask, [
+      window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, [
         {
           channelIds: [0],
           intensity: 1,
@@ -68,7 +68,7 @@ export default defineComponent({
       ]);
       await new Promise((r) => setTimeout(r, 1000));
 
-      window.api.send(IPC_CHANNELS.main.executeTask, [
+      window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, [
         {
           channelIds: [0],
           intensity: 0,

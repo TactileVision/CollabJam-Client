@@ -46,16 +46,25 @@ import {
 } from '../../feature/collabJamming/store/tactonPlayback'
 
 import {
-    State as TactonPlaybackState,
+  State as TactonPlaybackState,
 } from '../../feature/collabJamming/store/tactonPlayback/tactonPlayback'
 
+import {
+  store as deviceManager,
+  DeviceManagerStore,
+} from '../../core/DeviceManager/store'
+
+import {
+  State as DeviceManagerState
+} from '../../core/DeviceManager/store/DeviceManagerStore'
 
 export type RootState = {
+  deviceManager: DeviceManagerState,
   generalSettings: GeneralSettingsState,
   roomSettings: RoomSettingsState,
-  playGround:PlayGroundState,
+  playGround: PlayGroundState,
   tactonSettings: TactonSettingsState,
-  tactonPlayback: TactonPlaybackState
+  tactonPlayback: TactonPlaybackState,
 }
 
 /**
@@ -64,15 +73,22 @@ interface Mutations extends MutationsDirectInput,MutationsBreakPoint {}
 interface Actions extends ActionsDirectInput,ActionsBreakPoint {}
 interface Getters extends GettersDirectInput,GettersBreakPoint {}
 */
-export type Store = GeneralSettingsStore<Pick<RootState, 'generalSettings'>> & RoomSettingsStore<Pick<RootState, 'roomSettings'>> & PlayGroundStore<Pick<RootState, 'playGround'>> & TactonSettingsStore<Pick<RootState, 'tactonSettings'>>  & TactonPlaybackStore<Pick<RootState, 'tactonPlayback'>>
+export type Store =
+  DeviceManagerStore<Pick<RootState, 'deviceManager'>> &
+  GeneralSettingsStore<Pick<RootState, 'generalSettings'>> &
+  RoomSettingsStore<Pick<RootState, 'roomSettings'>> &
+  PlayGroundStore<Pick<RootState, 'playGround'>> &
+  TactonSettingsStore<Pick<RootState, 'tactonSettings'>> &
+  TactonPlaybackStore<Pick<RootState, 'tactonPlayback'>>
 
 export const store = createStore({
   modules: {
+    deviceManager,
     generalSettings,
     roomSettings,
     playGround,
     tactonSettings,
-    tactonPlayback
+    tactonPlayback,
   },
 })
 

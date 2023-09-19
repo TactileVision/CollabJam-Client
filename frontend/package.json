@@ -20,6 +20,7 @@
     "@pixi/canvas-renderer": "^6.3.2",
     "core-js": "^3.8.3",
     "loader-utils": "^3.2.0",
+    "path-browserify": "^1.0.1",
     "pixi.js": "^6.3.2",
     "protobufjs": "^6.11.2",
     "roboto-fontface": "*",

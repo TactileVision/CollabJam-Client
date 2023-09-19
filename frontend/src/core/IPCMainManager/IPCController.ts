@@ -1,13 +1,13 @@
-const { ipcMain, clipboard } = require('electron');
 import fs from 'fs';
-import { BrowserWindow, dialog } from "electron";
+import { BrowserWindow, dialog, ipcMain, clipboard } from "electron";
 import { IPC_CHANNELS } from "./IPCChannels";
 import DeviceManager from "../DeviceManager/DeviceManager"
-import { TactileTask} from "@sharedTypes/tactonTypes";
+import { TactileTask } from "@sharedTypes/tactonTypes";
 import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding } from '@/core/Input/InputDetection/types/InputBindings';
+import { writeAmplitudeBuffer } from '../DeviceManager/BluetoothWriter';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -62,10 +62,21 @@ ipcMain.on(IPC_CHANNELS.main.disconnectDevice, (event, deviceID: string) => {
 });
 
 //controll the vibrotactile device
-ipcMain.on(IPC_CHANNELS.main.executeTask, (event, taskList: TactileTask[]) => {
-    //console.log("executeTask");
-    DeviceManager.executeTask(taskList)
+ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, (event, taskList: TactileTask[]) => {
+    //console.log("writeAllAmplitudeBuffers");
+    DeviceManager.writeAllAmplitudeBuffers(taskList)
 });
+
+ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, (event, payload: {deviceId: string, taskList: TactileTask[]}) => {
+    const d = DeviceManager.connectedDevices.get(payload.deviceId)
+    if (d == null) return
+    writeAmplitudeBuffer(d, payload.taskList)
+});
+
+// ipcMain.on(IPC_CHANNELS.bluetooth.main.writeCharacteristic, (event, write: WriteCharacteristic) => {
+//     //console.log("writeAllAmplitudeBuffers");
+// });
+
 
 //copy roomName and adress
 ipcMain.on(IPC_CHANNELS.main.copyToClipBoard, (event, adress: string) => {

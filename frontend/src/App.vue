@@ -3,9 +3,10 @@
   <div tabindex="0" class="main" @keyup="buttonUp" @keydown="buttonDown">
     <div class="root">
       <v-app>
+        <app-bar></app-bar>
         <v-main>
           <router-view />
-          <transition name="fade">
+          <!-- <transition name="fade">
             <div class="snackbar" v-show="!store.getters.isConnectedToSocket">
               <div class="label">
                 It seems you are offline pleasy try to reconnect
@@ -40,7 +41,7 @@
                 }}
               </div>
             </div>
-          </transition>
+          </transition> -->
         </v-main>
       </v-app>
     </div>
@@ -153,8 +154,11 @@ import { createInputDetection } from "@/core/Input/InputDetection";
 import { InputEvent } from "@/core/Input/InputDetection/types/types";
 import { KeyInput, UserInputType } from "@/core/Input/InputDetection/types/InputDetection";
 import { DeviceType, KeyboardDevice } from "@/core/Input/InputDetection/types/InputBindings";
+import AppBar from "@/app/AppBar.vue"
+
 export default defineComponent({
   name: "App",
+  components: { AppBar },
   data() {
     return {
       store: useStore(),

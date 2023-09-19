@@ -1,7 +1,8 @@
 import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
 import { sendMessageToRenderer } from "../IPCMainManager/IPCController";
+import DeviceManager from "./DeviceManager";
 
-const hm10Service:Service = {
+const hm10Service: Service = {
     service: {
         uuid: "5eb8eec2b92d4dca901c3bc3b69936e6",
         callbacks: [
@@ -44,51 +45,94 @@ const hm10Service:Service = {
         },
     },
 };
-const pwmService:Service = {
-    service: { uuid: "f20913f7faa84f7b8d21f932d63af743" },
+const pwmService: Service = {
+    service: { uuid: "f20913f7faa84f7b8d21f932d63af743",  },
 };
-const tactileDisplayService:Service = {
-    service: { uuid: "f33c00018ebf4c9c83ecbfff479a930b" },
+const tactileDisplayService: Service = {
+    service: { uuid: "f33c00018ebf4c9c83ecbfff479a930b",  },
     characteristics: {
-        vtprotoBuffer: {
-            uuid: "f33c00328ebf4c9c83ecbfff479a930b",
-            callbacks:[
-                (characteristic: any) => {
-                    console.log("vtprotoBuffer characteristic")
-                }
-            ]
-        },
         numberOfOutputs: {
             uuid: "f33c00028ebf4c9c83ecbfff479a930b",
             callbacks: [
                 (characteristic: any) => {
-                    // console.log(characteristic);
                     characteristic.read((error: any, data: any) => {
                         if (error) {
                             console.log(error);
                         }
-                        // console.log("im A characteristic")
-                        // sendMessageToRenderer(IPC_CHANNELS.renderer.numberOfOutputsDiscovered, {
-                        //     deviceId:characteristic._peripheralId,
-                        //     numOfOutputs:data.readUInt8()
-                        // })
-                        /**
-                        webSocketServer.broadcastData(WS_BT.numberOfOutputsDiscovered, {
-                            [WS_DEVICE_INFO.id]: characteristic._peripheralId,
-                            [WS_DEVICE_DISPLAY.numOfOutputs]: data.readUInt8(),
-                        });
-
-                        numberOfOutputs.push({
-                            [WS_DEVICE_INFO.id]: characteristic._peripheralId,
-                            [WS_DEVICE_DISPLAY.numOfOutputs]: data.readUInt8(),
-                        });
-                         */
+                        console.log("num outputs")
+                        const x = data.readUInt32LE()
+                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readNumberOfOutputs, {
+                            deviceId: characteristic._peripheralId,
+                            numOfOutputs: x
+                        })
                     });
                 },
             ],
         },
+        canChangeAmplitude: {
+            uuid: "f33c00038ebf4c9c83ecbfff479a930b",
+            callbacks: [
+                (characteristic: any) => {
+                    characteristic.read((error: any, data: any) => {
+                        if (error) {
+                            console.log(error);
+                        }
+                        console.log("amp config")
+                        const x = data.readUInt32LE()
+                        console.log(x)
+                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readAmpConfig, {
+                            deviceId: characteristic._peripheralId,
+                            ampConf: x
+                        })
+                    });
+                },
+            ],
+        },
+        canChangeFrequency: {
+            uuid: "f33c00048ebf4c9c83ecbfff479a930b",
+            callbacks: [
+                (characteristic: any) => {
+                    characteristic.read((error: any, data: any) => {
+                        if (error) {
+                            console.log(error);
+                        }
+                        console.log("freq config")
+                        const x = data.readUInt32LE()
+                        console.log(x)
+                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readFreqConfig, {
+                            deviceId: characteristic._peripheralId,
+                            freqConf: x
+                        })
+                    });
+                },
+            ],
+        },
+        amplitudeValues: {
+            uuid: "f33c00328ebf4c9c83ecbfff479a930b",
+            callbacks: [
+                (characteristic: any) => {
+                    console.log("amplitudeValues")
+                }
+            ]
+        },
+        frequencyValues: {
+            uuid: "f33c00338ebf4c9c83ecbfff479a930b",
+            callbacks: [
+                (characteristic: any) => {
+                    console.log("frequencyValues")
+                }
+            ]
+        },
     },
 };
+
+export interface tactileDisplayServiceReadingProgress {
+    numberOfOutputs: boolean,
+    canChangeAmplitude: boolean,
+    canChangeFrequency: boolean,
+    amplitudeValues: boolean,
+    frequencyValues: boolean,
+}
 
 interface Service {
     service: {
