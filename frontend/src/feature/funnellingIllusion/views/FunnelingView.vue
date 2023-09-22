@@ -1,28 +1,55 @@
 <template>
 	<v-container>
 
-		<h2> Funelling Illusion </h2>
+		<h2>1D Funelling Illusion</h2>
 		<div id="funneling-illusion">
 
-		<div v-if="!hardwareIsReady">
-			Please connect a tactile display with at least two actuators connected!
-		</div>
-		<v-btn :disabled="!hardwareIsReady" @click="toggleVibration"> {{ isRunning ? "Stop" : "Start" }}</v-btn>
-		<!-- <v-btn color="error" @click="showActuatorSelection = !showActuatorSelection">
-			Select Actuators
-		</v-btn> -->
-		<v-slider max="1" min="0" step="0.05" show-ticks thumb-label @change="onSlider" v-model="slider">
-			<template v-slot:prepend>
-				Left: {{ leftIntensity.toFixed(2) }}
-			</template>
+			<div v-if="!hardwareIsReady">
+				Please connect a tactile display with at least two actuators connected!
+			</div>
+			<v-row align="center" justify="left">
+				<v-col cols="auto">
+					<v-btn :disabled="!hardwareIsReady" @click="toggleVibration"> {{ isRunning ? "Stop" : "Start" }}</v-btn>
+				</v-col>
 
-			<template v-slot:append>
-				Right: {{ rightIntensity.toFixed(2) }}
-			</template>
+				<v-col cols="auto">
+					<v-btn :disabled="!hardwareIsReady" @click="ping"> {{ "Ping" }}</v-btn>
+				</v-col>
+			</v-row>
 
-		</v-slider>
-		<!-- <img :src="require('../assets/handshake_openmoji.png')" /> -->
-		<!-- <v-dialog v-model="showActuatorSelection" persistent width="1500">
+			<v-row align="center" justify="left">
+				<v-slider max="1" min="0.05" step="0.05" show-ticks thumb-label v-model="maxAmp">
+					<template v-slot:prepend>
+						Maximal Amplitude
+					</template>
+					<template v-slot:append>
+						{{ maxAmp.toFixed(2) }}
+					</template>
+				</v-slider>
+			</v-row>
+			<v-row align="center" justify="left">
+				<v-slider max="1" min="0" step="0.05" show-ticks thumb-label v-model="slider">
+					<template v-slot:prepend>
+						Left: {{ slider.toFixed(2) }}
+					</template>
+
+					<template v-slot:append>
+						Right: {{ (1 - slider).toFixed(2) }}
+					</template>
+				</v-slider>
+			</v-row>
+			<v-row align="center" justify="left">
+				<v-slider max="1000" min="50" step="50" show-ticks thumb-label v-model="pingMs">
+					<template v-slot:prepend>
+						Ping duration
+					</template>
+					<template v-slot:append>
+						{{ pingMs }}ms
+					</template>
+				</v-slider>
+			</v-row>
+			<!-- <img :src="require('../assets/handshake_openmoji.png')" /> -->
+			<!-- <v-dialog v-model="showActuatorSelection" persistent width="1500">
 			<v-btn color="error" @click="showActuatorSelection = !showActuatorSelection">
 				Exit
 			</v-btn> -->
@@ -56,12 +83,14 @@ export default defineComponent({
 	data() {
 		return {
 			store: useStore(),
-			slider: 50,
+			slider: 0.5,
 			isRunning: false,
 			leftIntensity: 0,
 			rightIntensity: 0,
 			showActuatorSelection: false,
-			actuators: new Array<ActuatorSelection>()
+			actuators: new Array<ActuatorSelection>(),
+			maxAmp: 1,
+			pingMs: 100
 		}
 	},
 	computed: {
@@ -76,6 +105,12 @@ export default defineComponent({
 			return s
 		}
 	}, watch: {
+		maxAmp: function () {
+			this.updateFunneling()
+			if (this.isRunning) {
+				this.updateVibration()
+			}
+		},
 		slider: function () {
 			this.updateFunneling()
 			if (this.isRunning) {
@@ -90,9 +125,19 @@ export default defineComponent({
 		},
 
 		updateFunneling() {
-			const diff = 0.5
-			this.leftIntensity = 1 - (diff * this.slider)
-			this.rightIntensity = (1 - diff) + diff * this.slider
+
+			// const diff = 0.5
+			// this.leftIntensity = 1 - (diff * this.slider)
+			// this.rightIntensity = (1 - diff) + diff * this.slider
+			//CHOI
+			// this.leftIntensity = this.maxAmp * (1 - this.slider)
+			// this.rightIntensity = this.maxAmp * (1 - (1 - this.slider))
+
+			//Izrar
+			//maxAmp = Av
+			//b = this.slider, because normalized distance ratios
+			this.leftIntensity = this.maxAmp * Math.sqrt(1 - this.slider)
+			this.rightIntensity = this.maxAmp * Math.sqrt(this.slider)
 		},
 
 		writeValues(leftIntensity: number, rightIntensity: number) {
@@ -115,6 +160,13 @@ export default defineComponent({
 					},
 				]
 			});
+		},
+		async ping() {
+			this.isRunning = true
+			this.writeValues(this.leftIntensity, this.rightIntensity)
+			await new Promise((r) => setTimeout(r, this.pingMs));
+			this.writeValues(0, 0)
+			this.isRunning = false
 		},
 		updateVibration() {
 			this.writeValues(this.leftIntensity, this.rightIntensity)
