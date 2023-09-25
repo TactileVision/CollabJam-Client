@@ -7,7 +7,7 @@
 					{{ display.info.name }}
 				</div>
 				<div
-					:v-if="display.freqInformation.fMax != 0 && display.freqInformation.fMin != 0 && display.freqInformation.fResonance != 0">
+					:hidden="display.freqInformation.fMax == 0 && display.freqInformation.fMin == 0 && display.freqInformation.fResonance == 0">
 					<v-text-field v-model="freq" label="Frequency" type="number" :min="display.freqInformation.fMin"
 						:max="display.freqInformation.fMax" prefix="Hz"></v-text-field>
 					<!-- <v-slider v-model="freqs[]" label="Frequency" type="number" :min="display.freqInformation.fMin"
