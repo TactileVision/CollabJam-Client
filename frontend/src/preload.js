@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld(
     send: (channel, data) => {
         // whitelist channels
         //send to the main
-        let validChannels = ["tactile-jam.main"];
+        let validChannels = ["tactile-jam.main", "collabjam.main"];
         const isValid = validChannels.some(el => isValidChannel(el, channel));
 
         if (isValid == true) {
