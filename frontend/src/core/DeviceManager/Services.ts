@@ -46,10 +46,10 @@ const hm10Service: Service = {
     },
 };
 const pwmService: Service = {
-    service: { uuid: "f20913f7faa84f7b8d21f932d63af743",  },
+    service: { uuid: "f20913f7faa84f7b8d21f932d63af743", },
 };
 const tactileDisplayService: Service = {
-    service: { uuid: "f33c00018ebf4c9c83ecbfff479a930b",  },
+    service: { uuid: "f33c00018ebf4c9c83ecbfff479a930b", },
     characteristics: {
         numberOfOutputs: {
             uuid: "f33c00028ebf4c9c83ecbfff479a930b",
@@ -80,7 +80,7 @@ const tactileDisplayService: Service = {
                         console.log("amp config")
                         const x = data.readUInt32LE()
                         console.log(x)
-                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readAmpConfig, {
+                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readAmpAvailability, {
                             deviceId: characteristic._peripheralId,
                             ampConf: x
                         })
@@ -99,9 +99,29 @@ const tactileDisplayService: Service = {
                         console.log("freq config")
                         const x = data.readUInt32LE()
                         console.log(x)
-                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readFreqConfig, {
+                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readFreqAvailability, {
                             deviceId: characteristic._peripheralId,
                             freqConf: x
+                        })
+                    });
+                },
+            ],
+        },
+        frequencyRange: {
+            uuid: "f33c00058ebf4c9c83ecbfff479a930b",
+            callbacks: [
+                (characteristic: any) => {
+                    characteristic.read((error: any, data: any) => {
+                        if (error) {
+                            console.log(error);
+                        }
+                        const fMin = data.readUInt16LE(0)
+                        const fMax = data.readUInt16LE(2)
+                        const fResonance = data.readUInt16LE(4)
+                        console.log(fMin, fMax, fResonance);
+                        sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.readFreqRange, {
+                            deviceId: characteristic._peripheralId,
+                            freqInfo: { fMin: fMin, fMax: fMax, fResonance: fResonance }
                         })
                     });
                 },

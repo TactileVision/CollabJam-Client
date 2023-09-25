@@ -21,7 +21,12 @@ export interface ActuatorParameter {
 export interface TactileDisplay {
 	info: PeripheralInformation,
 	numOfOutputs: number,
-	outputParameter: ActuatorParameter[]
+	outputParameter: ActuatorParameter[],
+	freqInformation: FrequencyInformation
+}
+
+export interface FrequencyInformation {
+	fMin: number, fMax: number, fResonance: number
 }
 
 /**
@@ -50,7 +55,8 @@ export enum DeviceMutations {
 	UPDATE_CONNECTED_DISPLAY_LIST = "DM_UPDATE_CONNECTED_DISPLAY_LIST",
 	UPDATE_CONNECTED_DISPLAY = "DM_UPDATE_CONNECTED_DISPLAY",
 	ADD_SCANNED_PERIPHERAL = "DM_ADD_SCANNED_PERIPHERAL",
-	UPDATE_SCANNED_PERIPHERAL_LIST = "DM_UPDATE_SCANNED_PERIPHERAL_LIST"
+	UPDATE_SCANNED_PERIPHERAL_LIST = "DM_UPDATE_SCANNED_PERIPHERAL_LIST",
+	UPDATE_FREQ_INFORMATION = "DM_UPDATE_FREQ_INFORMATION"
 }
 
 export type Mutations<S = State> = {
@@ -60,6 +66,7 @@ export type Mutations<S = State> = {
 	[DeviceMutations.UPDATE_CONNECTED_DISPLAY](state: S, item: { index: number, device: TactileDisplay }): void
 	[DeviceMutations.ADD_SCANNED_PERIPHERAL](state: S, device: PeripheralInformation): void
 	[DeviceMutations.UPDATE_SCANNED_PERIPHERAL_LIST](state: S, deviceList: PeripheralInformation[]): void
+	[DeviceMutations.UPDATE_FREQ_INFORMATION](state: S, info: { uuid: string, freqInfo: FrequencyInformation }): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -85,6 +92,12 @@ export const mutations: MutationTree<State> & Mutations = {
 	[DeviceMutations.UPDATE_SCANNED_PERIPHERAL_LIST](state, deviceList) {
 		state.discoveredPeripherals = deviceList;
 	},
+	[DeviceMutations.UPDATE_FREQ_INFORMATION](state, info) {
+		const index = state.connectedTactileDisplays.findIndex(e => e.info.id == info.uuid)
+		if (index > -1) {
+			state.connectedTactileDisplays[index].freqInformation = info.freqInfo
+		}
+	},
 };
 
 /**
@@ -97,8 +110,9 @@ export enum DeviceManagerStoreActionTypes {
 	removeDisconnectedDisplay = 'removeDisconnectedDisplay',
 	updatePeripheralStatus = 'updateDeviceStatus',
 	setNumberOfOutputs = "setNumberOfOutputs",
-	setFreqConfig = "setFreqConfig",
-	setAmpConfig = "setAmpConfig",
+	setFreqAvailability = "setFreqAvailability",
+	setAmpAvailability = "setAmpAvailability",
+	setFreqInfo = "setFreqInfo"
 }
 
 type AugmentedActionContext = {
@@ -130,13 +144,17 @@ export interface Actions {
 		{ commit }: AugmentedActionContext,
 		payload: { deviceId: string, numOfOutputs: number }
 	): void;
-	[DeviceManagerStoreActionTypes.setFreqConfig](
+	[DeviceManagerStoreActionTypes.setFreqAvailability](
 		{ commit }: AugmentedActionContext,
 		payload: { deviceId: string, freqConf: number }
 	): void;
-	[DeviceManagerStoreActionTypes.setAmpConfig](
+	[DeviceManagerStoreActionTypes.setAmpAvailability](
 		{ commit }: AugmentedActionContext,
 		payload: { deviceId: string, ampConf: number }
+	): void;
+	[DeviceManagerStoreActionTypes.setFreqInfo](
+		{ commit }: AugmentedActionContext,
+		payload: { deviceId: string, freqInfo: FrequencyInformation }
 	): void;
 }
 
@@ -164,7 +182,6 @@ export const actions: ActionTree<State, RootState> & Actions = {
 		commit(DeviceMutations.UPDATE_CONNECTED_DISPLAY, { index: index, device: modifiedDevice });
 	},
 	[DeviceManagerStoreActionTypes.setNumberOfOutputs]({ commit }, payload: { deviceId: string, numOfOutputs: number }) {
-		console.log("NUM OUTPUTS ACITON")
 		const index = state.connectedTactileDisplays.findIndex(device => device.info.id === payload.deviceId);
 		//no device found
 		if (index == -1)
@@ -172,11 +189,9 @@ export const actions: ActionTree<State, RootState> & Actions = {
 		state.connectedTactileDisplays[index].numOfOutputs = payload.numOfOutputs
 		commit(DeviceMutations.UPDATE_CONNECTED_DISPLAY, { index: index, device: { ...state.connectedTactileDisplays[index] } });
 	},
-	[DeviceManagerStoreActionTypes.setFreqConfig]({ commit }, payload: { deviceId: string, freqConf: number }) {
-		console.log("FREQ ACITON")
+	[DeviceManagerStoreActionTypes.setFreqAvailability]({ commit }, payload: { deviceId: string, freqConf: number }) {
 		const index = state.connectedTactileDisplays.findIndex(device => device.info.id === payload.deviceId);
 		//no device found
-		console.log(payload.deviceId)
 		if (index == -1)
 			return;
 		const d = state.connectedTactileDisplays[index]
@@ -188,9 +203,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
 		}
 		commit(DeviceMutations.UPDATE_CONNECTED_DISPLAY, { index: index, device: { ...state.connectedTactileDisplays[index] } });
 	},
-	[DeviceManagerStoreActionTypes.setAmpConfig]({ commit }, payload: { deviceId: string, ampConf: number }) {
-		console.log("AMP ACTION")
-		console.log(payload)
+	[DeviceManagerStoreActionTypes.setAmpAvailability]({ commit }, payload: { deviceId: string, ampConf: number }) {
 		const index = state.connectedTactileDisplays.findIndex(device => device.info.id === payload.deviceId);
 		//no device found
 		if (index == -1)
@@ -205,6 +218,17 @@ export const actions: ActionTree<State, RootState> & Actions = {
 			d.outputParameter[i].amplitude = ((payload.ampConf >> i) & 0x01) == 1
 		}
 		commit(DeviceMutations.UPDATE_CONNECTED_DISPLAY, { index: index, device: { ...state.connectedTactileDisplays[index] } });
+	},
+	[DeviceManagerStoreActionTypes.setFreqInfo]({ commit }, payload: { deviceId: string, freqInfo: FrequencyInformation }) {
+		const index = state.connectedTactileDisplays.findIndex(device => device.info.id === payload.deviceId);
+		//no device found
+		if (index == -1)
+			return;
+
+		const d = state.connectedTactileDisplays[index]
+		if (d == null) return;
+
+		commit(DeviceMutations.UPDATE_FREQ_INFORMATION, { uuid: payload.deviceId, freqInfo: payload.freqInfo });
 	},
 };
 

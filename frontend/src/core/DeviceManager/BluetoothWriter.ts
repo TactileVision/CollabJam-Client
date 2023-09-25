@@ -1,6 +1,5 @@
 import { TactileTask } from "@sharedTypes/tactonTypes";
 import { Characteristic, Peripheral } from "@abandonware/noble";
-import protobuf from "protobufjs";
 import { tactileDisplayService } from "./Services";
 
 /**
@@ -19,7 +18,7 @@ export const writeAmplitudeBuffer = (device: Peripheral, taskList: TactileTask[]
     }
 }
 
-function writeAmplitudeBufferCharacteristic(taskList: TactileTask[], characteristic: Characteristic) {
+export function writeAmplitudeBufferCharacteristic(taskList: TactileTask[], characteristic: Characteristic) {
     const output = new Uint8Array(5).fill(255);
 
     const map = (value: number, x1: number, y1: number, x2: number, y2: number) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
@@ -41,4 +40,28 @@ function writeAmplitudeBufferCharacteristic(taskList: TactileTask[], characteris
         }
 
     });
+}
+
+export function writeFreqBuffer(device: Peripheral, freqBuffer: number[]) {
+    const service = device.services.find((x) => x.uuid === tactileDisplayService.service.uuid)
+    if (service !== undefined) {
+        const characteristic = service.characteristics.find((characteristic) => characteristic.uuid === tactileDisplayService.characteristics!.frequencyValues.uuid);
+        if (characteristic !== undefined) {
+            const raw = new Uint8Array(freqBuffer.length * 2).fill(0)
+            for (let i = 0; i < freqBuffer.length; i = i + 2) {
+                raw[i] = freqBuffer[i]
+                raw[i + 1] = freqBuffer[i] >> 8
+            }
+            const buf = Buffer.from(raw);
+            characteristic.write(buf, false, (error) => {
+                //go always in this callback if error is null;all is fine
+                // console.log(buf);
+                if (error !== null) {
+                    console.log("Error sending freq data");
+                    console.log(error);
+                    throw error;
+                }
+            });
+        }
+    }
 }

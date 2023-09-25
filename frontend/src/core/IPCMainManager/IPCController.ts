@@ -7,7 +7,7 @@ import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding } from '@/core/Input/InputDetection/types/InputBindings';
-import { writeAmplitudeBuffer } from '../DeviceManager/BluetoothWriter';
+import { writeAmplitudeBuffer, writeFreqBuffer } from '../DeviceManager/BluetoothWriter';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -63,7 +63,7 @@ ipcMain.on(IPC_CHANNELS.main.disconnectDevice, (event, deviceID: string) => {
 
 //controll the vibrotactile device
 ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, (event, taskList: TactileTask[]) => {
-    //console.log("writeAllAmplitudeBuffers");
+    console.log("writeAllAmplitudeBuffers");
     DeviceManager.writeAllAmplitudeBuffers(taskList)
 });
 
@@ -71,6 +71,12 @@ ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, (event, payload: {d
     const d = DeviceManager.connectedDevices.get(payload.deviceId)
     if (d == null) return
     writeAmplitudeBuffer(d, payload.taskList)
+});
+
+ipcMain.on(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, (event, payload: {deviceId: string, freqBuffer: number[] }) => {
+    const d = DeviceManager.connectedDevices.get(payload.deviceId)
+    if (d == null) return
+    writeFreqBuffer(d, payload.freqBuffer)
 });
 
 // ipcMain.on(IPC_CHANNELS.bluetooth.main.writeCharacteristic, (event, write: WriteCharacteristic) => {

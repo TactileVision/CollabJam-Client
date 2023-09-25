@@ -125,7 +125,8 @@ export const connectBlutetoothDevice = (device: Peripheral) => {
                 connectionState: device.state
             },
             numOfOutputs: 0,
-            outputParameter: []
+            outputParameter: [],
+            freqInformation: { fMin: 0, fMax: 0, fResonance: 0 }
         }
         DeviceManager.updateConnectedDevice(device);
         sendMessageToRenderer(IPC_CHANNELS.bluetooth.renderer.connectedToDevice, d)

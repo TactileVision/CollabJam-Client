@@ -3,9 +3,16 @@
 		<h2>Select Actuators ({{ selectedActuators.length }}/{{ numActuators }})</h2>
 		<div v-for="display in  tactileDisplayList " v-bind:key="display.info.id">
 			<div>
-
 				<div class="text-h5">
 					{{ display.info.name }}
+				</div>
+				<div
+					:v-if="display.freqInformation.fMax != 0 && display.freqInformation.fMin != 0 && display.freqInformation.fResonance != 0">
+					<v-text-field v-model="freq" label="Frequency" type="number" :min="display.freqInformation.fMin"
+						:max="display.freqInformation.fMax" prefix="Hz"></v-text-field>
+					<!-- <v-slider v-model="freqs[]" label="Frequency" type="number" :min="display.freqInformation.fMin"
+						:max="display.freqInformation.fMax" prefix="Hz"></v-slider> -->
+					<v-btn @click="updateFreq(display)"> Set Frequency </v-btn>
 				</div>
 				<div class="actuator-selection-list">
 					<div v-for="i in  display.numOfOutputs " v-bind:key="i">
@@ -47,6 +54,7 @@ import { defineComponent } from 'vue';
 import { useStore } from "@/app/store/store";
 import { TactileDisplay } from '../store/DeviceManagerStore';
 import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
+import { IPC_CHANNELS } from '@/core/IPCMainManager/IPCChannels';
 export default defineComponent({
 	name: "ActuatorSelectionMenu",
 	emits: ['update:modelValue'],
@@ -61,7 +69,9 @@ export default defineComponent({
 		return {
 			numSelected: 0,
 			store: useStore(),
-			selectedActuators: []
+			selectedActuators: [],
+			freq: 0,
+			// freqs: new Map<string,number>()
 		};
 	},
 	watch: {
@@ -85,6 +95,10 @@ export default defineComponent({
 	}, methods: {
 		updateSelection() {
 			return false
+		},
+		updateFreq(display: TactileDisplay) {
+			const b = new Array<number>(display.numOfOutputs).fill(this.freq)
+			window.api.send(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, { deviceId: display.info.id, freqBuffer: b })
 		}
 	}
 })

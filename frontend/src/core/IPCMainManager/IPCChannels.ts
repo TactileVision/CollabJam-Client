@@ -25,9 +25,9 @@ const IPC_CHANNELS = {
     bluetooth: {
         main: {
             writeCharacteristic: "collabjam.main.ble.writeAmplitudeCharacteristic",
-            writeAmplitudeBuffer:"tactile-jam.main.writeAmplitudeBuffer",
-            writeAllAmplitudeBuffers: "tactile-jam.main.writeAllAmplitudeBuffers",
-
+            writeAmplitudeBuffer: "collabjam.main.writeAmplitudeBuffer",
+            writeAllAmplitudeBuffers: "collabjam.main.writeAllAmplitudeBuffers",
+            writeFrequencyBuffer: "collabjam.main.writeFrequencyBuffer",
         },
         renderer: {
             discoveredPeripheral: "collabjam.renderer.ble.discoveredPeripheral",
@@ -36,8 +36,9 @@ const IPC_CHANNELS = {
             readNumberOfOutputs: "collabjam.renderer.ble.readNumberOfOutputs",
             readAmpBuffer: "collabjam.renderer.ble.readAmpBuffer",
             readFreqBuffer: "collabjam.renderer.ble.readFreqBuffer",
-            readAmpConfig: "collabjam.renderer.ble.readAmpConfig",
-            readFreqConfig: "collabjam.renderer.ble.readFreqConfig"
+            readAmpAvailability: "collabjam.renderer.ble.readAmpAvailability",
+            readFreqAvailability: "collabjam.renderer.ble.readFreqAvailability",
+            readFreqRange: "collabjam.renderer.ble.readFreqRange"
         }
     }
 };

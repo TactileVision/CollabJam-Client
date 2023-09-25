@@ -4,7 +4,7 @@ import { GeneralSettingsActionTypes, VibrotactileDevice } from "@/app/store/modu
 import { PlayGroundMutations } from "@/feature/collabJamming/store/playGround/types"
 import { CustomSettings } from "@/core/FileManager/initSettings"
 import { RoomMutations } from "@/feature/collabJamming/store/roomSettings/roomSettings"
-import { DeviceManagerStoreActionTypes, DeviceMutations, PeripheralInformation, TactileDisplay } from "../DeviceManager/store/DeviceManagerStore"
+import { DeviceManagerStoreActionTypes, DeviceMutations, FrequencyInformation, PeripheralInformation, TactileDisplay } from "../DeviceManager/store/DeviceManagerStore"
 
 const store = useStore()
 /**
@@ -38,7 +38,7 @@ export const initIPCListener = () => {
   window.api.receive(IPC_CHANNELS.bluetooth.renderer.connectedToDevice, (peripheral: TactileDisplay) => {
     store.dispatch(DeviceManagerStoreActionTypes.addConnectedDisplay, peripheral)
   })
-  window.api.receive(IPC_CHANNELS.bluetooth.renderer.disconnectedFromDevice, (uuid :string) => {
+  window.api.receive(IPC_CHANNELS.bluetooth.renderer.disconnectedFromDevice, (uuid: string) => {
     store.dispatch(DeviceManagerStoreActionTypes.removeDisconnectedDisplay, uuid)
   })
 
@@ -47,13 +47,18 @@ export const initIPCListener = () => {
     store.dispatch(DeviceManagerStoreActionTypes.setNumberOfOutputs, payload);
   })
 
-  window.api.receive(IPC_CHANNELS.bluetooth.renderer.readFreqConfig, (payload: { deviceId: string, freqConf: number }) => {
+  window.api.receive(IPC_CHANNELS.bluetooth.renderer.readFreqAvailability, (payload: { deviceId: string, freqConf: number }) => {
     console.log(payload)
-    store.dispatch(DeviceManagerStoreActionTypes.setFreqConfig, payload);
+    store.dispatch(DeviceManagerStoreActionTypes.setFreqAvailability, payload);
   })
 
-  window.api.receive(IPC_CHANNELS.bluetooth.renderer.readAmpConfig, (payload: { deviceId: string, ampConf: number }) => {
+  window.api.receive(IPC_CHANNELS.bluetooth.renderer.readAmpAvailability, (payload: { deviceId: string, ampConf: number }) => {
     console.log(payload)
-    store.dispatch(DeviceManagerStoreActionTypes.setAmpConfig, payload);
+    store.dispatch(DeviceManagerStoreActionTypes.setAmpAvailability, payload);
+  })
+  window.api.receive(IPC_CHANNELS.bluetooth.renderer.readFreqRange, (payload: { deviceId: string, freqInfo: FrequencyInformation }) => {
+    console.log("Updatating freq range")
+    console.log(payload)
+    store.dispatch(DeviceManagerStoreActionTypes.setFreqInfo, payload);
   })
 }
