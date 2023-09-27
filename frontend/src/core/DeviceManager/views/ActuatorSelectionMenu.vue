@@ -1,48 +1,57 @@
 <template>
-	<div class="actuator-selection-menu">
-		<h2>Select Actuators ({{ selectedActuators.length }}/{{ numActuators }})</h2>
-		<div v-for="display in  tactileDisplayList " v-bind:key="display.info.id">
-			<div>
-				<div class="text-h5">
-					{{ display.info.name }}
-				</div>
-				<div
-					:hidden="display.freqInformation.fMax == 0 && display.freqInformation.fMin == 0 && display.freqInformation.fResonance == 0">
-					<v-text-field v-model="freq" label="Frequency" type="number" :min="display.freqInformation.fMin"
-						:max="display.freqInformation.fMax" prefix="Hz"></v-text-field>
-					<!-- <v-slider v-model="freqs[]" label="Frequency" type="number" :min="display.freqInformation.fMin"
-						:max="display.freqInformation.fMax" prefix="Hz"></v-slider> -->
-					<v-btn @click="updateFreq(display)"> Set Frequency </v-btn>
-				</div>
-				<div class="actuator-selection-list">
-					<div v-for="i in  display.numOfOutputs " v-bind:key="i">
-						<!-- TODO: Change to a list of selected elements -->
-						<input
-							:disabled="(selectedActuators.length >= numActuators) && selectedActuators.includes(display.info.id + '-' + (i - 1)) == false"
-							type="checkbox" :value="display.info.id + '-' + (i - 1)" :name="'select-actuator-' + (i - 1)"
-							:id="'checkbox-select-actuator-' + (i - 1)" v-model="selectedActuators">
-						Actuator {{ i }}
+	<v-card class="actuator-selection-menu">
+		<v-card-title>Select Actuators ({{ selectedActuators.length }}/{{ numActuators }})</v-card-title>
+		<v-card v-for="display in  tactileDisplayList " v-bind:key="display.info.id">
+			<v-card-title>
+				{{ display.info.name }}
+			</v-card-title>
+			<v-container>
+				<v-row>
+					<div class="actuator-selection-list">
+						<div v-for="i in  display.numOfOutputs " v-bind:key="i">
+							<!-- TODO: Change to a list of selected elements -->
+							<input
+								:disabled="(selectedActuators.length >= numActuators) && selectedActuators.includes(display.info.id + '-' + (i - 1)) == false"
+								type="checkbox" :value="display.info.id + '-' + (i - 1)"
+								:name="'select-actuator-' + (i - 1)" :id="'checkbox-select-actuator-' + (i - 1)"
+								v-model="selectedActuators">
+							{{ i }}
+						</div>
 					</div>
-				</div>
-			</div>
+				</v-row>
 
-		</div>
-	</div>
+				<v-row
+					:hidden="display.freqInformation.fMax == 0 && display.freqInformation.fMin == 0 && display.freqInformation.fResonance == 0">
+					<v-col cols="8">
+						<v-text-field v-model="freq" label="Frequency" type="number" :min="display.freqInformation.fMin"
+							:max="display.freqInformation.fMax" prefix="Hz"></v-text-field>
+						<!-- <v-slider v-model="freqs[]" label="Frequency" type="number" :min="display.freqInformation.fMin"
+						:max="display.freqInformation.fMax" prefix="Hz"></v-slider> -->
+					</v-col>
+					<v-col cols="4">
+						<v-btn @click="updateFreq(display)"> Set Frequency </v-btn>
+					</v-col>
+				</v-row>
+
+			</v-container>
+		</v-card>
+	</v-card>
 </template>
 
 <style lang="scss">
-.actuator-selection-menu {
-	>div {
-		margin-right: 2em;
-		display: inline-block;
-	}
-}
+// .actuator-selection-menu {
+// 	>div {
+// 		margin-right: 2em;
+// 		display: inline-block;
+// 	}
+// }
 
 .actuator-selection-list {
 	margin-bottom: 1em;
 	padding: 1em;
 
 	>div {
+		display: inline-block;
 		margin: 1em;
 
 	}

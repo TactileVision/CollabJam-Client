@@ -15,7 +15,8 @@ export const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: RouterNames.SITEMAP,
-    component: SitemapView
+    component: SitemapView,
+
   },
   {
     path: "/devices",

@@ -3,9 +3,23 @@
   <div tabindex="0" class="main" @keyup="buttonUp" @keydown="buttonDown">
     <div class="root">
       <v-app>
-        <app-bar></app-bar>
+        <!-- <app-bar></app-bar> -->
+        <!-- <v-system-bar>
+          <v-icon icon="mdi-wifi-strength-4"></v-icon>
+          <v-icon icon="mdi-signal" class="ms-2"></v-icon>
+          <v-icon icon="mdi-battery" class="ms-2"></v-icon>
+
+          <span class="ms-2">3:13PM</span>
+        </v-system-bar> -->
         <v-main>
-          <router-view />
+          <v-container>
+            <v-row>
+              <sidebar />
+              <v-col>
+                <router-view />
+              </v-col>
+            </v-row>
+          </v-container>
           <!-- <transition name="fade">
             <div class="snackbar" v-show="!store.getters.isConnectedToSocket">
               <div class="label">
@@ -155,10 +169,10 @@ import { InputEvent } from "@/core/Input/InputDetection/types/types";
 import { KeyInput, UserInputType } from "@/core/Input/InputDetection/types/InputDetection";
 import { DeviceType, KeyboardDevice } from "@/core/Input/InputDetection/types/InputBindings";
 import AppBar from "@/app/AppBar.vue"
-
+import Sidebar from "@/app/Sidebar.vue"
 export default defineComponent({
   name: "App",
-  components: { AppBar },
+  components: { /* AppBar , */ Sidebar },
   data() {
     return {
       store: useStore(),

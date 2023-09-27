@@ -1,5 +1,5 @@
-import { TactileTask } from "@sharedTypes/tactonTypes";
 import { Characteristic, Peripheral } from "@abandonware/noble";
+import { TactileTask } from "@sharedTypes/tactonTypes";
 import { tactileDisplayService } from "./Services";
 
 /**
@@ -19,17 +19,24 @@ export const writeAmplitudeBuffer = (device: Peripheral, taskList: TactileTask[]
 }
 
 export function writeAmplitudeBufferCharacteristic(taskList: TactileTask[], characteristic: Characteristic) {
-    const output = new Uint8Array(5).fill(255);
+
+    const numOut = Math.max(...taskList.map(o => Math.max.apply(Math, o.channelIds)))
+    let output = new Uint8Array(numOut + 1).fill(255);
 
     const map = (value: number, x1: number, y1: number, x2: number, y2: number) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
     taskList.forEach(task => {
         const intensity = map((task.intensity * 100), 0, 100, 0, 254);
+
         task.channelIds.forEach(channelId => {
+            console.log("ChannelID:" + channelId)
+            console.log("Intensity:" + intensity)
             output[channelId] = intensity;
         }
         );
     });
+    console.log(output)
     const buf = Buffer.from(output);
+    console.log(buf)
     characteristic.write(buf, false, (error) => {
         //go always in this callback if error is null;all is fine
         // console.log(buf);
