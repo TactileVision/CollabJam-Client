@@ -1,6 +1,8 @@
 <template>
 	<v-card class="actuator-selection-menu">
-		<v-card-title>Select Actuators ({{ selectedActuators.length }}/{{ numActuators }})</v-card-title>
+		<v-card-title v-if="numActuators != null">Select Actuators ({{ selectedActuators.length }}/ {{ numActuators
+		}})</v-card-title>
+		<v-card-title v-else>Select Actuators ({{ selectedActuators.length }})</v-card-title>
 		<v-card v-for="display in  tactileDisplayList " v-bind:key="display.info.id">
 			<v-card-title>
 				{{ display.info.name }}
@@ -10,11 +12,9 @@
 					<div class="actuator-selection-list">
 						<div v-for="i in  display.numOfOutputs " v-bind:key="i">
 							<!-- TODO: Change to a list of selected elements -->
-							<input
-								:disabled="(selectedActuators.length >= numActuators) && selectedActuators.includes(display.info.id + '-' + (i - 1)) == false"
-								type="checkbox" :value="display.info.id + '-' + (i - 1)"
-								:name="'select-actuator-' + (i - 1)" :id="'checkbox-select-actuator-' + (i - 1)"
-								v-model="selectedActuators">
+							<input :disabled="!isSelectable(display.info.id + '-' + (i - 1))" type="checkbox"
+								:value="display.info.id + '-' + (i - 1)" :name="'select-actuator-' + (i - 1)"
+								:id="'checkbox-select-actuator-' + (i - 1)" v-model="selectedActuators">
 							{{ i }}
 						</div>
 					</div>
@@ -64,6 +64,7 @@ import { useStore } from "@/app/store/store";
 import { TactileDisplay } from '../store/DeviceManagerStore';
 import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
 import { IPC_CHANNELS } from '@/core/IPCMainManager/IPCChannels';
+import { toHandlers } from 'vue';
 export default defineComponent({
 	name: "ActuatorSelectionMenu",
 	emits: ['update:modelValue'],
@@ -71,14 +72,14 @@ export default defineComponent({
 		modelValue: Object as () => ActuatorSelection,
 		numActuators: {
 			type: Number,
-			required: true
+			required: false
 		},
 	},
 	data() {
 		return {
 			numSelected: 0,
 			store: useStore(),
-			selectedActuators: [],
+			selectedActuators: [] as Array<string>,
 			freq: 0,
 			// freqs: new Map<string,number>()
 		};
@@ -108,6 +109,12 @@ export default defineComponent({
 		updateFreq(display: TactileDisplay) {
 			const b = new Array<number>(display.numOfOutputs).fill(this.freq)
 			window.api.send(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, { deviceId: display.info.id, freqBuffer: b })
+		},
+		isSelectable(elementId: string) {
+			if (this.numActuators == null) {
+				return true
+			}
+			return this.selectedActuators.length < this.numActuators || (this.selectedActuators.includes(elementId))
 		}
 	}
 })

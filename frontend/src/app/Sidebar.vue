@@ -6,6 +6,7 @@
 				<!-- <v-list-subheader title="Tactile Illusions"></v-list-subheader>
 				<v-divider></v-divider> -->
 				<v-list-item @click="go(routes.FUNNELING)" link title="Funneling Illusion"></v-list-item>
+				<v-list-item @click="go(routes.ATM)" link title="Apparent Tactile Motion"></v-list-item>
 			<!-- </v-list-group> -->
 			<!-- <v-list-group> -->
 				<!-- <v-list-subheader title="Jamming"></v-list-subheader>
