@@ -188,12 +188,6 @@ export default defineComponent({
 						channelIds: [this.actuators[0].actuator],
 						intensity: leftIntensity,
 					},
-				]
-			});
-
-			window.api.send(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, {
-				deviceId: this.actuators[1].deviceUuid,
-				taskList: [
 					{
 						channelIds: [this.actuators[1].actuator],
 						intensity: rightIntensity,
