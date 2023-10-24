@@ -1,7 +1,7 @@
 <template>
 	<v-container>
 
-		<h2>1D Apparent Tactile Motion</h2>
+		<h2>1D Saltation Illusion</h2>
 		<div id="atm">
 			<v-alert v-if="!hardwareIsReady" type="warning" variant="tonal">
 				Please connect tactile displays with at least two actuators connected!
@@ -27,10 +27,6 @@
 												<v-radio label="Backwards" value="Backwards"></v-radio>
 												<!-- <v-radio label="Back and Forth" value="Back and Forth"></v-radio> -->
 											</v-radio-group>
-											<input v-model="repeat" type="checkbox" name="repeating-checkbox"
-												id="repeating-checkbox">
-											Repeat
-
 
 										</v-col>
 										<v-col>
@@ -55,47 +51,28 @@
 									</template>
 								</v-slider>
 
-								<v-slider hide-details max="500" min="70" step="10" show-ticks thumb-label
+								<v-slider hide-details max="100" min="10" step="10" show-ticks thumb-label
 									v-model="sliderBD">
 									<template v-slot:prepend>
 										Burst Duration: {{ sliderBD }} ms
 									</template>
 								</v-slider>
 
-								<v-slider hide-details :disabled="!repeat" max="1000" min="50" step="50" show-ticks
-									thumb-label v-model="interAtmMs">
+								<v-slider hide-details max="10" min="2" step="1" show-ticks thumb-label
+									v-model="sliderNumImpulses">
 									<template v-slot:prepend>
-										Inter ATM Interval:
-										{{ interAtmMs }}ms
+										Number of impulses: {{ sliderNumImpulses }}
+									</template>
+								</v-slider>
+
+								<v-slider hide-details max="300" min="20" step="10" show-ticks thumb-label
+									v-model="sliderIBI">
+									<template v-slot:prepend>
+										Inter burst interval: {{ sliderIBI }}ms
 									</template>
 								</v-slider>
 
 							</v-card>
-
-							<!-- MARK: Repeat Parameter -->
-							<!-- <v-card>
-								<v-card-title>
-									Pulsing Parameter
-								</v-card-title>
-								<v-slider hide-details :disabled="modeSelection == 'Forward'" max="1000" min="50" step="50"
-									show-ticks thumb-label v-model="BackwardsMs">
-									<template v-slot:prepend>
-										Backwards duration
-									</template>
-									<template v-slot:append>
-										{{ BackwardsMs }}ms
-									</template>
-								</v-slider>
-								<v-slider hide-details :disabled="modeSelection != 'Back and Forth'" max="1000" min="50"
-									step="50" show-ticks thumb-label v-model="interBackwardsMs">
-									<template v-slot:prepend>
-										Inter Backwards Interval
-									</template>
-									<template v-slot:append>
-										{{ interBackwardsMs }}ms
-									</template>
-								</v-slider>
-							</v-card> -->
 
 						</v-col>
 						<v-col>
@@ -143,15 +120,15 @@ import ActuatorArrangement from "@/core/DeviceManager/views/ActuatorArrangement.
 import { TactileTask } from "@sharedTypes/tactonTypes";
 
 export default defineComponent({
-	name: "ATM",
+	name: "Saltation",
 	components: { ActuatorSelectionMenu, ActuatorArrangement },
 	data() {
 		return {
 			store: useStore(),
-			sliderBD: 70,
+			sliderBD: 20,
+			sliderNumImpulses: 3,
+			sliderIBI: 50,
 			isRunning: false,
-			leftIntensity: 0,
-			rightIntensity: 0,
 			showActuatorSelection: false,
 			actuators: new Array<ActuatorSelection>(),
 			maxAmp: 1,
@@ -194,58 +171,28 @@ export default defineComponent({
 		}
 	},
 	methods: {
-		updateFunneling() {
-			this.leftIntensity = this.maxAmp * Math.sqrt(1 - this.sliderBD)
-			this.rightIntensity = this.maxAmp * Math.sqrt(this.sliderBD)
-		},
-		writeValues(leftIntensity: number, rightIntensity: number) {
-			window.api.send(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, {
-				deviceId: this.actuators[0].deviceUuid,
-				taskList: [
-					{
-						channelIds: [this.actuators[0].actuator],
-						intensity: leftIntensity,
-					},
-				]
-			});
-
-			window.api.send(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, {
-				deviceId: this.actuators[1].deviceUuid,
-				taskList: [
-					{
-						channelIds: [this.actuators[1].actuator],
-						intensity: rightIntensity,
-					},
-				]
-			});
-		},
-		async ping() {
-			this.isRunning = true
-			this.writeValues(this.leftIntensity, this.rightIntensity)
-			await new Promise((r) => setTimeout(r, this.BackwardsMs));
-			this.writeValues(0, 0)
-			this.isRunning = false
-		},
 		vibrate() {
-			this.atm()
+			return false;
+			// this.saltation()
 		},
 		updateVibration() {
 
-			this.writeValues(this.leftIntensity, this.rightIntensity)
+			// this.writeValues(this.leftIntensity, this.rightIntensity)
 		},
 		stopVibration() {
-			this.writeValues(0, 0)
+			return false;
 		},
 		toggleVibration() {
 			this.isRunning = !this.isRunning
 			if (this.isRunning) {
-				this.atm()
+				this.saltation()
 			} else {
 				this.stopVibration()
 			}
 			return false;
 		},
-		atm() {
+		saltation() {
+
 			interface AtmStep {
 				deviceId: string,
 				task: TactileTask,
@@ -253,8 +200,6 @@ export default defineComponent({
 			}
 			//tactile task, when
 			let instructions = new Array<AtmStep>()
-			if (this.sliderBD < 70) return
-			const soa = 0.32 * this.sliderBD + 47.3
 
 
 			let actuators = this.actuators
@@ -265,33 +210,34 @@ export default defineComponent({
 				actuators = actuators.concat(r)
 			} */
 
+			//steps = 2 * actuators.length * number_of_bursts 
+			let c = 0;
+			for (let a = 0; a < actuators.length; a++) {
+				for (let i = 0; i < this.sliderNumImpulses; i++) {
+					const on: AtmStep = {
+						deviceId: this.actuators[a].deviceUuid,
+						task: {
+							channelIds: [actuators[a].actuator],
+							intensity: this.maxAmp
+						},
+						when: c * this.sliderBD + c * this.sliderIBI
+					}
 
-			for (let i = 0; i < actuators.length; i++) {
-				const on: AtmStep = {
-					deviceId: actuators[i].deviceUuid,
-					task: {
-						channelIds: [actuators[i].actuator],
-						intensity: this.maxAmp
-					},
-					when: i * soa
+					const off: AtmStep = {
+						deviceId: this.actuators[a].deviceUuid,
+						task: {
+							channelIds: [actuators[a].actuator],
+							intensity: 0
+						},
+						when: (c + 1) * this.sliderBD + c * this.sliderIBI
+					}
+					instructions.push(on)
+					instructions.push(off)
+					++c
 				}
-				const off: AtmStep = {
-					deviceId: actuators[i].deviceUuid,
-					task: {
-						channelIds: [actuators[i].actuator],
-						intensity: 0
-					},
-					when: i * soa + this.sliderBD
-				}
-				instructions[i * 2] = on
-				instructions[i * 2 + 1] = off
 			}
 
-			instructions.sort(function (a: AtmStep, b: AtmStep) {
-				// a kleiner dann -1 ,a größer dann 1,a gleich b dann 0
-				return (a.when < b.when) ? -1 : (a.when > b.when) ? 1 : 0;
-			});
-
+			console.log()
 			const fn = () => {
 				instructions.forEach((inst, i) => {
 					setTimeout(() => {

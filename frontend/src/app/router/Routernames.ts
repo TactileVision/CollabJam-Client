@@ -6,6 +6,7 @@ export  enum RouterNames {
     PLAY_GROUND_DIALOG = "PLAY_GROUND_DIALOG",
     FUNNELING = "FUNNELING",
     ATM = "ATM",
+    SALTATION = "SALTATION",
     SITEMAP = "SITEMAP",
     DEVICES = "DEVICES"
   }
