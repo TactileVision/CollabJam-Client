@@ -4,6 +4,7 @@ import SetupView from "../../feature/collabJamming/views/SetupView.vue"
 import FunnelingView from "@/feature/funnellingIllusion/views/FunnelingView.vue"
 import SitemapView from "@/app/SitemapView.vue"
 import AtmView from "@/feature/atm/views/AtmView.vue"
+import EntranceControlView from "@/feature/entranceControl/views/EntranceControlView.vue"
 import SaltationView from "@/feature/saltation/views/SaltationView.vue"
 import DeviceDialog from "@/core/DeviceManager/views/deviceComponents/DeviceSection.vue"
 import { RouteRecordRaw } from "vue-router";
@@ -21,6 +22,11 @@ export const routes: Array<RouteRecordRaw> = [
 
   },
   {
+    path: "/door",
+    name: RouterNames.DOOR,
+    component: EntranceControlView
+  },
+  {
     path: "/devices",
     name: RouterNames.DEVICES,
     component: DeviceDialog
@@ -36,7 +42,7 @@ export const routes: Array<RouteRecordRaw> = [
     component: AtmView
   },
   {
-    path : "/saltation",
+    path: "/saltation",
     name: RouterNames.SALTATION,
     component: SaltationView
   },

@@ -203,7 +203,6 @@ export default defineComponent({
 			this.isRunning = false
 		},
 		vibrate() {
-
 			const fOn = () => {
 				this.isRunning = true
 				this.updateFunneling()
@@ -235,29 +234,8 @@ export default defineComponent({
 					this.toggleVibration()
 				} else {
 					fOn()
-					// this.isRunning = true
-					// this.updateFunneling()
-					// this.updateVibration()
-					// window.setTimeout(() => {
-					// 	this.stopVibration()
-					// 	window.setTimeout(() => {
-					// 		this.isRunning = true
-					// 		this.updateFunneling()
-					// 		this.updateVibration()
-					// 	}, this.interPulseMs)
-					// }, this.pulseMs)
 				}
 			}
-			// var internalCallback = function (pulseDurationMs: number, interPulseDurationMS: number) {
-			// 	return function () {
-			// 		if (--tick >= 0) {
-			// 			window.setTimeout(internalCallback, ++counter * factor);
-			// 			callback();
-			// 		}
-			// 	}
-			// }(times, 0);
-
-			// window.setTimeout(internalCallback, factor);
 		},
 		updateVibration() {
 

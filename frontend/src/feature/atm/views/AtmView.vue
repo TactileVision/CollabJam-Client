@@ -159,8 +159,6 @@ export default defineComponent({
 			interBackwardsMs: 100,
 			interAtmMs: 50,
 			modeSelection: "Forward",
-			fOnHandler: 0,
-			fOffHandler: 0,
 			repeat: false
 		}
 	},
@@ -175,29 +173,8 @@ export default defineComponent({
 			const s = this.actuators.length >= 2
 			return s
 		}
-	}, watch: {
-		maxAmp: function () {
-			/* 			if (this.modeSelection != "Back and Forth") {
-							this.updateFunneling()
-							if (this.isRunning) {
-								this.updateVibration()
-							}
-						} */
-		},
-		slider: function () {
-			/* 			if (this.modeSelection != "Back and Forth") {
-							this.updateFunneling()
-							if (this.isRunning) {
-								this.updateVibration()
-							}
-						} */
-		}
 	},
 	methods: {
-		updateFunneling() {
-			this.leftIntensity = this.maxAmp * Math.sqrt(1 - this.sliderBD)
-			this.rightIntensity = this.maxAmp * Math.sqrt(this.sliderBD)
-		},
 		writeValues(leftIntensity: number, rightIntensity: number) {
 			window.api.send(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, {
 				deviceId: this.actuators[0].deviceUuid,

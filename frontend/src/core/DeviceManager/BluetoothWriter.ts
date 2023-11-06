@@ -28,15 +28,13 @@ export function writeAmplitudeBufferCharacteristic(taskList: TactileTask[], char
         const intensity = map((task.intensity * 100), 0, 100, 0, 254);
 
         task.channelIds.forEach(channelId => {
-            console.log("ChannelID:" + channelId)
-            console.log("Intensity:" + intensity)
             output[channelId] = intensity;
         }
         );
     });
-    console.log(output)
+    // console.log(output)
     const buf = Buffer.from(output);
-    console.log(buf)
+    // console.log(buf)
     characteristic.write(buf, false, (error) => {
         //go always in this callback if error is null;all is fine
         // console.log(buf);
