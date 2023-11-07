@@ -65,6 +65,7 @@ import { TactileDisplay } from '../store/DeviceManagerStore';
 import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
 import { IPC_CHANNELS } from '@/core/IPCMainManager/IPCChannels';
 import { toHandlers } from 'vue';
+import { writeFrequencyOnDisplay } from '../TactileDisplayActions';
 export default defineComponent({
 	name: "ActuatorSelectionMenu",
 	emits: ['update:modelValue'],
@@ -107,8 +108,7 @@ export default defineComponent({
 			return false
 		},
 		updateFreq(display: TactileDisplay) {
-			const b = new Array<number>(display.numOfOutputs).fill(this.freq)
-			window.api.send(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, { deviceId: display.info.id, freqBuffer: b })
+			writeFrequencyOnDisplay(display.info.id, [...Array(display.numOfOutputs).keys()], this.freq)
 		},
 		isSelectable(elementId: string) {
 			if (this.numActuators == null) {

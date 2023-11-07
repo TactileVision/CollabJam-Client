@@ -65,4 +65,21 @@ export interface InstructionToClient {
 export interface TactileTask {
 	channelIds: number[],
 	intensity: number,
-  }
+}
+
+//Per Display actions
+export interface SetAmplitudeTask {
+	channelIds: number[],
+	intensity: number,
+}
+
+export interface SetFrequencyTask {
+	channelIds: number[],
+	frequency: number,
+}
+
+// export interface SetDisplayParameterTask {
+// 	channelIds: number[],
+// 	value: number,
+// 	type: 'frequency' | 'amplitude'
+// }

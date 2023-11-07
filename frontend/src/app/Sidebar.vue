@@ -5,6 +5,7 @@
 
 				<!-- <v-list-subheader title="Tactile Illusions"></v-list-subheader>
 				<v-divider></v-divider> -->
+				<v-list-item @click="go(routes.CHANNEL_PARAMETER)" link title="Channel Parameter"></v-list-item>
 				<v-list-item @click="go(routes.DOOR)" link title="Door example"></v-list-item>
 				<v-list-item @click="go(routes.FUNNELING)" link title="Funneling Illusion"></v-list-item>
 				<v-list-item @click="go(routes.ATM)" link title="Apparent Tactile Motion"></v-list-item>

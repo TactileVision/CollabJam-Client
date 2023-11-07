@@ -2,12 +2,12 @@ import fs from 'fs';
 import { BrowserWindow, dialog, ipcMain, clipboard } from "electron";
 import { IPC_CHANNELS } from "./IPCChannels";
 import DeviceManager from "../DeviceManager/DeviceManager"
-import { TactileTask } from "@sharedTypes/tactonTypes";
+import { SetFrequencyTask, TactileTask } from "@sharedTypes/tactonTypes";
 import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding } from '@/core/Input/InputDetection/types/InputBindings';
-import { writeAmplitudeBuffer, writeFreqBuffer } from '../DeviceManager/BluetoothWriter';
+import { writeAmplitudeBuffer, writeAmplitudeBuffers, writeFrequencyBuffer } from '../DeviceManager/BluetoothWriter';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -63,20 +63,19 @@ ipcMain.on(IPC_CHANNELS.main.disconnectDevice, (event, deviceID: string) => {
 
 //controll the vibrotactile device
 ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, (event, taskList: TactileTask[]) => {
-    console.log("writeAllAmplitudeBuffers");
-    DeviceManager.writeAllAmplitudeBuffers(taskList)
+    writeAmplitudeBuffers([...DeviceManager.connectedDevices.values()], taskList)
 });
 
-ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, (event, payload: {deviceId: string, taskList: TactileTask[]}) => {
+ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, (event, payload: { deviceId: string, taskList: TactileTask[] }) => {
     const d = DeviceManager.connectedDevices.get(payload.deviceId)
     if (d == null) return
     writeAmplitudeBuffer(d, payload.taskList)
 });
 
-ipcMain.on(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, (event, payload: {deviceId: string, freqBuffer: number[] }) => {
+ipcMain.on(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, (event, payload: { deviceId: string, taskList: SetFrequencyTask[] }) => {
     const d = DeviceManager.connectedDevices.get(payload.deviceId)
     if (d == null) return
-    writeFreqBuffer(d, payload.freqBuffer)
+    writeFrequencyBuffer(d,payload.taskList)
 });
 
 // ipcMain.on(IPC_CHANNELS.bluetooth.main.writeCharacteristic, (event, write: WriteCharacteristic) => {

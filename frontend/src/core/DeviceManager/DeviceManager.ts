@@ -95,16 +95,6 @@ const disconnectDevice = (deviceID: string) => {
     }
 }
 
-let n = 0
-// let millis = new Date()
-const writeAllAmplitudeBuffers = (taskList: TactileTask[]) => {
-    connectedDevices.forEach(device => {
-        // console.log(`writeAmplitudeBuffer ${n}`)
-        writeAmplitudeBuffer(device, taskList)
-        // ++n
-    })
-}
-
 const executeTask = (display: Peripheral, taskList: TactileTask[]) => {
     writeAmplitudeBuffer(display, taskList);
 }
@@ -136,17 +126,6 @@ const executeTask = (display: Peripheral, taskList: TactileTask[]) => {
 // const executeTask = 
 
 
-const initialVibration = async () => {
-    writeAllAmplitudeBuffers([{
-        channelIds: [0],
-        intensity: 1
-    }])
-    await new Promise((r) => setTimeout(r, 1000));
-    writeAllAmplitudeBuffers([{
-        channelIds: [0],
-        intensity: 0
-    }])
-}
 export default {
     startScan,
     stopScan,
@@ -154,9 +133,7 @@ export default {
     updateConnectedDevice,
     connectDevice,
     disconnectDevice,
-    writeAllAmplitudeBuffers,
     executeTask,
-    initialVibration,
     connectedDevices,
 }
 

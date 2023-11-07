@@ -1,6 +1,18 @@
 import { Characteristic, Peripheral } from "@abandonware/noble";
-import { TactileTask } from "@sharedTypes/tactonTypes";
+import { SetFrequencyTask, TactileTask } from "@sharedTypes/tactonTypes";
 import { tactileDisplayService } from "./Services";
+
+//TODO Change TactileTask to SetAmplitudeTask
+
+
+/**
+ * Vibrate the first channel of the specified display (`deviceUuid`) for `durationMs` milliseconds
+ */
+export async function pingDisplayViaNode(device: Peripheral, durationMs: number) {
+    writeAmplitudeBuffer(device, [{ channelIds: [0], intensity: 1 }])
+    await new Promise(resolve => setTimeout(resolve, durationMs))
+    writeAmplitudeBuffer(device, [{ channelIds: [0], intensity: 0 }])
+}
 
 /**
  * method to controll the vibrotactile device
@@ -13,15 +25,21 @@ export const writeAmplitudeBuffer = (device: Peripheral, taskList: TactileTask[]
     if (service !== undefined) {
         const characteristic = service.characteristics.find((characteristic) => characteristic.uuid === tactileDisplayService.characteristics!.amplitudeValues.uuid);
         if (characteristic !== undefined) {
-            writeAmplitudeBufferCharacteristic(taskList, characteristic);
+
+            const buf = getBufferFromAmplitudeTasks(taskList)
+            writeAmplitudeBufferCharacteristic(buf, characteristic);
         }
     }
 }
+export const writeAmplitudeBuffers = (devices: Peripheral[], taskList: TactileTask[]) => {
+    devices.forEach(device => {
+        writeAmplitudeBuffer(device, taskList)
+    })
+}
 
-export function writeAmplitudeBufferCharacteristic(taskList: TactileTask[], characteristic: Characteristic) {
-
+function getBufferFromAmplitudeTasks(taskList: TactileTask[]): Buffer {
     const numOut = Math.max(...taskList.map(o => Math.max.apply(Math, o.channelIds)))
-    let output = new Uint8Array(numOut + 1).fill(255);
+    const output = new Uint8Array(numOut + 1).fill(255);
 
     const map = (value: number, x1: number, y1: number, x2: number, y2: number) => (value - x1) * (y2 - x2) / (y1 - x1) + x2;
     taskList.forEach(task => {
@@ -32,41 +50,71 @@ export function writeAmplitudeBufferCharacteristic(taskList: TactileTask[], char
         }
         );
     });
-    // console.log(output)
-    const buf = Buffer.from(output);
-    // console.log(buf)
-    characteristic.write(buf, false, (error) => {
-        //go always in this callback if error is null;all is fine
-        // console.log(buf);
+    return Buffer.from(output);
+}
+
+function getBufferFromFrequencyTasks(taskList: SetFrequencyTask[]): Buffer {
+    const numOut = Math.max(...taskList.map(o => Math.max.apply(Math, o.channelIds)))
+    const output = new Uint8Array(2 * (numOut + 1)).fill(0);
+    taskList.forEach(task => {
+        task.channelIds.forEach(channel => {
+            output[2 * channel] = task.frequency
+            output[2 * channel + 1] = task.frequency >> 8
+
+            console.log(task)
+        })
+
+    })
+    return Buffer.from(output);
+}
+
+function writeAmplitudeBufferCharacteristic(buffer: Buffer, characteristic: Characteristic) {
+    characteristic.write(buffer, false, (error) => {
         if (error !== null) {
             console.log("Error sending data");
             console.log(error);
             throw error;
         }
-
     });
 }
 
-export function writeFreqBuffer(device: Peripheral, freqBuffer: number[]) {
+export function writeFrequencyBuffer(device: Peripheral, taskList: SetFrequencyTask[]) {
+    console.log("writing frequency alda")
     const service = device.services.find((x) => x.uuid === tactileDisplayService.service.uuid)
     if (service !== undefined) {
         const characteristic = service.characteristics.find((characteristic) => characteristic.uuid === tactileDisplayService.characteristics!.frequencyValues.uuid);
         if (characteristic !== undefined) {
-            const raw = new Uint8Array(freqBuffer.length * 2).fill(0)
-            for (let i = 0; i < freqBuffer.length; i = i + 2) {
-                raw[i] = freqBuffer[i]
-                raw[i + 1] = freqBuffer[i] >> 8
-            }
-            const buf = Buffer.from(raw);
-            characteristic.write(buf, false, (error) => {
-                //go always in this callback if error is null;all is fine
-                // console.log(buf);
-                if (error !== null) {
-                    console.log("Error sending freq data");
-                    console.log(error);
-                    throw error;
-                }
-            });
+            const buf = getBufferFromFrequencyTasks(taskList)
+            console.log(buf);
+            writeFrequencyBuffercharacteristic(buf, characteristic)
         }
     }
+}
+
+// export function writeFreqBuffer(device: Peripheral, freqBuffer: number[]) {
+//     const service = device.services.find((x) => x.uuid === tactileDisplayService.service.uuid)
+//     if (service !== undefined) {
+//         const characteristic = service.characteristics.find((characteristic) => characteristic.uuid === tactileDisplayService.characteristics!.frequencyValues.uuid);
+//         if (characteristic !== undefined) {
+//             writeFrequencyBuffercharacteristic(freqBuffer, characteristic)
+//         }
+//     }
+// }
+
+function writeFrequencyBuffercharacteristic(buffer: Buffer, characteristic: Characteristic) {
+    // const raw = new Uint8Array(freqBuffer.length * 2).fill(0)
+    // for (let i = 0; i < freqBuffer.length; i = i + 2) {
+    //     raw[i] = freqBuffer[i]
+    //     raw[i + 1] = freqBuffer[i] >> 8
+    // }
+    // const buf = Buffer.from(raw);
+    characteristic.write(buffer, false, (error) => {
+        //go always in this callback if error is null;all is fine
+        // console.log(buf);
+        if (error !== null) {
+            console.log("Error sending freq data");
+            console.log(error);
+            throw error;
+        }
+    });
 }

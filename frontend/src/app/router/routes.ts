@@ -7,6 +7,7 @@ import AtmView from "@/feature/atm/views/AtmView.vue"
 import EntranceControlView from "@/feature/entranceControl/views/EntranceControlView.vue"
 import SaltationView from "@/feature/saltation/views/SaltationView.vue"
 import DeviceDialog from "@/core/DeviceManager/views/deviceComponents/DeviceSection.vue"
+import ChannelParameterView from "@/feature/channelParameter/views/ChannelParameterView.vue"
 import { RouteRecordRaw } from "vue-router";
 import { RouterNames } from "@/app/router/Routernames";
 
@@ -20,6 +21,11 @@ export const routes: Array<RouteRecordRaw> = [
     name: RouterNames.SITEMAP,
     component: SitemapView,
 
+  },
+  {
+    path: "/channels",
+    name: RouterNames.CHANNEL_PARAMETER,
+    component: ChannelParameterView
   },
   {
     path: "/door",

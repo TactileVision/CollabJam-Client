@@ -4,6 +4,7 @@ import DeviceManager from "./DeviceManager";
 import { sendMessageToRenderer } from "../IPCMainManager/IPCController";
 import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
 import { TactileDisplay } from "./store/DeviceManagerStore";
+import { pingDisplayViaNode } from "./BluetoothWriter";
 
 /**
  * generell methods to establish a ble connection
@@ -93,8 +94,7 @@ const setOnCharacteristicsDiscover = (device: Peripheral, service: noble.Service
             }
         })
 
-        DeviceManager.initialVibration();
-
+        pingDisplayViaNode(device, 500)
     });
 }
 

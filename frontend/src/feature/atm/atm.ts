@@ -3,7 +3,7 @@
 //TODO: Make repeated atm a seperate function
 //TODO: Make reversing of actuators a responsibility of function caller 
 //TODO: Introduce state to make all calls working with timeouts stoppable!
-import { writeAmplitude } from "@/core/DeviceManager/TactileDisplayActions"
+import { writeAmplitudeForSelection, writeAmplitudeOnDisplay } from "@/core/DeviceManager/TactileDisplayActions"
 import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
 import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels"
 import { TactileTask } from "@sharedTypes/tactonTypes"
@@ -54,15 +54,10 @@ export function atm(actuators: ActuatorSelection[], burstDuration: number, ampli
 	const run = () => {
 		instructions.forEach((inst, i) => {
 			const t = setTimeout(() => {
-				window.api.send(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, {
-					deviceId: inst.deviceId,
-					taskList: [
-						inst.task
-					]
-				});
+				writeAmplitudeOnDisplay(inst.deviceId, inst.task.channelIds, inst.task.intensity)
 				if (i == instructions.length - 1) {
 					//TODO Make all actors stop
-					writeAmplitude(inst.deviceId, actuators, 0)
+					writeAmplitudeForSelection(actuators, 0)
 					onFinished()
 				}
 
@@ -77,7 +72,8 @@ export function atm(actuators: ActuatorSelection[], burstDuration: number, ampli
 }
 
 export function stopAtm(deviceId: string, actuators: ActuatorSelection[]) {
-	writeAmplitude(deviceId, actuators, 0)
+	// writeAmplitude(deviceId, actuators, 0)
+	writeAmplitudeForSelection(actuators, 0)
 	timeoutHandlers.forEach((handler) => {
 		clearTimeout(handler)
 	})

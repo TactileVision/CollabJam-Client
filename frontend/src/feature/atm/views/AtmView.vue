@@ -141,6 +141,7 @@ import ActuatorSelectionMenu from "@/core/DeviceManager/views/ActuatorSelectionM
 import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
 import ActuatorArrangement from "@/core/DeviceManager/views/ActuatorArrangement.vue"
 import { TactileTask } from "@sharedTypes/tactonTypes";
+import { writeAmplitudeOnDisplay } from "@/core/DeviceManager/TactileDisplayActions";
 
 export default defineComponent({
 	name: "ATM",
@@ -272,12 +273,8 @@ export default defineComponent({
 			const fn = () => {
 				instructions.forEach((inst, i) => {
 					setTimeout(() => {
-						window.api.send(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, {
-							deviceId: inst.deviceId,
-							taskList: [
-								inst.task
-							]
-						});
+						writeAmplitudeOnDisplay(inst.deviceId, inst.task.channelIds, inst.task.intensity)
+
 
 						//store all timeout handerls and set them free if vibrations stps
 						//restart if repeating is set

@@ -7,7 +7,8 @@
     <v-col cols="3">{{ `Status: ${device.state}` }}</v-col>
     <v-spacer />
     <v-col cols="1" style="display: flex; justify-content: flex-end, padding:0px 5px,"
-      v-if="device.state == 'connected' ? true : false"><v-btn @click="vibrateDevice" elevation="2" color="primary">
+      v-if="device.state == 'connected' ? true : false"><v-btn @click="vibrateDevice(device.id)" elevation="2"
+        color="primary">
         <v-progress-circular v-if="isVibrating" indeterminate color="red" :size="20"></v-progress-circular>
         Retry</v-btn>
     </v-col>
@@ -32,6 +33,7 @@ import {
 import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
 import { useStore } from "@/app/store/store";
 import ConnectionLevel from "./ConnectionLevel.vue";
+import { pingDisplayViaIPC } from "../../TactileDisplayActions";
 
 export default defineComponent({
   name: "DeviceRow",
@@ -58,22 +60,9 @@ export default defineComponent({
         window.api.send(IPC_CHANNELS.main.connectDevice, this.device.id);
       }
     },
-    async vibrateDevice() {
+    async vibrateDevice(id: string) {
       this.isVibrating = true;
-      window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, [
-        {
-          channelIds: [0],
-          intensity: 1,
-        },
-      ]);
-      await new Promise((r) => setTimeout(r, 1000));
-
-      window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, [
-        {
-          channelIds: [0],
-          intensity: 0,
-        },
-      ]);
+      pingDisplayViaIPC(id, 1000)
       this.isVibrating = false;
     },
   },
