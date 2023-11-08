@@ -1,8 +1,5 @@
 import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
 import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
-import { writeAmplitudeBuffer, writeFrequencyBuffer } from "./BluetoothWriter";
-import { Peripheral } from "@abandonware/noble";
-
 
 /**
  * Vibrate the first channel of the specified display (`deviceUuid`) for `durationMs` milliseconds
@@ -32,12 +29,13 @@ export function writeAmplitudeOnDisplay(deviceUuid: string, channels: number[], 
  * Writes the `amplitude` value to all channels/displays specified in the `actuators` ActuatorSelection array. The ActuatorSelection array gets reduced to one instruction for each occuring peripheral uuid
  */
 export function writeAmplitudeForSelection(actuators: ActuatorSelection[], amplitude: number) {
-	interface DisplayChannel {
-		[key: string]: Set<number>;
-	}
+	// interface DisplayChannel {
+	// 	[key: string]: Set<number>;
+	// }
 	//for each display in actuator selection write amplitude to channel with writeAmplitudeOnDisplay function
 	const displays = new Set<string>()
-	const channels: DisplayChannel = {}
+	// const channels: DisplayChannel = {}
+	const channels: { [key: string]: Set<number> } = {}
 	//get all unique displays
 	actuators.forEach((actor) => {
 		displays.add(actor.deviceUuid)
@@ -45,12 +43,15 @@ export function writeAmplitudeForSelection(actuators: ActuatorSelection[], ampli
 
 	//get all unique channels for each display
 	displays.forEach((display) => {
-		actuators.filter((a) => { a.deviceUuid == display }).forEach((actor) => {
-			channels[display].add(actor.actuator)
-		})
+		const a = actuators.filter(a => a.deviceUuid === display)
+		if (a.length > 0) {
+			channels[display] = new Set<number>()
+			a.forEach((actor) => {
+				channels[display].add(actor.actuator)
+			})
+		}
 	})
-	console.log(displays)
-
+	
 	displays.forEach((display) => {
 		writeAmplitudeOnDisplay(display, Array.from(channels[display].values()), amplitude)
 	})

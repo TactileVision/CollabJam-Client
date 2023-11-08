@@ -71,7 +71,7 @@ export function atm(actuators: ActuatorSelection[], burstDuration: number, ampli
 	run()
 }
 
-export function stopAtm(deviceId: string, actuators: ActuatorSelection[]) {
+export function stopAtm(actuators: ActuatorSelection[]) {
 	// writeAmplitude(deviceId, actuators, 0)
 	writeAmplitudeForSelection(actuators, 0)
 	timeoutHandlers.forEach((handler) => {

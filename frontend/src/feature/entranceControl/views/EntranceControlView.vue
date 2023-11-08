@@ -68,7 +68,7 @@ export default defineComponent({
 			}
 		},
 		restart() {
-			stopAtm(this.actuators[0].deviceUuid, this.actuators);
+			stopAtm(this.actuators);
 			let intMs = this.params[this.userCurrentStep].interval
 			let amp = this.params[this.userCurrentStep].amp
 			let bd = this.params[this.userCurrentStep].bd
@@ -84,7 +84,7 @@ export default defineComponent({
 			console.log("Step changed")
 			console.log(this.userCurrentStep)
 			if (this.userCurrentStep == 0) {
-				stopAtm(this.actuators[0].deviceUuid, this.actuators);
+				stopAtm(this.actuators);
 				clearTimeout(this.restartTimeout);
 				this.isRunning = false;
 				//TODO Stop all vibrations 
