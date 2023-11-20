@@ -1,79 +1,74 @@
 <template>
-	<v-container>
+	<h2>1D Apparent Tactile Motion</h2>
+	<div id="atm">
+		<v-alert v-if="!hardwareIsReady" type="warning" variant="tonal">
+			Please connect tactile displays with at least two actuators connected!
+		</v-alert>
+		<v-row>
 
-		<h2>1D Apparent Tactile Motion</h2>
-		<div id="atm">
-			<v-alert v-if="!hardwareIsReady" type="warning" variant="tonal">
-				Please connect tactile displays with at least two actuators connected!
-			</v-alert>
-			<v-row>
+			<!-- MARK: Illusion Settings -->
+			<v-col cols="8">
+				<v-row>
+					<v-col>
 
-				<!-- MARK: Illusion Settings -->
-				<v-col cols="8">
-					<v-row>
-						<v-col>
-
-							<!-- MARK: Playback -->
-							<v-card>
-								<v-card-title>
-									Playback
-								</v-card-title>
-								<v-container>
-									<v-row>
-										<v-col cols="10">
-											<v-radio-group v-model="modeSelection" :disabled="isRunning" inline
-												hide-details>
-												<v-radio label="Forward" value="Forward"></v-radio>
-												<v-radio label="Backwards" value="Backwards"></v-radio>
-												<!-- <v-radio label="Back and Forth" value="Back and Forth"></v-radio> -->
-											</v-radio-group>
-											<input v-model="repeat" type="checkbox" name="repeating-checkbox"
-												id="repeating-checkbox">
-											Repeat
+						<!-- MARK: Playback -->
+						<v-card>
+							<v-card-title>
+								Playback
+							</v-card-title>
+							<v-container>
+								<v-row>
+									<v-col cols="10">
+										<v-radio-group v-model="modeSelection" :disabled="isRunning" inline hide-details>
+											<v-radio label="Forward" value="Forward"></v-radio>
+											<v-radio label="Backwards" value="Backwards"></v-radio>
+											<!-- <v-radio label="Back and Forth" value="Back and Forth"></v-radio> -->
+										</v-radio-group>
+										<input v-model="repeat" type="checkbox" name="repeating-checkbox"
+											id="repeating-checkbox">
+										Repeat
 
 
-										</v-col>
-										<v-col>
-											<v-btn :disabled="!hardwareIsReady" @click="toggleVibration" :icon="isRunning ? 'mdi-stop'
-												: 'mdi-play'" size="x-large">
-												Trigger vibration
-											</v-btn>
-										</v-col>
-									</v-row>
-								</v-container>
-							</v-card>
+									</v-col>
+									<v-col>
+										<v-btn :disabled="!hardwareIsReady" @click="toggleVibration" :icon="isRunning ? 'mdi-stop'
+											: 'mdi-play'" size="x-large">
+											Trigger vibration
+										</v-btn>
+									</v-col>
+								</v-row>
+							</v-container>
+						</v-card>
 
-							<!-- MARK: Illusion Parameter -->
-							<v-card>
-								<v-card-title>
-									Illusion Parameter
-								</v-card-title>
-								<v-slider hide-details max="1" min="0.05" step="0.05" show-ticks thumb-label
-									v-model="maxAmp">
-									<template v-slot:prepend>
-										Maximal Amplitude: {{ maxAmp.toFixed(2) }}
-									</template>
-								</v-slider>
+						<!-- MARK: Illusion Parameter -->
+						<v-card>
+							<v-card-title>
+								Illusion Parameter
+							</v-card-title>
+							<v-slider hide-details max="1" min="0.05" step="0.05" show-ticks thumb-label v-model="maxAmp">
+								<template v-slot:prepend>
+									Maximal Amplitude: {{ maxAmp.toFixed(2) }}
+								</template>
+							</v-slider>
 
-								<v-slider hide-details max="500" min="70" step="10" show-ticks thumb-label
-									v-model="sliderBD">
-									<template v-slot:prepend>
-										Burst Duration: {{ sliderBD }} ms
-									</template>
-								</v-slider>
+							<v-slider hide-details max="500" min="70" step="10" show-ticks thumb-label v-model="sliderBD">
+								<template v-slot:prepend>
+									Burst Duration: {{ sliderBD }} ms
+								</template>
+							</v-slider>
 
-								<v-slider hide-details :disabled="!repeat" max="1000" min="50" step="50" show-ticks
-									thumb-label v-model="interAtmMs">
-									<template v-slot:prepend>
-										Inter ATM Interval:
-										{{ interAtmMs }}ms
-									</template>
-								</v-slider>
+							<v-slider hide-details :disabled="!repeat" max="1000" min="50" step="50" show-ticks thumb-label
+								v-model="interAtmMs">
+								<template v-slot:prepend>
+									Inter ATM Interval:
+									{{ interAtmMs }}ms
+								</template>
+							</v-slider>
 
-							</v-card>
+						</v-card>
 
-							<!-- MARK: Repeat Parameter -->
-							<!-- <v-card>
+						<!-- MARK: Repeat Parameter -->
+						<!-- <v-card>
 								<v-card-title>
 									Pulsing Parameter
 								</v-card-title>
@@ -97,31 +92,29 @@
 								</v-slider>
 							</v-card> -->
 
-						</v-col>
-						<v-col>
-							<actuator-selection-menu :disabled="isRunning" v-model="actuators"></actuator-selection-menu>
-							<actuator-arrangement v-model="actuators"></actuator-arrangement>
-						</v-col>
-					</v-row>
-					<!-- MARK: Mode selection and playback -->
+					</v-col>
+					<v-col>
+						<actuator-selection-menu :disabled="isRunning" v-model="actuators"></actuator-selection-menu>
+						<actuator-arrangement v-model="actuators"></actuator-arrangement>
+					</v-col>
+				</v-row>
+				<!-- MARK: Mode selection and playback -->
 
 
-					<!-- <img :src="require('../assets/handshake_openmoji.png')" /> -->
-					<!-- <v-dialog v-model="showActuatorSelection" persistent width="1500">
+				<!-- <img :src="require('../assets/handshake_openmoji.png')" /> -->
+				<!-- <v-dialog v-model="showActuatorSelection" persistent width="1500">
 			<v-btn color="error" @click="showActuatorSelection = !showActuatorSelection">
 				Exit
 			</v-btn> -->
-				</v-col>
-				<!-- MARK: Infos -->
-				<v-col>
-				</v-col>
+			</v-col>
+			<!-- MARK: Infos -->
+			<v-col>
+			</v-col>
 
-			</v-row>
-		</div>
-		<!-- {{ actuators }} -->
-		<!-- </v-dialog> -->
-
-	</v-container>
+		</v-row>
+	</div>
+	<!-- {{ actuators }} -->
+	<!-- </v-dialog> -->
 
 	<!-- 
 - Check if one device with at least two displays is connected or two devices with at least one device
@@ -142,6 +135,7 @@ import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation
 import ActuatorArrangement from "@/core/DeviceManager/views/ActuatorArrangement.vue"
 import { TactileTask } from "@sharedTypes/tactonTypes";
 import { writeAmplitudeOnDisplay } from "@/core/DeviceManager/TactileDisplayActions";
+import { atm, stopAtm } from "../atm";
 
 export default defineComponent({
 	name: "ATM",
@@ -160,7 +154,8 @@ export default defineComponent({
 			interBackwardsMs: 100,
 			interAtmMs: 50,
 			modeSelection: "Forward",
-			repeat: false
+			repeat: false,
+			timeoutHandler: 0
 		}
 	},
 	computed: {
@@ -204,9 +199,6 @@ export default defineComponent({
 			this.writeValues(0, 0)
 			this.isRunning = false
 		},
-		vibrate() {
-			this.atm()
-		},
 		updateVibration() {
 
 			this.writeValues(this.leftIntensity, this.rightIntensity)
@@ -217,13 +209,25 @@ export default defineComponent({
 		toggleVibration() {
 			this.isRunning = !this.isRunning
 			if (this.isRunning) {
-				this.atm()
+				// this.atm_o()
+				const fn = () => {
+					if (this.repeat) {
+						this.timeoutHandler = window.setTimeout(() => {
+							atm(this.actuators, this.sliderBD, this.maxAmp, fn)
+						}, this.interAtmMs)
+					} else {
+						this.isRunning = false
+					}
+				}
+				atm(this.actuators, this.sliderBD, this.maxAmp, fn)
 			} else {
-				this.stopVibration()
+				stopAtm(this.actuators)
+				window.clearTimeout(this.timeoutHandler)
+				// this.stopVibration()
 			}
 			return false;
 		},
-		atm() {
+		atm_o() {
 			interface AtmStep {
 				deviceId: string,
 				task: TactileTask,
@@ -280,7 +284,7 @@ export default defineComponent({
 						//restart if repeating is set
 						if (i == instructions.length - 1 && this.isRunning) {
 							if (this.repeat) {
-								setTimeout(() => {
+								this.timeoutHandler = window.setTimeout(() => {
 									fn()
 								}, this.interAtmMs)
 							}

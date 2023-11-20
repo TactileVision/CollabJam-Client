@@ -2,7 +2,7 @@
 <!-- input field to enter a name or adress of the room -->
 
 <template>
-  <v-container fill-height class="roomView">
+  <div class="roomView">
     <v-row align="center" justify="center" style="margin-top: 40px">
       <v-btn elevation="2" color="primary" @click="getRooms">Update Room List</v-btn>
       <v-list lines="one">
@@ -11,7 +11,7 @@
         </v-list-item>
       </v-list>
     </v-row>
-  </v-container>
+    </div>
 </template>
 
 <style lang="scss" scoped>

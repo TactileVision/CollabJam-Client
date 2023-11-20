@@ -1,6 +1,4 @@
 <template>
-	<v-container>
-
 		<h2>1D Saltation Illusion</h2>
 		<div id="atm">
 			<v-alert v-if="!hardwareIsReady" type="warning" variant="tonal">
@@ -97,8 +95,6 @@
 		</div>
 		<!-- {{ actuators }} -->
 		<!-- </v-dialog> -->
-
-	</v-container>
 
 	<!-- 
 - Check if one device with at least two displays is connected or two devices with at least one device
