@@ -1,3 +1,4 @@
+import { NoteOn } from "@sharedTypes/midiTypes";
 import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
 import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
 
@@ -51,7 +52,7 @@ export function writeAmplitudeForSelection(actuators: ActuatorSelection[], ampli
 			})
 		}
 	})
-	
+
 	displays.forEach((display) => {
 		writeAmplitudeOnDisplay(display, Array.from(channels[display].values()), amplitude)
 	})
@@ -68,6 +69,11 @@ export function writeFrequencyOnDisplay(deviceUuid: string, channels: number[], 
 		]
 	});
 }
+
+export function writeToMidiOutput(note: NoteOn) {
+	window.api.send(IPC_CHANNELS.midi.main.noteOn, note)
+}
+
 //export function writeAmplitudeForSelection
 //export function writeFrequencyForChannel
 

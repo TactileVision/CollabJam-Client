@@ -1,5 +1,5 @@
 "use strict";
-import { setBrowserWindow,initSettingManager } from './core/IPCMainManager/IPCController';
+import { setBrowserWindow, initSettingManager } from './core/IPCMainManager/IPCController';
 import { app, protocol, BrowserWindow } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
@@ -31,6 +31,22 @@ async function createWindow() {
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
       preload: path.join(__dirname, 'preload.js')
     },
+  });
+
+  win.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    if (permission === 'midi' || permission === 'midiSysex') {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  })
+
+  win.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    if (permission === 'midi' || permission === 'midiSysex') {
+      return true;
+    }
+
+    return false;
   });
 
   win.once('ready-to-show', () => {

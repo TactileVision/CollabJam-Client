@@ -6,7 +6,6 @@ import { connectBlutetoothDevice, disconnectBlutetoothDevice, startBluetoothScan
 import { writeAmplitudeBuffer } from "./BluetoothWriter";
 import { tactileDisplayService, tactileDisplayServiceReadingProgress } from "./Services";
 import { TactileDisplay } from "./store/DeviceManagerStore";
-
 /**
  * Generell Device Module, which will handle all devices
 * it will controll the device with the bluetooth controller and and the vtproto transformer
@@ -21,13 +20,12 @@ const characteristicReadingProgress = new Map<string, Map<string, boolean>>()
 const startScan = () => {
     discoveredDevices = [];
     // disconnectDevice()
-    startBluetoothScan()
+    // startBluetoothScan()
 }
 
 const stopScan = () => {
     stopBluetoothScan()
 }
-
 
 const addDevice = (peripheral: Peripheral) => {
     //TODO Check if not alreadt connected

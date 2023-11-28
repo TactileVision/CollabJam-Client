@@ -14,6 +14,12 @@
         <DeviceRow :device="item" />
       </v-list-item>
     </v-list>
+    <v-list :items="midiOutputs">
+      <v-list-item v-for="item in midiOutputs" :key="item.id" style="padding:0">
+        <!-- <DeviceRow :device="item" /> -->
+        {{ item.name }}
+      </v-list-item>
+    </v-list>
     <!-- <v-list-item v-for="item in deviceList" :key="item.id" style="padding:0">
           <DeviceRow :device="item" />
         </v-list-item>
@@ -56,7 +62,8 @@ import { defineComponent } from "@vue/runtime-core";
 import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
 import DeviceRow from "./deviceRow.vue";
 import { useStore } from "@/app/store/store";
-import { VibrotactileDevice,GeneralMutations } from "@/app/store/modules/generalSettings/generalSettings";
+import { VibrotactileDevice, GeneralMutations } from "@/app/store/modules/generalSettings/generalSettings";
+import { MidiInputInfo, MidiOutputInfo } from "@sharedTypes/midiTypes";
 
 export default defineComponent({
   components: { DeviceRow },
@@ -71,13 +78,21 @@ export default defineComponent({
     deviceList(): VibrotactileDevice[] {
       return this.store.state.generalSettings.deviceList;
     },
+    midiInputs(): MidiInputInfo[] {
+      return this.store.state.deviceManager.midiInputs;
+    },
+    midiOutputs(): MidiOutputInfo[] {
+      return this.store.state.deviceManager.midiOutputs;
+    }
   },
   methods: {
     startScanning() {
-      this.isScanning = !this.isScanning;
-      if (this.isScanning)
-        this.store.commit(GeneralMutations.UPDATE_DEVICE_LIST, []);
-      window.api.send(IPC_CHANNELS.main.changeScan, this.isScanning);
+      window.api.send(IPC_CHANNELS.midi.main.startMidi, {});
+
+      /*       this.isScanning = !this.isScanning;
+            if (this.isScanning)
+              this.store.commit(GeneralMutations.UPDATE_DEVICE_LIST, []);
+            window.api.send(IPC_CHANNELS.main.changeScan, this.isScanning); */
     },
   },
 });

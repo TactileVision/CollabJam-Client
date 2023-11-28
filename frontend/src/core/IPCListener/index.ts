@@ -5,17 +5,24 @@ import { PlayGroundMutations } from "@/feature/collabJamming/store/playGround/ty
 import { CustomSettings } from "@/core/FileManager/initSettings"
 import { RoomMutations } from "@/feature/collabJamming/store/roomSettings/roomSettings"
 import { DeviceManagerStoreActionTypes, DeviceMutations, FrequencyInformation, PeripheralInformation, TactileDisplay } from "../DeviceManager/store/DeviceManagerStore"
+import { PortEvent } from "webmidi"
+import { MidiInputInfo, MidiOutputInfo } from "@sharedTypes/midiTypes"
 
 const store = useStore()
 /**
  * initiate listener from the main process
  */
 export const initIPCListener = () => {
+
   window.api.receive(IPC_CHANNELS.renderer.foundDevice, (device: VibrotactileDevice) => {
     //console.log("Get from main " + device)
     store.dispatch(GeneralSettingsActionTypes.addNewDevice, device)
   })
 
+  window.api.receive(IPC_CHANNELS.renderer.foundDevice, (device: VibrotactileDevice) => {
+    //console.log("Get from main " + device)
+    store.dispatch(GeneralSettingsActionTypes.addNewDevice, device)
+  })
 
   window.api.receive(IPC_CHANNELS.renderer.deviceStatusChanged, (device: VibrotactileDevice) => {
     console.log("Get from main " + device)
@@ -60,5 +67,17 @@ export const initIPCListener = () => {
     console.log("Updatating freq range")
     console.log(payload)
     store.dispatch(DeviceManagerStoreActionTypes.setFreqInfo, payload);
+  })
+
+  //MIDI
+  window.api.receive(IPC_CHANNELS.midi.renderer.outputDeviceAvailable, (device: MidiOutputInfo) => {
+    // console.log("New MIDI Input available")
+    // console.log(device.name)
+    store.dispatch(DeviceManagerStoreActionTypes.addMidiInput, device)
+  })
+  window.api.receive(IPC_CHANNELS.midi.renderer.inputDeviceAvailable, (device: MidiInputInfo) => {
+    // console.log("New MIDI Output available")
+    // console.log(device.name)
+    store.dispatch(DeviceManagerStoreActionTypes.addMidiOutput, device)
   })
 }

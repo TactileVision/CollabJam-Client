@@ -1,5 +1,6 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState } from '@/app/store/store';
+import { MidiInputInfo, MidiOutputInfo } from '@sharedTypes/midiTypes';
 
 /**
  * Types
@@ -34,12 +35,16 @@ export interface FrequencyInformation {
  * 
  */
 export type State = {
+	midiInputs: MidiInputInfo[],
+	midiOutputs: MidiOutputInfo[],
 	discoveredPeripherals: PeripheralInformation[],
 	exist: boolean,
 	connectedTactileDisplays: TactileDisplay[]
 };
 
 export const state: State = {
+	midiInputs: [],
+	midiOutputs: [],
 	discoveredPeripherals: [],
 	exist: true,
 	connectedTactileDisplays: [],
@@ -56,7 +61,9 @@ export enum DeviceMutations {
 	UPDATE_CONNECTED_DISPLAY = "DM_UPDATE_CONNECTED_DISPLAY",
 	ADD_SCANNED_PERIPHERAL = "DM_ADD_SCANNED_PERIPHERAL",
 	UPDATE_SCANNED_PERIPHERAL_LIST = "DM_UPDATE_SCANNED_PERIPHERAL_LIST",
-	UPDATE_FREQ_INFORMATION = "DM_UPDATE_FREQ_INFORMATION"
+	UPDATE_FREQ_INFORMATION = "DM_UPDATE_FREQ_INFORMATION",
+	ADD_MIDI_INPUT = "DM_ADD_MIDI_INPUT",
+	ADD_MIDI_OUTPUT = "DM_ADD_MIDI_OUTPUT"
 }
 
 export type Mutations<S = State> = {
@@ -67,6 +74,8 @@ export type Mutations<S = State> = {
 	[DeviceMutations.ADD_SCANNED_PERIPHERAL](state: S, device: PeripheralInformation): void
 	[DeviceMutations.UPDATE_SCANNED_PERIPHERAL_LIST](state: S, deviceList: PeripheralInformation[]): void
 	[DeviceMutations.UPDATE_FREQ_INFORMATION](state: S, info: { uuid: string, freqInfo: FrequencyInformation }): void
+	[DeviceMutations.ADD_MIDI_INPUT](state: S, device: MidiInputInfo): void
+	[DeviceMutations.ADD_MIDI_OUTPUT](state: S, device: MidiOutputInfo): void
 }
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -98,6 +107,14 @@ export const mutations: MutationTree<State> & Mutations = {
 			state.connectedTactileDisplays[index].freqInformation = info.freqInfo
 		}
 	},
+	[DeviceMutations.ADD_MIDI_INPUT](state, device) {
+		state.midiInputs.push(device)
+
+	},
+	[DeviceMutations.ADD_MIDI_OUTPUT](state, device) {
+		state.midiOutputs.push(device)
+	}
+
 };
 
 /**
@@ -112,7 +129,9 @@ export enum DeviceManagerStoreActionTypes {
 	setNumberOfOutputs = "setNumberOfOutputs",
 	setFreqAvailability = "setFreqAvailability",
 	setAmpAvailability = "setAmpAvailability",
-	setFreqInfo = "setFreqInfo"
+	setFreqInfo = "setFreqInfo",
+	addMidiInput = "addMidiInput",
+	addMidiOutput = "addMidiOutput"
 }
 
 type AugmentedActionContext = {
@@ -155,6 +174,14 @@ export interface Actions {
 	[DeviceManagerStoreActionTypes.setFreqInfo](
 		{ commit }: AugmentedActionContext,
 		payload: { deviceId: string, freqInfo: FrequencyInformation }
+	): void;
+	[DeviceManagerStoreActionTypes.addMidiInput](
+		{ commit }: AugmentedActionContext,
+		payload: MidiInputInfo
+	): void;
+	[DeviceManagerStoreActionTypes.addMidiOutput](
+		{ commit }: AugmentedActionContext,
+		payload: MidiOutputInfo
 	): void;
 }
 
@@ -230,6 +257,16 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
 		commit(DeviceMutations.UPDATE_FREQ_INFORMATION, { uuid: payload.deviceId, freqInfo: payload.freqInfo });
 	},
+
+	[DeviceManagerStoreActionTypes.addMidiInput]({ commit }, device: MidiInputInfo) {
+		//TODO: Check if device id is already in array
+		commit(DeviceMutations.ADD_MIDI_INPUT, device)
+	},
+
+	[DeviceManagerStoreActionTypes.addMidiOutput]({ commit }, device: MidiOutputInfo) {
+		//TODO: Check if device id is already in array
+		commit(DeviceMutations.ADD_MIDI_OUTPUT, device)
+	},
 };
 
 /**
@@ -242,19 +279,16 @@ export type Getters = {
 }
 
 export const getters: GetterTree<State, RootState> & Getters = {
-	// getDeviceStatus: (state) => (id) => {
-	// 	const index = state.connectedTactileDisplays.findIndex(
-	// 		(deviceStore) => deviceStore.id === id
-	// 	);
-	// 	if (index == -1)
-	// 		return DeviceStatus.loading;
-
-	// 	return state.connectedTactileDisplays[index].connectionState;
-	// },
 	getNumberOfConnectedDisplays: (state) => {
 		return state.connectedTactileDisplays.length
 	},
 	getTactileDisplays(state) {
 		return state.connectedTactileDisplays
 	},
+	getMidiInputs(state) {
+		return state.midiInputs
+	},
+	getMidiOutputs(state) {
+		return state.midiOutputs
+	}
 };

@@ -8,6 +8,8 @@ import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding } from '@/core/Input/InputDetection/types/InputBindings';
 import { writeAmplitudeBuffer, writeAmplitudeBuffers, writeFrequencyBuffer } from '../DeviceManager/BluetoothWriter';
+import { initMidi, midiNoteOn } from '../DeviceManager/MidiController';
+import { NoteOn } from '@sharedTypes/midiTypes';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -75,7 +77,7 @@ ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, (event, payload: { 
 ipcMain.on(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, (event, payload: { deviceId: string, taskList: SetFrequencyTask[] }) => {
     const d = DeviceManager.connectedDevices.get(payload.deviceId)
     if (d == null) return
-    writeFrequencyBuffer(d,payload.taskList)
+    writeFrequencyBuffer(d, payload.taskList)
 });
 
 // ipcMain.on(IPC_CHANNELS.bluetooth.main.writeCharacteristic, (event, write: WriteCharacteristic) => {
@@ -148,6 +150,16 @@ ipcMain.on(IPC_CHANNELS.main.getRecordedTacton, async (event, payload: any) => {
     // })
     // playbackRecordedTacton(t)
 });
+
+ipcMain.on(IPC_CHANNELS.midi.main.startMidi, () => {
+    initMidi()
+})
+
+ipcMain.on(IPC_CHANNELS.midi.main.noteOn, (event, payload: NoteOn) => {
+    midiNoteOn(payload)
+})
+
+
 
 //generell function, which get called if on module want to communicate with the renderer
 export function sendMessageToRenderer(channel: string, payload: any): void {

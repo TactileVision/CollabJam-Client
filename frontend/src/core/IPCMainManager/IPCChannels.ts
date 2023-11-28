@@ -21,7 +21,17 @@ const IPC_CHANNELS = {
         numberOfOutputsDiscovered: "tactile-jam.renderer.numberOfOutputsDiscovered",
         initConfig: "tactile-jam.renderer.initConfig",
     },
+    midi: {
+        main: {
+            startMidi: "collabjam.main.midi.startMidi",
+            noteOn: "collabjam.main.midi.noteOn"
+        },
+        renderer: {
+            outputDeviceAvailable: "collabjam.renderer.midi.outputDeviceAvailable",
+            inputDeviceAvailable: "collabjam.renderer.midi.inputDeviceAvailable",
+        },
 
+    },
     bluetooth: {
         main: {
             writeCharacteristic: "collabjam.main.ble.writeAmplitudeCharacteristic",
