@@ -1,25 +1,20 @@
 <template>
-  <v-app-bar id="headerPlayGround" :elevation="2">
-    <!-- <template v-slot:prepend>
-      <v-app-bar-nav-icon></v-app-bar-nav-icon>
-    </template> -->
-
-    <v-app-bar-title>
-      {{ store.state.roomSettings.roomName }}
-    </v-app-bar-title>
-    <v-spacer></v-spacer>
-    <InteractionModeIndicator :mode="store.state.roomSettings.mode"></InteractionModeIndicator>
-    <v-spacer></v-spacer>
-    <template v-slot:append>
+  <div class="v-row" id="headerPlayGround" :elevation="2" align="center" justify="start">
+    <span class="v-col text-h4"> {{ store.state.roomSettings.roomName }} </span>
+    <!-- <v-spacer></v-spacer> -->
+    <InteractionModeIndicator class="v-col" cols="1" :mode="store.state.roomSettings.mode"></InteractionModeIndicator>
+    <!-- <v-spacer></v-spacer> -->
+    <div class="v-col">
       <UserTooltip :users="store.state.roomSettings.participants"></UserTooltip>
       <!-- <UserMenu /> -->
       <DeviceDialog :num-connected-devices="numConnectedDevices">
       </DeviceDialog>
       <v-btn color="primary" :disabled="store.state.roomSettings.mode != 1" prepend-icon="mdi-logout" @click="logOut">Log
         out</v-btn>
-    </template>
-  </v-app-bar>
+    </div>
+  </div>
 </template>
+
 
 <style lang="scss" scoped>
 .headerPlayGround {
@@ -28,7 +23,7 @@
   border-bottom: 1px solid rgb(48, 41, 41);
   min-height: 50px;
   padding: 2px 10px;
-  display: flex;
+  display: block;
 }
 </style>
 <script lang="ts">

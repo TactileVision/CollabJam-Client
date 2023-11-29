@@ -18,7 +18,7 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 1920,
     height: 1080,
-    resizable: false,
+    resizable: true,
     autoHideMenuBar: true,
     title: "Collaborative Tacton Generator",
     backgroundColor: '#121212',

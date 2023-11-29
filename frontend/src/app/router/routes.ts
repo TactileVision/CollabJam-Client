@@ -17,7 +17,7 @@ import { RouterNames } from "@/app/router/Routernames";
  */
 export const routes: Array<RouteRecordRaw> = [
   {
-    path: "/",
+    path: "/sitemap",
     name: RouterNames.SITEMAP,
     component: SitemapView,
 
@@ -33,7 +33,7 @@ export const routes: Array<RouteRecordRaw> = [
     component: EntranceControlView
   },
   {
-    path: "/devices",
+    path: "/",
     name: RouterNames.DEVICES,
     component: DeviceDialog
   },

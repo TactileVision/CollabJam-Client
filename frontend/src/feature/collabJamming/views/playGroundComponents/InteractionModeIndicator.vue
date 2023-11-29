@@ -1,16 +1,22 @@
 <template>
-	<v-chip :prepend-icon="getIcon()"  :color="getColor()" class="px-16 py-4 ma-2 text-uppercase">
+	<div class="indicator px-16 py-4 ma-2 text-uppercase">
+		<v-icon :color="getColor()" :icon="getIcon()"></v-icon>
 		{{ getModeString() }}
-	</v-chip>
+	</div>
+	<!-- <v-chip :prepend-icon="getIcon()" :color="getColor()" class="px-16 py-4 ma-2 text-uppercase"> -->
+	<!-- </v-chip> -->
 </template>
 
-<!-- <style lang="scss" scoped>
-
-</style> -->
+<style lang="scss" scoped>
+.indicator {
+	border-radius: 999px;
+}
+</style>
 
 <script lang="ts">
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { defineComponent } from "@vue/runtime-core";
+import { TilingSprite } from "pixi.js";
 import { PropType } from "vue";
 
 export default defineComponent({
@@ -23,6 +29,11 @@ export default defineComponent({
 	},
 	data() {
 		return {
+		}
+	},
+	computed: {
+		setColor() {
+			return { backgroundColor: this.getColor() }
 		}
 	},
 	methods: {
@@ -52,6 +63,7 @@ export default defineComponent({
 			}
 
 		},
+
 		getModeString() {
 			switch (this.mode) {
 				case InteractionMode.Jamming:
