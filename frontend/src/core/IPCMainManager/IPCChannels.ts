@@ -24,7 +24,8 @@ const IPC_CHANNELS = {
     midi: {
         main: {
             startMidi: "collabjam.main.midi.startMidi",
-            noteOn: "collabjam.main.midi.noteOn"
+            noteOn: "collabjam.main.midi.noteOn",
+            setAmplitudeViaTactileTask: "collabjam.main.midi.setAmplitudeViaTactileTask"
         },
         renderer: {
             outputDeviceAvailable: "collabjam.renderer.midi.outputDeviceAvailable",

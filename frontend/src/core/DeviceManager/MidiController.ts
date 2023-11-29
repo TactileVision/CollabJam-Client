@@ -2,6 +2,7 @@ import { WebMidi } from "../../../node_modules/webmidi/dist/esm/webmidi.esm.js";
 import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
 import { sendMessageToRenderer } from "@/core/IPCMainManager/IPCController";
 import { MidiInputInfo, MidiOutputInfo, NoteOn } from "@sharedTypes/midiTypes.js";
+import DeviceManager from "./DeviceManager";
 
 // export const startMidiElectron = () => {
 // 	window.api.send(IPC_CHANNELS.midi.main.startMidi, {});
@@ -16,12 +17,13 @@ export const initMidi = () => {
 		console.log(e.port)
 		if (e.port._midiInput !== undefined) {
 			// console.log("Input connected, sending to client")
-			const device: MidiInputInfo = { id: e.port._midiInput.id, name: e.port._midiInput.name, channels: e.port.channels.length }
+			const device: MidiInputInfo = { id: e.port._midiInput.id, name: e.port._midiInput.name, channels: e.port.channels.length - 1 }
 			sendMessageToRenderer(IPC_CHANNELS.midi.renderer.inputDeviceAvailable, device)
 		} else if (e.port._midiOutput !== undefined) {
 			// console.log("Output connected, sending to client")
-			const device: MidiOutputInfo = { id: e.port._midiOutput.id, name: e.port._midiOutput.name, channels: e.port.channels.length }
+			const device: MidiOutputInfo = { id: e.port._midiOutput.id, name: e.port._midiOutput.name, channels: e.port.channels.length - 1 }
 			sendMessageToRenderer(IPC_CHANNELS.midi.renderer.outputDeviceAvailable, device)
+			DeviceManager.addMidiOutput(device)
 		}
 	})
 

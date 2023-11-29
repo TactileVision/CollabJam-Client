@@ -4,8 +4,7 @@ import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
 import { sendMessageToRenderer } from "../IPCMainManager/IPCController";
 import { connectBlutetoothDevice, disconnectBlutetoothDevice, startBluetoothScan, stopBluetoothScan } from "./BluetoothController"
 import { writeAmplitudeBuffer } from "./BluetoothWriter";
-import { tactileDisplayService, tactileDisplayServiceReadingProgress } from "./Services";
-import { TactileDisplay } from "./store/DeviceManagerStore";
+import { MidiOutputInfo } from "@sharedTypes/midiTypes";
 /**
  * Generell Device Module, which will handle all devices
 * it will controll the device with the bluetooth controller and and the vtproto transformer
@@ -16,7 +15,7 @@ const connectedDevice: Peripheral | undefined = undefined;
 const connectedDevices = new Map<string, Peripheral>();
 // const discoveryTable = new Map<string, 
 const characteristicReadingProgress = new Map<string, Map<string, boolean>>()
-
+const midiOutputs = [] as MidiOutputInfo[]
 const startScan = () => {
     discoveredDevices = [];
     // disconnectDevice()
@@ -25,6 +24,14 @@ const startScan = () => {
 
 const stopScan = () => {
     stopBluetoothScan()
+}
+
+const addMidiOutput = (device: MidiOutputInfo) => {
+    midiOutputs.push(device)
+}
+
+const getMidiOutputs = (): MidiOutputInfo[] => {
+    return midiOutputs
 }
 
 const addDevice = (peripheral: Peripheral) => {
@@ -133,6 +140,8 @@ export default {
     disconnectDevice,
     executeTask,
     connectedDevices,
+    addMidiOutput,
+    getMidiOutputs
 }
 
 // function getTactileDisplayInfo(peripheralId: string): TactileDisplay | null {

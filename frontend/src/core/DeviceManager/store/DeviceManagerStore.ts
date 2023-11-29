@@ -259,13 +259,15 @@ export const actions: ActionTree<State, RootState> & Actions = {
 	},
 
 	[DeviceManagerStoreActionTypes.addMidiInput]({ commit }, device: MidiInputInfo) {
-		//TODO: Check if device id is already in array
-		commit(DeviceMutations.ADD_MIDI_INPUT, device)
+		if (state.midiInputs.findIndex((d) => { return d.id === device.id }) == -1) {
+			commit(DeviceMutations.ADD_MIDI_INPUT, device)
+		}
 	},
 
 	[DeviceManagerStoreActionTypes.addMidiOutput]({ commit }, device: MidiOutputInfo) {
-		//TODO: Check if device id is already in array
-		commit(DeviceMutations.ADD_MIDI_OUTPUT, device)
+		if (state.midiOutputs.findIndex((d) => { return d.id === device.id }) == -1) {
+			commit(DeviceMutations.ADD_MIDI_OUTPUT, device)
+		}
 	},
 };
 

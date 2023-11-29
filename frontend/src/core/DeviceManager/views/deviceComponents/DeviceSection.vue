@@ -9,16 +9,13 @@
     </v-row>
     <!-- <v-row class="test"> -->
     <!-- <v-container class="listSection"> -->
-    <v-list :items="deviceList">
-      <v-list-item v-for="item in deviceList" :key="item.id" style="padding:0">
+    <v-list :items="bleDevices">
+      <v-list-item v-for="item in bleDevices" :key="item.id" style="padding:0">
         <DeviceRow :device="item" />
       </v-list-item>
     </v-list>
     <v-list :items="midiOutputs">
-      <v-list-item v-for="item in midiOutputs" :key="item.id" style="padding:0">
-        <!-- <DeviceRow :device="item" /> -->
-        {{ item.name }}
-      </v-list-item>
+      <v-list-item v-for="item in midiOutputs" :key="item.id" style="padding:0" :title="item.name"> </v-list-item>
     </v-list>
     <!-- <v-list-item v-for="item in deviceList" :key="item.id" style="padding:0">
           <DeviceRow :device="item" />
@@ -75,7 +72,7 @@ export default defineComponent({
     };
   },
   computed: {
-    deviceList(): VibrotactileDevice[] {
+    bleDevices(): VibrotactileDevice[] {
       return this.store.state.generalSettings.deviceList;
     },
     midiInputs(): MidiInputInfo[] {

@@ -9,7 +9,7 @@ import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding } from '@/core/Input/InputDetection/types/InputBindings';
 import { writeAmplitudeBuffer, writeAmplitudeBuffers, writeFrequencyBuffer } from '../DeviceManager/BluetoothWriter';
 import { initMidi, midiNoteOn } from '../DeviceManager/MidiController';
-import { NoteOn } from '@sharedTypes/midiTypes';
+import { MidiInputInfo, NoteOn } from '@sharedTypes/midiTypes';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -159,6 +159,15 @@ ipcMain.on(IPC_CHANNELS.midi.main.noteOn, (event, payload: NoteOn) => {
     midiNoteOn(payload)
 })
 
+ipcMain.on(IPC_CHANNELS.midi.main.setAmplitudeViaTactileTask, (event, payload: { taskList: TactileTask[], freq: number }) => {
+    //TODO Get all displays and the associated frequency
+    const midiOutputs: MidiInputInfo[] = DeviceManager.getMidiOutputs()
+    payload.taskList.forEach(task => {
+        midiOutputs.forEach(output => {
+            midiNoteOn({ amplitude: task.intensity, channels: task.channelIds.map(x => x + 1), deviceId: output.id, frequency: payload.freq })
+        })
+    })
+})
 
 
 //generell function, which get called if on module want to communicate with the renderer

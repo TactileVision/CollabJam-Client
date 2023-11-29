@@ -140,7 +140,9 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
                 store.dispatch(TactonSettingsActionTypes.modifySpecificChannel, msg.payload)
             }
             if (store.state.generalSettings.currentView == RouterNames.PLAY_GROUND && !store.state.playGround.inEditMode) {
+                //TODO Add function to send MIDI Data as well
                 window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, msg.payload);
+                window.api.send(IPC_CHANNELS.midi.main.setAmplitudeViaTactileTask, { taskList: msg.payload, freq: 170 })
             }
             break;
         }
