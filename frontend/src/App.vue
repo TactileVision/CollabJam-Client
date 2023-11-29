@@ -12,7 +12,7 @@
           <span class="ms-2">3:13PM</span>
         </v-system-bar> -->
         <v-main>
-          <v-container>
+          <v-container fluid class="ma-0">
             <v-row>
               <sidebar />
               <v-col>

@@ -1,13 +1,13 @@
 <template>
-  <v-container class="playGroundView" ref="container" tabindex="-1">
+  <v-container class="playGroundView ma-0" ref="container" tabindex="-1">
 
-    <v-col cols="2">
+    <v-col cols="3">
       <v-sheet elevation="0" class="mr-2 pa-4">
         <TactonSelectionList></TactonSelectionList>
       </v-sheet>
     </v-col>
 
-    <v-col cols="10">
+    <v-col cols="9">
 
       <v-row>
 
