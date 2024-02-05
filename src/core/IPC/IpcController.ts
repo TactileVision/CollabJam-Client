@@ -1,13 +1,13 @@
 import fs from 'fs';
 import { BrowserWindow, dialog, ipcMain, clipboard } from "electron";
-import { IPC_CHANNELS } from "./IPCChannels";
-import DeviceManager from "../DeviceManager/DeviceManager"
+import { IPC_CHANNELS } from "./IpcChannels";
+import DeviceManager from "../Ble/BlePeripheralConnectionManager"
 import { SetFrequencyTask, TactileTask } from "@sharedTypes/tactonTypes";
 import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding } from '@/core/Input/InputDetection/types/InputBindings';
-import { writeAmplitudeBuffer, writeAmplitudeBuffers, writeFrequencyBuffer } from '../DeviceManager/BluetoothWriter';
+import { writeAmplitudeBuffer, writeAmplitudeBuffers, writeFrequencyBuffer } from '../TactileDisplays/TactileDisplayCharacteristicWriter';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;

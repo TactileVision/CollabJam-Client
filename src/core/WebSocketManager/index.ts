@@ -1,6 +1,6 @@
 
 import { LoggingLevel } from "@/core/FileManager/LoggingLevel";
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 import { GeneralMutations } from "@/app/store/modules/generalSettings/generalSettings";
 import { Store } from "@/app/store/store";
 import { handleMessage } from "./messageHandler";

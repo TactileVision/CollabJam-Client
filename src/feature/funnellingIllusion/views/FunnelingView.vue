@@ -115,9 +115,9 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "@/app/store/store";
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
-import ActuatorSelectionMenu from "@/core/DeviceManager/views/ActuatorSelectionMenu.vue"
-import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
+import ActuatorSelectionMenu from "@/core/TactileDisplays/views/ActuatorSelectionMenu.vue"
+import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
 
 export default defineComponent({
 	name: "Funneling",

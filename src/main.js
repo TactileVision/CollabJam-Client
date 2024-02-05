@@ -5,7 +5,7 @@ import { loadFonts } from './plugins/webfontloader';
 import router from "./app/router";
 import { useStore } from "./app/store/store";
 import { initWebsocket } from "./core/WebSocketManager";
-import { initIPCListener } from "./core/IPCListener";
+import { initIPCListener } from "./core/IPC/IpcListener";
 import { registerInputAdapter } from "./core/Input/InputDetection/InputAdapter/InputAdapterRegistry";
 // import GamepadAdapter from "./app/InputDetection/InputAdapter/GamepadAdapter";
 import GamepadAdapter from "./core/Input/InputDetection/InputAdapter/GamepadAdapter";

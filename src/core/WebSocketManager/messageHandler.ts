@@ -1,7 +1,7 @@
-import { playbackRecordedTacton, stopPlayback } from "@/core/DeviceManager/TactonPlayer";
+import { playbackRecordedTacton, stopPlayback } from "@/core/TactileDisplays/TactonPlayer";
 import { RoomMutations, RoomSettingsActionTypes, RoomState } from "@/feature/collabJamming/store/roomSettings/roomSettings";
 import { Store } from "@/app/store/store";
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 import { bufferedSending } from "@/core/WebSocketManager/index";
 import router from "@/app/router";
 import { GeneralSettingsActionTypes } from "@/app/store/modules/generalSettings/generalSettings";

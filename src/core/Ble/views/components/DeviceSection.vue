@@ -53,7 +53,7 @@
 
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 import DeviceRow from "./deviceRow.vue";
 import { useStore } from "@/app/store/store";
 import { VibrotactileDevice,GeneralMutations } from "@/app/store/modules/generalSettings/generalSettings";

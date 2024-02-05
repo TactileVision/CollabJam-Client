@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import DeviceSection from './deviceComponents/DeviceSection.vue';
+import DeviceSection from './components/DeviceSection.vue';
 
 export default defineComponent({
 	props: {

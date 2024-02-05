@@ -61,10 +61,8 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { useStore } from "@/app/store/store";
-import { TactileDisplay } from '../store/DeviceManagerStore';
-import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
-import { IPC_CHANNELS } from '@/core/IPCMainManager/IPCChannels';
-import { toHandlers } from 'vue';
+import { TactileDisplay } from '@/core/Ble/store/DeviceManagerStore';
+import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
 import { writeFrequencyOnDisplay } from '../TactileDisplayActions';
 export default defineComponent({
 	name: "ActuatorSelectionMenu",

@@ -6,7 +6,7 @@ import SitemapView from "@/app/SitemapView.vue"
 import AtmView from "@/feature/atm/views/AtmView.vue"
 import EntranceControlView from "@/feature/entranceControl/views/EntranceControlView.vue"
 import SaltationView from "@/feature/saltation/views/SaltationView.vue"
-import DeviceDialog from "@/core/DeviceManager/views/deviceComponents/DeviceSection.vue"
+import DeviceDialog from "@/core/Ble/views/components/DeviceSection.vue"
 import ChannelParameterView from "@/feature/channelParameter/views/ChannelParameterView.vue"
 import { RouteRecordRaw } from "vue-router";
 import { RouterNames } from "@/app/router/Routernames";

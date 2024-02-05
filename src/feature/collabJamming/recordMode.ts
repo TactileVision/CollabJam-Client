@@ -2,7 +2,7 @@ import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 import { sendSocketMessage } from "@/core/WebSocketManager";
 import { UpdateRoomMode, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import { Store } from "@/app/store/store";
-import { playbackRecordedTacton } from "@/core/DeviceManager/TactonPlayer";
+import { playbackRecordedTacton } from "@/core/TactileDisplays/TactonPlayer";
 
 // export const changeRecordMode = function (roomId: string, currentMode: InteractionMode, change: InteractionModeChange) {
 export const changeRecordMode = function (store: Store, change: InteractionModeChange) {

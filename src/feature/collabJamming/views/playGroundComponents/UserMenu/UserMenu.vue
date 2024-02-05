@@ -109,7 +109,7 @@
 }
 </style>
 <script lang="ts">
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 import {
   GeneralMutations,
   GeneralSettingsActionTypes,

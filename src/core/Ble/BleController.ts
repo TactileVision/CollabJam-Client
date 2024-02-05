@@ -1,10 +1,10 @@
 import noble, { Peripheral } from "@abandonware/noble";
-import { isKnownService, knownServices, knownServiceUuids } from "./Services"
-import DeviceManager from "./DeviceManager";
-import { sendMessageToRenderer } from "../IPCMainManager/IPCController";
-import { IPC_CHANNELS } from "../IPCMainManager/IPCChannels";
+import { isKnownService, knownServices, knownServiceUuids } from "./BleServices"
+import DeviceManager from "./BlePeripheralConnectionManager";
+import { sendMessageToRenderer } from "../IPC/IpcController";
+import { IPC_CHANNELS } from "../IPC/IpcChannels";
 import { TactileDisplay } from "./store/DeviceManagerStore";
-import { pingDisplayViaNode } from "./BluetoothWriter";
+import { pingDisplayViaNode } from "../TactileDisplays/TactileDisplayCharacteristicWriter";
 
 /**
  * generell methods to establish a ble connection

@@ -1,10 +1,10 @@
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels"
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels"
 import { useStore } from "@/app/store/store"
 import { GeneralSettingsActionTypes, VibrotactileDevice } from "@/app/store/modules/generalSettings/generalSettings"
 import { PlayGroundMutations } from "@/feature/collabJamming/store/playGround/types"
 import { CustomSettings } from "@/core/FileManager/initSettings"
 import { RoomMutations } from "@/feature/collabJamming/store/roomSettings/roomSettings"
-import { DeviceManagerStoreActionTypes, DeviceMutations, FrequencyInformation, PeripheralInformation, TactileDisplay } from "../DeviceManager/store/DeviceManagerStore"
+import { DeviceManagerStoreActionTypes, DeviceMutations, FrequencyInformation, PeripheralInformation, TactileDisplay } from "../Ble/store/DeviceManagerStore"
 
 const store = useStore()
 /**

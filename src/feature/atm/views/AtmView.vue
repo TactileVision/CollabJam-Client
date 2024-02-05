@@ -129,12 +129,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "@/app/store/store";
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
-import ActuatorSelectionMenu from "@/core/DeviceManager/views/ActuatorSelectionMenu.vue"
-import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
-import ActuatorArrangement from "@/core/DeviceManager/views/ActuatorArrangement.vue"
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
+import ActuatorSelectionMenu from "@/core/TactileDisplays/views/ActuatorSelectionMenu.vue"
+import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
+import ActuatorArrangement from "@/core/TactileDisplays/views/ActuatorArrangement.vue"
 import { TactileTask } from "@sharedTypes/tactonTypes";
-import { writeAmplitudeOnDisplay } from "@/core/DeviceManager/TactileDisplayActions";
+import { writeAmplitudeOnDisplay } from "@/core/TactileDisplays/TactileDisplayActions";
 import { atm, stopAtm } from "../atm";
 
 export default defineComponent({

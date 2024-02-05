@@ -1,6 +1,6 @@
 import { Characteristic, Peripheral } from "@abandonware/noble";
 import { SetFrequencyTask, TactileTask } from "@sharedTypes/tactonTypes";
-import { tactileDisplayService } from "./Services";
+import { tactileDisplayService } from "../Ble/BleServices";
 
 //TODO Change TactileTask to SetAmplitudeTask
 

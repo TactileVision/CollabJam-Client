@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from "path";
 import { app } from "electron";
 import { initSettings, CustomSettings } from './initSettings';
-import { sendMessageToRenderer } from '../IPCMainManager/IPCController';
-import { IPC_CHANNELS } from '../IPCMainManager/IPCChannels';
+import { sendMessageToRenderer } from '../IPC/IpcController';
+import { IPC_CHANNELS } from '../IPC/IpcChannels';
 import { InputBinding} from '@/core/Input/InputDetection/types/InputBindings';
 
 //Manager to handle all user configurations and save them locally

@@ -3,7 +3,7 @@ import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
 import { RootState, useStore } from '../../../../app/store/store';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayGroundActionTypes, PlayGroundMutations } from './types';
-import { IPC_CHANNELS } from '@/core/IPCMainManager/IPCChannels';
+import { IPC_CHANNELS } from '@/core/IPC/IpcChannels';
 import { DeviceType, GamepadDevice, InputBinding, InputDevice, InputProfile, KeyboardDevice, TactileAction, compareDevices } from '@/core/Input/InputDetection/types/InputBindings';
 import { UserInput,  compareInputs } from '@/core/Input/InputDetection/types/InputDetection';
 import { executeAllInputHandlers } from '@/core/Input/InputHandling/InputHandlerManager';

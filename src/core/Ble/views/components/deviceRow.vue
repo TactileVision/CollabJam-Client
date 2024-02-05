@@ -30,10 +30,10 @@ import {
   DeviceStatus,
   VibrotactileDevice,
 } from "@/app/store/modules/generalSettings/generalSettings";
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 import { useStore } from "@/app/store/store";
 import ConnectionLevel from "./ConnectionLevel.vue";
-import { pingDisplayViaIPC } from "../../TactileDisplayActions";
+import { pingDisplayViaIPC } from "@/core/TactileDisplays/TactileDisplayActions";
 
 export default defineComponent({
   name: "DeviceRow",

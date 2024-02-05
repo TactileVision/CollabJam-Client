@@ -15,7 +15,6 @@ export interface PeripheralInformation {
 export interface ActuatorParameter {
 	amplitude: boolean,
 	frequency: boolean,
-	// voltage: boolean
 }
 
 export interface TactileDisplay {

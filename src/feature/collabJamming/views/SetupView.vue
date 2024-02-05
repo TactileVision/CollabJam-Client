@@ -116,11 +116,11 @@ import {
   RoomMutations,
   RoomState,
 } from "@/feature/collabJamming/store/roomSettings/roomSettings";
-import DeviceSection from "@/core/DeviceManager/views/deviceComponents/DeviceSection.vue";
-import ParticipantSection from "@/core/DeviceManager/views/deviceComponents/ParticipantSection.vue";
+import DeviceSection from "@/core/Ble/views/components/DeviceSection.vue";
+import ParticipantSection from "@/core/Ble/views/components/ParticipantSection.vue";
 import { sendSocketMessage } from "@/core/WebSocketManager";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels";
+import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 
 export default defineComponent({
   name: "SetupView",

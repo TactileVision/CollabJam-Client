@@ -34,8 +34,8 @@
 </style>
 <script lang="ts">
 import { defineComponent } from "vue"
-import { TactileDisplay } from '@/core/DeviceManager/store/DeviceManagerStore';
-import { writeAmplitudeOnDisplay, writeFrequencyOnDisplay } from "@/core/DeviceManager/TactileDisplayActions"
+import { TactileDisplay } from '@/core/Ble/store/DeviceManagerStore';
+import { writeAmplitudeOnDisplay, writeFrequencyOnDisplay } from "@/core/TactileDisplays/TactileDisplayActions"
 
 export default defineComponent({
 	//TODO Set all outputs to zero when entering view to mitigate risk of state offset

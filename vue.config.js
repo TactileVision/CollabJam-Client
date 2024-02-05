@@ -39,7 +39,8 @@ module.exports = {
         path: require.resolve("path-browserify")
       },
       alias: {
-        "@sharedTypes": path.resolve(__dirname, 'src/shared/types/')
+        "@sharedTypes": path.resolve(__dirname, 'src/shared/types/'),
+        "@/*": path.resolve(__dirname, "src/*")
 
       },
       extensions: ["", ".ts", ".tsx", ".js"]

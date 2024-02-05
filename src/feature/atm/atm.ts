@@ -3,9 +3,8 @@
 //TODO: Make repeated atm a seperate function
 //TODO: Make reversing of actuators a responsibility of function caller 
 //TODO: Introduce state to make all calls working with timeouts stoppable!
-import { writeAmplitudeForSelection, writeAmplitudeOnDisplay } from "@/core/DeviceManager/TactileDisplayActions"
-import { ActuatorSelection } from "@/core/DeviceManager/TactileDisplayValidation"
-import { IPC_CHANNELS } from "@/core/IPCMainManager/IPCChannels"
+import { writeAmplitudeForSelection, writeAmplitudeOnDisplay } from "@/core/TactileDisplays/TactileDisplayActions"
+import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
 import { TactileTask } from "@sharedTypes/tactonTypes"
 
 // interface ATMPlaybackSettings{
