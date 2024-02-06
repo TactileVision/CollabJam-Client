@@ -15,12 +15,12 @@ module.exports = {
     "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
     "vue/multi-word-component-names": "off",
-    "@typescript-eslint/no-explicit-any": "on",
+    "@typescript-eslint/no-explicit-any": "warn",
     "vue/no-unused-vars": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
-    "newline-per-chained-call": "on",
-    "func-call-spacing": "never",
-    "padded-blocks": "always"
+    // "newline-per-chained-call": "warn",
+    // "func-call-spacing": "never",
+    // "padded-blocks": "always"
 
 
 
