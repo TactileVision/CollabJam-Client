@@ -1,6 +1,5 @@
-import { IPC_CHANNELS } from "../IPC/IpcChannels";
-import { sendMessageToRenderer } from "../IPC/IpcController";
-import DeviceManager from "./BlePeripheralConnectionManager";
+import { IPC_CHANNELS } from "../../IPC/IpcChannels";
+import { sendMessageToRenderer } from "../../IPC/IpcMainController";
 
 const tactileDisplayService: Service = {
     service: { uuid: "f33c00018ebf4c9c83ecbfff479a930b", },

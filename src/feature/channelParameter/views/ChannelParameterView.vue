@@ -22,7 +22,7 @@ import { defineComponent } from "vue";
 import { useStore } from "@/app/store/store";
 import { mapGetters } from 'vuex'
 import EditParameter from "@/feature/channelParameter/views/EditParameter.vue"
-import { TactileDisplay } from '@/core/Ble/store/DeviceManagerStore';
+import { TactileDisplay } from '@/core/Ble/renderer/store/DeviceManagerStore';
 
 export default defineComponent({
 	name: "ChannelParameter",

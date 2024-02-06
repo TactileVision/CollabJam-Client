@@ -4,21 +4,17 @@ import { GeneralSettingsActionTypes, VibrotactileDevice } from "@/app/store/modu
 import { PlayGroundMutations } from "@/feature/collabJamming/store/playGround/types"
 import { CustomSettings } from "@/core/FileManager/initSettings"
 import { RoomMutations } from "@/feature/collabJamming/store/roomSettings/roomSettings"
-import { DeviceManagerStoreActionTypes, DeviceMutations, FrequencyInformation, PeripheralInformation, TactileDisplay } from "../Ble/store/DeviceManagerStore"
+import { DeviceManagerStoreActionTypes, FrequencyInformation, PeripheralInformation, TactileDisplay } from "../Ble/renderer/store/DeviceManagerStore"
 
 const store = useStore()
 /**
  * initiate listener from the main process
  */
-export const initIPCListener = () => {
+export const initIpcRendererListener = () => {
   window.api.receive(IPC_CHANNELS.renderer.foundDevice, (device: VibrotactileDevice) => {
-    //console.log("Get from main " + device)
     store.dispatch(GeneralSettingsActionTypes.addNewDevice, device)
   })
-
-
   window.api.receive(IPC_CHANNELS.renderer.deviceStatusChanged, (device: VibrotactileDevice) => {
-    console.log("Get from main " + device)
     store.dispatch(GeneralSettingsActionTypes.updateDeviceStatus, device)
   })
 
@@ -38,6 +34,7 @@ export const initIPCListener = () => {
   window.api.receive(IPC_CHANNELS.bluetooth.renderer.connectedToDevice, (peripheral: TactileDisplay) => {
     store.dispatch(DeviceManagerStoreActionTypes.addConnectedDisplay, peripheral)
   })
+
   window.api.receive(IPC_CHANNELS.bluetooth.renderer.disconnectedFromDevice, (uuid: string) => {
     store.dispatch(DeviceManagerStoreActionTypes.removeDisconnectedDisplay, uuid)
   })
@@ -56,9 +53,8 @@ export const initIPCListener = () => {
     console.log(payload)
     store.dispatch(DeviceManagerStoreActionTypes.setAmpAvailability, payload);
   })
+
   window.api.receive(IPC_CHANNELS.bluetooth.renderer.readFreqRange, (payload: { deviceId: string, freqInfo: FrequencyInformation }) => {
-    console.log("Updatating freq range")
-    console.log(payload)
     store.dispatch(DeviceManagerStoreActionTypes.setFreqInfo, payload);
   })
 }

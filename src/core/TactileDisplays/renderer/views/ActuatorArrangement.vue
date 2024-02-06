@@ -27,7 +27,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { ActuatorSelection } from '../TactileDisplayValidation';
+import { ActuatorSelection } from '@/core/TactileDisplays/types/TactileDisplayValidation';
 import draggable from 'vuedraggable'
 import { useStore } from 'vuex';
 

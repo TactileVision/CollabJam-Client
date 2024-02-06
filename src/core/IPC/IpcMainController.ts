@@ -1,13 +1,13 @@
 import fs from 'fs';
 import { BrowserWindow, dialog, ipcMain, clipboard } from "electron";
 import { IPC_CHANNELS } from "./IpcChannels";
-import DeviceManager from "../Ble/BlePeripheralConnectionManager"
+import DeviceManager from "../Ble/main/BlePeripheralConnectionManager"
 import { SetFrequencyTask, TactileTask } from "@sharedTypes/tactonTypes";
 import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
 import { InputBinding } from '@/core/Input/InputDetection/types/InputBindings';
-import { writeAmplitudeBuffer, writeAmplitudeBuffers, writeFrequencyBuffer } from '../TactileDisplays/TactileDisplayCharacteristicWriter';
+import { writeAmplitudeBuffer, writeAmplitudeBuffers, writeFrequencyBuffer } from '../TactileDisplays/main/TactileDisplayCharacteristicWriter';
 
 let _win: BrowserWindow;
 let _settingManager: SettingManager;
@@ -39,9 +39,9 @@ ipcMain.on(IPC_CHANNELS.main.actuator, (event, actuator) => {
     _win.webContents.send(IPC_CHANNELS.renderer.actuator, actuator)
 });
 
+
 //change scan for the ble devices
 ipcMain.on(IPC_CHANNELS.main.changeScan, (event, scanStatus: boolean) => {
-    //console.log("recieved meesage to make Scan: " + scanStatus)
     if (scanStatus) {
         DeviceManager.startScan()
     } else {
@@ -49,19 +49,14 @@ ipcMain.on(IPC_CHANNELS.main.changeScan, (event, scanStatus: boolean) => {
     }
 });
 
-//connect with specific device
 ipcMain.on(IPC_CHANNELS.main.connectDevice, (event, deviceID: string) => {
-    // console.log("Starting Connection");
     DeviceManager.connectDevice(deviceID);
 });
 
-//disconnect with specific device
 ipcMain.on(IPC_CHANNELS.main.disconnectDevice, (event, deviceID: string) => {
-    // console.log("Starting Discconnect");
     DeviceManager.disconnectDevice(deviceID);
 });
 
-//controll the vibrotactile device
 ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, (event, taskList: TactileTask[]) => {
     writeAmplitudeBuffers([...DeviceManager.connectedDevices.values()], taskList)
 });
@@ -75,29 +70,21 @@ ipcMain.on(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, (event, payload: { 
 ipcMain.on(IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer, (event, payload: { deviceId: string, taskList: SetFrequencyTask[] }) => {
     const d = DeviceManager.connectedDevices.get(payload.deviceId)
     if (d == null) return
-    writeFrequencyBuffer(d,payload.taskList)
+    writeFrequencyBuffer(d, payload.taskList)
 });
-
-// ipcMain.on(IPC_CHANNELS.bluetooth.main.writeCharacteristic, (event, write: WriteCharacteristic) => {
-//     //console.log("writeAllAmplitudeBuffers");
-// });
-
 
 //copy roomName and adress
 ipcMain.on(IPC_CHANNELS.main.copyToClipBoard, (event, adress: string) => {
-    //console.log("copyToClipBoard");
     clipboard.writeText(adress);
 });
 
 //read the current user configs and send it to renderer
 ipcMain.on(IPC_CHANNELS.main.modifyUserConfig, (event, setting: { key: string, value: any }) => {
-    //console.log("modifyUserConfig");
     _settingManager.sendSettings();
 });
 
 //save the user name in the config
 ipcMain.on(IPC_CHANNELS.main.saveUserName, (event, userName: string) => {
-    //console.log("saveUserName");
     _settingManager.updateUserName(userName);
 });
 
@@ -119,7 +106,6 @@ ipcMain.on(IPC_CHANNELS.main.logMessageInfos, (event, payload: {
 
 //save one tacton as json in vtproto format
 ipcMain.on(IPC_CHANNELS.main.saveTacton, async (event, payload: any) => {
-    //console.log("saveKeyBoardButton");
     const file = await dialog.showSaveDialog(_win, {
         title: 'Download to File…',
         filters: [

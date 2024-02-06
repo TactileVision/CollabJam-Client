@@ -27,8 +27,8 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import ActuatorSelectionMenu from "@/core/TactileDisplays/views/ActuatorSelectionMenu.vue"
-import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
+import ActuatorSelectionMenu from "@/core/TactileDisplays/renderer/views/ActuatorSelectionMenu.vue"
+import { ActuatorSelection } from "@/core/TactileDisplays/types/TactileDisplayValidation"
 import { atm, stopAtm } from "@/feature/atm/atm";
 interface outParams {
 	amp: number,

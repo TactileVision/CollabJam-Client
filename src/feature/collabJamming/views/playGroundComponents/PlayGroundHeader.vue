@@ -38,7 +38,7 @@ import { useStore } from "@/app/store/store";
 import { defineComponent } from "@vue/runtime-core";
 import { sendSocketMessage } from "@/core/WebSocketManager";
 import UserTooltip from "./UserMenu/UserTooltip.vue";
-import DeviceDialog from "@/core/Ble/views/DeviceDialog.vue";
+import DeviceDialog from "@/core/Ble/renderer/views/DeviceDialog.vue";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import InteractionModeIndicator from "@/feature/collabJamming/views/playGroundComponents/InteractionModeIndicator.vue"
 

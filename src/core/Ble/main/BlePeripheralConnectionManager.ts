@@ -1,9 +1,9 @@
 import { TactileTask } from "@sharedTypes/tactonTypes";
 import { Peripheral } from "@abandonware/noble";
-import { IPC_CHANNELS } from "../IPC/IpcChannels";
-import { sendMessageToRenderer } from "../IPC/IpcController";
+import { IPC_CHANNELS } from "../../IPC/IpcChannels";
+import { sendMessageToRenderer } from "../../IPC/IpcMainController";
 import { connectBlutetoothDevice, disconnectBlutetoothDevice, startBluetoothScan, stopBluetoothScan } from "./BleController"
-import { writeAmplitudeBuffer } from "../TactileDisplays/TactileDisplayCharacteristicWriter";
+import { writeAmplitudeBuffer } from "../../TactileDisplays/main/TactileDisplayCharacteristicWriter";
 
 /**
  * Generell Device Module, which will handle all devices

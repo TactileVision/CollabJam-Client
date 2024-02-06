@@ -1,5 +1,5 @@
-import { IPC_CHANNELS } from "../IPC/IpcChannels";
-import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
+import { IPC_CHANNELS } from "../../IPC/IpcChannels";
+import { ActuatorSelection } from "@/core/TactileDisplays/types/TactileDisplayValidation"
 
 /**
  * Vibrate the first channel of the specified display (`deviceUuid`) for `durationMs` milliseconds

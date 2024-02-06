@@ -52,11 +52,11 @@ import {
 import {
   store as deviceManager,
   DeviceManagerStore,
-} from '../../core/Ble/store'
+} from '../../core/Ble/renderer/store'
 
 import {
   State as DeviceManagerState
-} from '../../core/Ble/store/DeviceManagerStore'
+} from '../../core/Ble/renderer/store/DeviceManagerStore'
 
 export type RootState = {
   deviceManager: DeviceManagerState,

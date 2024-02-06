@@ -5,7 +5,7 @@ import { loadFonts } from './plugins/webfontloader';
 import router from "./app/router";
 import { useStore } from "./app/store/store";
 import { initWebsocket } from "./core/WebSocketManager";
-import { initIPCListener } from "./core/IPC/IpcListener";
+import { initIpcRendererListener } from "./core/IPC/IpcRendererListener";
 import { registerInputAdapter } from "./core/Input/InputDetection/InputAdapter/InputAdapterRegistry";
 // import GamepadAdapter from "./app/InputDetection/InputAdapter/GamepadAdapter";
 import GamepadAdapter from "./core/Input/InputDetection/InputAdapter/GamepadAdapter";
@@ -37,5 +37,5 @@ createApp(App)
   .component('inline-svg', InlineSvg)
   .mount('#app')
 
-initIPCListener();
+initIpcRendererListener();
 initWebsocket(store);

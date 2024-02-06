@@ -1,4 +1,4 @@
-import { playbackRecordedTacton, stopPlayback } from "@/core/TactileDisplays/TactonPlayer";
+import { playbackRecordedTacton, stopPlayback } from "@/core/TactileDisplays/renderer/TactonPlayer";
 import { RoomMutations, RoomSettingsActionTypes, RoomState } from "@/feature/collabJamming/store/roomSettings/roomSettings";
 import { Store } from "@/app/store/store";
 import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";

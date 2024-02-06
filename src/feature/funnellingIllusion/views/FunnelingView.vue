@@ -116,8 +116,8 @@
 import { defineComponent } from "vue";
 import { useStore } from "@/app/store/store";
 import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
-import ActuatorSelectionMenu from "@/core/TactileDisplays/views/ActuatorSelectionMenu.vue"
-import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
+import ActuatorSelectionMenu from "@/core/TactileDisplays/renderer/views/ActuatorSelectionMenu.vue"
+import { ActuatorSelection } from "@/core/TactileDisplays/types/TactileDisplayValidation"
 
 export default defineComponent({
 	name: "Funneling",

@@ -109,11 +109,11 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "@/app/store/store";
-import ActuatorSelectionMenu from "@/core/TactileDisplays/views/ActuatorSelectionMenu.vue"
-import { ActuatorSelection } from "@/core/TactileDisplays/TactileDisplayValidation"
-import ActuatorArrangement from "@/core/TactileDisplays/views/ActuatorArrangement.vue"
+import ActuatorSelectionMenu from "@/core/TactileDisplays/renderer/views/ActuatorSelectionMenu.vue"
+import { ActuatorSelection } from "@/core/TactileDisplays/types/TactileDisplayValidation"
+import ActuatorArrangement from "@/core/TactileDisplays/renderer/views/ActuatorArrangement.vue"
 import { TactileTask } from "@sharedTypes/tactonTypes";
-import { writeAmplitudeOnDisplay } from "@/core/TactileDisplays/TactileDisplayActions";
+import { writeAmplitudeOnDisplay } from "@/core/TactileDisplays/renderer/TactileDisplayActions";
 
 export default defineComponent({
 	name: "Saltation",

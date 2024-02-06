@@ -33,7 +33,7 @@ import {
 import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 import { useStore } from "@/app/store/store";
 import ConnectionLevel from "./ConnectionLevel.vue";
-import { pingDisplayViaIPC } from "@/core/TactileDisplays/TactileDisplayActions";
+import { pingDisplayViaIPC } from "@/core/TactileDisplays/renderer/TactileDisplayActions";
 
 export default defineComponent({
   name: "DeviceRow",

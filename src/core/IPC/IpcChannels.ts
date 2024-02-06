@@ -23,12 +23,14 @@ const IPC_CHANNELS = {
     },
 
     bluetooth: {
+        //channels to communicate with main process
         main: {
             writeCharacteristic: "collabjam.main.ble.writeAmplitudeCharacteristic",
             writeAmplitudeBuffer: "collabjam.main.writeAmplitudeBuffer",
             writeAllAmplitudeBuffers: "collabjam.main.writeAllAmplitudeBuffers",
             writeFrequencyBuffer: "collabjam.main.writeFrequencyBuffer",
         },
+        //channels to communicate with renderer process
         renderer: {
             discoveredPeripheral: "collabjam.renderer.ble.discoveredPeripheral",
             connectedToDevice: "collabjam.renderer.ble.connectedToDevice",

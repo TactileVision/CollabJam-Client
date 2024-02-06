@@ -116,8 +116,8 @@ import {
   RoomMutations,
   RoomState,
 } from "@/feature/collabJamming/store/roomSettings/roomSettings";
-import DeviceSection from "@/core/Ble/views/components/DeviceSection.vue";
-import ParticipantSection from "@/core/Ble/views/components/ParticipantSection.vue";
+import DeviceSection from "@/core/Ble/renderer/views/components/DeviceSection.vue";
+import ParticipantSection from "@/core/Ble/renderer/views/components/ParticipantSection.vue";
 import { sendSocketMessage } from "@/core/WebSocketManager";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";

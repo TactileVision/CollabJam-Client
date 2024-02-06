@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from "path";
 import { app } from "electron";
 import { initSettings, CustomSettings } from './initSettings';
-import { sendMessageToRenderer } from '../IPC/IpcController';
+import { sendMessageToRenderer } from '../IPC/IpcMainController';
 import { IPC_CHANNELS } from '../IPC/IpcChannels';
 import { InputBinding} from '@/core/Input/InputDetection/types/InputBindings';
 
