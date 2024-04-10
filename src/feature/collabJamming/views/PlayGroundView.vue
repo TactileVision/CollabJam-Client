@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import PlayGroundBody from "./playGroundComponents/PlayGroundBody.vue";
 import PlayGroundHeader from "./playGroundComponents/PlayGroundHeader.vue";
 

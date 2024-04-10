@@ -1,6 +1,14 @@
 <template>
-  <v-card class="mx-auto pa-1 keyButton" max-width="100" min-width="100" min-height="100" @click="handleMouse(false)"
-    @mouseleave="handleMouseLeave()" @mousedown="handleMouse(true)" v-bind:style="{ backgroundColor: colorActuator }">
+  <v-card
+    class="mx-auto pa-1 keyButton"
+    max-width="100"
+    min-width="100"
+    min-height="100"
+    @click="handleMouse(false)"
+    @mouseleave="handleMouseLeave()"
+    @mousedown="handleMouse(true)"
+    v-bind:style="{ backgroundColor: colorActuator }"
+  >
     <v-card-text style="padding: 1px" class="keyButton">
       <v-row no-gutters>
         {{ binding.name }}
@@ -50,11 +58,17 @@
 <script lang="ts">
 import { useStore } from "@/app/store/store";
 import { defineComponent } from "@vue/runtime-core";
-import { isActuatorAction, isIntensityAction } from "@/core/Input/InputDetection/types/InputBindings";
+import {
+  isActuatorAction,
+  isIntensityAction,
+} from "@/core/Input/InputDetection/types/InputBindings";
 import getInputName from "@/core/Input/InputDetection/getInputName";
 import { lightenDarkenColor } from "@/app/lib/colors";
 import { PlayGroundActionTypes } from "@/feature/collabJamming/store/playGround/types";
-import { StateInputBinding, StateProfile } from "@/feature/collabJamming/store/playGround/playGround";
+import {
+  StateInputBinding,
+  StateProfile,
+} from "@/feature/collabJamming/store/playGround/playGround";
 import { UserInput } from "@/core/Input/InputDetection/types/InputDetection";
 
 export default defineComponent({
@@ -94,9 +108,9 @@ export default defineComponent({
       if (intensityAction) {
         return intensityAction.intensity * 100;
       } else {
-        return '-';
+        return "-";
       }
-    }
+    },
   },
   methods: {
     handleMouseLeave() {
@@ -105,7 +119,7 @@ export default defineComponent({
         this.buttonPressed = false;
         this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
           profile: this.profile,
-          input: this.binding.inputs[0]
+          input: this.binding.inputs[0],
         });
       }
     },
@@ -144,7 +158,9 @@ export default defineComponent({
     },
     listChannels(): string {
       let channelList = "[";
-      const channels = this.binding.actions.filter(isActuatorAction).map(action => action.channel);
+      const channels = this.binding.actions
+        .filter(isActuatorAction)
+        .map((action) => action.channel);
 
       channels.forEach((channel: number, index: number) => {
         channelList += channel + 1;

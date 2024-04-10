@@ -9,31 +9,53 @@
     <v-row class="subRow">
       <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Name</v-col>
       <v-col cols="5">
-        <v-text-field disabled variant="underlined" hide-details="auto" no-resize v-model="roomName"></v-text-field>
+        <v-text-field
+          disabled
+          variant="underlined"
+          hide-details="auto"
+          no-resize
+          v-model="roomName"
+        ></v-text-field>
       </v-col>
     </v-row>
     <v-row class="subRow">
-      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Description</v-col>
+      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px"
+        >Description</v-col
+      >
       <v-col cols="5">
-        <v-textarea disabled variant="underlined" hide-details="auto" no-resize rows="3"
-          v-model="description"></v-textarea>
+        <v-textarea
+          disabled
+          variant="underlined"
+          hide-details="auto"
+          no-resize
+          rows="3"
+          v-model="description"
+        ></v-textarea>
       </v-col>
     </v-row>
     <v-row class="subRow">
-      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Username</v-col>
+      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px"
+        >Username</v-col
+      >
       <v-col cols="5">
-        <v-text-field variant="underlined" hide-details="auto" v-model="userName"></v-text-field>
+        <v-text-field
+          variant="underlined"
+          hide-details="auto"
+          v-model="userName"
+        ></v-text-field>
       </v-col>
     </v-row>
     <v-row class="subRow">
-      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px">Connected Device</v-col>
+      <v-col cols="2" style="paddingtop: 25px; paddingleft: 60px"
+        >Connected Device</v-col
+      >
       <v-col cols="5">
         {{ store.getters.getConnectedDevice?.name }}
       </v-col>
     </v-row>
     <v-divider />
     <v-row class="expandRow">
-      <v-col cols="4" style="border-right: 1px solid rgba(0, 0, 0, .2);">
+      <v-col cols="4" style="border-right: 1px solid rgba(0, 0, 0, 0.2)">
         <v-row no-gutters class="subheader"> Participants section </v-row>
         <ParticipantSection />
       </v-col>
@@ -51,16 +73,16 @@
           <v-btn elevation="2" color="primary" @click="cancelRoomEnter">
             {{
               store.state.roomSettings.roomState == configureState
-              ? "Log Out"
-              : "Cancel"
+                ? "Log Out"
+                : "Cancel"
             }}
           </v-btn>
           <v-spacer />
           <v-btn elevation="2" color="primary" @click="enterRoom">
             {{
               store.state.roomSettings.roomState == configureState
-              ? "Finish Configuration"
-              : "Enter Room"
+                ? "Finish Configuration"
+                : "Enter Room"
             }}
           </v-btn>
         </v-row>
@@ -111,7 +133,6 @@
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/app/store/store";
-import router from "@/app/router";
 import {
   RoomMutations,
   RoomState,
@@ -130,8 +151,8 @@ export default defineComponent({
   },
   data() {
     return {
-      configureState: RoomState.Configure,
       store: useStore(),
+      configureState: RoomState.Configure,
     };
   },
   computed: {
@@ -163,15 +184,16 @@ export default defineComponent({
   methods: {
     cancelRoomEnter() {
       window.api.send(IPC_CHANNELS.main.changeScan, false);
-      // sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
-      //   roomId: this.store.state.roomSettings.id,
-      //   user: this.store.state.roomSettings.user,
-      // });
-      router.push("/");
+      sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
+        roomId: this.store.state.roomSettings.id,
+        user: this.store.state.roomSettings.user,
+      });
+      this.$router.push("/");
     },
     enterRoom() {
       window.api.send(IPC_CHANNELS.main.changeScan, false);
       window.api.send(IPC_CHANNELS.main.saveUserName, this.userName);
+      console.log(this.store.state.roomSettings.roomState);
       if (this.store.state.roomSettings.roomState == RoomState.Configure) {
         sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_SERV, {
           room: {
@@ -185,10 +207,13 @@ export default defineComponent({
           },
         });
       } else {
+        console.log("Entering room");
+
         sendSocketMessage(WS_MSG_TYPE.ENTER_ROOM_SERV, {
           id: this.store.state.roomSettings.id,
           userName: this.userName,
         });
+        this.$router.push("/playGround");
       }
     },
   },

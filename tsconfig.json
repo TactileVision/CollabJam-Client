@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "dist_electron",
     "target": "ES6",
     "module": "esnext",
     "strict": true,
@@ -12,7 +13,8 @@
     "useDefineForClassFields": true,
     "sourceMap": true,
     "baseUrl": "./",
-    "types": ["webpack-env"],
+    // "types": ["webpack-env"],
+    "allowJs": true,
     "paths": {
       "@/*": ["src/*"],
       "@sharedTypes/*": ["src/shared/types/*"]
@@ -26,6 +28,7 @@
     "tests/**/*.ts",
     "tests/**/*.tsx",
     "src/main.js",
+    "src/preload.js"
   ],
   "exclude": ["node_modules"]
 }

@@ -70,7 +70,7 @@
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { v4 as uuidv4 } from "uuid";
 
 export default defineComponent({
@@ -78,6 +78,7 @@ export default defineComponent({
   props: {
     connectionQuality: {
       type: Number,
+      default: 0,
     },
   },
   data() {
@@ -86,11 +87,12 @@ export default defineComponent({
     };
   },
   computed: {
-      customField() {
-        const normalPath = "0,65 10,50 20,65 220,65 220,100 0,100"
+    customField() {
+      const normalPath = "0,65 10,50 20,65 220,65 220,100 0,100";
       if (this.connectionQuality == undefined) return normalPath;
       if (this.connectionQuality >= -60) return normalPath;
-      if (this.connectionQuality >= -70) return  "0,65 10,50 20,65 250,65 250,100 0,100";
+      if (this.connectionQuality >= -70)
+        return "0,65 10,50 20,65 250,65 250,100 0,100";
 
       return normalPath;
     },

@@ -9,14 +9,6 @@ module.exports = {
       preload: 'src/preload.js',
       builderOptions: {
         productName: 'Collaborative Tacton Generator',
-        extraResources: [
-          {
-            "from": "./src/protobuf/",
-            "to": "extraResources",
-            "filter": [
-              "**/*"
-            ]
-          }],
       },
 
 
@@ -28,7 +20,7 @@ module.exports = {
   pages: {
     index: {
       // entry for the page
-      entry: 'src/main.js',
+      entry: 'src/background.js',
       title: 'Collaborative Tacton Generator',
     },
   },

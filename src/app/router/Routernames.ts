@@ -10,5 +10,5 @@ export enum RouterNames {
   SALTATION = "SALTATION",
   SITEMAP = "SITEMAP",
   DEVICES = "DEVICES",
-  DOOR = "DOOR"
+  DOOR = "DOOR",
 }

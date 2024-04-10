@@ -25,9 +25,9 @@
 
 <style lang="scss" scoped>
 .svgImage {
-  display:flex;
-  align-items:center;
-  height:100%;
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 .secondEntries {
   margin-left: -10px;
@@ -35,7 +35,7 @@
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "DefaultProfile",

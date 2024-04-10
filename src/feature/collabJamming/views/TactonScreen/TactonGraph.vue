@@ -4,12 +4,26 @@
 
 <script lang="ts">
 import * as PIXI from "pixi.js";
+// import {Renderer} from "@pixi/core"
+// import "@pixi/unsafe-eval";
+import { settings as pixiSettings } from "@pixi/settings";
 import { PRECISION } from "@pixi/constants";
 import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/app/store/store";
-import { TactonSettingsActionTypes, OutputChannelState } from "@/feature/collabJamming/store/tactonSettings/tactonSettings";
+import {
+  TactonSettingsActionTypes,
+  OutputChannelState,
+} from "@/feature/collabJamming/store/tactonSettings/tactonSettings";
 import { User, InteractionMode } from "@sharedTypes/roomTypes";
-import { Tacton, TactonInstruction, isInstructionSetParameter, InstructionSetParameter, InstructionWait, getDuration, isInstructionWait } from "@sharedTypes/tactonTypes";
+import {
+  Tacton,
+  TactonInstruction,
+  isInstructionSetParameter,
+  InstructionSetParameter,
+  InstructionWait,
+  getDuration,
+  isInstructionWait,
+} from "@sharedTypes/tactonTypes";
 
 interface IntensityObject {
   intensity: number;
@@ -19,33 +33,35 @@ interface IntensityObject {
   index?: number;
   object?: PIXI.Graphics;
 }
+
 interface GraphicObject {
   channelId: number;
   container: PIXI.Container;
 }
+
 interface ChannelGraph extends GraphicObject {
   intensities: IntensityObject[];
 }
 class Cursor {
   graphic: PIXI.Graphics = new PIXI.Graphics();
-  container: PIXI.Container = new PIXI.Container()
-  position = 0
-  hasDrawnCursor = false
-  color: number
+  container: PIXI.Container = new PIXI.Container();
+  position = 0;
+  hasDrawnCursor = false;
+  color: number;
 
   constructor(color: number) {
-    this.container.addChild(this.graphic)
-    this.color = color
+    this.container.addChild(this.graphic);
+    this.color = color;
   }
 
   getContainer(): PIXI.Container {
-    return this.container
+    return this.container;
   }
 
   drawCursor(height: number) {
     this.graphic.beginFill(this.color);
     this.graphic.drawRect(0, 0, 2, height);
-    this.hasDrawnCursor = true
+    this.hasDrawnCursor = true;
   }
   moveToPosition(xPosition: number) {
     this.container.position.set(xPosition, 0);
@@ -81,7 +97,7 @@ export default defineComponent({
       currentTime: 0,
       dropdownDisabled: false,
       cursor: new Cursor(0xec660c),
-      endOfTactonIndicator: new Cursor(0x83be63)
+      endOfTactonIndicator: new Cursor(0x83be63),
     };
   },
   computed: {
@@ -92,17 +108,17 @@ export default defineComponent({
       return this.store.state.tactonSettings.trackStateChanges;
     },
     interactionMode(): InteractionMode {
-      return this.store.state.roomSettings.mode
+      return this.store.state.roomSettings.mode;
     },
     tacton(): Tacton | null {
-      return this.store.state.tactonPlayback.currentTacton
+      return this.store.state.tactonPlayback.currentTacton;
     },
     numberOfOutputs(): number {
       return this.store.getters.getNumberOfOutputs;
     },
     playbackTime(): number {
-      return this.store.state.tactonPlayback.playbackTime
-    }
+      return this.store.state.tactonPlayback.playbackTime;
+    },
   },
   watch: {
     //start to drawing if all components are mounted
@@ -120,44 +136,59 @@ export default defineComponent({
     interactionMode(mode) {
       if (mode == InteractionMode.Recording) {
         //Coming into recording mode
-        this.store.dispatch(TactonSettingsActionTypes.instantiateArray)
-        this.clearGraph()
+        this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
+        this.clearGraph();
         this.ticker?.start();
       } else {
         this.ticker?.stop();
         this.ticker?.remove(this.loop);
 
         if (mode == InteractionMode.Jamming) {
-          this.cursor.moveToPosition(0)
+          this.cursor.moveToPosition(0);
         }
       }
     },
     tacton(tacton) {
-      if (tacton == null) return
-      const t = tacton as Tacton
-      this.clearGraph()
-      this.drawStoredGraph(t.instructions)
-      this.endOfTactonIndicator.moveToPosition(getDuration(tacton) * this.growRatio + this.paddingRL)
-      this.endOfTactonIndicator.drawCursor(this.height.actual)
-      this.graphContainer?.addChild(this.endOfTactonIndicator.getContainer())
+      if (tacton == null) return;
+      const t = tacton as Tacton;
+      this.clearGraph();
+      this.drawStoredGraph(t.instructions);
+      this.endOfTactonIndicator.moveToPosition(
+        getDuration(tacton) * this.growRatio + this.paddingRL,
+      );
+      this.endOfTactonIndicator.drawCursor(this.height.actual);
+      this.graphContainer?.addChild(this.endOfTactonIndicator.getContainer());
     },
     playbackTime(time) {
-      console.log(time)
+      console.log(time);
       // this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
-      this.positionCursor(time)
-    }
+      this.positionCursor(time);
+    },
   },
-  mounted() {
+  async mounted() {
     //listener to recalculate time profiles
     window.addEventListener("resize", this.resizeScreen);
 
-    PIXI.settings.PRECISION_FRAGMENT = PRECISION.HIGH;
-    this.pixiApp = new PIXI.Application({
-      transparent: true,
-      antialias: true,
-    });
-    this.pixiApp.renderer.view.style.display = "block";
-    document.getElementById("tactonDisplay")?.appendChild(this.pixiApp.view);
+    // PIXI.settings.PRECISION_FRAGMENT = PRECISION.HIGH;
+    // this.pixiApp = new PIXI.Application({
+    //   transparent: true,
+    //   antialias: true,
+    // });
+    // this.pixiApp.renderer.view.style.display = "block";
+
+    // PIXI.settings.PRECISION_FRAGMENT = PRECISION.HIGH;
+    // const renderer = new Renderer();
+    this.pixiApp = new PIXI.Application();
+    await this.pixiApp.init();
+
+    // this.pixiApp.init({ antialias: true, backgroundAlpha: 1 });
+    // this.pixiApp = new PIXI.Application({
+    //   transparent: true,
+    //   antialias: true,
+    // });
+    //TODO Pixi Fixi
+    // this.pixiApp.renderer.view.style.display = "block";
+    document.getElementById("tactonDisplay")?.appendChild(this.pixiApp.canvas);
 
     /**
      * create ticker for animation
@@ -186,7 +217,7 @@ export default defineComponent({
        */
       const newWidth = document.getElementById("tactonScreen")!.clientWidth;
       const newHeight =
-        document.getElementById("tactonScreenHeight")!.clientHeight
+        document.getElementById("tactonScreenHeight")!.clientHeight;
       // window.innerHeight -
       // document.getElementById("tactonHeader")!.clientHeight -
       // document.getElementById("headerPlayGround")!.clientHeight;
@@ -201,7 +232,7 @@ export default defineComponent({
         this.pixiApp!.stage.removeChildren;
         this.coordinateContainer = new PIXI.Container();
         this.pixiApp!.stage.addChild(
-          this.coordinateContainer! as PIXI.Container
+          this.coordinateContainer! as PIXI.Container,
         );
         const graphContainer = new PIXI.Container();
         this.pixiApp!.stage.addChild(graphContainer);
@@ -214,7 +245,9 @@ export default defineComponent({
       //recalculate the size if of the container if something is changed
       const xRatio = newWidth / this.width.actual;
       const yRatio = newHeight / this.height.actual;
-      console.log(`newHeight: ${newHeight} / this.height.actual ${this.height.actual} =  ${yRatio}`)
+      console.log(
+        `newHeight: ${newHeight} / this.height.actual ${this.height.actual} =  ${yRatio}`,
+      );
       this.width.actual = newWidth;
       this.height.actual = newHeight;
 
@@ -235,7 +268,8 @@ export default defineComponent({
             );
        */
 
-      this.pixiApp?.renderer.resize(this.width.actual, this.height.actual);
+      // this.pixiApp?.renderer.resize(this.width.actual, this.height.actual);
+
       this.createMask();
       this.calcLegend();
     },
@@ -247,16 +281,19 @@ export default defineComponent({
       if (this.maskIndex !== -1)
         this.pixiApp?.stage.removeChildAt(this.maskIndex);
       const px_mask_outter_bounds = new PIXI.Graphics();
-      px_mask_outter_bounds.beginFill();
-      px_mask_outter_bounds.drawRect(
+      // px_mask_outter_bounds.beginFill();
+      px_mask_outter_bounds.fill();
+      // px_mask_outter_bounds.drawRect(
+      px_mask_outter_bounds.rect(
         this.paddingRL,
         0,
         this.width.actual - 2 * this.paddingRL,
-        this.height.actual
+        this.height.actual,
       );
       px_mask_outter_bounds.endFill();
       px_mask_outter_bounds.renderable = true;
-      px_mask_outter_bounds.cacheAsBitmap = true;
+      //TODO Why not available anymore?
+      // px_mask_outter_bounds.cacheAsBitmap = true;
       this.pixiApp!.stage.addChild(px_mask_outter_bounds);
 
       this.maskIndex = this.pixiApp!.stage.children.length - 1;
@@ -268,7 +305,7 @@ export default defineComponent({
      * draw the legend every time new, because numbers get blurry at scaling
      */
     calcLegend() {
-      const parts = 20
+      const parts = 20;
       this.coordinateContainer?.removeChildren();
       let xPosition = this.width.actual - this.paddingRL;
       let yPosition = 0;
@@ -316,7 +353,7 @@ export default defineComponent({
       const channels = this.store.state.tactonSettings.outputChannelState;
       for (let i = 0; i < channels.length; i++) {
         const graph = this.channelGraphs.find(
-          (graph) => graph.channelId == channels[i].channelId
+          (graph) => graph.channelId == channels[i].channelId,
         );
 
         if (graph == undefined) continue;
@@ -348,7 +385,7 @@ export default defineComponent({
             duration * this.growRatio,
             intensityArray[z].intensity,
             graph.container as PIXI.Container,
-            intensityArray[z].author
+            intensityArray[z].author,
           );
 
           graph.intensities.push({
@@ -364,52 +401,65 @@ export default defineComponent({
       this.channelGraphs.forEach((graph) => {
         graph.container.removeChildren();
       });
-      this.graphContainer?.removeChild(this.endOfTactonIndicator.getContainer())
+      this.graphContainer?.removeChild(
+        this.endOfTactonIndicator.getContainer(),
+      );
       this.channelGraphs = [];
       if (this.ticker !== null && this.ticker.count > 0) {
-        console.log('stopped ticker')
+        console.log("stopped ticker");
         this.ticker?.remove(this.loop);
       }
-      console.log('starting ticker')
+      console.log("starting ticker");
       this.ticker?.add(this.loop);
     },
     drawStoredGraph(instructions: TactonInstruction[]) {
-      const getMillisForIndex = (instructions: TactonInstruction[], from: number, to: number): number => {
-        let ms = 0
+      const getMillisForIndex = (
+        instructions: TactonInstruction[],
+        from: number,
+        to: number,
+      ): number => {
+        let ms = 0;
         for (let index = from; index < to; index++) {
           const instruction = instructions[index];
           if (isInstructionWait(instruction)) {
-            const wi = instruction as InstructionWait
-            ms += wi.wait.miliseconds
+            const wi = instruction as InstructionWait;
+            ms += wi.wait.miliseconds;
           }
         }
 
-        return ms
-      }
+        return ms;
+      };
 
       //Work on each channel
       for (let i = 0; i < this.numberOfOutputs; i++) {
-        let accumulatedMs = 0
+        let accumulatedMs = 0;
         /*  */
         //Find all setParameter Instructions that are associated with the channel Id (i)
-        var indices = instructions.map((instruction, index) => isInstructionSetParameter(instruction) ? index : -1).filter(e => {
-          if (e == -1) return false
-          const sp = instructions[e] as InstructionSetParameter
-          return sp.setParameter.channelIds.includes(i)
-        })
+        var indices = instructions
+          .map((instruction, index) =>
+            isInstructionSetParameter(instruction) ? index : -1,
+          )
+          .filter((e) => {
+            if (e == -1) return false;
+            const sp = instructions[e] as InstructionSetParameter;
+            return sp.setParameter.channelIds.includes(i);
+          });
 
-
-        // Für die  erste Instruction muss auch der Startpunkt in MS bestimmt werden   
-        let channelBeginningMs = getMillisForIndex(instructions, 0, indices[0])
-        accumulatedMs = channelBeginningMs
+        // Für die  erste Instruction muss auch der Startpunkt in MS bestimmt werden
+        let channelBeginningMs = getMillisForIndex(instructions, 0, indices[0]);
+        accumulatedMs = channelBeginningMs;
         //Instead of using a timer, use the accumulated wait instructions to get the millisecond value for drawing the boxes
         for (let j = 0; j < indices.length - 1; j++) {
-          let timeBetweenInstructionsMs = getMillisForIndex(instructions, indices[j], indices[j + 1])
+          let timeBetweenInstructionsMs = getMillisForIndex(
+            instructions,
+            indices[j],
+            indices[j + 1],
+          );
 
           const graph = this.channelGraphs.find(
-            (graph) => graph.channelId == i
+            (graph) => graph.channelId == i,
           );
-          const additionalWidth = this.growRatio * timeBetweenInstructionsMs
+          const additionalWidth = this.growRatio * timeBetweenInstructionsMs;
           // console.log(instructions[indices[j]])
 
           if (graph == undefined) {
@@ -425,9 +475,10 @@ export default defineComponent({
               i,
               xPosition,
               additionalWidth,
-              (instructions[indices[j]] as InstructionSetParameter).setParameter.intensity,
+              (instructions[indices[j]] as InstructionSetParameter).setParameter
+                .intensity,
               container,
-              undefined
+              undefined,
             );
             this.channelGraphs.push({
               channelId: i,
@@ -447,16 +498,17 @@ export default defineComponent({
             //intensity or author changed, draw new rectangle
             const xPosition =
               ((this.width.original - 2 * this.paddingRL) * accumulatedMs) /
-              this.maxDurationStore +
+                this.maxDurationStore +
               this.paddingRL;
 
             const intensityObject = this.drawRectangle(
               i,
               xPosition,
               additionalWidth,
-              (instructions[indices[j]] as InstructionSetParameter).setParameter.intensity,
+              (instructions[indices[j]] as InstructionSetParameter).setParameter
+                .intensity,
               graph.container as PIXI.Container,
-              undefined
+              undefined,
             );
 
             graph.intensities.push({
@@ -466,26 +518,21 @@ export default defineComponent({
             });
           }
 
-          accumulatedMs += timeBetweenInstructionsMs
+          accumulatedMs += timeBetweenInstructionsMs;
           // console.log(`Starts at ${channelBeginningMs}ms, curently ${timeBetweenInstructionsMs} ending at ${accumulatedMs}`)
-
         }
-
-
       }
       /* 
         filter the instructions for each channel, also get the index
         calaculate the time between each change by summing up all wait instructions between the first and the second instruction
       */
-      console.log(instructions)
-
-
+      console.log(instructions);
     },
     drawLiveGraph(channels: OutputChannelState[]) {
       const additionalWidth = this.growRatio * this.ticker!.elapsedMS;
       for (let i = 0; i < channels.length; i++) {
         const graph = this.channelGraphs.find(
-          (graph) => graph.channelId == channels[i].channelId
+          (graph) => graph.channelId == channels[i].channelId,
         );
         if (graph == undefined) {
           /**
@@ -510,7 +557,7 @@ export default defineComponent({
             additionalWidth,
             channels[i].intensity,
             container,
-            channels[i].author
+            channels[i].author,
           );
           this.channelGraphs.push({
             channelId: channels[i].channelId,
@@ -559,7 +606,7 @@ export default defineComponent({
             //intensity or author changed, draw new rectangle
             const xPosition =
               ((this.width.original - 2 * this.paddingRL) * this.currentTime) /
-              this.maxDurationStore +
+                this.maxDurationStore +
               this.paddingRL;
 
             const intensityObject = this.drawRectangle(
@@ -568,7 +615,7 @@ export default defineComponent({
               additionalWidth,
               channels[i].intensity,
               graph.container as PIXI.Container,
-              channels[i].author
+              channels[i].author,
             );
 
             graph.intensities.push({
@@ -582,11 +629,10 @@ export default defineComponent({
     },
     positionCursor(time: number) {
       if (!this.cursor.hasDrawnCursor) {
-        this.cursor.drawCursor(this.height.actual)
+        this.cursor.drawCursor(this.height.actual);
       }
-      this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
-      this.graphContainer?.addChild(this.cursor.getContainer())
-
+      this.cursor.moveToPosition(time * this.growRatio + this.paddingRL);
+      this.graphContainer?.addChild(this.cursor.getContainer());
     },
 
     /**
@@ -604,7 +650,7 @@ export default defineComponent({
       additionalWidth: number,
       intensity: number,
       container: PIXI.Container,
-      author?: User
+      author?: User,
     ) {
       // not du anything at intensity of 0
       if (intensity == 0) return { intensity: 0 };
@@ -646,15 +692,18 @@ export default defineComponent({
      * method wich will called every frame, to draw and update figures
      */
     loop() {
-      console.log("loop")
+      console.log("loop");
       //calculate the additional width, which has to add for the time frame
-      const numOfInst = this.channelGraphs.reduce((acc, val) => acc + val.intensities.length, 0)
+      const numOfInst = this.channelGraphs.reduce(
+        (acc, val) => acc + val.intensities.length,
+        0,
+      );
       if (numOfInst == this.numberOfOutputs) {
         this.currentTime = 0;
       }
       const channels = this.store.state.tactonSettings.outputChannelState;
-      this.drawLiveGraph(channels)
-      this.positionCursor(this.currentTime)
+      this.drawLiveGraph(channels);
+      this.positionCursor(this.currentTime);
       this.currentTime += this.ticker!.elapsedMS;
     },
   },

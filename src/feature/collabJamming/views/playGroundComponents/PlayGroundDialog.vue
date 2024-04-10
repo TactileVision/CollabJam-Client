@@ -5,7 +5,11 @@
         Name
       </v-col>
       <v-col cols="7">
-        <v-text-field variant="underlined" hide-details="auto" v-model="name"></v-text-field>
+        <v-text-field
+          variant="underlined"
+          hide-details="auto"
+          v-model="name"
+        ></v-text-field>
       </v-col>
     </v-row>
     <v-row justify="center" style="margin-bottom: 10px">
@@ -25,7 +29,12 @@
           </v-col>
           <v-col cols="5" style="display: flex; justify-content: flex-end">
             <v-btn elevation="2" color="primary" @click="startKeyDetection">
-              <v-progress-circular v-if="isKeyDetecting" indeterminate color="red" :size="20"></v-progress-circular>
+              <v-progress-circular
+                v-if="isKeyDetecting"
+                indeterminate
+                color="red"
+                :size="20"
+              ></v-progress-circular>
               <div style="padding: 5px">Detect</div>
             </v-btn>
           </v-col>
@@ -36,7 +45,14 @@
       <v-col cols="2" align-self="center"> Intensity </v-col>
       <v-col cols="7">
         <v-row no-gutters class="slider">
-          <v-slider v-model="intensity" step="0.1" max="1" min="0" hide-details style="margin: 0px" />
+          <v-slider
+            v-model="intensity"
+            step="0.1"
+            max="1"
+            min="0"
+            hide-details
+            style="margin: 0px"
+          />
           <div style="margin-left: 20px">
             {{ `${intensity * 100} %` }}
           </div>
@@ -48,19 +64,28 @@
       <v-col cols="7">
         <v-row style="justify-content: space-between" no-gutters>
           <v-col cols="1" v-for="(item, index) in colors" v-bind:key="index">
-            <span class="dot" :style="[
-              item == colorButtons
-                ? { backgroundColor: item, border: 'solid 0.11em' }
-                : { backgroundColor: item },
-            ]" @click="colorButtons = item"></span>
+            <span
+              class="dot"
+              :style="[
+                item == colorButtons
+                  ? { backgroundColor: item, border: 'solid 0.11em' }
+                  : { backgroundColor: item },
+              ]"
+              @click="colorButtons = item"
+            ></span>
           </v-col>
         </v-row>
       </v-col>
     </v-row>
     <v-row class="pa-3">
       <div class="listChannels">
-        <v-card v-for="(item, index) in channelActive" v-bind:key="index" class="actuator"
-          @click="updateChannel(item, index)" v-bind:style="{ backgroundColor: colorActuator(index) }">
+        <v-card
+          v-for="(item, index) in channelActive"
+          v-bind:key="index"
+          class="actuator"
+          @click="updateChannel(item, index)"
+          v-bind:style="{ backgroundColor: colorActuator(index) }"
+        >
           {{ index + 1 }}
         </v-card>
       </div>
@@ -70,8 +95,13 @@
         Cancel
       </v-btn>
       <v-spacer />
-      <v-btn elevation="2" color="primary" style="margin-right: 20px" v-if="keyButtonId !== undefined"
-        @click="deleteButton">
+      <v-btn
+        elevation="2"
+        color="primary"
+        style="margin-right: 20px"
+        v-if="keyButtonId !== undefined"
+        @click="deleteButton"
+      >
         Delete
       </v-btn>
       <v-btn elevation="2" color="primary" @click="modifyButton">
@@ -140,10 +170,21 @@ import { defineComponent } from "@vue/runtime-core";
 import { lightenDarkenColor, defaultColors } from "@/app/lib/colors";
 import { createInputDetection } from "@/core/Input/InputDetection";
 import { InputEvent } from "@/core/Input/InputDetection/types/types";
-import { UserInput, UserInputType, KeyInput } from "@/core/Input/InputDetection/types/InputDetection";
-import { InputBinding, isIntensityAction, isActuatorAction } from "@/core/Input/InputDetection/types/InputBindings";
+import {
+  UserInput,
+  UserInputType,
+  KeyInput,
+} from "@/core/Input/InputDetection/types/InputDetection";
+import {
+  InputBinding,
+  isIntensityAction,
+  isActuatorAction,
+} from "@/core/Input/InputDetection/types/InputBindings";
 import getInputName from "@/core/Input/InputDetection/getInputName";
-import { StateProfile, state } from "@/feature/collabJamming/store/playGround/playGround";
+import {
+  StateProfile,
+  state,
+} from "@/feature/collabJamming/store/playGround/playGround";
 
 export default defineComponent({
   name: "PlayGroundDialog",
@@ -167,22 +208,22 @@ export default defineComponent({
       colorButtons: defaultColors[1],
       channelActive: new Array(0).fill(false),
       colors: defaultColors,
-      detection: createInputDetection({ onInput: (e) => this.onDetectionInput(e) })
+      detection: createInputDetection({
+        onInput: (e) => this.onDetectionInput(e),
+      }),
     };
   },
   mounted() {
     //console.log("this.keyButtonId: " +this.keyButtonId);
     this.store.commit(
       GeneralMutations.CHANGE_VISIBILE_VIEW,
-      RouterNames.PLAY_GROUND_DIALOG
+      RouterNames.PLAY_GROUND_DIALOG,
     );
 
     /**
       set the number of maximum activeChannels
     */
-    this.channelActive = new Array(5).fill(
-      false
-    );
+    this.channelActive = new Array(5).fill(false);
 
     /**
     set channels active, if the area button get modified
@@ -202,14 +243,14 @@ export default defineComponent({
     if (binding.inputs.length > 0) this.input = binding.inputs[0];
     this.colorButtons = binding.color;
 
-
     const intensityAction = binding.actions.find(isIntensityAction);
-    if (intensityAction)
-      this.intensity = intensityAction.intensity;
+    if (intensityAction) this.intensity = intensityAction.intensity;
 
-    const channels = binding.actions.filter(isActuatorAction).map(action => action.channel);
-    channels.forEach(channel => {
-      this.channelActive[channel] = true
+    const channels = binding.actions
+      .filter(isActuatorAction)
+      .map((action) => action.channel);
+    channels.forEach((channel) => {
+      this.channelActive[channel] = true;
     });
   },
   computed: {
@@ -223,7 +264,7 @@ export default defineComponent({
     inputName(): string | undefined {
       if (!this.input) return;
       return getInputName(this.input);
-    }
+    },
   },
   methods: {
     updateChannel(currentState: boolean, index: number) {
@@ -247,19 +288,27 @@ export default defineComponent({
       const keyInput: KeyInput = {
         type: UserInputType.Key,
         key: e.key.toUpperCase(),
-      }
+      };
 
       this.input = keyInput;
       this.onUserInput();
     },
     onDetectionInput(e: InputEvent) {
       this.input = e.input;
-      this.onUserInput()
+      this.onUserInput();
     },
     onUserInput() {
       this.keyIsRequired = false;
 
-      if (this.input && this.profile && this.store.getters.isInputAlreadyTaken(this.keyButtonId, this.profile, this.input)) {
+      if (
+        this.input &&
+        this.profile &&
+        this.store.getters.isInputAlreadyTaken(
+          this.keyButtonId,
+          this.profile,
+          this.input,
+        )
+      ) {
         this.keyIsTaken = true;
         return;
       }
@@ -272,10 +321,10 @@ export default defineComponent({
       if (this.keyButtonId == undefined) return;
       if (!this.profile) return;
 
-      this.store.commit(
-        PlayGroundMutations.DELETE_ITEM_FROM_GRID,
-        { uid: this.keyButtonId, profileUid: this.profile.uid }
-      );
+      this.store.commit(PlayGroundMutations.DELETE_ITEM_FROM_GRID, {
+        uid: this.keyButtonId,
+        profileUid: this.profile.uid,
+      });
       this.$emit("closeDialog");
     },
     modifyButton() {
@@ -295,15 +344,18 @@ export default defineComponent({
         inputs: [{ ...this.input }],
         name: this.name,
         color: this.colorButtons,
-        actions: channels.map(channel => ({
+        actions: channels.map((channel) => ({
           type: "trigger_actuator",
           channel,
-          intensity: this.intensity
-        }))
-      }
+          intensity: this.intensity,
+        })),
+      };
 
       if (this.keyButtonId == undefined) {
-        this.store.dispatch(PlayGroundActionTypes.addButtonToGrid, { profile: this.profile, binding });
+        this.store.dispatch(PlayGroundActionTypes.addButtonToGrid, {
+          profile: this.profile,
+          binding,
+        });
         this.$emit("closeDialog");
       } else {
         console.log("updating ", this.profile, binding, this.keyButtonId);

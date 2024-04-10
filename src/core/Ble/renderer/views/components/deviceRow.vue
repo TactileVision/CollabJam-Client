@@ -6,23 +6,30 @@
     </v-col>
     <v-col cols="3">{{ `Status: ${device.state}` }}</v-col>
     <v-spacer />
-    <v-col cols="1" style="display: flex; justify-content: flex-end, padding:0px 5px,"
-      v-if="device.state == 'connected' ? true : false"><v-btn @click="vibrateDevice(device.id)" elevation="2"
-        color="primary">
-        <v-progress-circular v-if="isVibrating" indeterminate color="red" :size="20"></v-progress-circular>
-        Retry</v-btn>
+    <v-col
+      cols="1"
+      style="display: flex; justify-content: flex-end, padding:0px 5px,"
+      v-if="device.state == 'connected' ? true : false"
+      ><v-btn @click="vibrateDevice(device.id)" elevation="2" color="primary">
+        <v-progress-circular
+          v-if="isVibrating"
+          indeterminate
+          color="red"
+          :size="20"
+        ></v-progress-circular>
+        Retry</v-btn
+      >
     </v-col>
 
-    <v-col style="display: flex; justify-content: flex-end" cols="3"><v-btn @click="changeConnectionStatus" elevation="2"
-        color="primary">
-        {{ device.state == "connected" ? "Disconnect" : "Connect" }}</v-btn>
+    <v-col style="display: flex; justify-content: flex-end" cols="3"
+      ><v-btn @click="changeConnectionStatus" elevation="2" color="primary">
+        {{ device.state == "connected" ? "Disconnect" : "Connect" }}</v-btn
+      >
     </v-col>
   </v-row>
 </template>
 
-
 <style lang="scss" scoped></style>
-
 
 <script lang="ts">
 import { defineComponent } from "@vue/runtime-core";
@@ -62,7 +69,7 @@ export default defineComponent({
     },
     async vibrateDevice(id: string) {
       this.isVibrating = true;
-      pingDisplayViaIPC(id, 1000)
+      pingDisplayViaIPC(id, 1000);
       this.isVibrating = false;
     },
   },

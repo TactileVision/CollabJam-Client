@@ -8,7 +8,7 @@
     :class="['svgImage', isFirstEntry ? '' : 'secondEntries']"
     :cursor="clickable == true ? 'pointer' : ''"
   >
-   <path :fill="color" d="m0,15a15,15 0 1 1 30,0a15,15 0 1 1 -30,0" />
+    <path :fill="color" d="m0,15a15,15 0 1 1 30,0a15,15 0 1 1 -30,0" />
     <text
       x="50%"
       y="50%"
@@ -34,7 +34,7 @@
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "CustomProfile",

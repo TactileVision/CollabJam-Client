@@ -1,6 +1,6 @@
 <template>
   <v-row no-gutters style="margin: 5px 10px 40px 10px" id="gridHeader">
-    <v-col style="display:flex">
+    <v-col style="display: flex">
       <v-switch
         v-model="editModeOne"
         :label="`Edit Mode: ${editModeOne ? 'on' : 'off'}`"
@@ -12,7 +12,7 @@
       <v-btn
         elevation="2"
         color="primary"
-        style="margin-left:5px"
+        style="margin-left: 5px"
         @click="openDialog"
         :disabled="!store.state.playGround.inEditMode"
       >
@@ -74,7 +74,7 @@ export default defineComponent({
   }),
   computed: {
     intensity: {
-      get() : number {
+      get(): number {
         return this.store.state.playGround.globalIntensity;
       },
       set(value: number) {
@@ -82,7 +82,7 @@ export default defineComponent({
       },
     },
     editModeOne: {
-      get() : boolean {
+      get(): boolean {
         return this.store.state.playGround.inEditMode;
       },
       set(value: boolean) {

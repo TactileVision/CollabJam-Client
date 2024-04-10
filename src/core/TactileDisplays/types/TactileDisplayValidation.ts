@@ -1,4 +1,4 @@
 export interface ActuatorSelection {
-	deviceUuid : string,
-	actuator : number
+  deviceUuid: string;
+  actuator: number;
 }

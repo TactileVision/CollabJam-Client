@@ -43,10 +43,10 @@ export default defineComponent({
     store: useStore(),
   }),
   computed: {
-    participantList() : [] | { id: string; name: string; color: string; }[] {
+    participantList(): [] | { id: string; name: string; color: string }[] {
       if (this.store.state.roomSettings.participants == undefined) return [];
       return this.store.state.roomSettings.participants.filter(
-        (user) => user.id !== this.store.state.roomSettings.user.id
+        (user) => user.id !== this.store.state.roomSettings.user.id,
       );
     },
   },

@@ -13,17 +13,22 @@ interface HandlerEvent {
 }
 
 interface InputHandler {
-  onInput: (e: HandlerEvent) => Instruction[]
+  onInput: (e: HandlerEvent) => Instruction[];
 }
 
 const handlers: InputHandler[] = [];
 
 const registerInputHandler = (handler: InputHandler) => {
   handlers.push(handler);
-}
+};
 
 const executeAllInputHandlers = (e: HandlerEvent): Instruction[] => {
-  return handlers.flatMap(handler => handler.onInput(e))
-}
+  return handlers.flatMap((handler) => handler.onInput(e));
+};
 
-export { InputHandler, Instruction, registerInputHandler, executeAllInputHandlers };
+export {
+  InputHandler,
+  Instruction,
+  registerInputHandler,
+  executeAllInputHandlers,
+};

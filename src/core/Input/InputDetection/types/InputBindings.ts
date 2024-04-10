@@ -20,13 +20,13 @@ export interface ActuatorAction extends TactileAction {
 }
 
 export const isActuatorAction = (
-  action: TactileAction
+  action: TactileAction,
 ): action is ActuatorAction => {
   return (action as ActuatorAction).channel !== undefined;
 };
 
 export const isIntensityAction = (
-  action: TactileAction
+  action: TactileAction,
 ): action is IntensityAction => {
   return (action as IntensityAction).intensity !== undefined;
 };
@@ -46,13 +46,13 @@ export interface KeyboardDevice extends InputDevice {
 }
 
 export const isKeyboardDevice = (
-  device: InputDevice
+  device: InputDevice,
 ): device is KeyboardDevice => {
   return device.type === DeviceType.Keyboard;
 };
 
 export const isGamepadDevice = (
-  device: InputDevice
+  device: InputDevice,
 ): device is GamepadDevice => {
   return device.type === DeviceType.StandardGamepad;
 };

@@ -3,7 +3,10 @@ import {
   InputAdapter,
   getInputAdapters,
 } from "./InputAdapter/InputAdapterRegistry";
-import { DeviceType, InputDevice } from "@/core/Input/InputDetection/types/InputBindings";
+import {
+  DeviceType,
+  InputDevice,
+} from "@/core/Input/InputDetection/types/InputBindings";
 
 const defaultConfig = (): Omit<InputDetectionConfig, "onInput"> =>
   Object.freeze({
@@ -14,7 +17,7 @@ const defaultConfig = (): Omit<InputDetectionConfig, "onInput"> =>
   });
 
 export const createInputDetection = (
-  config: Partial<InputDetectionConfig> & Pick<InputDetectionConfig, "onInput">
+  config: Partial<InputDetectionConfig> & Pick<InputDetectionConfig, "onInput">,
 ): InputDetection => {
   const configWithDefaults: InputDetectionConfig = {
     ...defaultConfig(),
@@ -29,7 +32,7 @@ export const createInputDetection = (
       axesThreshold,
       throttleTimeout,
       onInput,
-    })
+    }),
   );
 
   return Object.freeze({
@@ -44,7 +47,7 @@ export const createInputDetection = (
 };
 
 export const getAllDevices = (
-  adapters: InputAdapter[] | undefined = undefined
+  adapters: InputAdapter[] | undefined = undefined,
 ): InputDevice[] => {
   const adaptersWithDefaults = adapters || defaultConfig().adapters;
   return adaptersWithDefaults

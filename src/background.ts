@@ -1,12 +1,16 @@
 "use strict";
-import { setBrowserWindow,initSettingManager } from './core/IPC/IpcMainController';
+import {
+  setBrowserWindow,
+  initSettingManager,
+} from "./core/IPC/IpcMainController";
 import { app, protocol, BrowserWindow } from "electron";
-import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
+// import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
-import path from 'path';
-
+import path from "path";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
+// process.env.DIST_ELECTRON = join(__dirname, "..") as string;
+// process.env.DIST = join(process.env.DIST_ELECTRON, "../dist") as string;
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -16,43 +20,56 @@ protocol.registerSchemesAsPrivileged([
 async function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 1920,
-    height: 1080,
+    // width: 1920,
+    // height: 1080,
     resizable: true,
     autoHideMenuBar: true,
     title: "Collaborative Tacton Generator",
-    backgroundColor: '#121212',
-    show: false,
+    backgroundColor: "#121212",
+    // show: false,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env
         .ELECTRON_NODE_INTEGRATION as unknown as boolean,
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, "./preload/preload.js"),
     },
   });
 
-  win.once('ready-to-show', () => {
+  win.once("ready-to-show", () => {
     //show the GUI in full screen mode
-    win.maximize();
-    win.show()
-  })
+    // win.maximize();
+    win.show();
+  });
 
   setBrowserWindow(win);
   initSettingManager();
 
-  if (process.env.WEBPACK_DEV_SERVER_URL) {
-    // Load the url of the dev server if in development mode
-    await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
+  // You can use `process.env.VITE_DEV_SERVER_URL` when the vite command is called `serve`
+  if (process.env.VITE_DEV_SERVER_URL) {
+    win.loadURL(process.env.VITE_DEV_SERVER_URL);
     if (!process.env.IS_TEST) win.webContents.openDevTools();
   } else {
-    console.log("createProtocol")
-    createProtocol("app");
-    // Load the index.html when not in development
-    win.loadURL("app://./index.html");
+    // Load your file
+    // if (process.platform == "darwin") {
+    win.loadFile("./dist/index.html");
+    // } else {
+    // win.loadFile("./index.html");
+    // win.loadFile(`file://${__dirname}/index.html`);
+    // }
   }
 
+  // if (process.env.WEBPACK_DEV_SERVER_URL) {
+  //   // Load the url of the dev server if in development mode
+  //   await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
+  //   if (!process.env.IS_TEST) win.webContents.openDevTools();
+  // } else {
+  //   console.log("createProtocol")
+  //   createProtocol("app");
+  //   // Load the index.html when not in development
+  //   win.loadURL("app://./index.html");
+  // }
 }
 
 // Quit when all windows are closed.
@@ -105,9 +122,9 @@ process.on('uncaughtException', function (err) {
   console.log("Unexpected Exception: " + err);
 });
  */
-process.on('unhandledRejection', function (err) {
+process.on("unhandledRejection", function (err) {
   console.log("Unexpected error occured: " + err);
   app.quit();
 });
 
-console.log(app.getPath('userData'))
+console.log(app.getPath("userData"));

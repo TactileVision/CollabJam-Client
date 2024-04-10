@@ -1,4 +1,4 @@
-export const lightenDarkenColor = (col:string, amount:number):string => {
+export const lightenDarkenColor = (col: string, amount: number): string => {
   let usePound = false;
   if (col[0] == "#") {
     col = col.slice(1);
@@ -26,4 +26,12 @@ export const lightenDarkenColor = (col:string, amount:number):string => {
   return (usePound ? "#" : "") + string.substr(string.length - 6);
 };
 
-export const defaultColors = ["#ff2d2d","#e6e600","#ffa22d","#07d248", "#009480", "#9b80ff", "#9933ff"]
+export const defaultColors = [
+  "#ff2d2d",
+  "#e6e600",
+  "#ffa22d",
+  "#07d248",
+  "#009480",
+  "#9b80ff",
+  "#9933ff",
+];

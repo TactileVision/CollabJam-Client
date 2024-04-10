@@ -4,14 +4,20 @@
 <template>
   <div class="roomView">
     <v-row align="center" justify="center" style="margin-top: 40px">
-      <v-btn elevation="2" color="primary" @click="getRooms">Update Room List</v-btn>
+      <v-btn elevation="2" color="primary" @click="getRooms"
+        >Update Room List</v-btn
+      >
       <v-list lines="one">
-        <v-list-item v-for="(room, index) of store.state.roomSettings.availableRooms" :key=room.id
-          @click="enterRoom(room.id)" :title="room.name">
+        <v-list-item
+          v-for="(room, index) of store.state.roomSettings.availableRooms"
+          :key="room.id"
+          @click="enterRoom(room.id)"
+          :title="room.name"
+        >
         </v-list-item>
       </v-list>
     </v-row>
-    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -28,7 +34,7 @@ import { useStore } from "@/app/store/store";
 import { RoomMutations } from "@/feature/collabJamming/store/roomSettings/roomSettings";
 import { sendSocketMessage } from "@/core/WebSocketManager";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
-
+import { getAvailableRooms } from "@/core/WebSocketManager/roomHandler";
 export default defineComponent({
   name: "RoomView",
   data() {
@@ -53,7 +59,8 @@ export default defineComponent({
     },
     enterRoom(roomId: string) {
       sendSocketMessage(WS_MSG_TYPE.ROOM_INFO_SERV, roomId);
-    }
+      this.$router.push("/setup");
+    },
   },
 });
 </script>

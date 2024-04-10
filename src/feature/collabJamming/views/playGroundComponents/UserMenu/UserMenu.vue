@@ -1,41 +1,82 @@
 <template>
   <div style="padding-right: 20px" v-click-outside="leaveMenu">
     <div style="height: 40px; display: flex; align-item: center">
-      <div v-for="(item, index) in store.state.roomSettings.participants" v-bind:key="index">
-        <CustomProfile v-if="item.name !== ''" :letter="item.name.charAt(0).toUpperCase()" :color="item.color"
-          :isFirstEntry="index == 0" :clickable="true" @displayMenuDialog="switchMenu" />
-        <DefaultProfile v-else :color="item.color" :isFirstEntry="index == 0" :clickable="true"
-          @displayMenuDialog="switchMenu" />
+      <div
+        v-for="(item, index) in store.state.roomSettings.participants"
+        v-bind:key="index"
+      >
+        <CustomProfile
+          v-if="item.name !== ''"
+          :letter="item.name.charAt(0).toUpperCase()"
+          :color="item.color"
+          :isFirstEntry="index == 0"
+          :clickable="true"
+          @displayMenuDialog="switchMenu"
+        />
+        <DefaultProfile
+          v-else
+          :color="item.color"
+          :isFirstEntry="index == 0"
+          :clickable="true"
+          @displayMenuDialog="switchMenu"
+        />
       </div>
-      <div style="
+      <div
+        style="
           display: flex;
           align-items: flex-end;
           font-size: 1.5em;
           padding-top: 10px;
           cursor: pointer;
-        " v-if="store.state.roomSettings.participants.length > 5" @click="switchMenu">
+        "
+        v-if="store.state.roomSettings.participants.length > 5"
+        @click="switchMenu"
+      >
         ...
       </div>
     </div>
     <div class="dropdown-content" v-if="displayUserDialog">
       <v-list>
         <div style="display: flex; padding-left: 5px">
-          <CustomProfile v-if="store.getters.userNameFromServer.name !== ''"
-            :letter="store.getters.userNameFromServer.name.charAt(0).toUpperCase()"
-            :color="store.getters.userNameFromServer.color" :isFirstEntry="true" :clickable="false" />
-          <DefaultProfile v-else :color="store.getters.userNameFromServer.color" :isFirstEntry="true"
-            :clickable="false" />
+          <CustomProfile
+            v-if="store.getters.userNameFromServer.name !== ''"
+            :letter="
+              store.getters.userNameFromServer.name.charAt(0).toUpperCase()
+            "
+            :color="store.getters.userNameFromServer.color"
+            :isFirstEntry="true"
+            :clickable="false"
+          />
+          <DefaultProfile
+            v-else
+            :color="store.getters.userNameFromServer.color"
+            :isFirstEntry="true"
+            :clickable="false"
+          />
 
           <div style="border: 1px solid #ddd" class="customField">
             <div class="inline">
-              <input class="inputField" v-on:keyup.enter="leaveMenu" v-model="userName" />
+              <input
+                class="inputField"
+                v-on:keyup.enter="leaveMenu"
+                v-model="userName"
+              />
               <v-icon right @click="leaveMenu"> mdi-content-save </v-icon>
             </div>
           </div>
         </div>
-        <v-list-item v-for="(item, index) in participantList" :key="index" :value="index" class="customMenu">
+        <v-list-item
+          v-for="(item, index) in participantList"
+          :key="index"
+          :value="index"
+          class="customMenu"
+        >
           <div style="display: flex; padding-left: 3px">
-            <DefaultProfile :color="item.color" :isFirstEntry="true" :clickable="false" />
+            <DefaultProfile
+              :color="item.color"
+              :isFirstEntry="true"
+              :clickable="false"
+            />
             <div class="partName">
               {{ item.name == "" ? "Guest" : item.name }}
             </div>
@@ -144,12 +185,13 @@ export default defineComponent({
     },
     participantList(): User[] {
       return this.store.state.roomSettings.participants.filter(
-        (user) => user.id !== this.store.state.roomSettings.user.id
+        (user) => user.id !== this.store.state.roomSettings.user.id,
       );
     },
     displayUserDialog(): boolean {
       return (
-        this.store.state.generalSettings.currentView == RouterNames.PLAY_GROUND_USERS
+        this.store.state.generalSettings.currentView ==
+        RouterNames.PLAY_GROUND_USERS
       );
     },
   },
@@ -161,7 +203,7 @@ export default defineComponent({
         //save the setting inside of the config file
         window.api.send(
           IPC_CHANNELS.main.saveUserName,
-          this.store.state.roomSettings.user.name
+          this.store.state.roomSettings.user.name,
         );
         //update user that the userName get changed
         sendSocketMessage(WS_MSG_TYPE.UPDATE_USER_ACCOUNT_SERV, {
@@ -173,16 +215,24 @@ export default defineComponent({
   },
   methods: {
     leaveMenu() {
-      this.store.commit(GeneralMutations.CHANGE_VISIBILE_VIEW, RouterNames.PLAY_GROUND);
+      this.store.commit(
+        GeneralMutations.CHANGE_VISIBILE_VIEW,
+        RouterNames.PLAY_GROUND,
+      );
     },
     switchMenu() {
-      if (this.store.state.generalSettings.currentView == RouterNames.PLAY_GROUND) {
+      if (
+        this.store.state.generalSettings.currentView == RouterNames.PLAY_GROUND
+      ) {
         this.store.commit(
           GeneralMutations.CHANGE_VISIBILE_VIEW,
-          RouterNames.PLAY_GROUND_USERS
+          RouterNames.PLAY_GROUND_USERS,
         );
       } else {
-        this.store.commit(GeneralMutations.CHANGE_VISIBILE_VIEW, RouterNames.PLAY_GROUND);
+        this.store.commit(
+          GeneralMutations.CHANGE_VISIBILE_VIEW,
+          RouterNames.PLAY_GROUND,
+        );
       }
     },
   },

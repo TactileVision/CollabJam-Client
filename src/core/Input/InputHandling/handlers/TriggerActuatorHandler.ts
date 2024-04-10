@@ -7,37 +7,39 @@ interface TriggerActuatorAction extends TactileAction {
   intensity: number;
 }
 
-const isTriggerActuatorAction = (action: TactileAction): action is TriggerActuatorAction => {
+const isTriggerActuatorAction = (
+  action: TactileAction,
+): action is TriggerActuatorAction => {
   return action.type === "trigger_actuator";
-}
+};
 
 const TriggerActuatorHandler = (): InputHandler => {
   return {
     onInput({ binding, wasActive, globalIntensity }) {
-      const instructions: Instruction[] = []
+      const instructions: Instruction[] = [];
 
       const actions = binding.actions.filter(isTriggerActuatorAction);
       if (binding.activeTriggers > 0) {
         if (!wasActive) {
-          actions.forEach(action => {
+          actions.forEach((action) => {
             const intensity = action.intensity * globalIntensity;
             instructions.push({
               intensity,
-              channels: [action.channel]
-            })
-          })
+              channels: [action.channel],
+            });
+          });
         }
       } else {
         if (actions.length > 0) {
           instructions.push({
-            channels: actions.map(action => action.channel),
-            intensity: 0
-          })
+            channels: actions.map((action) => action.channel),
+            intensity: 0,
+          });
         }
       }
-      return instructions
-    }
-  }
-}
+      return instructions;
+    },
+  };
+};
 
 export default TriggerActuatorHandler;

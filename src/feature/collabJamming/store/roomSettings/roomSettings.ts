@@ -1,35 +1,36 @@
-import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
-import { RootState } from '@/app/store/store';
-import { InteractionMode, User, Room } from '@sharedTypes/roomTypes';
+import { MutationTree, GetterTree, ActionTree, ActionContext } from "vuex";
+import { RootState } from "@/app/store/store";
+import { InteractionMode, User, Room } from "@sharedTypes/roomTypes";
+import { useRoute, useRouter } from "vue-router";
 /**
  * Types
- * 
+ *
  */
-
 
 export enum RoomState {
   Create = "Create",
   Enter = "Enter",
-  Configure = "Configure"
+  Configure = "Configure",
 }
+
 /**
  * state
- * 
+ *
  */
 
 export type State = {
-  roomState: RoomState
-  id: string | undefined,
-  roomName: string,
-  description: string,
-  participants: User[],
-  user: User,
+  roomState: RoomState;
+  id: string | undefined;
+  roomName: string;
+  description: string;
+  participants: User[];
+  user: User;
   // isRecording: boolean,
-  maxDuration: number,
-  mode: InteractionMode
-  recordingNamePrefix: string
+  maxDuration: number;
+  mode: InteractionMode;
+  recordingNamePrefix: string;
 
-  availableRooms: Room[]
+  availableRooms: Room[];
 };
 
 export const state: State = {
@@ -43,11 +44,11 @@ export const state: State = {
   maxDuration: 20000,
   mode: InteractionMode.Jamming,
   recordingNamePrefix: "",
-  availableRooms: []
+  availableRooms: [],
 };
 /**
  * mutations
- * 
+ *
  */
 export enum RoomMutations {
   CHANGE_ROOM = "CHANGE_ROOM",
@@ -59,21 +60,27 @@ export enum RoomMutations {
   UPDATE_PARTICIPANTS = "UPDATE_PARTICIPANTS",
   UPDATE_RECORD_MODE = "UPDATE_RECORD_MODE",
   UPDATE_MAX_DURATION_TACTON = "UPDATE_MAX_DURATION_TACTON",
-  SET_AVAILABLE_ROOMS = "SET_AVAILABLE_ROOMS"
+  SET_AVAILABLE_ROOMS = "SET_AVAILABLE_ROOMS",
 }
 
 export type Mutations<S = State> = {
-  [RoomMutations.CHANGE_ROOM](state: S, props: { roomState: RoomState, roomInfo: Room }): void
-  [RoomMutations.UPDATE_ROOM_NAME](state: S, roomName: string): void
-  [RoomMutations.UPDATE_ROOM_DESCRIPTION](state: S, description: string): void
-  [RoomMutations.UPDATE_ROOM_STATE](state: S, roomState: RoomState): void
-  [RoomMutations.UPDATE_USER](state: S, user: User): void
-  [RoomMutations.UPDATE_USER_NAME](state: S, userName: string): void
-  [RoomMutations.UPDATE_PARTICIPANTS](state: S, participants: User[]): void
-  [RoomMutations.UPDATE_RECORD_MODE](state: S, mode: InteractionMode): void
-  [RoomMutations.UPDATE_MAX_DURATION_TACTON](state: S, maxDuration: number): void
-  [RoomMutations.SET_AVAILABLE_ROOMS](state: S, rooms: Room[]): void
-}
+  [RoomMutations.CHANGE_ROOM](
+    state: S,
+    props: { roomState: RoomState; roomInfo: Room },
+  ): void;
+  [RoomMutations.UPDATE_ROOM_NAME](state: S, roomName: string): void;
+  [RoomMutations.UPDATE_ROOM_DESCRIPTION](state: S, description: string): void;
+  [RoomMutations.UPDATE_ROOM_STATE](state: S, roomState: RoomState): void;
+  [RoomMutations.UPDATE_USER](state: S, user: User): void;
+  [RoomMutations.UPDATE_USER_NAME](state: S, userName: string): void;
+  [RoomMutations.UPDATE_PARTICIPANTS](state: S, participants: User[]): void;
+  [RoomMutations.UPDATE_RECORD_MODE](state: S, mode: InteractionMode): void;
+  [RoomMutations.UPDATE_MAX_DURATION_TACTON](
+    state: S,
+    maxDuration: number,
+  ): void;
+  [RoomMutations.SET_AVAILABLE_ROOMS](state: S, rooms: Room[]): void;
+};
 
 export const mutations: MutationTree<State> & Mutations = {
   [RoomMutations.CHANGE_ROOM](state, props) {
@@ -84,7 +91,7 @@ export const mutations: MutationTree<State> & Mutations = {
     state.participants = props.roomInfo.participants;
     // state.isRecording = props.roomInfo.isRecording;
     state.maxDuration = props.roomInfo.maxDurationRecord;
-    state.recordingNamePrefix = props.roomInfo.recordingNamePrefix
+    state.recordingNamePrefix = props.roomInfo.recordingNamePrefix;
   },
   [RoomMutations.UPDATE_ROOM_NAME](state, roomName) {
     state.roomName = roomName;
@@ -105,24 +112,24 @@ export const mutations: MutationTree<State> & Mutations = {
     state.participants = participants;
   },
   [RoomMutations.UPDATE_RECORD_MODE](state, mode) {
-    state.mode = mode
+    state.mode = mode;
   },
   [RoomMutations.UPDATE_MAX_DURATION_TACTON](state, maxDuration) {
     state.maxDuration = maxDuration;
   },
   [RoomMutations.SET_AVAILABLE_ROOMS](state, rooms) {
-    state.availableRooms = rooms
-  }
+    state.availableRooms = rooms;
+  },
 };
 
 /**
  * actions
- * 
+ *
  */
 export enum RoomSettingsActionTypes {
   enterRoom = "enterRoom",
   updateRoom = "updateRoom",
-  setAvailableRoomList = "setAvailableRoomList"
+  setAvailableRoomList = "setAvailableRoomList",
 }
 
 type AugmentedActionContext = {
@@ -130,29 +137,38 @@ type AugmentedActionContext = {
     key: K,
     payload: Parameters<Mutations[K]>[1],
   ): ReturnType<Mutations[K]>;
-} & Omit<ActionContext<State, RootState>, 'commit'>
+} & Omit<ActionContext<State, RootState>, "commit">;
 
 export interface Actions {
   [RoomSettingsActionTypes.enterRoom](
     { commit }: AugmentedActionContext,
-    payload: { room: Room, userId: string, participants: User[] },
+    payload: { room: Room; userId: string; participants: User[] },
   ): void;
   [RoomSettingsActionTypes.updateRoom](
     { commit }: AugmentedActionContext,
-    payload: { room: Room, participants: User[] },
+    payload: { room: Room; participants: User[] },
   ): void;
   [RoomSettingsActionTypes.setAvailableRoomList](
     { commit }: AugmentedActionContext,
-    payload: { rooms: Room[] }
+    payload: { rooms: Room[] },
   ): void;
 }
 
 export const actions: ActionTree<State, RootState> & Actions = {
-  [RoomSettingsActionTypes.enterRoom]({ commit }, props: { room: Room, userId: string, participants: User[] }) {
-    const user = props.participants.find(participant => participant.id == props.userId);
+  [RoomSettingsActionTypes.enterRoom](
+    { commit },
+    props: { room: Room; userId: string; participants: User[] },
+  ) {
+    const user = props.participants.find(
+      (participant) => participant.id == props.userId,
+    );
 
     if (user !== undefined)
-      commit(RoomMutations.UPDATE_USER, { id: user.id, name: user.name, color: user.color });
+      commit(RoomMutations.UPDATE_USER, {
+        id: user.id,
+        name: user.name,
+        color: user.color,
+      });
 
     commit(RoomMutations.CHANGE_ROOM, {
       roomState: RoomState.Enter,
@@ -164,13 +180,17 @@ export const actions: ActionTree<State, RootState> & Actions = {
         maxDurationRecord: props.room.maxDurationRecord,
         recordingNamePrefix: props.room.recordingNamePrefix,
         mode: props.room.mode,
-        currentRecordingTime: 0
-      }
-    })
+        currentRecordingTime: 0,
+      },
+    });
+
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
-  [RoomSettingsActionTypes.updateRoom]({ commit }, props: { room: Room, participants: User[] }) {
-    console.log(props.room)
+  [RoomSettingsActionTypes.updateRoom](
+    { commit },
+    props: { room: Room; participants: User[] },
+  ) {
+    console.log(props.room);
     commit(RoomMutations.CHANGE_ROOM, {
       roomState: RoomState.Enter,
       roomInfo: {
@@ -182,37 +202,44 @@ export const actions: ActionTree<State, RootState> & Actions = {
         maxDurationRecord: props.room.maxDurationRecord,
         recordingNamePrefix: props.room.recordingNamePrefix,
         mode: props.room.mode,
-        currentRecordingTime: 0
-      }
-    })
+        currentRecordingTime: 0,
+      },
+    });
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
-  [RoomSettingsActionTypes.setAvailableRoomList]({ commit }, props: { rooms: Room[] }) {
-    commit(RoomMutations.SET_AVAILABLE_ROOMS, props.rooms)
-  }
+  [RoomSettingsActionTypes.setAvailableRoomList](
+    { commit },
+    props: { rooms: Room[] },
+  ) {
+    commit(RoomMutations.SET_AVAILABLE_ROOMS, props.rooms);
+  },
 };
 
 /**
  * Getters
  */
 export type Getters = {
-  roomTitle(state: State): string,
-  userNameUpdated(state: State): boolean,
-  userNameFromServer(state: State): User,
-}
+  roomTitle(state: State): string;
+  userNameUpdated(state: State): boolean;
+  userNameFromServer(state: State): User;
+};
 
 export const getters: GetterTree<State, RootState> & Getters = {
   roomTitle: (state) => state.roomName + "#" + state.id,
   userNameUpdated: (state) => {
-    const serverItem = state.participants.find(participant => participant.id == state.user.id)
+    const serverItem = state.participants.find(
+      (participant) => participant.id == state.user.id,
+    );
     if (serverItem == undefined) return false;
 
     return serverItem.name !== state.user.name;
   },
   userNameFromServer: (state) => {
-    const serverItem = state.participants.find(participant => participant.id == state.user.id)
+    const serverItem = state.participants.find(
+      (participant) => participant.id == state.user.id,
+    );
     if (serverItem == undefined) return state.user;
 
     return serverItem;
-  }
+  },
 };

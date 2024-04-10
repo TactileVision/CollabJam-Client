@@ -3,11 +3,15 @@ import {
   GamepadButtonInput,
   UserInputType,
 } from "@/core/Input/InputDetection/types/InputDetection";
-import { DeviceType, GamepadDevice, InputDevice } from "@/core/Input/InputDetection/types/InputBindings";
+import {
+  DeviceType,
+  GamepadDevice,
+  InputDevice,
+} from "@/core/Input/InputDetection/types/InputBindings";
 import { InputAdapterDetection, InputAdapterDetectionConfig } from ".";
 
 const createDetection = (
-  config: InputAdapterDetectionConfig
+  config: InputAdapterDetectionConfig,
 ): InputAdapterDetection => {
   let isDetecting = false;
 
@@ -118,7 +122,7 @@ const getDevices = (): InputDevice[] => {
 
 const gamepadToInputDevice = (
   gamepad: Gamepad,
-  index: number
+  index: number,
 ): GamepadDevice => {
   return Object.freeze({
     type: DeviceType.StandardGamepad,

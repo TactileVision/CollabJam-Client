@@ -1,35 +1,35 @@
-import { MutationTree, GetterTree, ActionTree, ActionContext } from 'vuex'
-import { RootState } from '@/app/store/store';
-import { RouterNames } from '@/app/router/Routernames';
+import { MutationTree, GetterTree, ActionTree, ActionContext } from "vuex";
+import { RootState } from "@/app/store/store";
+import { RouterNames } from "@/app/router/Routernames";
 /**
  * Types
- * 
+ *
  */
 export enum DeviceStatus {
   connected = "connected",
   disconnected = "disconnected",
-  loading = "loading"
+  loading = "loading",
 }
 
 export interface VibrotactileDevice {
-  id: string,
-  name: string,
-  rssi: number,
-  state: DeviceStatus,
-  numOfOutputs: number,
+  id: string;
+  name: string;
+  rssi: number;
+  state: DeviceStatus;
+  numOfOutputs: number;
 }
 /**
  * state
- * 
+ *
  */
 
 export type State = {
-  currentView: RouterNames,
-  socketConnectionStatus: boolean,
-  userNameChanged: boolean,
-  copiedToClipboard: boolean,
-  tactonLengthZero: boolean,
-  deviceList: VibrotactileDevice[]
+  currentView: RouterNames;
+  socketConnectionStatus: boolean;
+  userNameChanged: boolean;
+  copiedToClipboard: boolean;
+  tactonLengthZero: boolean;
+  deviceList: VibrotactileDevice[];
 };
 
 export const state: State = {
@@ -38,11 +38,11 @@ export const state: State = {
   userNameChanged: false,
   copiedToClipboard: false,
   tactonLengthZero: false,
-  deviceList: []
+  deviceList: [],
 };
 /**
  * mutations
- * 
+ *
  */
 export enum GeneralMutations {
   CHANGE_VISIBILE_VIEW = "CHANGE_VISIBILE_VIEW",
@@ -52,19 +52,31 @@ export enum GeneralMutations {
   UPDATE_DEVICE_LIST = "UPDATE_DEVICE_LIST",
   UPDATE_DEVICE = "UPDATE_DEVICE",
   COPIED_TO_CLIPBOARD = "COPIED_TO_CLIPBOARD",
-  TACTON_LENGTH_ZERO = "TACTON_LENGTH_ZERO"
+  TACTON_LENGTH_ZERO = "TACTON_LENGTH_ZERO",
 }
 
 export type Mutations<S = State> = {
-  [GeneralMutations.CHANGE_VISIBILE_VIEW](state: S, view: RouterNames): void
-  [GeneralMutations.UPDATE_SOCKET_CONNECTION](state: S, status: boolean): void
-  [GeneralMutations.USER_NAME_CHANGED](state: S, isChanged: boolean): void
-  [GeneralMutations.COPIED_TO_CLIPBOARD](state: S, copiedToClipboard: boolean): void
-  [GeneralMutations.ADD_DEVICE](state: S, device: VibrotactileDevice): void
-  [GeneralMutations.UPDATE_DEVICE_LIST](state: S, deviceList: VibrotactileDevice[]): void
-  [GeneralMutations.UPDATE_DEVICE](state: S, item: { index: number, device: VibrotactileDevice }): void
-  [GeneralMutations.TACTON_LENGTH_ZERO](state: S, tactonLengthZero: boolean): void
-}
+  [GeneralMutations.CHANGE_VISIBILE_VIEW](state: S, view: RouterNames): void;
+  [GeneralMutations.UPDATE_SOCKET_CONNECTION](state: S, status: boolean): void;
+  [GeneralMutations.USER_NAME_CHANGED](state: S, isChanged: boolean): void;
+  [GeneralMutations.COPIED_TO_CLIPBOARD](
+    state: S,
+    copiedToClipboard: boolean,
+  ): void;
+  [GeneralMutations.ADD_DEVICE](state: S, device: VibrotactileDevice): void;
+  [GeneralMutations.UPDATE_DEVICE_LIST](
+    state: S,
+    deviceList: VibrotactileDevice[],
+  ): void;
+  [GeneralMutations.UPDATE_DEVICE](
+    state: S,
+    item: { index: number; device: VibrotactileDevice },
+  ): void;
+  [GeneralMutations.TACTON_LENGTH_ZERO](
+    state: S,
+    tactonLengthZero: boolean,
+  ): void;
+};
 
 export const mutations: MutationTree<State> & Mutations = {
   [GeneralMutations.CHANGE_VISIBILE_VIEW](state, view) {
@@ -95,17 +107,17 @@ export const mutations: MutationTree<State> & Mutations = {
 
 /**
  * actions
- * 
+ *
  */
 export enum GeneralSettingsActionTypes {
-  changeCurrentView = 'changeCurrentView',
-  updateSocketConnectionStatus = 'updateSocketConnectionStatus',
-  addNewDevice = 'addNewDevice',
-  updateDeviceStatus = 'updateDeviceStatus',
+  changeCurrentView = "changeCurrentView",
+  updateSocketConnectionStatus = "updateSocketConnectionStatus",
+  addNewDevice = "addNewDevice",
+  updateDeviceStatus = "updateDeviceStatus",
   userNameGetSaved = "userNameGetSaved",
   copyAdressToClipboard = "copyAdressToClipboard",
   setNumberOfOutPuts = "setNumberOfOutPuts",
-  tactonLengthChanged = "tactonLengthChanged"
+  tactonLengthChanged = "tactonLengthChanged",
 }
 
 type AugmentedActionContext = {
@@ -113,7 +125,7 @@ type AugmentedActionContext = {
     key: K,
     payload: Parameters<Mutations[K]>[1],
   ): ReturnType<Mutations[K]>;
-} & Omit<ActionContext<State, RootState>, 'commit'>
+} & Omit<ActionContext<State, RootState>, "commit">;
 
 export interface Actions {
   [GeneralSettingsActionTypes.changeCurrentView](
@@ -135,58 +147,83 @@ export interface Actions {
     { commit }: AugmentedActionContext,
     payload: VibrotactileDevice, // Obsolete in here but left as an example
   ): void;
-  [GeneralSettingsActionTypes.copyAdressToClipboard](
-    { commit }: AugmentedActionContext
-  ): void;
+  [GeneralSettingsActionTypes.copyAdressToClipboard]({
+    commit,
+  }: AugmentedActionContext): void;
   [GeneralSettingsActionTypes.setNumberOfOutPuts](
     { commit }: AugmentedActionContext,
-    payload: { deviceId: string, numOfOutputs: number }
+    payload: { deviceId: string; numOfOutputs: number },
   ): void;
-  [GeneralSettingsActionTypes.tactonLengthChanged](
-    { commit }: AugmentedActionContext,
-  ): void;
+  [GeneralSettingsActionTypes.tactonLengthChanged]({
+    commit,
+  }: AugmentedActionContext): void;
 }
 
 export const actions: ActionTree<State, RootState> & Actions = {
-  [GeneralSettingsActionTypes.changeCurrentView]({ commit }, view: RouterNames) {
+  [GeneralSettingsActionTypes.changeCurrentView](
+    { commit },
+    view: RouterNames,
+  ) {
     commit(GeneralMutations.CHANGE_VISIBILE_VIEW, view);
   },
-  [GeneralSettingsActionTypes.updateSocketConnectionStatus]({ commit }, status: boolean) {
+  [GeneralSettingsActionTypes.updateSocketConnectionStatus](
+    { commit },
+    status: boolean,
+  ) {
     commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, status);
   },
   [GeneralSettingsActionTypes.userNameGetSaved]({ commit }) {
     commit(GeneralMutations.USER_NAME_CHANGED, true);
-    setTimeout(() => (commit(GeneralMutations.USER_NAME_CHANGED, false)), 3000);
+    setTimeout(() => commit(GeneralMutations.USER_NAME_CHANGED, false), 3000);
   },
   [GeneralSettingsActionTypes.copyAdressToClipboard]({ commit }) {
     commit(GeneralMutations.COPIED_TO_CLIPBOARD, true);
-    setTimeout(() => (commit(GeneralMutations.COPIED_TO_CLIPBOARD, false)), 3000);
+    setTimeout(() => commit(GeneralMutations.COPIED_TO_CLIPBOARD, false), 3000);
   },
-  [GeneralSettingsActionTypes.addNewDevice]({ commit }, newDevice: VibrotactileDevice) {
-    if (state.deviceList.some(device => device.id == newDevice.id))
-      return;
+  [GeneralSettingsActionTypes.addNewDevice](
+    { commit },
+    newDevice: VibrotactileDevice,
+  ) {
+    if (state.deviceList.some((device) => device.id == newDevice.id)) return;
 
     commit(GeneralMutations.ADD_DEVICE, newDevice);
   },
-  [GeneralSettingsActionTypes.updateDeviceStatus]({ commit }, modifiedDevice: VibrotactileDevice) {
-    const index = state.deviceList.findIndex(device => device.id === modifiedDevice.id);
+  [GeneralSettingsActionTypes.updateDeviceStatus](
+    { commit },
+    modifiedDevice: VibrotactileDevice,
+  ) {
+    const index = state.deviceList.findIndex(
+      (device) => device.id === modifiedDevice.id,
+    );
     //no device found
-    if (index == -1)
-      return;
+    if (index == -1) return;
 
-    commit(GeneralMutations.UPDATE_DEVICE, { index: index, device: modifiedDevice });
+    commit(GeneralMutations.UPDATE_DEVICE, {
+      index: index,
+      device: modifiedDevice,
+    });
   },
-  [GeneralSettingsActionTypes.setNumberOfOutPuts]({ commit }, payload: { deviceId: string, numOfOutputs: number }) {
-    const index = state.deviceList.findIndex(device => device.id === payload.deviceId);
+  [GeneralSettingsActionTypes.setNumberOfOutPuts](
+    { commit },
+    payload: { deviceId: string; numOfOutputs: number },
+  ) {
+    const index = state.deviceList.findIndex(
+      (device) => device.id === payload.deviceId,
+    );
     //no device found
-    if (index == -1)
-      return;
+    if (index == -1) return;
 
-    commit(GeneralMutations.UPDATE_DEVICE, { index: index, device: { ...state.deviceList[index], numOfOutputs: payload.numOfOutputs } });
+    commit(GeneralMutations.UPDATE_DEVICE, {
+      index: index,
+      device: {
+        ...state.deviceList[index],
+        numOfOutputs: payload.numOfOutputs,
+      },
+    });
   },
   [GeneralSettingsActionTypes.tactonLengthChanged]({ commit }) {
     commit(GeneralMutations.TACTON_LENGTH_ZERO, true);
-    setTimeout(() => (commit(GeneralMutations.TACTON_LENGTH_ZERO, false)), 3000);
+    setTimeout(() => commit(GeneralMutations.TACTON_LENGTH_ZERO, false), 3000);
   },
 };
 
@@ -194,27 +231,26 @@ export const actions: ActionTree<State, RootState> & Actions = {
  * Getters
  */
 export type Getters = {
-  currentView(state: State): RouterNames,
-  isConnectedToSocket(state: State): boolean,
-  getDeviceStatus(state: State): (id: string) => DeviceStatus,
-  getConnectedDevice(state: State): VibrotactileDevice | undefined,
-  getNumberOfOutputs(state: State): number
-}
+  currentView(state: State): RouterNames;
+  isConnectedToSocket(state: State): boolean;
+  getDeviceStatus(state: State): (id: string) => DeviceStatus;
+  getConnectedDevice(state: State): VibrotactileDevice | undefined;
+  getNumberOfOutputs(state: State): number;
+};
 
 export const getters: GetterTree<State, RootState> & Getters = {
   currentView: (state) => state.currentView,
   isConnectedToSocket: (state) => state.socketConnectionStatus,
   getDeviceStatus: (state) => (id) => {
     const index = state.deviceList.findIndex(
-      (deviceStore) => deviceStore.id === id
+      (deviceStore) => deviceStore.id === id,
     );
-    if (index == -1)
-      return DeviceStatus.loading;
+    if (index == -1) return DeviceStatus.loading;
 
     return state.deviceList[index].state;
   },
   getConnectedDevice: (state) => {
-    return state.deviceList.find(device => device.state == "connected");
+    return state.deviceList.find((device) => device.state == "connected");
   },
   getNumberOfOutputs: (state) => {
     /**
@@ -224,12 +260,10 @@ export const getters: GetterTree<State, RootState> & Getters = {
  * for testing we use only 8 actauators always just, uncomment the code to set default to 12 and use the number you get from the device
   return 8;
 */
-    return 4
+    return 4;
     // const device = getters.getConnectedDevice(state);
     // if (device == undefined) return 5;
     // if (device.numOfOutputs == undefined) return 5;
     // return device.numOfOutputs;
-
-
-  }
+  },
 };

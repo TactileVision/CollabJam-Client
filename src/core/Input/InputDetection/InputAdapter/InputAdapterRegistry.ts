@@ -3,7 +3,7 @@ import { InputAdapterDetection, InputAdapterDetectionConfig } from ".";
 
 export interface InputAdapter {
   createDetection: (
-    config: InputAdapterDetectionConfig
+    config: InputAdapterDetectionConfig,
   ) => InputAdapterDetection;
   getDevices: () => InputDevice[];
 }

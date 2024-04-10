@@ -1,7 +1,12 @@
 <template>
-  <v-row no-gutters align="center" style="justify-content: space-evenly; margin: 5px 0" id="tactonHeader">
+  <v-row
+    no-gutters
+    align="center"
+    style="justify-content: space-evenly; margin: 5px 0"
+    id="tactonHeader"
+  >
   </v-row>
-  <TactonGraph :isMounted="isMounted" />
+  <!-- <TactonGraph :isMounted="isMounted" /> -->
   <!-- </v-col> -->
 </template>
 
@@ -11,7 +16,7 @@
   width: 100%;
   user-select: none;
   &.recording {
-    >span {
+    > span {
       color: white;
     }
 
@@ -26,7 +31,7 @@
     background-color: yellow;
   }
 
-  >span {
+  > span {
     display: block;
     margin: auto;
     padding: 1em;
@@ -34,7 +39,6 @@
     font-weight: bold;
   }
 }
-
 
 .durationBox {
   padding-left: 10px;
@@ -81,7 +85,7 @@ import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
   name: "TactonScreen",
-  components: { TactonGraph/* , TactonSelectionList */ },
+  components: { TactonGraph /* , TactonSelectionList */ },
   props: {
     isMounted: {
       type: Boolean,
@@ -108,8 +112,8 @@ export default defineComponent({
       },
     },
     mode(): InteractionMode {
-      return this.store.state.roomSettings.mode
-    }
+      return this.store.state.roomSettings.mode;
+    },
   },
   methods: {
     saveTacton() {

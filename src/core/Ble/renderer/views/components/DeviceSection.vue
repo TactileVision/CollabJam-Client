@@ -1,16 +1,21 @@
 <template>
   <v-container fill-height class="">
-    <v-row no-gutters style="padding-bottom:10px">
+    <v-row no-gutters style="padding-bottom: 10px">
       <v-btn elevation="2" color="primary" @click="startScanning">
-        <v-progress-circular v-if="isScanning" indeterminate color="red" :size="20"
-          style="margin-right: 10px"></v-progress-circular>
+        <v-progress-circular
+          v-if="isScanning"
+          indeterminate
+          color="red"
+          :size="20"
+          style="margin-right: 10px"
+        ></v-progress-circular>
         {{ isScanning ? "Stop" : "Start" }} Scanning
       </v-btn>
     </v-row>
     <!-- <v-row class="test"> -->
     <!-- <v-container class="listSection"> -->
     <v-list :items="deviceList">
-      <v-list-item v-for="item in deviceList" :key="item.id" style="padding:0">
+      <v-list-item v-for="item in deviceList" :key="item.id" style="padding: 0">
         <DeviceRow :device="item" />
       </v-list-item>
     </v-list>
@@ -56,7 +61,10 @@ import { defineComponent } from "@vue/runtime-core";
 import { IPC_CHANNELS } from "@/core/IPC/IpcChannels";
 import DeviceRow from "./deviceRow.vue";
 import { useStore } from "@/app/store/store";
-import { VibrotactileDevice,GeneralMutations } from "@/app/store/modules/generalSettings/generalSettings";
+import {
+  VibrotactileDevice,
+  GeneralMutations,
+} from "@/app/store/modules/generalSettings/generalSettings";
 
 export default defineComponent({
   components: { DeviceRow },
