@@ -1,25 +1,17 @@
 {
-  "author": "Tactile Vision",
-  "name": "collaborative-tacton-frontend",
+  "author": "Tactile Vision Research Group",
+  "name": "collabjam-client",
   "main": "dist_electron/background.js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "electron:build": "vue-cli-service electron:build",
-    "electron:serve": "vue-cli-service electron:serve",
-    "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps",
     "dev": "vite",
+    "build": "vue-tsc --noEmit && npx vite build && npx electron-builder -mwl",
     "lint": "eslint src",
     "lint:fix": "eslint src  --fix",
     "prettier": "prettier src",
     "prettier:fix": "prettier src  --write",
-    "format": "npm run prettier:fix && npm run lint:fix",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "format": "npm run prettier:fix && npm run lint:fix"
   },
   "devDependencies": {
     "@electron-forge/plugin-auto-unpack-natives": "^7.3.1",
@@ -29,6 +21,9 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "electron": "^29.2.0",
     "electron-devtools-installer": "^3.2.0",
+    "electron-log": "^5.1.2",
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-updater": "^6.1.8",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-vue": "^9.24.1",
@@ -39,8 +34,7 @@
     "typescript-eslint": "^7.6.0",
     "vite": "^5.2.8",
     "vite-plugin-electron": "^0.28.4",
-    "vite-plugin-electron-renderer": "^0.14.5",
-    "vite-tsconfig-paths": "^4.3.2"
+    "vite-plugin-electron-renderer": "^0.14.5"
   },
   "dependencies": {
     "@abandonware/noble": "^1.9.2-24",
@@ -48,12 +42,8 @@
     "@pixi/canvas-renderer": "^7.4.2",
     "@pixi/settings": "^7.4.2",
     "@pixi/unsafe-eval": "^7.4.2",
-    "electron-log": "^5.1.2",
-    "electron-squirrel-startup": "^1.0.0",
-    "electron-updater": "^6.1.8",
     "pixi.js": "^8.1.0",
     "uuid": "^9.0.1",
-    "vite-plugin-vuetify": "^2.0.3",
     "vue": "^3.4.21",
     "vue-inline-svg": "^3.1.2",
     "vue-router": "^4.3.0",
