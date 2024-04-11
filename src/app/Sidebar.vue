@@ -1,5 +1,5 @@
 <template>
-  <h1>I'am the sidebar</h1>
+  <!-- <v-navigation-drawer expand-on-hover rail> -->
   <v-navigation-drawer>
     <v-list
       :disabled="store.state.generalSettings.currentView == routes.PLAY_GROUND"

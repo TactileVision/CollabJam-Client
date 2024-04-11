@@ -1,33 +1,21 @@
 <template>
-  <div
-    class="v-row"
-    id="headerPlayGround"
-    :elevation="2"
-    align="center"
-    justify="start"
-  >
-    <span class="v-col text-h4"> {{ store.state.roomSettings.roomName }} </span>
-    <!-- <v-spacer></v-spacer> -->
+  <v-toolbar :title="store.state.roomSettings.roomName">
     <InteractionModeIndicator
       class="v-col"
       cols="1"
       :mode="store.state.roomSettings.mode"
     ></InteractionModeIndicator>
-    <!-- <v-spacer></v-spacer> -->
-    <div class="v-col">
-      <UserTooltip :users="store.state.roomSettings.participants"></UserTooltip>
-      <!-- <UserMenu /> -->
-      <DeviceDialog :num-connected-devices="numConnectedDevices">
-      </DeviceDialog>
-      <v-btn
-        color="primary"
-        :disabled="store.state.roomSettings.mode != 1"
-        prepend-icon="mdi-logout"
-        @click="logOut"
-        >Log out</v-btn
-      >
-    </div>
-  </div>
+    <UserTooltip :users="store.state.roomSettings.participants"></UserTooltip>
+    <!-- <UserMenu /> -->
+    <DeviceDialog :num-connected-devices="numConnectedDevices"> </DeviceDialog>
+    <v-btn
+      color="primary"
+      :disabled="store.state.roomSettings.mode != 1"
+      prepend-icon="mdi-logout"
+      @click="logOut"
+      >Log out</v-btn
+    >
+  </v-toolbar>
 </template>
 
 <style lang="scss" scoped>
