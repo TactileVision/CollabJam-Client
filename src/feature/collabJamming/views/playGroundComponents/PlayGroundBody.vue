@@ -113,7 +113,7 @@ export default defineComponent({
     //set the focus to the gui, so key down and up is working
     const container: any = this.$refs.container;
     this.$nextTick(() => container.$el.focus());
-    this.isMounted = true;
+    // this.isMounted = true;
     this.store.commit(PlayGroundMutations.UPDATE_EDIT_MDOE, false);
     this.devices = getAllDevices();
 

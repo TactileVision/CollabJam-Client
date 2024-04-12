@@ -284,5 +284,10 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
       }
       break;
     }
+    case WS_MSG_TYPE.UPDATE_TACTON_CLI: {
+      const tacton: Tacton = msg.payload.tacton;
+      store.dispatch(TactonPlaybackActionTypes.updateTacton, tacton);
+      break;
+    }
   }
 };

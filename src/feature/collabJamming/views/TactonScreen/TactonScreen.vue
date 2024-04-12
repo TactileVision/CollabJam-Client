@@ -6,8 +6,8 @@
     id="tactonHeader"
   >
   </v-row>
-  <!-- <TactonGraph :isMounted="isMounted" /> -->
-  <!-- </v-col> -->
+  <TactonGraph :isMounted="isMounted" />
+  <!-- <PixiTest></PixiTest> -->
 </template>
 
 <style lang="scss">
@@ -80,12 +80,13 @@ import { defineComponent } from "@vue/runtime-core";
 import { useStore } from "@/app/store/store";
 import { sendSocketMessage } from "@/core/WebSocketManager";
 import TactonGraph from "./TactonGraph.vue";
+import PixiTest from "./PixiTest.vue";
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
   name: "TactonScreen",
-  components: { TactonGraph /* , TactonSelectionList */ },
+  components: { TactonGraph /* PixiTest */ /*TactonSelectionList */ },
   props: {
     isMounted: {
       type: Boolean,
