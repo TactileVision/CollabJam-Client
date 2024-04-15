@@ -93,28 +93,28 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
      *   } as payload
      */
     case WS_MSG_TYPE.ENTER_ROOM_CLI: {
-      console.log("ENTER_UPDATE_ROOM_CLI");
+      console.log("ENTER_ROOM_CLI");
       store.dispatch(RoomSettingsActionTypes.enterRoom, msg.payload);
       //TODO Add action to set the list of tactons for a specific room id!
       store.dispatch(
         TactonPlaybackActionTypes.setTactonList,
         msg.payload.recordings,
       );
-      if (store.state.generalSettings.currentView == RouterNames.SETUP) {
-        //TODO Move to inside vue framework
-        // router.push("/playGround");
-        //TODO Start periodic sending of input data
-        if (store.state.roomSettings.id != undefined) {
-          //MARK: Start the debouncing of inputs
-          setInterval(() => {
-            bufferedSending(
-              store.state.roomSettings.id || "",
-              store.state.tactonSettings.debounceInstructionsBuffer,
-            );
-            store.dispatch(TactonSettingsActionTypes.clearDebounceBuffer);
-          }, 20);
-        }
+      // if (store.state.generalSettings.currentView == RouterNames.SETUP) {
+      //TODO Move to inside vue framework
+      // router.push("/playGround");
+      //TODO Start periodic sending of input data
+      if (store.state.roomSettings.id != undefined) {
+        //MARK: Start the debouncing of inputs
+        setInterval(() => {
+          bufferedSending(
+            store.state.roomSettings.id || "",
+            store.state.tactonSettings.debounceInstructionsBuffer,
+          );
+          store.dispatch(TactonSettingsActionTypes.clearDebounceBuffer);
+        }, 20);
       }
+      // }
       break;
     }
     /**
