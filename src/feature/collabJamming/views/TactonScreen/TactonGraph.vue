@@ -367,15 +367,15 @@ export default defineComponent({
         //   },
         // });
 
-        // let xOffset = 8;
-        // // label.resolution = 3;
-        // if (duration >= 10) xOffset = 12;
+        let xOffset = 8;
+        // label.resolution = 3;
+        if (duration >= 10) xOffset = 12;
 
         // label.x = xPosition - xOffset;
         // label.y = yPosition + 15;
         // this.coordinateContainer?.addChild(label);
-        // duration -= timeInterval;
-        // xPosition -= distLinesX;
+        duration -= timeInterval;
+        xPosition -= distLinesX;
       }
 
       // this.coordinateContainer?.addChild(basicText);
