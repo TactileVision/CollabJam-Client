@@ -27,7 +27,7 @@ export default defineConfig(({ command }) => {
         main: {
           // Shortcut of `build.lib.entry`
           // entry: 'electron/main/index.ts',
-          entry: "src/background.ts",
+          entry: "src/main/background.ts",
           onstart({ startup }) {
             if (process.env.VSCODE_DEBUG) {
               console.log(
@@ -38,10 +38,19 @@ export default defineConfig(({ command }) => {
             }
           },
           vite: {
+            //TODO :P
+            plugins: [tsconfigPaths()],
+            resolve: {
+              // alias: {
+              //   "@": resolve(__dirname, "/src"),
+              //   "@sharedTypes": resolve(__dirname, "./src/shared/types/*"),
+              // },
+            },
             build: {
               sourcemap,
               minify: isBuild,
               outDir: "dist_electron",
+
               rollupOptions: {
                 // Some third-party Node.js libraries may not be built correctly by Vite, especially `C/C++` addons,
                 // we can use `external` to exclude them to ensure they work correctly.
@@ -58,7 +67,7 @@ export default defineConfig(({ command }) => {
           // Shortcut of `build.rollupOptions.input`.
           // Preload scripts may contain Web assets, so use the `build.rollupOptions.input` instead `build.lib.entry`.
           // input: 'electron/preload/index.ts',
-          input: "src/preload.js",
+          input: "src/preload/preload.js",
           vite: {
             build: {
               sourcemap: sourcemap ? "inline" : undefined, // #332

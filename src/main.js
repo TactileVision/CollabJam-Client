@@ -1,21 +1,20 @@
 import { createApp } from "vue";
-import App from "./App.vue";
-import vuetify from "./plugins/vuetify";
-// import { loadFonts } from './plugins/webfontloader';
-import { router } from "./app/router";
-import { useStore } from "./app/store/store";
-import { initWebsocket } from "./core/WebSocketManager";
-import { initIpcRendererListener } from "./core/IPC/IpcRendererListener";
-import { registerInputAdapter } from "./core/Input/InputDetection/InputAdapter/InputAdapterRegistry";
-// import GamepadAdapter from "./app/InputDetection/InputAdapter/GamepadAdapter";
-import GamepadAdapter from "./core/Input/InputDetection/InputAdapter/GamepadAdapter";
-import { registerInputHandler } from "./core/Input/InputHandling/InputHandlerManager";
-import VariableIntensityHandler from "./core/Input/InputHandling/handlers/VariableIntensityHandler";
-import TriggerActuatorHandler from "./core/Input/InputHandling/handlers/TriggerActuatorHandler";
-import TriggerActuatorWithDynamicIntensityHandler from "./core/Input/InputHandling/handlers/TriggerActuatorWithDynamicIntensityHandler";
-import DynamicActuatorHandler from "./core/Input//InputHandling/handlers/DynamicActuatorHandler";
-import LockIntensityHandler from "./core/Input/InputHandling/handlers/LockIntensityHandler";
-import ChangeInteractionModeHandler from "./core/Input/InputHandling/handlers/ChangeInteractionModeHandler"
+import App from "@/renderer/App.vue";
+import vuetify from "@/plugins/vuetify";
+// import { loadFonts } from '@/plugins/webfontloader';
+import { router } from "@/renderer/router";
+import { useStore } from "@/renderer/store/store";
+import { initWebsocket } from "@/main/WebSocketManager";
+import { initIpcRendererListener } from "@/renderer/helpers/IpcRendererListener";
+import { registerInputAdapter } from "@/main/Input/InputDetection/InputAdapter/InputAdapterRegistry";
+import GamepadAdapter from "@/main/Input/InputDetection/InputAdapter/GamepadAdapter";
+import { registerInputHandler } from "@/main/Input/InputHandling/InputHandlerManager";
+import VariableIntensityHandler from "@/main/Input/InputHandling/handlers/VariableIntensityHandler";
+import TriggerActuatorHandler from "@/main/Input/InputHandling/handlers/TriggerActuatorHandler";
+import TriggerActuatorWithDynamicIntensityHandler from "@/main/Input/InputHandling/handlers/TriggerActuatorWithDynamicIntensityHandler";
+import DynamicActuatorHandler from "@/main/Input//InputHandling/handlers/DynamicActuatorHandler";
+import LockIntensityHandler from "@/main/Input/InputHandling/handlers/LockIntensityHandler";
+import ChangeInteractionModeHandler from "@/main/Input/InputHandling/handlers/ChangeInteractionModeHandler"
 import InlineSvg from "vue-inline-svg";
 
 // loadFonts()
