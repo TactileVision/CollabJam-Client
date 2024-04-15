@@ -810,10 +810,10 @@ export default defineComponent({
       const height = (distLinesY - ratioHeight * numberOfRows) * intensity;
       let yPosition = (idGraph + 1) * distLinesY - height * 0.5;
 
-      //console.log("draw Rectangle at x: " + xPosition);
-      // console.log(draw Rectangle at x: " + yPosition)
-      //console.log("draw Rectangle width: " + additionalWidth);
-      //console.log("draw Rectangle height: " + height);
+      // console.log("draw Rectangle at x: " + xPosition);
+      // console.log("draw Rectangle at x" + yPosition);
+      // console.log("draw Rectangle width: " + additionalWidth);
+      // console.log("draw Rectangle height: " + height);
       // draw the rectangle
       const rect = new PIXI.Graphics();
 
@@ -821,17 +821,19 @@ export default defineComponent({
       if (author == undefined) {
         rect.setFillStyle({
           color: "0x6c6c60",
+          alpha: 1,
           matrix: new PIXI.Matrix(),
         });
       } else {
-        const customColor: number = parseInt("0x" + author.color.slice(1));
         rect.setFillStyle({
-          color: customColor.toString(),
+          color: author.color,
+          alpha: 1,
           matrix: new PIXI.Matrix(),
         });
       }
-      rect.rect(xPosition, yPosition, additionalWidth, height).fill();
-      // rect.position.set(xPosition, yPosition);
+      rect.rect(0, 0, additionalWidth, height);
+      rect.position.set(xPosition, yPosition);
+      rect.fill();
 
       container.addChild(rect);
       //this.ticker?.stop();
@@ -883,17 +885,13 @@ export default defineComponent({
           matrix: new PIXI.Matrix(),
         });
       } else {
-        const customColor: number = parseInt("0x" + author.color.slice(1));
         rect.setFillStyle({
-          color: customColor.toString(),
+          color: author.color,
           matrix: new PIXI.Matrix(),
         });
-
-        // rect.beginFill(customColor);
       }
-      // rect.x = xPosition;
-      // rect.y = yPosition;
-      rect.rect(xPosition, yPosition, additionalWidth, height);
+      rect.rect(0, 0, additionalWidth, height);
+      rect.position.set(xPosition, yPosition);
       rect.fill();
 
       container.addChild(rect);
