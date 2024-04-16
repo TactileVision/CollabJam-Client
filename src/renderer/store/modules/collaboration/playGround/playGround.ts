@@ -9,8 +9,6 @@ import {
   InputBinding,
   InputDevice,
   InputProfile,
-  KeyboardDevice,
-  TactileAction,
   compareDevices,
 } from "@sharedTypes/InputDetection/InputBindings";
 import {
@@ -198,7 +196,7 @@ export interface Actions {
   ): void;
   [PlayGroundActionTypes.updateKeyButton](
     { commit }: AugmentedActionContext,
-    payload: { id: string; profileUid: string; props: any }, // Obsolete in here but left as an example
+    payload: { id: string; profileUid: string; props: object }, // Obsolete in here but left as an example
   ): void;
   [PlayGroundActionTypes.modifyGlobalIntensity](
     { commit }: AugmentedActionContext,
@@ -335,7 +333,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
   },
   [PlayGroundActionTypes.updateKeyButton](
     { commit },
-    payload: { id: string; profileUid: string; props: any },
+    payload: { id: string; profileUid: string; props: object },
   ) {
     const profileIndex = state.profiles.findIndex(
       (profile) => profile.uid === payload.profileUid,
@@ -442,7 +440,7 @@ export const getters: GetterTree<State, RootState> & Getters = {
 
     return binding.activeTriggers > 0;
   },
-  isInputAlreadyTaken: (state) => (originalId, profile, input) => {
+  isInputAlreadyTaken: () => (originalId, profile, input) => {
     const binding = profile.bindings.find((binding) =>
       compareInputs(binding.inputs[0], input),
     );

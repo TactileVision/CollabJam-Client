@@ -52,7 +52,8 @@ export const writeAmplitudeBuffers = (
 
 function getBufferFromAmplitudeTasks(taskList: TactileTask[]): Buffer {
   const numOut = Math.max(
-    ...taskList.map((o) => Math.max.apply(Math, o.channelIds)),
+    // ...taskList.map((o) => Math.max.apply(Math, o.channelIds)),
+    ...taskList.map((o) => Math.max(...o.channelIds)),
   );
   const output = new Uint8Array(numOut + 1).fill(255);
 
@@ -70,7 +71,8 @@ function getBufferFromAmplitudeTasks(taskList: TactileTask[]): Buffer {
 
 function getBufferFromFrequencyTasks(taskList: SetFrequencyTask[]): Buffer {
   const numOut = Math.max(
-    ...taskList.map((o) => Math.max.apply(Math, o.channelIds)),
+    // ...taskList.map((o) => Math.max.apply(Math, o.channelIds)),
+    ...taskList.map((o) => Math.max(...o.channelIds)),
   );
   const output = new Uint8Array(2 * (numOut + 1)).fill(0);
   taskList.forEach((task) => {

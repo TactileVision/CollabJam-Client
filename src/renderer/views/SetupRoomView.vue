@@ -131,7 +131,7 @@
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import {
   RoomMutations,
@@ -183,7 +183,7 @@ export default defineComponent({
   },
   methods: {
     cancelRoomEnter() {
-      window.api.send(IPC_CHANNELS.main.changeScan, false);
+      window.api.send(IPC_CHANNELS.main.changeScan, { scanStatus: false });
       sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
         roomId: this.store.state.roomSettings.id,
         user: this.store.state.roomSettings.user,
@@ -191,8 +191,10 @@ export default defineComponent({
       this.$router.push("/");
     },
     enterRoom() {
-      window.api.send(IPC_CHANNELS.main.changeScan, false);
-      window.api.send(IPC_CHANNELS.main.saveUserName, this.userName);
+      window.api.send(IPC_CHANNELS.main.changeScan, { scanStatus: false });
+      window.api.send(IPC_CHANNELS.main.saveUserName, {
+        userName: this.userName,
+      });
       console.log(this.store.state.roomSettings.roomState);
       if (this.store.state.roomSettings.roomState == RoomState.Configure) {
         sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_SERV, {

@@ -8,7 +8,6 @@ import {
   isInstructionWait,
   TactonMetadata,
 } from "@sharedTypes/tactonTypes";
-import { TactonMutations } from "../tactonSettings/tactonSettings";
 
 export const createTactonInstructionsFromPayload = (
   payload: InstructionServerPayload[],

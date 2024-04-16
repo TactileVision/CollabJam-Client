@@ -43,6 +43,7 @@ export default defineComponent({
   props: {
     color: {
       type: String,
+      default: "#000000",
     },
     isFirstEntry: {
       type: Boolean,

@@ -52,7 +52,7 @@
                 thumb-label
                 v-model="maxAmp"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   Maximal Amplitude: {{ maxAmp.toFixed(2) }}
                 </template>
               </v-slider>
@@ -66,7 +66,7 @@
                 thumb-label
                 v-model="sliderBD"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   Burst Duration: {{ sliderBD }} ms
                 </template>
               </v-slider>
@@ -80,7 +80,7 @@
                 thumb-label
                 v-model="sliderNumImpulses"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   Number of impulses: {{ sliderNumImpulses }}
                 </template>
               </v-slider>
@@ -94,7 +94,7 @@
                 thumb-label
                 v-model="sliderIBI"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   Inter burst interval: {{ sliderIBI }}ms
                 </template>
               </v-slider>
@@ -143,7 +143,7 @@ import { TactileTask } from "@sharedTypes/tactonTypes";
 import { writeAmplitudeOnDisplay } from "@/renderer/helpers/TactileDisplayActions";
 
 export default defineComponent({
-  name: "Saltation",
+  name: "SaltationView",
   components: { ActuatorSelectionMenu, ActuatorArrangement },
   data() {
     return {

@@ -6,81 +6,16 @@
     id="tactonHeader"
   >
   </v-row>
-  <TactonGraph :isMounted="isMounted" />
-  <!-- <PixiTest></PixiTest> -->
+  <TactonGraph :is-mounted="isMounted" />
 </template>
 
-<style lang="scss">
-.mode-indicator {
-  display: block;
-  width: 100%;
-  user-select: none;
-  &.recording {
-    > span {
-      color: white;
-    }
+<style scoped="scss"></style>
 
-    background-color: red;
-  }
-
-  &.jamming {
-    background-color: green;
-  }
-
-  &.playback {
-    background-color: yellow;
-  }
-
-  > span {
-    display: block;
-    margin: auto;
-    padding: 1em;
-    text-align: center;
-    font-weight: bold;
-  }
-}
-
-.durationBox {
-  padding-left: 10px;
-  max-width: 100px;
-
-  .v-input__control {
-    height: 40px !important;
-    max-height: 40px !important;
-    display: flex;
-
-    .v-field {
-      .v-label {
-        display: none;
-      }
-
-      .v-field__append-inner {
-        display: flex;
-        height: 40px !important;
-        align-items: center;
-        padding-top: 0;
-      }
-
-      .v-field__field {
-        height: 40px !important;
-        max-height: 40px !important;
-        display: flex;
-        padding-top: 0;
-      }
-    }
-  }
-
-  .v-input__details {
-    display: none;
-  }
-}
-</style>
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { sendSocketMessage } from "@/main/WebSocketManager";
 import TactonGraph from "./TactonGraph.vue";
-import PixiTest from "./PixiTest.vue";
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
@@ -105,10 +40,10 @@ export default defineComponent({
       get(): string {
         return (this.maxDurationStore / 1000).toString() + "s";
       },
-      set(newValue: any) {
+      set(newValue: string) {
         sendSocketMessage(WS_MSG_TYPE.CHANGE_DURATION_SERV, {
           roomId: this.store.state.roomSettings.id,
-          duration: newValue.substring(0, newValue.length - 1) * 1000,
+          duration: parseInt(newValue.substring(0, newValue.length - 1)) * 1000,
         });
       },
     },

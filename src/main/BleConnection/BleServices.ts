@@ -1,5 +1,6 @@
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import { sendMessageToRenderer } from "@/main/IpcController/IpcMainController";
+import { Characteristic } from "@abandonware/noble";
 
 const tactileDisplayService: Service = {
   service: { uuid: "f33c00018ebf4c9c83ecbfff479a930b" },
@@ -7,8 +8,8 @@ const tactileDisplayService: Service = {
     numberOfOutputs: {
       uuid: "f33c00028ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: any) => {
-          characteristic.read((error: any, data: any) => {
+        (characteristic: Characteristic) => {
+          characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
             }
@@ -28,8 +29,8 @@ const tactileDisplayService: Service = {
     canChangeAmplitude: {
       uuid: "f33c00038ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: any) => {
-          characteristic.read((error: any, data: any) => {
+        (characteristic: Characteristic) => {
+          characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
             }
@@ -50,8 +51,8 @@ const tactileDisplayService: Service = {
     canChangeFrequency: {
       uuid: "f33c00048ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: any) => {
-          characteristic.read((error: any, data: any) => {
+        (characteristic: Characteristic) => {
+          characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
             }
@@ -72,8 +73,8 @@ const tactileDisplayService: Service = {
     frequencyRange: {
       uuid: "f33c00058ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: any) => {
-          characteristic.read((error: any, data: any) => {
+        (characteristic: Characteristic) => {
+          characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
             }
@@ -95,7 +96,7 @@ const tactileDisplayService: Service = {
     amplitudeValues: {
       uuid: "f33c00328ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: any) => {
+        () => {
           console.log("amplitudeValues");
         },
       ],
@@ -103,7 +104,7 @@ const tactileDisplayService: Service = {
     frequencyValues: {
       uuid: "f33c00338ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: any) => {
+        () => {
           console.log("frequencyValues");
         },
       ],
@@ -114,12 +115,12 @@ const tactileDisplayService: Service = {
 interface Service {
   service: {
     uuid: string;
-    callbacks?: any[];
+    callbacks?: ((characteristic: Characteristic) => void)[] | (() => void)[];
   };
   characteristics?: {
     [key: string]: {
       uuid: string;
-      callbacks?: any[];
+      callbacks?: ((characteristic: Characteristic) => void)[] | (() => void)[];
     };
   };
 }

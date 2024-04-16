@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="dialog" persistent width="auto">
-    <template v-slot:activator="{ props }">
+    <template #activator="{ props }">
       <v-btn
         prepend-icon="mdi-account"
         :color="users.length == 0 ? 'error' : 'primary'"
@@ -21,7 +21,7 @@
             :key="user.id"
             :title="user.name.length == 0 ? 'Unnamed User' : user.name"
           >
-            <template v-slot:prepend>
+            <template #prepend>
               <v-icon
                 :color="user.color"
                 icon="mdi-account"
@@ -44,7 +44,7 @@
 <style lang="scss" scoped></style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { User } from "@sharedTypes/roomTypes";
 import { PropType } from "vue";
 export default defineComponent({

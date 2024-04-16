@@ -89,7 +89,7 @@
     density="compact"
   >
     <v-list-item
-      v-for="(tacton, index) of getTactons()"
+      v-for="tacton of getTactons()"
       :disabled="store.state.roomSettings.mode != 1"
       :key="tacton.uuid"
       class="non-selectable"
@@ -98,7 +98,7 @@
       :active="tacton.uuid == selection"
       @click="selectTacton(tacton)"
     >
-      <template v-slot:prepend>
+      <template #prepend>
         <v-list-item-action>
           <v-btn
             :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'"
@@ -123,13 +123,13 @@
   overflow-y: scroll !important;
 }
 
-#prefix-input {
-  border-style: solid;
-}
+// #prefix-input {
+//   border-style: solid;
+// }
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { sendSocketMessage } from "@/main/WebSocketManager";

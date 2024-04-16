@@ -19,7 +19,7 @@
           cols="12"
         >
           <div id="TactonGraphWrapper">
-            <TactonGraphWrapper :isMounted="isMounted" />
+            <TactonGraphWrapper :is-mounted="isMounted" />
           </div>
           <!-- <v-sheet id="TactonGraphWrapper" elevation="0" class="mr-2 pa-4"> -->
           <!-- </v-sheet> -->
@@ -45,14 +45,14 @@
       @click:outside="closeDialog"
     >
       <CollaborationDialog
-        @closeDialog="closeDialog"
-        :keyButtonId="idOfEditableButton"
+        @close-dialog="closeDialog"
+        :key-button-id="idOfEditableButton"
       />
     </v-dialog>
   </v-container>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
 .playGroundView {
   display: flex;
   height: 90%;
@@ -74,13 +74,13 @@
   height: 45vh;
 }
 
-.devices {
-  margin: 2rem;
-}
+// .devices {
+//   margin: 2rem;
+// }
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import TactonGraphWrapper from "@/renderer/components/TactonGraphWrapper.vue";
 import CollaborationDialog from "./CollaborationDialog.vue";
 import CollaborationInputDeviceProfile from "./CollaborationInputDeviceProfile.vue";
@@ -118,8 +118,11 @@ export default defineComponent({
   },
   mounted() {
     //set the focus to the gui, so key down and up is working
-    const container: any = this.$refs.container;
-    this.$nextTick(() => container.$el.focus());
+    console.log("foo");
+    console.log(this.$refs);
+    console.log(typeof this.$refs.contia);
+    const container: object = this.$refs.container as object;
+    this.$nextTick(() => (container.$el as HTMLDivElement).focus());
     // this.isMounted = true;
     this.store.commit(PlayGroundMutations.UPDATE_EDIT_MDOE, false);
     this.devices = getAllDevices();
@@ -144,8 +147,8 @@ export default defineComponent({
         RouterNames.PLAY_GROUND,
       );
       // set the focus again, so key down and up is working
-      const container: any = this.$refs.container;
-      this.$nextTick(() => container.$el.focus());
+      const container: object = this.$refs.container as object;
+      this.$nextTick(() => (container.$el as HTMLDivElement).focus());
     },
     startDialog(id: string) {
       //console.log("startDialog: " + id);

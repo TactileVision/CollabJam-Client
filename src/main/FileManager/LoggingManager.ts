@@ -38,7 +38,7 @@ class LoggingManager {
     try {
       fs.readFileSync(this.pathSettings, { encoding: "utf8" });
       return true;
-    } catch (err: any) {
+    } catch (err: Error) {
       if (err.code !== "ENOENT") {
         console.log("err");
         console.log(err);

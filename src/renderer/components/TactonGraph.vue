@@ -371,9 +371,9 @@ export default defineComponent({
         //   },
         // });
 
-        let xOffset = 8;
+        // let xOffset = 8;
         // label.resolution = 3;
-        if (duration >= 10) xOffset = 12;
+        // if (duration >= 10) xOffset = 12;
 
         // label.x = xPosition - xOffset;
         // label.y = yPosition + 15;
@@ -650,13 +650,13 @@ export default defineComponent({
                 blockContainer.removeChild(oldControls);
                 oldControls.destroy({ children: true });
               }
-              const newControls = this.drawBlockControls(
-                i,
-                currentIndex,
-                blockContainer.width,
-                blockContainer,
-                true,
-              );
+              // const newControls = this.drawBlockControls(
+              //   i,
+              //   currentIndex,
+              //   blockContainer.width,
+              //   blockContainer,
+              //   true,
+              // );
               this.selectedBlock = {
                 moving: true,
                 channel: i,

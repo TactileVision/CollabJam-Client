@@ -5,7 +5,6 @@ import mappingBImage from "@/renderer/assets/inputs/mappingB.svg";
 import mappingCImage from "@/renderer/assets/inputs/mappingC.svg";
 import {
   DeviceType,
-  InputProfile,
   TactileAction,
 } from "@sharedTypes/InputDetection/InputBindings";
 import {
@@ -15,7 +14,7 @@ import {
   UserInputType,
 } from "@sharedTypes/InputDetection/InputDetection";
 import { StateProfile } from "./playGround";
-import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
+import { InteractionModeChange } from "@sharedTypes/roomTypes";
 
 const mappingBTriggerActuators = [
   {

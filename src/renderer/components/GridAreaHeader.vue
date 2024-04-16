@@ -37,7 +37,7 @@
   </v-row>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
 .slider {
   justify-content: center;
   align-items: center;
@@ -48,13 +48,13 @@
   align-items: center;
   color: #000000 !important;
   opacity: 1;
-  .v-selection-control {
-    size: 10px;
-    height: 15px;
-  }
-  .v-input--density-default {
-    --v-input-control-height: 0px;
-  }
+  // .v-selection-control {
+  //   size: 10px;
+  //   height: 15px;
+  // }
+  // .v-input--density-default {
+  //   --v-input-control-height: 0px;
+  // }
 }
 </style>
 
@@ -64,7 +64,7 @@ import {
   PlayGroundActionTypes,
 } from "@/renderer/store/modules/collaboration/playGround/types";
 import { useStore } from "@/renderer/store/store";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "GridHeader",

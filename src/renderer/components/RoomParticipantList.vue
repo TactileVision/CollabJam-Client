@@ -11,13 +11,13 @@
         v-if="item.name !== ''"
         :letter="item.name.charAt(0).toUpperCase()"
         :color="item.color"
-        :isFirstEntry="true"
+        :is-first-entry="true"
         :clickable="false"
       />
       <UserMenuDefaultProfile
         v-else
         :color="item.color"
-        :isFirstEntry="true"
+        :is-first-entry="true"
         :clickable="false"
       />
     </v-col>
@@ -27,10 +27,10 @@
   </v-row>
 </template>
 
-<style></style>
+<style scoped lang="scss"></style>
 <script lang="ts">
 import { useStore } from "@/renderer/store/store";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import UserMenuDefaultProfile from "@/renderer/components/UserMenuDefaultProfile.vue";
 import UserMenuCustomProfile from "@/renderer/components/UserMenuCustomProfile.vue";
 export default defineComponent({

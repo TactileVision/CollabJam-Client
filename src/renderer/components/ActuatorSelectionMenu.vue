@@ -7,14 +7,14 @@
     <v-card-title v-else
       >Select Actuators ({{ selectedActuators.length }})</v-card-title
     >
-    <v-card v-for="display in tactileDisplayList" v-bind:key="display.info.id">
+    <v-card v-for="display in tactileDisplayList" :key="display.info.id">
       <v-card-title>
         {{ display.info.name }}
       </v-card-title>
       <v-container>
         <v-row>
           <div class="actuator-selection-list">
-            <div v-for="i in display.numOfOutputs" v-bind:key="i">
+            <div v-for="i in display.numOfOutputs" :key="i">
               <!-- TODO: Change to a list of selected elements -->
               <input
                 :disabled="!isSelectable(display.info.id + '-' + (i - 1))"
@@ -57,7 +57,7 @@
   </v-card>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 // .actuator-selection-menu {
 // 	>div {
 // 		margin-right: 2em;
@@ -86,10 +86,14 @@ export default defineComponent({
   name: "ActuatorSelectionMenu",
   emits: ["update:modelValue"],
   props: {
-    modelValue: Object as () => ActuatorSelection[],
+    modelValue: {
+      type: Object as () => ActuatorSelection[],
+      required: true,
+    },
     numActuators: {
       type: Number,
       required: false,
+      default: 0,
     },
   },
   data() {

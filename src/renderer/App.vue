@@ -15,102 +15,16 @@
   </div>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
 .main {
   height: 100%;
   outline: none;
   justify-content: center;
   display: flex;
 }
-
-.v-main__wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .root {
   display: block;
   width: 100%;
-}
-
-.customIcon {
-  padding-left: 5px;
-}
-
-.snackbar {
-  display: flex;
-  justify-content: space-between;
-  width: 90%;
-  /* Set a default minimum width */
-  box-shadow:
-    0 10px 16px 0 rgba(0, 0, 0, 0.2),
-    0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
-  border-radius: 5px !important;
-  // box-shadow: #333;
-  background-color: #333;
-  /* Black background color */
-  color: #fff;
-  /* White text color */
-  text-align: center;
-  /* Centered text */
-  border-radius: 2px;
-  /* Rounded borders */
-  padding: 16px;
-  /* Padding */
-  margin: 16px;
-  /* Padding */
-  position: fixed;
-  /* Sit on top of the screen */
-  z-index: 1;
-  /* Add a z-index if needed */
-  bottom: 30px;
-  /* 30px from the bottom */
-}
-
-.snackbarSucess {
-  display: flex;
-  justify-content: center;
-  width: 50%;
-  /* Set a default minimum width */
-  box-shadow:
-    0 10px 16px 0 rgba(0, 0, 0, 0.2),
-    0 6px 20px 0 rgba(0, 0, 0, 0.19) !important;
-  border-radius: 5px !important;
-  // box-shadow: #333;
-  color: #fff;
-  /* White text color */
-  text-align: center;
-  /* Centered text */
-  border-radius: 2px;
-  /* Rounded borders */
-  padding: 16px;
-  /* Padding */
-  margin: auto;
-  /* Padding */
-  position: fixed;
-  /* Sit on top of the screen */
-  z-index: 1;
-  /* Add a z-index if needed */
-  bottom: 30px;
-  /* 30px from the bottom */
-}
-
-.label {
-  display: flex;
-  align-items: center;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.9s;
-}
-
-.fade-enter,
-.fade-leave-to
-
-/* .fade-leave-active below version 2.1.8 */ {
-  opacity: 0;
 }
 </style>
 <script lang="ts">
@@ -130,11 +44,11 @@ import {
   DeviceType,
   KeyboardDevice,
 } from "@sharedTypes/InputDetection/InputBindings";
-import TheAppBar from "@/renderer/components/TheAppBar.vue";
+// import TheAppBar from "@/renderer/components/TheAppBar.vue";
 import TheSidebar from "@/renderer/components/TheSidebar.vue";
 export default defineComponent({
   name: "App",
-  components: { TheAppBar, TheSidebar },
+  components: { /* TheAppBar ,*/ TheSidebar },
   data() {
     return {
       store: useStore(),
@@ -183,7 +97,7 @@ export default defineComponent({
         wasActive: false,
       });
     },
-    buttonUp(e: any) {
+    buttonUp(e: KeyboardEvent) {
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
       const input: KeyInput = {

@@ -52,8 +52,8 @@
                 thumb-label
                 v-model="maxAmp"
               >
-                <template v-slot:prepend> Maximal Amplitude </template>
-                <template v-slot:append>
+                <template #prepend> Maximal Amplitude </template>
+                <template #append>
                   {{ maxAmp.toFixed(2) }}
                 </template>
               </v-slider>
@@ -66,11 +66,9 @@
                 thumb-label
                 v-model="slider"
               >
-                <template v-slot:prepend>
-                  Left: {{ slider.toFixed(2) }}
-                </template>
+                <template #prepend> Left: {{ slider.toFixed(2) }} </template>
 
-                <template v-slot:append>
+                <template #append>
                   Right: {{ (1 - slider).toFixed(2) }}
                 </template>
               </v-slider>
@@ -87,8 +85,8 @@
                 thumb-label
                 v-model="pulseMs"
               >
-                <template v-slot:prepend> Pulse duration </template>
-                <template v-slot:append> {{ pulseMs }}ms </template>
+                <template #prepend> Pulse duration </template>
+                <template #append> {{ pulseMs }}ms </template>
               </v-slider>
               <v-slider
                 hide-details
@@ -100,15 +98,15 @@
                 thumb-label
                 v-model="interPulseMs"
               >
-                <template v-slot:prepend> Inter Pulse Interval </template>
-                <template v-slot:append> {{ interPulseMs }}ms </template>
+                <template #prepend> Inter Pulse Interval </template>
+                <template #append> {{ interPulseMs }}ms </template>
               </v-slider>
             </v-card>
           </v-col>
           <v-col>
             <actuator-selection-menu
               :disabled="isRunning"
-              :numActuators="2"
+              :num-actuators="2"
               v-model="actuators"
             ></actuator-selection-menu>
           </v-col>
@@ -145,7 +143,7 @@ import ActuatorSelectionMenu from "@/renderer/components/ActuatorSelectionMenu.v
 import { ActuatorSelection } from "@/renderer/helpers/TactileDisplayValidation";
 
 export default defineComponent({
-  name: "Funneling",
+  name: "FunnelingView",
   components: { ActuatorSelectionMenu },
   data() {
     return {

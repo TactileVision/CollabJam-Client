@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
 // .overflow-wrapper {
 // 	overflow: scroll;
 // 	height: 100vh;
@@ -20,13 +20,11 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
-import { mapGetters } from "vuex";
-import EditActorParameter from "@/renderer/components/EditActorParameter.vue";
 import { TactileDisplay } from "@/renderer/store/modules/DeviceManager/DeviceManagerStore";
 
 export default defineComponent({
   name: "ChannelParameter",
-  components: { EditActorParameter },
+  components: {},
   data() {
     return {
       store: useStore(),

@@ -9,7 +9,7 @@
       >
       <v-list lines="one">
         <v-list-item
-          v-for="(room, index) of store.state.roomSettings.availableRooms"
+          v-for="room of store.state.roomSettings.availableRooms"
           :key="room.id"
           @click="enterRoom(room.id)"
           :title="room.name"
@@ -29,12 +29,11 @@
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { RoomMutations } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { sendSocketMessage } from "@/main/WebSocketManager";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
-import { getAvailableRooms } from "@/main/WebSocketManager/roomHandler";
 export default defineComponent({
   name: "RoomView",
   data() {

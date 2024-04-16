@@ -26,11 +26,10 @@ import {
   UpdateRoomMode,
   WS_MSG_TYPE,
 } from "@sharedTypes/websocketTypes";
-import { useRouter } from "vue-router";
 
 export interface SocketMessage {
   type: WS_MSG_TYPE;
-  payload: any;
+  payload: object;
 }
 
 export const handleMessage = (store: Store, msg: SocketMessage) => {
@@ -176,10 +175,9 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
         store.state.generalSettings.currentView == RouterNames.PLAY_GROUND &&
         !store.state.playGround.inEditMode
       ) {
-        window.api.send(
-          IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers,
-          msg.payload,
-        );
+        window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, {
+          taskList: msg.payload,
+        });
       }
       break;
     }
@@ -209,7 +207,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
               };
               window.api.send(
                 IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers,
-                [tt],
+                { taskList: [tt] },
               );
             });
           }

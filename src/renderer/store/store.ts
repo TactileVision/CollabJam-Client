@@ -1,5 +1,6 @@
 //file to initiate the vuex store, with all modules
 import { createStore } from "vuex";
+import type { ContextBridgeApi } from "@/preload/preload";
 
 import {
   store as generalSettings,
@@ -75,10 +76,13 @@ export const store = createStore({
     tactonPlayback,
   },
 });
-
 declare global {
   interface Window {
-    api: any;
+    api: ContextBridgeApi;
+    // api: {
+    //   send: (channel: string, payload: object) => void;
+    //   receive: (channel: string, payload: object) => void;
+    // };
   }
 }
 

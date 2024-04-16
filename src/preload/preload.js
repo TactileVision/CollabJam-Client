@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+import { contextBridge, ipcRenderer } from "electron";
 
 const isValidChannel = (element, channel) => {
   if (typeof channel === "string" || channel instanceof String) {
@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld("api", {
   send: (channel, data) => {
     // whitelist channels
     //send to the main
-    let validChannels = ["tactile-jam.main", "collabjam.main"];
+    const validChannels = ["tactile-jam.main", "collabjam.main"];
     const isValid = validChannels.some((el) => isValidChannel(el, channel));
 
     if (isValid == true) {
@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld("api", {
   },
   receive: (channel, func) => {
     //get messages from main
-    let validChannels = ["collabjam.renderer", "tactile-jam.renderer"];
+    const validChannels = ["collabjam.renderer", "tactile-jam.renderer"];
     const isValid = validChannels.some((el) => isValidChannel(el, channel));
 
     if (isValid == true) {

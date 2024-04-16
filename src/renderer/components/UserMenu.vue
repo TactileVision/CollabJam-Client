@@ -1,24 +1,24 @@
 <template>
   <div style="padding-right: 20px" v-click-outside="leaveMenu">
-    <div style="height: 40px; display: flex; align-item: center">
+    <div style="height: 40px; display: flex; align-content: center">
       <div
         v-for="(item, index) in store.state.roomSettings.participants"
-        v-bind:key="index"
+        :key="index"
       >
         <UserMenuCustomProfile
           v-if="item.name !== ''"
           :letter="item.name.charAt(0).toUpperCase()"
           :color="item.color"
-          :isFirstEntry="index == 0"
+          :is-first-entry="index == 0"
           :clickable="true"
-          @displayMenuDialog="switchMenu"
+          @display-menu-dialog="switchMenu"
         />
         <UserMenuDefaultProfile
           v-else
           :color="item.color"
-          :isFirstEntry="index == 0"
+          :is-first-entry="index == 0"
           :clickable="true"
-          @displayMenuDialog="switchMenu"
+          @display-menu-dialog="switchMenu"
         />
       </div>
       <div
@@ -44,13 +44,13 @@
               store.getters.userNameFromServer.name.charAt(0).toUpperCase()
             "
             :color="store.getters.userNameFromServer.color"
-            :isFirstEntry="true"
+            :is-first-entry="true"
             :clickable="false"
           />
           <UserMenuDefaultProfile
             v-else
             :color="store.getters.userNameFromServer.color"
-            :isFirstEntry="true"
+            :is-first-entry="true"
             :clickable="false"
           />
 
@@ -58,7 +58,7 @@
             <div class="inline">
               <input
                 class="inputField"
-                v-on:keyup.enter="leaveMenu"
+                @keyup.enter="leaveMenu"
                 v-model="userName"
               />
               <v-icon right @click="leaveMenu"> mdi-content-save </v-icon>
@@ -74,7 +74,7 @@
           <div style="display: flex; padding-left: 3px">
             <UserMenuDefaultProfile
               :color="item.color"
-              :isFirstEntry="true"
+              :is-first-entry="true"
               :clickable="false"
             />
             <div class="partName">
@@ -111,10 +111,11 @@
   flex-grow: 1;
 }
 
+/*
 .dropdown {
   position: relative;
   display: inline-block;
-}
+}*/
 
 .dropdown-content {
   position: absolute;
@@ -124,6 +125,7 @@
   z-index: 1;
 }
 
+/*
 .dropdown-content a {
   color: black;
   text-decoration: none;
@@ -136,7 +138,7 @@
 
 .dropdown:hover .dropbtn {
   background-color: #3e8e41;
-}
+}*/
 
 .customMenu {
   pointer-events: none;
@@ -158,7 +160,7 @@ import {
 import { RoomMutations } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { useStore } from "@/renderer/store/store";
 import { RouterNames } from "@/renderer/router/Routernames";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { sendSocketMessage } from "@/main/WebSocketManager";
 import UserMenuCustomProfile from "./UserMenuCustomProfile.vue";
 import UserMenuDefaultProfile from "./UserMenuDefaultProfile.vue";
@@ -201,10 +203,9 @@ export default defineComponent({
         //save that its stored to show snackbar
         this.store.dispatch(GeneralSettingsActionTypes.userNameGetSaved);
         //save the setting inside of the config file
-        window.api.send(
-          IPC_CHANNELS.main.saveUserName,
-          this.store.state.roomSettings.user.name,
-        );
+        window.api.send(IPC_CHANNELS.main.saveUserName, {
+          userName: this.store.state.roomSettings.user.name,
+        });
         //update user that the userName get changed
         sendSocketMessage(WS_MSG_TYPE.UPDATE_USER_ACCOUNT_SERV, {
           roomId: this.store.state.roomSettings.id,

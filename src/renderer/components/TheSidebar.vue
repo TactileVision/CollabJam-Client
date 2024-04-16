@@ -59,7 +59,7 @@ import { router } from "@/renderer/router";
 import { RouterNames } from "@/renderer/router/Routernames";
 import { useStore } from "vuex";
 export default defineComponent({
-  name: "Sidebar",
+  name: "TheSidebar",
   data() {
     return {
       store: useStore(),

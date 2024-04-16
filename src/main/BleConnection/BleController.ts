@@ -16,7 +16,7 @@ import { pingDisplayViaNode } from "@/main/BleTactileDisplays/TactileDisplayChar
  */
 let blueToothState = "";
 
-noble.on("stateChange", (state: any) => {
+noble.on("stateChange", (state: string) => {
   blueToothState = state;
 });
 
@@ -93,16 +93,17 @@ const setOnCharacteristicsDiscover = (
                 });
               }
             }
-            characteristic.once("descriptorsDiscover", (descriptors) => {
-              // console.log(descriptors)
-              // descriptors.forEach((d) =>{
-              //     d.readValue((error, data)=>{
-              //         // console.log("decriptor read")
-              //         // console.log(data)
-              //         // console.log(error)
-              //     })
-              // })
-            });
+            // Descovering descriptors caused crashes on macintosh
+            // characteristic.once("descriptorsDiscover", (descriptors) => {
+            // console.log(descriptors)
+            // descriptors.forEach((d) =>{
+            //     d.readValue((error, data)=>{
+            //         // console.log("decriptor read")
+            //         // console.log(data)
+            //         // console.log(error)
+            //     })
+            // })
+            // });
             characteristic.discoverDescriptors();
           }
         }

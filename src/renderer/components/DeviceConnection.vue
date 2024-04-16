@@ -38,6 +38,7 @@ export default defineComponent({
     numConnectedDevices: {
       type: Number,
       required: false,
+      default: 0,
     },
   },
   data() {

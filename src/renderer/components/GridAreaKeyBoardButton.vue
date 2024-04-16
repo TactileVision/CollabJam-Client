@@ -7,7 +7,7 @@
     @click="handleMouse(false)"
     @mouseleave="handleMouseLeave()"
     @mousedown="handleMouse(true)"
-    v-bind:style="{ backgroundColor: colorActuator }"
+    :style="{ backgroundColor: colorActuator }"
   >
     <v-card-text style="padding: 1px" class="keyButton">
       <v-row no-gutters>
@@ -57,7 +57,7 @@
 
 <script lang="ts">
 import { useStore } from "@/renderer/store/store";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import {
   isActuatorAction,
   isIntensityAction,
@@ -69,7 +69,6 @@ import {
   StateInputBinding,
   StateProfile,
 } from "@/renderer/store/modules/collaboration/playGround/playGround";
-import { UserInput } from "@sharedTypes/InputDetection/InputDetection";
 
 export default defineComponent({
   name: "KeyBoardButton",

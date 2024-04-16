@@ -43,21 +43,21 @@
 //   padding:0 10px;
 // }
 
-.listSection {
-  margin: 0;
-  padding: 0;
-  max-width: 100% !important;
-  min-width: 100% !important;
-}
+// .listSection {
+//   margin: 0;
+//   padding: 0;
+//   max-width: 100% !important;
+//   min-width: 100% !important;
+// }
 
-.test {
-  margin: 0;
-  flex-grow: 1;
-}
+// .test {
+//   margin: 0;
+//   flex-grow: 1;
+// }
 </style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import DeviceConnectionTableRow from "./DeviceConnectionTableRow.vue";
 import { useStore } from "@/renderer/store/store";
@@ -85,7 +85,9 @@ export default defineComponent({
       this.isScanning = !this.isScanning;
       if (this.isScanning)
         this.store.commit(GeneralMutations.UPDATE_DEVICE_LIST, []);
-      window.api.send(IPC_CHANNELS.main.changeScan, this.isScanning);
+      window.api.send(IPC_CHANNELS.main.changeScan, {
+        scanStatus: this.isScanning,
+      });
     },
   },
 });

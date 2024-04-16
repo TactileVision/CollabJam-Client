@@ -1,5 +1,4 @@
-import fs from "fs";
-import { BrowserWindow, dialog, ipcMain, clipboard } from "electron";
+import { BrowserWindow, ipcMain, clipboard } from "electron";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import DeviceManager from "@/main/BleConnection/BlePeripheralConnectionManager";
 import { SetFrequencyTask, TactileTask } from "@sharedTypes/tactonTypes";
@@ -39,78 +38,93 @@ electronCache.getBrowserWindow().webContents.send('tactile-jam.receive', 'pong')
  * initiate listener for the renderer process
  */
 
-ipcMain.on(IPC_CHANNELS.main.actuator, (event, actuator) => {
-  _win.webContents.send(IPC_CHANNELS.renderer.actuator, actuator);
-});
+// ipcMain.on(IPC_CHANNELS.main.actuator, (event, actuator) => {
+//   _win.webContents.send(IPC_CHANNELS.renderer.actuator, actuator);
+// });
 
 //change scan for the ble devices
-ipcMain.on(IPC_CHANNELS.main.changeScan, (event, scanStatus: boolean) => {
-  if (scanStatus) {
-    DeviceManager.startScan();
-  } else {
-    DeviceManager.stopScan();
-  }
-});
+ipcMain.on(
+  IPC_CHANNELS.main.changeScan,
+  (event, data: { scanStatus: boolean }) => {
+    if (data.scanStatus) {
+      DeviceManager.startScan();
+    } else {
+      DeviceManager.stopScan();
+    }
+  },
+);
 
-ipcMain.on(IPC_CHANNELS.main.connectDevice, (event, deviceID: string) => {
-  DeviceManager.connectDevice(deviceID);
-});
+ipcMain.on(
+  IPC_CHANNELS.main.connectDevice,
+  (event, data: { deviceId: string }) => {
+    DeviceManager.connectDevice(data.deviceId);
+  },
+);
 
-ipcMain.on(IPC_CHANNELS.main.disconnectDevice, (event, deviceID: string) => {
-  DeviceManager.disconnectDevice(deviceID);
-});
+ipcMain.on(
+  IPC_CHANNELS.main.disconnectDevice,
+  (event, data: { deviceId: string }) => {
+    DeviceManager.disconnectDevice(data.deviceId);
+  },
+);
 
 ipcMain.on(
   IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers,
-  (event, taskList: TactileTask[]) => {
+  (event, data: { taskList: TactileTask[] }) => {
     writeAmplitudeBuffers(
       [...DeviceManager.connectedDevices.values()],
-      taskList,
+      data.taskList,
     );
   },
 );
 
 ipcMain.on(
   IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer,
-  (event, payload: { deviceId: string; taskList: TactileTask[] }) => {
-    const d = DeviceManager.connectedDevices.get(payload.deviceId);
+  (event, data: { deviceId: string; taskList: TactileTask[] }) => {
+    const d = DeviceManager.connectedDevices.get(data.deviceId);
     if (d == null) return;
-    writeAmplitudeBuffer(d, payload.taskList);
+    writeAmplitudeBuffer(d, data.taskList);
   },
 );
 
 ipcMain.on(
   IPC_CHANNELS.bluetooth.main.writeFrequencyBuffer,
-  (event, payload: { deviceId: string; taskList: SetFrequencyTask[] }) => {
-    const d = DeviceManager.connectedDevices.get(payload.deviceId);
+  (event, data: { deviceId: string; taskList: SetFrequencyTask[] }) => {
+    const d = DeviceManager.connectedDevices.get(data.deviceId);
     if (d == null) return;
-    writeFrequencyBuffer(d, payload.taskList);
+    writeFrequencyBuffer(d, data.taskList);
   },
 );
 
 //copy roomName and adress
-ipcMain.on(IPC_CHANNELS.main.copyToClipBoard, (event, adress: string) => {
-  clipboard.writeText(adress);
-});
-
-//read the current user configs and send it to renderer
 ipcMain.on(
-  IPC_CHANNELS.main.modifyUserConfig,
-  (event, setting: { key: string; value: any }) => {
-    _settingManager.sendSettings();
+  IPC_CHANNELS.main.copyToClipBoard,
+  (event, data: { adress: string }) => {
+    clipboard.writeText(data.adress);
   },
 );
 
+//read the current user configs and send it to renderer
+// ipcMain.on(
+//   IPC_CHANNELS.main.modifyUserConfig,
+//   (event, setting: { key: string; value: any }) => {
+//     _settingManager.sendSettings();
+//   },
+// );
+
 //save the user name in the config
-ipcMain.on(IPC_CHANNELS.main.saveUserName, (event, userName: string) => {
-  _settingManager.updateUserName(userName);
-});
+ipcMain.on(
+  IPC_CHANNELS.main.saveUserName,
+  (event, data: { userName: string }) => {
+    _settingManager.updateUserName(data.userName);
+  },
+);
 
 //save one updated keyboard buttton
 ipcMain.on(
   IPC_CHANNELS.main.saveKeyBoardButton,
-  (event, payload: { profileUid: string; binding: InputBinding }) => {
-    _settingManager.updateBinding(payload.profileUid, payload.binding);
+  (event, data: { profileUid: string; binding: InputBinding }) => {
+    _settingManager.updateBinding(data.profileUid, data.binding);
   },
 );
 
@@ -119,7 +133,7 @@ ipcMain.on(
   IPC_CHANNELS.main.logMessageInfos,
   (
     event,
-    payload: {
+    data: {
       level: LoggingLevel;
       type: string;
       startTimeStamp: number;
@@ -127,45 +141,46 @@ ipcMain.on(
     },
   ) => {
     _loggingManager.writeLog(
-      payload.level,
-      payload.type,
-      payload.endTimeStamp - payload.startTimeStamp,
+      data.level,
+      data.type,
+      data.endTimeStamp - data.startTimeStamp,
     );
   },
 );
 
 //save one tacton as json in vtproto format
-ipcMain.on(IPC_CHANNELS.main.saveTacton, async (event, payload: any) => {
-  const file = await dialog.showSaveDialog(_win, {
-    title: "Download to File…",
-    filters: [{ name: "Json", extensions: [".json"] }],
-  });
-  if (!file.canceled && file.filePath !== undefined) {
-    fs.writeFile(file.filePath, JSON.stringify(payload), (err) => {
-      if (err) {
-        console.log(err);
-      }
-    });
-  }
-});
+// ipcMain.on(IPC_CHANNELS.main.saveTacton, async (event, data: any) => {
+//   const file = await dialog.showSaveDialog(_win, {
+//     title: "Download to File…",
+//     filters: [{ name: "Json", extensions: [".json"] }],
+//   });
+//   if (!file.canceled && file.filePath !== undefined) {
+//     fs.writeFile(file.filePath, JSON.stringify(payload), (err) => {
+//       if (err) {
+//         console.log(err);
+//       }
+//     });
+//   }
+// });
 
 // receive tacton to play back
-ipcMain.on(IPC_CHANNELS.main.getRecordedTacton, async (event, payload: any) => {
-  // let p = payload as [InstructionServerPayload]
-  // let t: TactonInstruction[] = []
-  // p.forEach(inst => {
-  //     if (isInstructionWait(inst.Instruction) || isInstructionSetParameter(inst.Instruction)) {
-  //         t.push(inst.Instruction)
-  //     } else {
-  //         console.log("Unknown payload")
-  //     }
-  // })
-  // playbackRecordedTacton(t)
-});
+// ipcMain.on(IPC_CHANNELS.main.getRecordedTacton, async (event, data: any) => {
+// let p = payload as [InstructionServerPayload]
+// let t: TactonInstruction[] = []
+// p.forEach(inst => {
+//     if (isInstructionWait(inst.Instruction) || isInstructionSetParameter(inst.Instruction)) {
+//         t.push(inst.Instruction)
+//     } else {
+//         console.log("Unknown payload")
+//     }
+// })
+// playbackRecordedTacton(t)
+// });
 
 //generell function, which get called if on module want to communicate with the renderer
-export function sendMessageToRenderer(channel: string, payload: any): void {
-  _win.webContents.send(channel, payload);
+//TODO Specify payload type w/ a union type of specific message types
+export function sendMessageToRenderer(channel: string, data: object): void {
+  _win.webContents.send(channel, data);
 }
 
 //for internal use, get initiated at starting the application

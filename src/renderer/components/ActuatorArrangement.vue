@@ -15,7 +15,7 @@
   </v-card>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .actuator {
   display: inline-block;
   margin: 1em;
@@ -53,7 +53,10 @@ export default defineComponent({
     },
   },
   props: {
-    modelValue: Object as () => ActuatorSelection[],
+    modelValue: {
+      type: Object as () => ActuatorSelection[],
+      required: true,
+    },
   },
 });
 </script>

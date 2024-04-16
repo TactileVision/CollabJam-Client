@@ -42,9 +42,11 @@ export default defineComponent({
   props: {
     letter: {
       type: String,
+      default: "A",
     },
     color: {
       type: String,
+      default: "#000000",
     },
     isFirstEntry: {
       type: Boolean,

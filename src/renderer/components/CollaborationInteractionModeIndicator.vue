@@ -15,8 +15,7 @@
 
 <script lang="ts">
 import { InteractionMode } from "@sharedTypes/roomTypes";
-import { defineComponent } from "@vue/runtime-core";
-import { TilingSprite } from "pixi.js";
+import { defineComponent } from "vue";
 import { PropType } from "vue";
 
 export default defineComponent({

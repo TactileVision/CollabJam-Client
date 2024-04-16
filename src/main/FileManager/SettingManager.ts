@@ -47,7 +47,7 @@ class SettingManager {
       const data = fs.readFileSync(this.pathSettings, { encoding: "utf8" });
       this.customSettings = JSON.parse(data);
       return true;
-    } catch (err: any) {
+    } catch (err: Error) {
       if (err.code !== "ENOENT") {
         console.log("err");
         console.log(err);

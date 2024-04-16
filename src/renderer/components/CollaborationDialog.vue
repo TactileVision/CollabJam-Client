@@ -63,7 +63,7 @@
       <v-col cols="2" align-self="center"> Color </v-col>
       <v-col cols="7">
         <v-row style="justify-content: space-between" no-gutters>
-          <v-col cols="1" v-for="(item, index) in colors" v-bind:key="index">
+          <v-col cols="1" v-for="(item, index) in colors" :key="index">
             <span
               class="dot"
               :style="[
@@ -81,10 +81,10 @@
       <div class="listChannels">
         <v-card
           v-for="(item, index) in channelActive"
-          v-bind:key="index"
+          :key="index"
           class="actuator"
           @click="updateChannel(item, index)"
-          v-bind:style="{ backgroundColor: colorActuator(index) }"
+          :style="{ backgroundColor: colorActuator(index) }"
         >
           {{ index + 1 }}
         </v-card>
@@ -166,7 +166,7 @@ import {
 } from "@/renderer/store/modules/collaboration/playGround/types";
 import { useStore } from "@/renderer/store/store";
 import { RouterNames } from "@/renderer/router/Routernames";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { lightenDarkenColor, defaultColors } from "@/renderer/plugins/colors";
 import { createInputDetection } from "@/main/Input/InputDetection";
 import { InputEvent } from "@sharedTypes/InputDetection/types";
@@ -192,6 +192,7 @@ export default defineComponent({
   props: {
     keyButtonId: {
       type: String,
+      required: true,
     },
   },
   data() {

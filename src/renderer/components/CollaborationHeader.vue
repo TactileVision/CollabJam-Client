@@ -21,14 +21,14 @@
 </template>
 
 <style lang="scss" scoped>
-.headerPlayGround {
+/* .headerPlayGround {
   min-width: 100% !important;
   max-width: 100% !important;
   border-bottom: 1px solid rgb(48, 41, 41);
   min-height: 50px;
   padding: 2px 10px;
   display: block;
-}
+} */
 </style>
 <script lang="ts">
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
@@ -42,7 +42,7 @@ import {
   RoomState,
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { useStore } from "@/renderer/store/store";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import { sendSocketMessage } from "@/main/WebSocketManager";
 import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
 import DeviceDialog from "@/renderer/components/DeviceConnection.vue";
@@ -68,8 +68,6 @@ export default defineComponent({
   },
   methods: {
     logOut() {
-      const s = useStore();
-      // s.dispatch(TactonPlaybackActionTypes.deselectTacton)
       sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
         roomId: this.store.state.roomSettings.id,
         user: this.store.state.roomSettings.user,
@@ -79,10 +77,9 @@ export default defineComponent({
     copyAdress() {
       console.log(this.store.getters);
       this.store.dispatch(GeneralSettingsActionTypes.copyAdressToClipboard);
-      window.api.send(
-        IPC_CHANNELS.main.copyToClipBoard,
-        `${this.store.state.roomSettings.roomName}#${this.store.state.roomSettings.id}`,
-      );
+      window.api.send(IPC_CHANNELS.main.copyToClipBoard, {
+        adress: `${this.store.state.roomSettings.roomName}#${this.store.state.roomSettings.id}`,
+      });
     },
     settings() {
       this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Configure);

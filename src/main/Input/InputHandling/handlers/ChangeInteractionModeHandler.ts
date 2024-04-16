@@ -27,7 +27,8 @@ const isChangeInteractionMode = (
 
 const ChangeInteractionModeHandler = (): InputHandler => {
   return {
-    onInput({ binding, value, wasActive, globalIntensity }) {
+    // eslint-disable-line no-unused-vars
+    onInput({ binding, wasActive }) {
       const actions = binding.actions.filter(isChangeInteractionMode);
       if (binding.activeTriggers > 0) {
         if (!wasActive) {

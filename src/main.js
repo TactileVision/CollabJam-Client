@@ -14,7 +14,7 @@ import TriggerActuatorHandler from "@/main/Input/InputHandling/handlers/TriggerA
 import TriggerActuatorWithDynamicIntensityHandler from "@/main/Input/InputHandling/handlers/TriggerActuatorWithDynamicIntensityHandler";
 import DynamicActuatorHandler from "@/main/Input//InputHandling/handlers/DynamicActuatorHandler";
 import LockIntensityHandler from "@/main/Input/InputHandling/handlers/LockIntensityHandler";
-import ChangeInteractionModeHandler from "@/main/Input/InputHandling/handlers/ChangeInteractionModeHandler"
+import ChangeInteractionModeHandler from "@/main/Input/InputHandling/handlers/ChangeInteractionModeHandler";
 import InlineSvg from "vue-inline-svg";
 
 // loadFonts()

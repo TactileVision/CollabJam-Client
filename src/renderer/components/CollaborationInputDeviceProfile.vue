@@ -16,7 +16,7 @@
         >
           <v-radio
             v-for="profile in allProfileOptions"
-            v-bind:key="profile.value"
+            :key="profile.value"
             :label="profile.title"
             :value="profile.value"
           ></v-radio>
@@ -42,7 +42,7 @@
 import getDeviceName from "@/main/Input/InputDetection/getDeviceName";
 import { useStore } from "@/renderer/store/store";
 import { InputDevice } from "@sharedTypes/InputDetection/InputBindings";
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import defaultImagePath from "@/renderer/assets/inputs/controller.svg";
 import { PlayGroundMutations } from "@/renderer/store/modules/collaboration/playGround/types";
 import { StateProfile } from "@/renderer/store/modules/collaboration/playGround/playGround";
@@ -103,7 +103,7 @@ export default defineComponent({
     },
   },
   watch: {
-    selectedProfileUid(val) {
+    selectedProfileUid() {
       this.updateProfile();
     },
     selectedProfile(val) {

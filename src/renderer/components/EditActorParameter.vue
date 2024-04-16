@@ -13,7 +13,7 @@
       <!-- Set amp -->
       <v-slider
         :disabled="!enabled[n - 1]"
-        @update:modelValue="bleWriteAmp($event, n - 1)"
+        @update:model-value="bleWriteAmp($event, n - 1)"
         v-if="display.outputParameter[n - 1].amplitude"
         hide-details
         max="1"
@@ -23,13 +23,13 @@
         thumb-label
         v-model="amp[n - 1]"
       >
-        <template v-slot:prepend> Amplitude: {{ amp[n - 1] }} </template>
+        <template #prepend> Amplitude: {{ amp[n - 1] }} </template>
       </v-slider>
 
       <!-- Set freq -->
       <v-slider
         :disabled="!enabled[n - 1]"
-        @update:modelValue="bleWriteFreq($event, n - 1)"
+        @update:model-value="bleWriteFreq($event, n - 1)"
         v-if="display.outputParameter[n - 1].frequency"
         hide-details
         :max="display.freqInformation.fMax"
@@ -39,12 +39,12 @@
         thumb-label
         v-model="freq[n - 1]"
       >
-        <template v-slot:prepend> Frequency: {{ freq[n - 1] }}Hz </template>
+        <template #prepend> Frequency: {{ freq[n - 1] }}Hz </template>
       </v-slider>
     </v-col>
   </v-row>
 </template>
-<style lang="scss">
+<style scoped lang="scss">
 .channel {
   margin-bottom: 1em;
 }

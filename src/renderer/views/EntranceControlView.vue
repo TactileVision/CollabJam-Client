@@ -26,7 +26,7 @@
     <v-col>
       <actuator-selection-menu
         :disabled="isRunning"
-        :numActuators="2"
+        :num-actuators="2"
         v-model="actuators"
       ></actuator-selection-menu>
     </v-col>

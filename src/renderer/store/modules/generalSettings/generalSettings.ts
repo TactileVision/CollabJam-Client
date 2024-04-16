@@ -252,7 +252,7 @@ export const getters: GetterTree<State, RootState> & Getters = {
   getConnectedDevice: (state) => {
     return state.deviceList.find((device) => device.state == "connected");
   },
-  getNumberOfOutputs: (state) => {
+  getNumberOfOutputs: () => {
     /**
  
 //12 is default so the user without the device will at least see 12 graphs

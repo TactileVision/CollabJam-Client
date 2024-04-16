@@ -2,7 +2,6 @@ import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 import { sendSocketMessage } from "@/main/WebSocketManager";
 import { UpdateRoomMode, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import { Store } from "@/renderer/store/store";
-import { playbackRecordedTacton } from "@/renderer/helpers/TactonPlayer";
 
 // export const changeRecordMode = function (roomId: string, currentMode: InteractionMode, change: InteractionModeChange) {
 export const changeRecordMode = function (

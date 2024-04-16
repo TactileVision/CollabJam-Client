@@ -70,9 +70,9 @@ export const initWebsocket = (store: Store) => {
       store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, false);
       console.log("Error websocket  connection " + event);
     };
-    clientWs.onmessage = function (event: MessageEvent<any>) {
-      //console.log("Message websocket  connection ");
-      //console.log(JSON.parse(event.data));
+    clientWs.onmessage = function (event: MessageEvent) {
+      console.log("Message websocket  connection ");
+      console.log(JSON.parse(event.data));
       try {
         const data = JSON.parse(event.data);
         handleMessage(store, data);
@@ -90,7 +90,7 @@ export const initWebsocket = (store: Store) => {
   }
 };
 
-export const sendSocketMessage = (msgType: WS_MSG_TYPE, payload: any) => {
+export const sendSocketMessage = (msgType: WS_MSG_TYPE, payload: object) => {
   if (clientWs?.readyState == 1) {
     clientWs?.send(
       JSON.stringify({

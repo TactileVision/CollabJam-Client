@@ -2,7 +2,7 @@
   <v-row no-gutters>
     <v-col cols="3">{{ `Name: ${device.name}` }}</v-col>
     <v-col cols="2">
-      <DeviceConnectionLevelIndicator :connectionQuality="device.rssi" />
+      <DeviceConnectionLevelIndicator :connection-quality="device.rssi" />
     </v-col>
     <v-col cols="3">{{ `Status: ${device.state}` }}</v-col>
     <v-spacer />
@@ -32,7 +32,7 @@
 <style lang="scss" scoped></style>
 
 <script lang="ts">
-import { defineComponent } from "@vue/runtime-core";
+import { defineComponent } from "vue";
 import {
   DeviceStatus,
   VibrotactileDevice,
@@ -62,9 +62,13 @@ export default defineComponent({
   methods: {
     changeConnectionStatus() {
       if (this.device.state == DeviceStatus.connected) {
-        window.api.send(IPC_CHANNELS.main.disconnectDevice, this.device.id);
+        window.api.send(IPC_CHANNELS.main.disconnectDevice, {
+          deviceId: this.device.id,
+        });
       } else {
-        window.api.send(IPC_CHANNELS.main.connectDevice, this.device.id);
+        window.api.send(IPC_CHANNELS.main.connectDevice, {
+          deviceId: this.device.id,
+        });
       }
     },
     async vibrateDevice(id: string) {

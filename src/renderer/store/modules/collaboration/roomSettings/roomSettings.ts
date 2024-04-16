@@ -1,7 +1,6 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from "vuex";
 import { RootState } from "@/renderer/store/store";
 import { InteractionMode, User, Room } from "@sharedTypes/roomTypes";
-import { useRoute, useRouter } from "vue-router";
 /**
  * Types
  *

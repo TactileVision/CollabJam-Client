@@ -1,12 +1,12 @@
 const IPC_CHANNELS = {
   //channels to communicate with main process
   main: {
-    actuator: "tactile-jam.main.actuator",
+    // actuator: "tactile-jam.main.actuator",
     changeScan: "tactile-jam.main.changeScan",
     connectDevice: "tactile-jam.main.connectDevice",
     disconnectDevice: "tactile-jam.main.disconnectDevice",
     copyToClipBoard: "tactile-jam.main.copyToClipBoard",
-    modifyUserConfig: "tactile-jam.main.modifyUserConfig",
+    // modifyUserConfig: "tactile-jam.main.modifyUserConfig",
     saveUserName: "tactile-jam.main.saveUserName",
     saveKeyBoardButton: "tactile-jam.main.saveKeyBoardButton",
     logMessageInfos: "tactile-jam.main.logMessageInfos",
@@ -25,7 +25,7 @@ const IPC_CHANNELS = {
   bluetooth: {
     //channels to communicate with main process
     main: {
-      writeCharacteristic: "collabjam.main.ble.writeAmplitudeCharacteristic",
+      // writeCharacteristic: "collabjam.main.ble.writeAmplitudeCharacteristic",
       writeAmplitudeBuffer: "collabjam.main.writeAmplitudeBuffer",
       writeAllAmplitudeBuffers: "collabjam.main.writeAllAmplitudeBuffers",
       writeFrequencyBuffer: "collabjam.main.writeFrequencyBuffer",

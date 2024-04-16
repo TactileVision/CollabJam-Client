@@ -59,7 +59,7 @@
                 thumb-label
                 v-model="maxAmp"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   Maximal Amplitude: {{ maxAmp.toFixed(2) }}
                 </template>
               </v-slider>
@@ -73,7 +73,7 @@
                 thumb-label
                 v-model="sliderBD"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   Burst Duration: {{ sliderBD }} ms
                 </template>
               </v-slider>
@@ -88,7 +88,7 @@
                 thumb-label
                 v-model="interAtmMs"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   Inter ATM Interval:
                   {{ interAtmMs }}ms
                 </template>

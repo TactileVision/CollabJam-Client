@@ -29,6 +29,7 @@ const stopScan = () => {
 const addDevice = (peripheral: Peripheral) => {
   //TODO Check if not already connected
   discoveredDevices.push(peripheral);
+
   sendMessageToRenderer(IPC_CHANNELS.renderer.foundDevice, {
     id: peripheral.id,
     name: peripheral.advertisement.localName,
