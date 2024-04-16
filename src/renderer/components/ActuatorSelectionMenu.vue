@@ -1,8 +1,8 @@
 <template>
   <v-card class="actuator-selection-menu">
-    <v-card-title v-if="numActuators != null"
+    <v-card-title v-if="selectionLimited"
       >Select Actuators ({{ selectedActuators.length }}/
-      {{ numActuators }})</v-card-title
+      {{ selectionLimitedTo }})</v-card-title
     >
     <v-card-title v-else
       >Select Actuators ({{ selectedActuators.length }})</v-card-title
@@ -90,7 +90,12 @@ export default defineComponent({
       type: Object as () => ActuatorSelection[],
       required: true,
     },
-    numActuators: {
+    selectionLimited: {
+      type: Boolean,
+      required: false,
+      defualt: false,
+    },
+    selectionLimitedTo: {
       type: Number,
       required: false,
       default: 0,
@@ -136,11 +141,11 @@ export default defineComponent({
       );
     },
     isSelectable(elementId: string) {
-      if (this.numActuators == null) {
+      if (!this.selectionLimited) {
         return true;
       }
       return (
-        this.selectedActuators.length < this.numActuators ||
+        this.selectedActuators.length < this.selectionLimitedTo ||
         this.selectedActuators.includes(elementId)
       );
     },

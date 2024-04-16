@@ -5,7 +5,7 @@
   <div>
     <div v-for="item in deviceList" :key="item.info.id" style="padding: 0">
       <h3>{{ item.info.name }}</h3>
-      <edit-parameter :display="item"></edit-parameter>
+      <edit-actor-parameter :display="item"></edit-actor-parameter>
     </div>
   </div>
 </template>
@@ -21,10 +21,11 @@
 import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { TactileDisplay } from "@/renderer/store/modules/DeviceManager/DeviceManagerStore";
+import EditActorParameter from "@/renderer/components/EditActorParameter.vue";
 
 export default defineComponent({
   name: "ChannelParameter",
-  components: {},
+  components: { EditActorParameter },
   data() {
     return {
       store: useStore(),

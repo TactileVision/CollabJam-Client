@@ -37,10 +37,8 @@
                     <v-btn
                       :disabled="!hardwareIsReady"
                       @click="toggleVibration"
-                      :icon="isRunning ? 'mdi-stop' : 'mdi-play'"
-                      size="x-large"
+                      :text="isRunning ? 'Stop' : 'Trigger Vibration'"
                     >
-                      Trigger vibration
                     </v-btn>
                   </v-col>
                 </v-row>
@@ -124,6 +122,7 @@
             <actuator-selection-menu
               :disabled="isRunning"
               v-model="actuators"
+              :selection-limited="false"
             ></actuator-selection-menu>
             <actuator-arrangement v-model="actuators"></actuator-arrangement>
           </v-col>
