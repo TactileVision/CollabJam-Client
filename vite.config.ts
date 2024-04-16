@@ -3,7 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import vuetify from "vite-plugin-vuetify";
 import tsconfigPaths from "vite-tsconfig-paths";
 import renderer from "vite-plugin-electron-renderer";
-import { resolve } from "path";
+import eslintPlugin from "@nabla/vite-plugin-eslint";
 
 import electron from "vite-plugin-electron/simple";
 import { defineConfig } from "vite";
@@ -86,6 +86,7 @@ export default defineConfig(({ command }) => {
         // See 👉 https://github.com/electron-vite/vite-plugin-electron-renderer
         renderer: {},
       }),
+      eslintPlugin(),
     ],
   };
 });
