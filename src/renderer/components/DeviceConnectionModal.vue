@@ -34,6 +34,7 @@ import { defineComponent } from "vue";
 import DeviceConnectionTable from "./DeviceConnectionTable.vue";
 
 export default defineComponent({
+  name: "DeviceConnectionModal",
   props: {
     numConnectedDevices: {
       type: Number,

@@ -68,7 +68,7 @@ import {
 
 export default defineComponent({
   components: { DeviceConnectionTableRow },
-  name: "DeviceConnection",
+  name: "DeviceConnectionTable",
   data() {
     return {
       isScanning: false,

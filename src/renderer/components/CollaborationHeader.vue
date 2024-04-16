@@ -9,7 +9,8 @@
       :users="store.state.roomSettings.participants"
     ></UserMenuTooltip>
     <!-- <UserMenu /> -->
-    <DeviceDialog :num-connected-devices="numConnectedDevices"> </DeviceDialog>
+    <DeviceConnectionModal :num-connected-devices="numConnectedDevices">
+    </DeviceConnectionModal>
     <v-btn
       color="primary"
       :disabled="store.state.roomSettings.mode != 1"
@@ -45,7 +46,7 @@ import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "vue";
 import { sendSocketMessage } from "@/main/WebSocketManager";
 import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
-import DeviceDialog from "@/renderer/components/DeviceConnection.vue";
+import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
 
@@ -53,7 +54,7 @@ export default defineComponent({
   name: "CollaborationHeader",
   components: {
     UserMenuTooltip,
-    DeviceDialog,
+    DeviceConnectionModal,
     CollaborationInteractionModeIndicator,
   },
   data: () => ({

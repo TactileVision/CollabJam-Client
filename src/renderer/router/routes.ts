@@ -5,10 +5,10 @@ import SitemapView from "@/renderer/views/SitemapView.vue";
 import AtmView from "@/renderer/views/AtmView.vue";
 import EntranceControlView from "@/renderer/views/EntranceControlView.vue";
 import SaltationView from "@/renderer/views/SaltationView.vue";
-import DeviceDialog from "@/renderer/components/DeviceConnection.vue";
 import ChannelParameterView from "@/renderer/views/ChannelParameterView.vue";
 import { RouteRecordRaw } from "vue-router";
 import { RouterNames } from "@/renderer/router/Routernames";
+import DeviceConnectionView from "../views/DeviceConnectionView.vue";
 
 /**
  * set the paths for the single components in the views folder
@@ -33,7 +33,7 @@ export const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: RouterNames.DEVICES,
-    component: DeviceDialog,
+    component: DeviceConnectionView,
   },
   {
     path: "/funneling",

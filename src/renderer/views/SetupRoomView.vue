@@ -62,7 +62,7 @@
       <v-col cols="8">
         <v-row>
           <v-row no-gutters class="subheader"> Device section </v-row>
-          <DeviceConnection />
+          <DeviceConnectionModal />
         </v-row>
       </v-col>
     </v-row>
@@ -137,7 +137,7 @@ import {
   RoomMutations,
   RoomState,
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
-import DeviceConnection from "@/renderer/components/DeviceConnection.vue";
+import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import RoomParticipantList from "@/renderer/components/RoomParticipantList.vue";
 import { sendSocketMessage } from "@/main/WebSocketManager";
 import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
@@ -146,7 +146,7 @@ import { IPC_CHANNELS } from "@/preload/IpcChannels";
 export default defineComponent({
   name: "SetupRoomView",
   components: {
-    DeviceConnection,
+    DeviceConnectionModal,
     RoomParticipantList,
   },
   data() {
