@@ -9,6 +9,7 @@ import ChannelParameterView from "@/renderer/views/ChannelParameterView.vue";
 import { RouteRecordRaw } from "vue-router";
 import { RouterNames } from "@/renderer/router/Routernames";
 import DeviceConnectionView from "../views/DeviceConnectionView.vue";
+import ListRoomsView from "../views/ListRoomsView.vue";
 
 /**
  * set the paths for the single components in the views folder
@@ -53,7 +54,7 @@ export const routes: Array<RouteRecordRaw> = [
   {
     path: "/rooms",
     name: RouterNames.ROOM,
-    component: SetupRoomView,
+    component: ListRoomsView,
   },
   {
     path: "/setup",
