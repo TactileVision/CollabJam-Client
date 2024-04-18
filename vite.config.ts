@@ -38,7 +38,6 @@ export default defineConfig(({ command }) => {
             }
           },
           vite: {
-            //TODO :P
             plugins: [tsconfigPaths()],
             resolve: {
               // alias: {
