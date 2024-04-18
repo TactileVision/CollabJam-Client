@@ -44,10 +44,9 @@ import {
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "vue";
-import { sendSocketMessage } from "@/main/WebSocketManager";
+import { WebSocketAPI } from "@/main/WebSocketManager";
 import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
 
 export default defineComponent({
@@ -69,8 +68,8 @@ export default defineComponent({
   },
   methods: {
     logOut() {
-      sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
-        roomId: this.store.state.roomSettings.id,
+      WebSocketAPI.logOut({
+        roomId: this.store.state.roomSettings.id || "",
         user: this.store.state.roomSettings.user,
       });
       this.$router.push("/");

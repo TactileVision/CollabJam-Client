@@ -70,10 +70,10 @@ export const initIpcRendererListener = () => {
 
   window.api.receive(
     IPC_CHANNELS.bluetooth.renderer.disconnectedFromDevice,
-    (uuid: string) => {
+    (data: { uuid: string }) => {
       store.dispatch(
         DeviceManagerStoreActionTypes.removeDisconnectedDisplay,
-        uuid,
+        data.uuid,
       );
     },
   );

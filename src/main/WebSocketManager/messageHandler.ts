@@ -10,9 +10,6 @@ import {
 import { Store } from "@/renderer/store/store";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import { bufferedSending } from "@/main/WebSocketManager/index";
-// import { router } from "@/renderer/router/";
-// import { useRouter } from "vue-router";
-import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import {
   TactonMutations,
@@ -20,17 +17,13 @@ import {
 } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import { RouterNames } from "@/renderer/router/Routernames";
 import { InteractionMode } from "@sharedTypes/roomTypes";
-import { TactileTask, Tacton } from "@sharedTypes/tactonTypes";
-import {
-  ChangeTactonMetadata,
-  UpdateRoomMode,
-  WS_MSG_TYPE,
-} from "@sharedTypes/websocketTypes";
+import { TactileTask } from "@sharedTypes/tactonTypes";
+import { SocketMessage, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
-export interface SocketMessage {
-  type: WS_MSG_TYPE;
-  payload: object;
-}
+// export interface SocketMessage {
+//   type: WS_MSG_TYPE;
+//   payload: any;
+// }
 
 export const handleMessage = (store: Store, msg: SocketMessage) => {
   // const router = useRouter()
@@ -152,7 +145,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
     case WS_MSG_TYPE.UPDATE_USER_ACCOUNT_CLI: {
       //console.log("UPDATE_USER_ACCOUNT_CLI")
       //console.log(msg.payload)
-      store.commit(RoomMutations.UPDATE_PARTICIPANTS, msg.payload);
+      store.commit(RoomMutations.UPDATE_PARTICIPANTS, msg.payload.participants);
       break;
     }
     /**
@@ -189,7 +182,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
      */
     case WS_MSG_TYPE.UPDATE_ROOM_MODE_CLI: {
       //TODO Change tacton state based on received update!
-      const update = msg.payload as UpdateRoomMode;
+      const update = msg.payload;
       const rm = update.newMode;
       // console.log("Update Record Mode!")
       // console.log(msg.payload)
@@ -258,19 +251,18 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
      *   } as payload
      */
     case WS_MSG_TYPE.GET_TACTON_CLI: {
-      console.log("GET_TACTON_CLI");
       console.log(msg.payload);
-      if (msg.payload.length == 0) {
-        store.dispatch(GeneralSettingsActionTypes.tactonLengthChanged);
-      } else {
-        const t: Tacton = msg.payload as Tacton;
-        store.dispatch(TactonPlaybackActionTypes.addTacton, t);
-        store.dispatch(TactonPlaybackActionTypes.selectTacton, t.uuid);
-      }
+      // if (msg.payload.length == 0) {
+      //   store.dispatch(GeneralSettingsActionTypes.tactonLengthChanged);
+      // } else {
+      // const t: Tacton = msg.payload as Tacton;
+      store.dispatch(TactonPlaybackActionTypes.addTacton, msg.payload);
+      store.dispatch(TactonPlaybackActionTypes.selectTacton, msg.payload.uuid);
+      // }
       break;
     }
     case WS_MSG_TYPE.CHANGE_TACTON_METADATA_CLI: {
-      const d: ChangeTactonMetadata = msg.payload;
+      const d = msg.payload;
       const t = store.state.tactonPlayback.tactons.find(
         (e) => e.uuid === d.tactonId,
       );
@@ -283,8 +275,10 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
       break;
     }
     case WS_MSG_TYPE.UPDATE_TACTON_CLI: {
-      const tacton: Tacton = msg.payload.tacton;
-      store.dispatch(TactonPlaybackActionTypes.updateTacton, tacton);
+      store.dispatch(
+        TactonPlaybackActionTypes.updateTacton,
+        msg.payload.tacton,
+      );
       break;
     }
   }

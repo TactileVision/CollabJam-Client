@@ -32,8 +32,7 @@
 import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { RoomMutations } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
-import { sendSocketMessage } from "@/main/WebSocketManager";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { WebSocketAPI } from "@/main/WebSocketManager";
 export default defineComponent({
   name: "RoomView",
   data() {
@@ -54,10 +53,10 @@ export default defineComponent({
   },
   methods: {
     getRooms() {
-      sendSocketMessage(WS_MSG_TYPE.GET_AVAILABLE_ROOMS_SERV, {});
+      WebSocketAPI.requestAvailableRooms();
     },
     enterRoom(roomId: string) {
-      sendSocketMessage(WS_MSG_TYPE.ROOM_INFO_SERV, roomId);
+      WebSocketAPI.getRoomInfos(roomId);
       this.$router.push("/setup");
     },
   },

@@ -132,10 +132,10 @@
 import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
-import { sendSocketMessage } from "@/main/WebSocketManager";
+import { WebSocketAPI } from "@/main/WebSocketManager";
 import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
-import { ChangeTactonMetadata, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
 import { changeRecordMode } from "@/renderer/helpers/recordMode";
 
 export default defineComponent({
@@ -201,8 +201,8 @@ export default defineComponent({
     },
     updatePrefix() {
       console.log(this.editPrefixText);
-      sendSocketMessage(WS_MSG_TYPE.CHANGE_ROOMINFO_TACTON_PREFIX_SERV, {
-        roomId: this.store.state.roomSettings.id,
+      WebSocketAPI.updateTactonFilenamePrefix({
+        roomId: this.store.state.roomSettings.id || "",
         prefix: this.editPrefixText,
       });
       return;
@@ -219,7 +219,7 @@ export default defineComponent({
           tactonId: tacton.uuid,
           metadata: m,
         };
-        sendSocketMessage(WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV, payload);
+        WebSocketAPI.changeTactonMetadata(payload);
       }
     },
     shouldDisplay(tacton: Tacton) {

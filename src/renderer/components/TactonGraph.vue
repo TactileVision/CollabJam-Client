@@ -24,8 +24,7 @@ import {
   StretchDirection,
 } from "@sharedTypes/tactonTypes";
 import { toRaw } from "vue";
-import { sendSocketMessage } from "@/main//WebSocketManager";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { WebSocketAPI } from "@/main//WebSocketManager";
 
 interface IntensityObject {
   intensity: number;
@@ -1422,12 +1421,11 @@ export default defineComponent({
         }
       }
 
-      const payload = {
-        roomId: this.store.state.roomSettings.id,
+      WebSocketAPI.updateTacton({
+        roomId: this.store.state.roomSettings.id || "",
         tactonId: tacton.uuid,
         tacton: { ...tacton, instructions },
-      };
-      sendSocketMessage(WS_MSG_TYPE.UPDATE_TACTON_SERV, payload);
+      });
     },
     /**
      * method wich will called every frame, to draw and update figures

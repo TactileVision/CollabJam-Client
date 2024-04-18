@@ -6,13 +6,13 @@ import mappingCImage from "@/renderer/assets/inputs/mappingC.svg";
 import {
   DeviceType,
   TactileAction,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 import {
   GamepadAxisInput,
   GamepadButtonInput,
   KeyInput,
   UserInputType,
-} from "@sharedTypes/InputDetection/InputDetection";
+} from "@/main/Input/InputDetection/InputDetection";
 import { StateProfile } from "./playGround";
 import { InteractionModeChange } from "@sharedTypes/roomTypes";
 

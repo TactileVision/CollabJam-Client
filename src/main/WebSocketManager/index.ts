@@ -6,7 +6,17 @@ import { handleMessage } from "./messageHandler";
 import { Instruction } from "@/main/Input/InputHandling/InputHandlerManager";
 import { debouncedHandling } from "@/main/Input/InputHandling/Debouincing";
 // import { router } from "@/renderer/router";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import {
+  ChangeTactonMetadata,
+  RequestEnterRoom,
+  RequestSendTactileInstruction,
+  RequestUpdateRoom,
+  RequestUpdateUser,
+  SocketMessage,
+  UpdateRoomMode,
+  UpdateTacton,
+  WS_MSG_TYPE,
+} from "@sharedTypes/websocketTypes";
 
 let clientWs = null as WebSocket | null;
 
@@ -36,7 +46,7 @@ export const bufferedSending = (
   if (instructions.length > 0) {
     const instructionsToSend = debouncedHandling(instructions);
     if (instructionsToSend.length > 0) {
-      sendSocketMessage(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, {
+      WebSocketAPI.sendInstruction({
         roomId: roomId,
         instructions: instructionsToSend,
       });
@@ -52,7 +62,9 @@ export const initWebsocket = (store: Store) => {
   //     //add this token to establish a connection
   const token =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-  // clientWs = new WebSocket("wss://itactjam.informatik.htw-dresden.de/whws/path?token="+token)
+  // clientWs = new WebSocket(
+  //   "wss://itactjam.informatik.htw-dresden.de/whws/path?token=" + token,
+  // );
   clientWs = new WebSocket("ws://localhost:3333/path?token=" + token);
 
   if (clientWs !== null) {
@@ -90,14 +102,74 @@ export const initWebsocket = (store: Store) => {
   }
 };
 
-export const sendSocketMessage = (msgType: WS_MSG_TYPE, payload: object) => {
+export const sendSocketMessage = (msg: SocketMessage) => {
   if (clientWs?.readyState == 1) {
-    clientWs?.send(
-      JSON.stringify({
-        type: msgType,
-        startTimeStamp: new Date().getTime(),
-        payload: payload,
-      }),
-    );
+    clientWs?.send(JSON.stringify(msg));
   }
+};
+
+export const WebSocketAPI = {
+  sendInstruction: (payload: RequestSendTactileInstruction) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.SEND_INSTRUCTION_SERV,
+      payload: payload,
+    });
+  },
+  requestAvailableRooms: () => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.GET_AVAILABLE_ROOMS_SERV,
+      payload: {},
+    });
+  },
+  logOut: (payload: RequestUpdateUser) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.LOG_OUT,
+      payload: payload,
+    });
+  },
+  updateTacton: (payload: UpdateTacton) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.UPDATE_TACTON_SERV,
+      payload: payload,
+    });
+  },
+  updateTactonDuration: (payload: { roomId: string; duration: number }) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.CHANGE_DURATION_SERV,
+      payload: payload,
+    });
+  },
+  updateTactonFilenamePrefix: (payload: { roomId: string; prefix: string }) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.CHANGE_ROOMINFO_TACTON_PREFIX_SERV,
+      payload: payload,
+    });
+  },
+  updateRoomMode: (payload: UpdateRoomMode) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV,
+      payload: payload,
+    });
+  },
+  changeTactonMetadata: (payload: ChangeTactonMetadata) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV,
+      payload: payload,
+    });
+  },
+  getRoomInfos: (roomId: string) => {
+    sendSocketMessage({ type: WS_MSG_TYPE.ROOM_INFO_SERV, payload: roomId });
+  },
+  updateRoom: (payload: RequestUpdateRoom) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.UPDATE_ROOM_SERV,
+      payload: payload,
+    });
+  },
+  enterRoom: (payload: RequestEnterRoom) => {
+    sendSocketMessage({
+      type: WS_MSG_TYPE.ENTER_ROOM_SERV,
+      payload: payload,
+    });
+  },
 };

@@ -161,10 +161,8 @@ import { RoomMutations } from "@/renderer/store/modules/collaboration/roomSettin
 import { useStore } from "@/renderer/store/store";
 import { RouterNames } from "@/renderer/router/Routernames";
 import { defineComponent } from "vue";
-import { sendSocketMessage } from "@/main/WebSocketManager";
 import UserMenuCustomProfile from "./UserMenuCustomProfile.vue";
 import UserMenuDefaultProfile from "./UserMenuDefaultProfile.vue";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import { User } from "@sharedTypes/roomTypes";
 
 export default defineComponent({
@@ -207,10 +205,13 @@ export default defineComponent({
           userName: this.store.state.roomSettings.user.name,
         });
         //update user that the userName get changed
-        sendSocketMessage(WS_MSG_TYPE.UPDATE_USER_ACCOUNT_SERV, {
-          roomId: this.store.state.roomSettings.id,
-          user: this.store.state.roomSettings.user,
-        });
+        // sendSocketMessage({
+        //   type: WS_MSG_TYPE.UPDATE_USER_ACCOUNT_SERV,
+        //   payload: {
+        //     roomId: this.store.state.roomSettings.id,
+        //     user: this.store.state.roomSettings.user,
+        //   },
+        // });
       }
     },
   },

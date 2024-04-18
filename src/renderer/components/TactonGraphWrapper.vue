@@ -14,10 +14,9 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
-import { sendSocketMessage } from "@/main/WebSocketManager";
+import { WebSocketAPI } from "@/main/WebSocketManager";
 import TactonGraph from "./TactonGraph.vue";
 import { InteractionMode } from "@sharedTypes/roomTypes";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 
 export default defineComponent({
   name: "TactonGraphWrapper",
@@ -41,8 +40,8 @@ export default defineComponent({
         return (this.maxDurationStore / 1000).toString() + "s";
       },
       set(newValue: string) {
-        sendSocketMessage(WS_MSG_TYPE.CHANGE_DURATION_SERV, {
-          roomId: this.store.state.roomSettings.id,
+        WebSocketAPI.updateTactonDuration({
+          roomId: this.store.state.roomSettings.id || "",
           duration: parseInt(newValue.substring(0, newValue.length - 1)) * 1000,
         });
       },
@@ -52,12 +51,12 @@ export default defineComponent({
     },
   },
   methods: {
-    saveTacton() {
-      sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
-        roomId: this.store.state.roomSettings.id,
-        shouldRecord: false,
-      });
-    },
+    // saveTacton() {
+    //   sendSocketMessage(WS_MSG_TYPE.GET_TACTON_SERV, {
+    //     roomId: this.store.state.roomSettings.id,
+    //     shouldRecord: false,
+    //   });
+    // },
   },
 });
 </script>

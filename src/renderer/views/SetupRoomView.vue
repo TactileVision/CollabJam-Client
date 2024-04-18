@@ -139,8 +139,8 @@ import {
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import RoomParticipantList from "@/renderer/components/RoomParticipantList.vue";
-import { sendSocketMessage } from "@/main/WebSocketManager";
-import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { WebSocketAPI } from "@/main/WebSocketManager";
+import { RequestUpdateUser } from "@sharedTypes/websocketTypes";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 
 export default defineComponent({
@@ -184,10 +184,11 @@ export default defineComponent({
   methods: {
     cancelRoomEnter() {
       window.api.send(IPC_CHANNELS.main.changeScan, { scanStatus: false });
-      sendSocketMessage(WS_MSG_TYPE.LOG_OUT, {
+      WebSocketAPI.logOut({
         roomId: this.store.state.roomSettings.id,
         user: this.store.state.roomSettings.user,
-      });
+      } as RequestUpdateUser);
+
       this.$router.push("/");
     },
     enterRoom() {
@@ -197,22 +198,19 @@ export default defineComponent({
       });
       console.log(this.store.state.roomSettings.roomState);
       if (this.store.state.roomSettings.roomState == RoomState.Configure) {
-        sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_SERV, {
+        WebSocketAPI.updateRoom({
           room: {
-            id: this.store.state.roomSettings.id,
+            id: this.store.state.roomSettings.id || "",
             name: this.store.state.roomSettings.roomName,
             description: this.description,
           },
-          user: {
-            id: this.store.state.roomSettings.user.id,
-            name: this.store.state.roomSettings.user.name,
-          },
+          user: this.store.state.roomSettings.user,
         });
       } else {
         console.log("Entering room");
 
-        sendSocketMessage(WS_MSG_TYPE.ENTER_ROOM_SERV, {
-          id: this.store.state.roomSettings.id,
+        WebSocketAPI.enterRoom({
+          id: this.store.state.roomSettings.id || "",
           userName: this.userName,
         });
         this.$router.push("/playGround");
