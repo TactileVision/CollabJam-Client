@@ -19,7 +19,7 @@ import {
 } from "@sharedTypes/websocketTypes";
 
 let clientWs = null as WebSocket | null;
-
+let currentUrl = "";
 /**
  * method to calculate the latency to the server every 30second
  * result get logged
@@ -62,24 +62,29 @@ export const bufferedSending = (
  * method to initiate the websocket connection
  * in onmessage Function all custom messages are handled
  */
-export const initWebsocket = (store: Store) => {
+export const initWebsocket = (store: Store, url: string) => {
+  if (clientWs !== null && currentUrl !== url) {
+    clientWs.close();
+    currentUrl = url;
+  }
   //     //add this token to establish a connection
   const token =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
   // clientWs = new WebSocket(
   //   "wss://itactjam.informatik.htw-dresden.de/whws/path?token=" + token,
   // );
-  clientWs = new WebSocket("ws://localhost:3333/path?token=" + token);
+  // clientWs = new WebSocket("ws://localhost:3333/path?token=" + token);
+  clientWs = new WebSocket(url + "/path?token=" + token);
 
   if (clientWs !== null) {
     clientWs.onopen = function (event: Event) {
       store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, true);
       heartbeat(store);
+      WebSocketAPI.requestAvailableRooms();
       console.log("Opened websocket  connection " + event);
     };
     clientWs.onclose = function (event: Event) {
       store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, false);
-      // router.push("/")
       console.log("Closed websocket  connection " + event);
     };
     clientWs.onerror = function (event: Event) {
@@ -92,12 +97,6 @@ export const initWebsocket = (store: Store) => {
       try {
         const data = JSON.parse(event.data);
         handleMessage(store, data);
-        // window.api.send(IPC_CHANNELS.main.logMessageInfos, {
-        //   level: LoggingLevel.INFO,
-        //   type: data.type,
-        //   startTimeStamp: data.startTimeStamp,
-        //   endTimeStamp: new Date().getTime(),
-        // })
       } catch (err) {
         console.log("error Past");
         console.log(`Error occured ${err}`);

@@ -37,4 +37,4 @@ createApp(App)
   .mount("#app");
 
 initIpcRendererListener();
-initWebsocket(store);
+initWebsocket(store, "ws://localhost:3333/");
