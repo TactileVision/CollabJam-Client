@@ -2,6 +2,7 @@ import { app } from "electron";
 import fs from "fs";
 import path from "path";
 import { LoggingLevel } from "./LoggingLevel";
+import { isApiError } from "../ErrorType";
 
 //Manager to log all user datas locally
 class LoggingManager {
@@ -38,9 +39,8 @@ class LoggingManager {
     try {
       fs.readFileSync(this.pathSettings, { encoding: "utf8" });
       return true;
-    } catch (err: Error) {
-      if (err.code !== "ENOENT") {
-        console.log("err");
+    } catch (err) {
+      if (isApiError(err)) {
         console.log(err);
       }
       return false;

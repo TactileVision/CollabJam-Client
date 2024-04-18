@@ -6,6 +6,7 @@ import { initSettings, CustomSettings } from "./initSettings";
 import { sendMessageToRenderer } from "@/main/IpcController/IpcMainController";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import { InputBinding } from "@sharedTypes/InputDetection/InputBindings";
+import { isApiError } from "../ErrorType";
 
 //Manager to handle all user configurations and save them locally
 class SettingManager {
@@ -47,9 +48,8 @@ class SettingManager {
       const data = fs.readFileSync(this.pathSettings, { encoding: "utf8" });
       this.customSettings = JSON.parse(data);
       return true;
-    } catch (err: Error) {
-      if (err.code !== "ENOENT") {
-        console.log("err");
+    } catch (err) {
+      if (isApiError(err)) {
         console.log(err);
       }
       return false;
