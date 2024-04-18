@@ -483,12 +483,12 @@ export default defineComponent({
         // perform deep copy of instruction
         if (isInstructionSetParameter(instruction)) {
           const i = instruction as InstructionSetParameter;
-          i.setParameter.channelIds.forEach((channelId) => {
+          i.setParameter.channels.forEach((channelId) => {
             const blocks = this.blocksByChannel[channelId];
             const block = blocks[blocks.length - 1];
             const newInstruction = {
               setParameter: {
-                channelIds: [channelId],
+                channels: [channelId],
                 intensity: i.setParameter.intensity,
               },
             };
@@ -719,7 +719,7 @@ export default defineComponent({
               (xPosition * this.currentTime) / this.maxDurationStore +
               this.paddingRL;
 
-          //Go thorugh InstructionToClient object, for each channel in channelIds
+          //Go thorugh InstructionToClient object, for each channel in channels
           const intensityObject = this.drawRectangleLive(
             i,
             xPosition,
@@ -1390,12 +1390,12 @@ export default defineComponent({
               ) {
                 (
                   entry.instruction as InstructionSetParameter
-                ).setParameter.channelIds = [
+                ).setParameter.channels = [
                   ...new Set([
                     ...(entry.instruction as InstructionSetParameter)
-                      .setParameter.channelIds,
+                      .setParameter.channels,
                     ...(nextEntry.instruction as InstructionSetParameter)
-                      .setParameter.channelIds,
+                      .setParameter.channels,
                   ]),
                 ];
               } else {

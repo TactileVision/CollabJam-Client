@@ -137,7 +137,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
     //console.log("action " + state.outputChannelState)
     // Iterate through all channels
     const uniqueChannels = [
-      ...new Set(channels.map((item) => item.channelIds).flat()),
+      ...new Set(channels.map((item) => item.channels).flat()),
     ]; // [ 'A', 'B']
     //Get last item with containing channel;
     uniqueChannels.forEach((c) => {
@@ -148,7 +148,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
       channels
         .filter((i) => {
-          return i.channelIds.includes(c) == true;
+          return i.channels.includes(c) == true;
         })
         .forEach((ch) => {
           //TODO Only add the last of the array?

@@ -68,14 +68,16 @@ export const writeAmplitudeBuffer = (
     instructionTimer = setTimeout(f, x.wait.miliseconds);
   } else if (isInstructionSetParameter(tacton[index])) {
     const x = tacton[index] as InstructionSetParameter;
-    const c: number[] = x.setParameter.channelIds;
+    const c: number[] = x.setParameter.channels;
 
     WebSocketAPI.sendInstruction({
       roomId: store.state.roomSettings.id || "",
       instructions: [
         {
-          /* keyId: "REC", */ channels: c,
+          keyId: "REC",
+          channels: c,
           intensity: x.setParameter.intensity,
+          author: store.state.roomSettings.user,
         },
       ],
     });

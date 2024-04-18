@@ -156,8 +156,8 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
      *   } as payload
      */
     case WS_MSG_TYPE.SEND_INSTRUCTION_CLI: {
-      //console.log("SEND_INSTRUCTION_CLI")
-      //console.log(msg.payload)
+      console.log("SEND_INSTRUCTION_CLI");
+      console.log(msg.payload);
       if (store.state.roomSettings.mode != InteractionMode.Playback) {
         store.dispatch(
           TactonSettingsActionTypes.modifySpecificChannel,
@@ -195,7 +195,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
             // Set all outputs to 0
             store.state.generalSettings.deviceList.forEach((device) => {
               const tt: TactileTask = {
-                channelIds: [...Array(device.numOfOutputs).keys()],
+                channels: [...Array(device.numOfOutputs).keys()],
                 intensity: 0,
               };
               window.api.send(

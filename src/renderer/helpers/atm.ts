@@ -34,7 +34,7 @@ export function atm(
       const on: AtmStep = {
         deviceId: actuators[i].deviceUuid,
         task: {
-          channelIds: [actuators[i].actuator],
+          channels: [actuators[i].actuator],
           intensity: amplitude,
         },
         when: i * soa,
@@ -42,7 +42,7 @@ export function atm(
       const off: AtmStep = {
         deviceId: actuators[i].deviceUuid,
         task: {
-          channelIds: [actuators[i].actuator],
+          channels: [actuators[i].actuator],
           intensity: 0,
         },
         when: i * soa + burstDuration,
@@ -63,7 +63,7 @@ export function atm(
       const t = setTimeout(() => {
         writeAmplitudeOnDisplay(
           inst.deviceId,
-          inst.task.channelIds,
+          inst.task.channels,
           inst.task.intensity,
         );
         if (i == instructions.length - 1) {

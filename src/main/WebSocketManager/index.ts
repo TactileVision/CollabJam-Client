@@ -48,7 +48,11 @@ export const bufferedSending = (
     if (instructionsToSend.length > 0) {
       WebSocketAPI.sendInstruction({
         roomId: roomId,
-        instructions: instructionsToSend,
+        instructions: instructionsToSend.map((i) => ({
+          ...i,
+          keyId: undefined,
+          author: undefined,
+        })),
       });
     }
   }
@@ -88,12 +92,12 @@ export const initWebsocket = (store: Store) => {
       try {
         const data = JSON.parse(event.data);
         handleMessage(store, data);
-        window.api.send(IPC_CHANNELS.main.logMessageInfos, {
-          level: LoggingLevel.INFO,
-          type: data.type,
-          startTimeStamp: data.startTimeStamp,
-          endTimeStamp: new Date().getTime(),
-        });
+        // window.api.send(IPC_CHANNELS.main.logMessageInfos, {
+        //   level: LoggingLevel.INFO,
+        //   type: data.type,
+        //   startTimeStamp: data.startTimeStamp,
+        //   endTimeStamp: new Date().getTime(),
+        // })
       } catch (err) {
         console.log("error Past");
         console.log(`Error occured ${err}`);
@@ -110,6 +114,7 @@ export const sendSocketMessage = (msg: SocketMessage) => {
 
 export const WebSocketAPI = {
   sendInstruction: (payload: RequestSendTactileInstruction) => {
+    console.log(payload);
     sendSocketMessage({
       type: WS_MSG_TYPE.SEND_INSTRUCTION_SERV,
       payload: payload,

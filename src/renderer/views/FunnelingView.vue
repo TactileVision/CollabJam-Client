@@ -203,11 +203,11 @@ export default defineComponent({
         deviceId: this.actuators[0].deviceUuid,
         taskList: [
           {
-            channelIds: [this.actuators[0].actuator],
+            channels: [this.actuators[0].actuator],
             intensity: leftIntensity,
           },
           {
-            channelIds: [this.actuators[1].actuator],
+            channels: [this.actuators[1].actuator],
             intensity: rightIntensity,
           },
         ],

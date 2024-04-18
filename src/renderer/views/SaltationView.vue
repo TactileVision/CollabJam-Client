@@ -239,7 +239,7 @@ export default defineComponent({
           const on: AtmStep = {
             deviceId: this.actuators[a].deviceUuid,
             task: {
-              channelIds: [actuators[a].actuator],
+              channels: [actuators[a].actuator],
               intensity: this.maxAmp,
             },
             when: c * this.sliderBD + c * this.sliderIBI,
@@ -248,7 +248,7 @@ export default defineComponent({
           const off: AtmStep = {
             deviceId: this.actuators[a].deviceUuid,
             task: {
-              channelIds: [actuators[a].actuator],
+              channels: [actuators[a].actuator],
               intensity: 0,
             },
             when: (c + 1) * this.sliderBD + c * this.sliderIBI,
@@ -265,7 +265,7 @@ export default defineComponent({
           setTimeout(() => {
             writeAmplitudeOnDisplay(
               inst.deviceId,
-              inst.task.channelIds,
+              inst.task.channels,
               inst.task.intensity,
             );
 

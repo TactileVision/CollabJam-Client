@@ -11,9 +11,9 @@ export async function pingDisplayViaNode(
   device: Peripheral,
   durationMs: number,
 ) {
-  writeAmplitudeBuffer(device, [{ channelIds: [0], intensity: 1 }]);
+  writeAmplitudeBuffer(device, [{ channels: [0], intensity: 1 }]);
   await new Promise((resolve) => setTimeout(resolve, durationMs));
-  writeAmplitudeBuffer(device, [{ channelIds: [0], intensity: 0 }]);
+  writeAmplitudeBuffer(device, [{ channels: [0], intensity: 0 }]);
 }
 
 /**
@@ -52,8 +52,8 @@ export const writeAmplitudeBuffers = (
 
 function getBufferFromAmplitudeTasks(taskList: TactileTask[]): Buffer {
   const numOut = Math.max(
-    // ...taskList.map((o) => Math.max.apply(Math, o.channelIds)),
-    ...taskList.map((o) => Math.max(...o.channelIds)),
+    // ...taskList.map((o) => Math.max.apply(Math, o.channels)),
+    ...taskList.map((o) => Math.max(...o.channels)),
   );
   const output = new Uint8Array(numOut + 1).fill(255);
 
@@ -62,7 +62,7 @@ function getBufferFromAmplitudeTasks(taskList: TactileTask[]): Buffer {
   taskList.forEach((task) => {
     const intensity = map(task.intensity * 100, 0, 100, 0, 254);
 
-    task.channelIds.forEach((channelId) => {
+    task.channels.forEach((channelId) => {
       output[channelId] = intensity;
     });
   });
@@ -71,12 +71,12 @@ function getBufferFromAmplitudeTasks(taskList: TactileTask[]): Buffer {
 
 function getBufferFromFrequencyTasks(taskList: SetFrequencyTask[]): Buffer {
   const numOut = Math.max(
-    // ...taskList.map((o) => Math.max.apply(Math, o.channelIds)),
-    ...taskList.map((o) => Math.max(...o.channelIds)),
+    // ...taskList.map((o) => Math.max.apply(Math, o.channels)),
+    ...taskList.map((o) => Math.max(...o.channels)),
   );
   const output = new Uint8Array(2 * (numOut + 1)).fill(0);
   taskList.forEach((task) => {
-    task.channelIds.forEach((channel) => {
+    task.channels.forEach((channel) => {
       output[2 * channel] = task.frequency;
       output[2 * channel + 1] = task.frequency >> 8;
 

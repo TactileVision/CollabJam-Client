@@ -25,7 +25,7 @@ export function writeAmplitudeOnDisplay(
     deviceId: deviceUuid,
     taskList: [
       {
-        channelIds: channels,
+        channels: channels,
         intensity: amplitude,
       },
     ],
@@ -80,7 +80,7 @@ export function writeFrequencyOnDisplay(
     deviceId: deviceUuid,
     taskList: [
       {
-        channelIds: channels,
+        channels: channels,
         frequency: frequency,
       },
     ],
