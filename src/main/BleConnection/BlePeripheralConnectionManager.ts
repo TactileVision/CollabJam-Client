@@ -52,7 +52,7 @@ const updateConnectedDevice = async (peripheral: Peripheral) => {
     connectedDevices.delete(peripheral.uuid);
     sendMessageToRenderer(
       IPC_CHANNELS.bluetooth.renderer.disconnectedFromDevice,
-      peripheral.uuid,
+      { uuid: peripheral.uuid },
     );
   }
 

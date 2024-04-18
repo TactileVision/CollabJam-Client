@@ -8,7 +8,7 @@ const tactileDisplayService: Service = {
     numberOfOutputs: {
       uuid: "f33c00028ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: Characteristic) => {
+        (deviceUuid: string, characteristic: Characteristic) => {
           characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
@@ -18,7 +18,7 @@ const tactileDisplayService: Service = {
             sendMessageToRenderer(
               IPC_CHANNELS.bluetooth.renderer.readNumberOfOutputs,
               {
-                deviceId: characteristic._peripheralId,
+                deviceId: deviceUuid,
                 numOfOutputs: x,
               },
             );
@@ -29,7 +29,7 @@ const tactileDisplayService: Service = {
     canChangeAmplitude: {
       uuid: "f33c00038ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: Characteristic) => {
+        (deviceUuid: string, characteristic: Characteristic) => {
           characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
@@ -40,7 +40,7 @@ const tactileDisplayService: Service = {
             sendMessageToRenderer(
               IPC_CHANNELS.bluetooth.renderer.readAmpAvailability,
               {
-                deviceId: characteristic._peripheralId,
+                deviceId: deviceUuid,
                 ampConf: x,
               },
             );
@@ -51,7 +51,7 @@ const tactileDisplayService: Service = {
     canChangeFrequency: {
       uuid: "f33c00048ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: Characteristic) => {
+        (deviceUuid: string, characteristic: Characteristic) => {
           characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
@@ -62,7 +62,7 @@ const tactileDisplayService: Service = {
             sendMessageToRenderer(
               IPC_CHANNELS.bluetooth.renderer.readFreqAvailability,
               {
-                deviceId: characteristic._peripheralId,
+                deviceId: deviceUuid,
                 freqConf: x,
               },
             );
@@ -73,7 +73,7 @@ const tactileDisplayService: Service = {
     frequencyRange: {
       uuid: "f33c00058ebf4c9c83ecbfff479a930b",
       callbacks: [
-        (characteristic: Characteristic) => {
+        (deviceUuid: string, characteristic: Characteristic) => {
           characteristic.read((error: string, data: Buffer) => {
             if (error) {
               console.log(error);
@@ -85,7 +85,7 @@ const tactileDisplayService: Service = {
             sendMessageToRenderer(
               IPC_CHANNELS.bluetooth.renderer.readFreqRange,
               {
-                deviceId: characteristic._peripheralId,
+                deviceId: deviceUuid,
                 freqInfo: { fMin: fMin, fMax: fMax, fResonance: fResonance },
               },
             );
@@ -115,12 +115,16 @@ const tactileDisplayService: Service = {
 interface Service {
   service: {
     uuid: string;
-    callbacks?: ((characteristic: Characteristic) => void)[] | (() => void)[];
+    callbacks?:
+      | ((deviceUuid: string, characteristic: Characteristic) => void)[]
+      | (() => void)[];
   };
   characteristics?: {
     [key: string]: {
       uuid: string;
-      callbacks?: ((characteristic: Characteristic) => void)[] | (() => void)[];
+      callbacks?:
+        | ((deviceUuid: string, characteristic: Characteristic) => void)[]
+        | (() => void)[];
     };
   };
 }

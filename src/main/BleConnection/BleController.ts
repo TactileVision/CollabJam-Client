@@ -89,7 +89,7 @@ const setOnCharacteristicsDiscover = (
               ) {
                 s.characteristics[key]!.callbacks!.forEach((setOnFn) => {
                   // console.log("inside of callback");
-                  setOnFn(characteristic);
+                  setOnFn(device.id, characteristic);
                 });
               }
             }
