@@ -1,6 +1,6 @@
 import { Store } from "@/renderer/store/store";
-import { LoggingLevel } from "@/main/FileManager/LoggingLevel";
-import { IPC_CHANNELS } from "@/preload/IpcChannels";
+// import { LoggingLevel } from "@/main/FileManager/LoggingLevel";
+// import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import { GeneralMutations } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { handleMessage } from "./messageHandler";
 import { Instruction } from "@/main/Input/InputHandling/InputHandlerManager";
