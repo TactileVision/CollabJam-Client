@@ -1,4 +1,4 @@
-import { TactileAction } from "@sharedTypes/InputDetection/InputBindings";
+import { TactileAction } from "@/main/Input/InputDetection/InputBindings";
 import { InputHandler } from "../InputHandlerManager";
 import { lockIntensity, unlockIntensity } from "../IntensityStore";
 

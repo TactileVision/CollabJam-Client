@@ -169,17 +169,17 @@ import { RouterNames } from "@/renderer/router/Routernames";
 import { defineComponent } from "vue";
 import { lightenDarkenColor, defaultColors } from "@/renderer/plugins/colors";
 import { createInputDetection } from "@/main/Input/InputDetection";
-import { InputEvent } from "@sharedTypes/InputDetection/types";
+import { InputEvent } from "@/main/Input/InputDetection/types";
 import {
   UserInput,
   UserInputType,
   KeyInput,
-} from "@sharedTypes/InputDetection/InputDetection";
+} from "@/main/Input/InputDetection/InputDetection";
 import {
   InputBinding,
   isIntensityAction,
   isActuatorAction,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 import getInputName from "@/main/Input/InputDetection/getInputName";
 import {
   StateProfile,

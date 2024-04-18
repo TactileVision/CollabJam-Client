@@ -2,7 +2,7 @@ import {
   InputDevice,
   isGamepadDevice,
   isKeyboardDevice,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 
 const getDeviceName = (device: InputDevice): string => {
   if (isKeyboardDevice(device)) {

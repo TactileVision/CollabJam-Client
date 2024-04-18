@@ -34,16 +34,16 @@ import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSett
 import { useStore } from "@/renderer/store/store";
 import { initWebsocket } from "@/main/WebSocketManager/";
 import { createInputDetection } from "@/main/Input/InputDetection";
-import { InputEvent } from "@sharedTypes/InputDetection/types";
+import { InputEvent } from "@/main/Input/InputDetection/types";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/collaboration/playGround/types";
 import {
   KeyInput,
   UserInputType,
-} from "@sharedTypes/InputDetection/InputDetection";
+} from "@/main/Input/InputDetection/InputDetection";
 import {
   DeviceType,
   KeyboardDevice,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 // import TheAppBar from "@/renderer/components/TheAppBar.vue";
 import TheSidebar from "@/renderer/components/TheSidebar.vue";
 export default defineComponent({

@@ -1,7 +1,7 @@
 import {
   InputDetection,
   InputDetectionConfig,
-} from "@sharedTypes/InputDetection/types";
+} from "@/main/Input/InputDetection/types";
 import {
   InputAdapter,
   getInputAdapters,
@@ -9,7 +9,7 @@ import {
 import {
   DeviceType,
   InputDevice,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 
 const defaultConfig = (): Omit<InputDetectionConfig, "onInput"> =>
   Object.freeze({

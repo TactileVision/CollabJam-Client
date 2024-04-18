@@ -1,4 +1,4 @@
-import { InputEvent } from "@sharedTypes/InputDetection/types";
+import { InputEvent } from "@/main/Input/InputDetection/types";
 
 export interface InputAdapterDetectionConfig {
   axesThreshold: number;

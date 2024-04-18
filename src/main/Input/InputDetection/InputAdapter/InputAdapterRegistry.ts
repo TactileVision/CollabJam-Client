@@ -1,4 +1,4 @@
-import { InputDevice } from "@sharedTypes/InputDetection/InputBindings";
+import { InputDevice } from "@/main/Input/InputDetection/InputBindings";
 import { InputAdapterDetection, InputAdapterDetectionConfig } from ".";
 
 export interface InputAdapter {

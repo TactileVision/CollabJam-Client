@@ -61,7 +61,7 @@ import { defineComponent } from "vue";
 import {
   isActuatorAction,
   isIntensityAction,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 import getInputName from "@/main/Input/InputDetection/getInputName";
 import { lightenDarkenColor } from "@/renderer/plugins/colors";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/collaboration/playGround/types";

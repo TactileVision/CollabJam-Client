@@ -5,7 +5,7 @@ import { app } from "electron";
 import { initSettings, CustomSettings } from "./initSettings";
 import { sendMessageToRenderer } from "@/main/IpcController/IpcMainController";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
-import { InputBinding } from "@sharedTypes/InputDetection/InputBindings";
+import { InputBinding } from "@/main/Input/InputDetection/InputBindings";
 import { isApiError } from "../ErrorType";
 
 //Manager to handle all user configurations and save them locally

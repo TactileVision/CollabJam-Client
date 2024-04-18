@@ -5,7 +5,7 @@ import { SetFrequencyTask, TactileTask } from "@sharedTypes/tactonTypes";
 import SettingManager from "../FileManager/SettingManager";
 import { LoggingLevel } from "../FileManager/LoggingLevel";
 import LoggingManager from "../FileManager/LoggingManager";
-import { InputBinding } from "@sharedTypes/InputDetection/InputBindings";
+import { InputBinding } from "@/main/Input/InputDetection/InputBindings";
 import {
   writeAmplitudeBuffer,
   writeAmplitudeBuffers,

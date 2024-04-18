@@ -41,7 +41,7 @@
 <script lang="ts">
 import getDeviceName from "@/main/Input/InputDetection/getDeviceName";
 import { useStore } from "@/renderer/store/store";
-import { InputDevice } from "@sharedTypes/InputDetection/InputBindings";
+import { InputDevice } from "@/main/Input/InputDetection/InputBindings";
 import { defineComponent } from "vue";
 import defaultImagePath from "@/renderer/assets/inputs/controller.svg";
 import { PlayGroundMutations } from "@/renderer/store/modules/collaboration/playGround/types";

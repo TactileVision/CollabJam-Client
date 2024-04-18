@@ -1,4 +1,4 @@
-import { InputProfile } from "@sharedTypes/InputDetection/InputBindings";
+import { InputProfile } from "@/main/Input/InputDetection/InputBindings";
 
 export const initSettings: CustomSettings = {
   userName: "",

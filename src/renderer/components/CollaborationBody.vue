@@ -93,7 +93,7 @@ import {
   InputDevice,
   isGamepadDevice,
   isKeyboardDevice,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
 
 export default defineComponent({

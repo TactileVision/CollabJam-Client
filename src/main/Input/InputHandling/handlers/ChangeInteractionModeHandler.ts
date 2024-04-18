@@ -4,14 +4,11 @@
 // 	intensity: number;
 //   }
 
-import { TactileAction } from "@sharedTypes/InputDetection/InputBindings";
+import { TactileAction } from "@/main/Input/InputDetection/InputBindings";
 import { InputHandler } from "@/main/Input/InputHandling/InputHandlerManager";
 import {
   /* InteractionMode, */ InteractionModeChange,
 } from "@sharedTypes/roomTypes";
-// import { sendSocketMessage } from "@/main/WebSocketManager";
-// import { useStore } from "vuex";
-// import { WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
 import { store } from "@/renderer/store/store";
 import { changeRecordMode } from "@/renderer/helpers/recordMode";
 interface TriggerActuatorAction extends TactileAction {
@@ -34,9 +31,6 @@ const ChangeInteractionModeHandler = (): InputHandler => {
         if (!wasActive) {
           actions.forEach((action) => {
             const a = action as TriggerActuatorAction;
-            // const s = useStore()
-            // console.log(a)
-            // console.log(store)
             if (
               store == undefined ||
               store.state.roomSettings.id == undefined

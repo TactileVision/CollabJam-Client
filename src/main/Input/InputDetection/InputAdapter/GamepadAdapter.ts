@@ -2,12 +2,12 @@ import {
   GamepadAxisInput,
   GamepadButtonInput,
   UserInputType,
-} from "@sharedTypes/InputDetection/InputDetection";
+} from "@/main/Input/InputDetection/InputDetection";
 import {
   DeviceType,
   GamepadDevice,
   InputDevice,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 import { InputAdapterDetection, InputAdapterDetectionConfig } from ".";
 
 const createDetection = (

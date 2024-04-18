@@ -5,7 +5,7 @@ import {
   isGamepadAxis,
   isGamepadButton,
   isKeyInput,
-} from "@sharedTypes/InputDetection/InputDetection";
+} from "@/main/Input/InputDetection/InputDetection";
 
 const INPUT_NAME_MAP = {
   xbox: {

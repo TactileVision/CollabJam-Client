@@ -10,11 +10,11 @@ import {
   InputDevice,
   InputProfile,
   compareDevices,
-} from "@sharedTypes/InputDetection/InputBindings";
+} from "@/main/Input/InputDetection/InputBindings";
 import {
   UserInput,
   compareInputs,
-} from "@sharedTypes/InputDetection/InputDetection";
+} from "@/main/Input/InputDetection/InputDetection";
 import { executeAllInputHandlers } from "@/main/Input/InputHandling/InputHandlerManager";
 import { TactonMutations } from "../tactonSettings/tactonSettings";
 import profiles from "./profiles";
