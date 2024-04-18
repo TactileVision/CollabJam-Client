@@ -365,7 +365,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
     commit(PlayGroundMutations.UPDATE_GLOBAL_INTENSITY, intensity);
 
     const instructionList: {
-      keyId: string;
+      // keyId: string;
       channels: number[];
       intensity: number;
     }[] = [];
@@ -379,7 +379,9 @@ export const actions: ActionTree<State, RootState> & Actions = {
               value: 1,
               wasActive: false,
               globalIntensity: intensity,
-            }).map((instruction) => ({ keyId: item.uid, ...instruction })),
+            }).map((instruction) => ({
+              /* keyId: item.uid, */ ...instruction,
+            })),
           );
         }
       });

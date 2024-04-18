@@ -121,8 +121,8 @@ export default defineComponent({
     console.log("foo");
     console.log(this.$refs);
     console.log(typeof this.$refs.contia);
-    const container: object = this.$refs.container as object;
-    this.$nextTick(() => (container.$el as HTMLDivElement).focus());
+    // const container = this.$refs.container;
+    // this.$nextTick(() => (container.$el as HTMLDivElement).focus());
     // this.isMounted = true;
     this.store.commit(PlayGroundMutations.UPDATE_EDIT_MDOE, false);
     this.devices = getAllDevices();
@@ -147,8 +147,8 @@ export default defineComponent({
         RouterNames.PLAY_GROUND,
       );
       // set the focus again, so key down and up is working
-      const container: object = this.$refs.container as object;
-      this.$nextTick(() => (container.$el as HTMLDivElement).focus());
+      // const container: object = this.$refs.container as object;
+      // this.$nextTick(() => (container.$el as HTMLDivElement).focus());
     },
     startDialog(id: string) {
       //console.log("startDialog: " + id);

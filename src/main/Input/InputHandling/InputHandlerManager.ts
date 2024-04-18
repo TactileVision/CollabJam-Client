@@ -1,6 +1,7 @@
 import { StateInputBinding } from "@/renderer/store/modules/collaboration/playGround/playGround";
 
 interface Instruction {
+  // keyId: string;
   channels: number[];
   intensity: number;
 }

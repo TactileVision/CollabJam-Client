@@ -1,6 +1,5 @@
 //file to initiate the vuex store, with all modules
 import { createStore } from "vuex";
-import type { ContextBridgeApi } from "@/preload/preload";
 
 import {
   store as generalSettings,
@@ -78,11 +77,11 @@ export const store = createStore({
 });
 declare global {
   interface Window {
-    api: ContextBridgeApi;
-    // api: {
-    //   send: (channel: string, payload: object) => void;
-    //   receive: (channel: string, payload: object) => void;
-    // };
+    // api: ContextBridgeApi;
+    api: {
+      send: (channel: string, payload: object) => void;
+      receive: (channel: string, payload: object) => void;
+    };
   }
 }
 
