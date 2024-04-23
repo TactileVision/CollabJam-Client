@@ -3,20 +3,22 @@
 
 <template>
   <div class="roomView">
-    <v-row align="center" justify="center" style="margin-top: 40px">
-      <v-btn elevation="2" color="primary" @click="getRooms"
-        >Update Room List</v-btn
+    <!-- <v-row align="center" justify="center" style="margin-top: 40px"> -->
+    <websocket-toggle
+      remote-url="wss://itactjam.informatik.htw-dresden.de/whws"
+      local-url="ws://localhost:3333/"
+    >
+    </websocket-toggle>
+    <v-list lines="one">
+      <v-list-item
+        v-for="room of store.state.roomSettings.availableRooms"
+        :key="room.id"
+        @click="enterRoom(room.id)"
+        :title="room.name"
       >
-      <v-list lines="one">
-        <v-list-item
-          v-for="room of store.state.roomSettings.availableRooms"
-          :key="room.id"
-          @click="enterRoom(room.id)"
-          :title="room.name"
-        >
-        </v-list-item>
-      </v-list>
-    </v-row>
+      </v-list-item>
+    </v-list>
+    <!-- </v-row> -->
   </div>
 </template>
 
@@ -33,8 +35,10 @@ import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { RoomMutations } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { WebSocketAPI } from "@/main/WebSocketManager";
+import WebsocketToggle from "../components/WebsocketToggle.vue";
 export default defineComponent({
   name: "RoomView",
+  components: { WebsocketToggle },
   data() {
     return {
       userName: "",

@@ -28,7 +28,6 @@ export type State = {
   maxDuration: number;
   mode: InteractionMode;
   recordingNamePrefix: string;
-
   availableRooms: Room[];
 };
 

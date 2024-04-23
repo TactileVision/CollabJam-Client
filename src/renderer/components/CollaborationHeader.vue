@@ -72,7 +72,7 @@ export default defineComponent({
         roomId: this.store.state.roomSettings.id || "",
         user: this.store.state.roomSettings.user,
       });
-      this.$router.push("/");
+      this.$router.push("/rooms");
     },
     copyAdress() {
       console.log(this.store.getters);

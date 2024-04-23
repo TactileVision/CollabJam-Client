@@ -189,7 +189,7 @@ export default defineComponent({
         user: this.store.state.roomSettings.user,
       } as RequestUpdateUser);
 
-      this.$router.push("/");
+      this.$router.push("/rooms");
     },
     enterRoom() {
       window.api.send(IPC_CHANNELS.main.changeScan, { scanStatus: false });
