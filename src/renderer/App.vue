@@ -69,11 +69,11 @@ export default defineComponent({
     this.detection.start();
   },
   methods: {
-    reconnectSocket() {
-      this.isReconnecting = true;
-      initWebsocket(this.store);
-      setTimeout(() => (this.isReconnecting = false), 5000);
-    },
+    // reconnectSocket() {
+    //   this.isReconnecting = true;
+    //   initWebsocket(this.store);
+    //   setTimeout(() => (this.isReconnecting = false), 5000);
+    // },
     correctFrameForInput(): boolean {
       return this.store.getters.currentView == RouterNames.PLAY_GROUND;
     },
