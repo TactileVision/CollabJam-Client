@@ -9,12 +9,13 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && npx vite build && npx electron-builder ",
+    "build": "npm run clean && vue-tsc --noEmit && npx vite build && npx electron-builder ",
     "lint": "eslint src",
     "lint:fix": "eslint src  --fix",
     "prettier": "prettier src",
     "prettier:fix": "prettier src  --write",
-    "format": "npm run prettier:fix && npm run lint:fix"
+    "format": "npm run prettier:fix && npm run lint:fix",
+    "clean" : "rimraf dist dist_electron"
   },
   "devDependencies": {
     "@electron-forge/plugin-auto-unpack-natives": "^7.3.1",
