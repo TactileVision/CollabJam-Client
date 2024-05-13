@@ -9,7 +9,7 @@ import {
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { Store } from "@/renderer/store/store";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
-import { bufferedSending } from "@/main/WebSocketManager/index";
+import { WebSocketAPI } from "@/main/WebSocketManager/index";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import {
   TactonMutations,
@@ -17,8 +17,11 @@ import {
 } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import { RouterNames } from "@/renderer/router/Routernames";
 import { InteractionMode } from "@sharedTypes/roomTypes";
-import { TactileTask } from "@sharedTypes/tactonTypes";
+import { InstructionToClient, TactileTask } from "@sharedTypes/tactonTypes";
 import { SocketMessage, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import { Instruction } from "../Input/InputHandling/InputHandlerManager";
+import { debouncedHandling } from "../Input/InputHandling/Debouincing";
+import { toRaw } from "vue";
 
 // export interface SocketMessage {
 //   type: WS_MSG_TYPE;
@@ -99,11 +102,44 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
       if (store.state.roomSettings.id != undefined) {
         //MARK: Start the debouncing of inputs
         setInterval(() => {
-          bufferedSending(
-            store.state.roomSettings.id || "",
+          const muted = store.state.roomSettings.mutedParticipants.has(
+            store.state.roomSettings.user.id,
+          );
+          const instructionsToSend: Instruction[] = debouncedHandling(
             store.state.tactonSettings.debounceInstructionsBuffer,
           );
+
           store.dispatch(TactonSettingsActionTypes.clearDebounceBuffer);
+
+          if (instructionsToSend.length > 0) {
+            if (muted) {
+              // TODO: Wouldnt it make more sense to send InstructionToClient to the server as well because they are translating it anyway?
+              const clientInstructions: InstructionToClient[] =
+                instructionsToSend.map((instruction) => ({
+                  ...instruction,
+                  keyId: undefined,
+                  author: toRaw(store.state.roomSettings.user),
+                }));
+              store.dispatch(
+                TactonSettingsActionTypes.modifySpecificChannel,
+                clientInstructions,
+              );
+
+              window.api.send(
+                IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer,
+                clientInstructions,
+              );
+            } else {
+              WebSocketAPI.sendInstruction({
+                roomId: store.state.roomSettings.id || "",
+                instructions: instructionsToSend.map((instruction) => ({
+                  ...instruction,
+                  keyId: undefined,
+                  author: toRaw(store.state.roomSettings.user),
+                })),
+              });
+            }
+          }
         }, 20);
       }
       // }
@@ -158,18 +194,30 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
     case WS_MSG_TYPE.SEND_INSTRUCTION_CLI: {
       console.log("SEND_INSTRUCTION_CLI");
       console.log(msg.payload);
+      const instructions = msg.payload as InstructionToClient[];
+
       if (store.state.roomSettings.mode != InteractionMode.Playback) {
         store.dispatch(
           TactonSettingsActionTypes.modifySpecificChannel,
-          msg.payload,
+          instructions,
         );
       }
+      const mutedParticipants = store.state.roomSettings.mutedParticipants;
+      // For playback we want to play all instructions because the "author" is always the user that started the playback
+      // which makes muting pretty unintuitive
+      const instructionsToExecute = instructions.filter(
+        (instruction) =>
+          !instruction.author ||
+          store.state.roomSettings.mode == InteractionMode.Playback ||
+          !mutedParticipants.has(instruction.author.id),
+      );
+
       if (
         store.state.generalSettings.currentView == RouterNames.PLAY_GROUND &&
         !store.state.playGround.inEditMode
       ) {
         window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, {
-          taskList: msg.payload,
+          taskList: instructionsToExecute,
         });
       }
       break;

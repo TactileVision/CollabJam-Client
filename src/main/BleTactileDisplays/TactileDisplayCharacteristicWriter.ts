@@ -26,6 +26,7 @@ export const writeAmplitudeBuffer = (
   device: Peripheral,
   taskList: TactileTask[],
 ) => {
+  if (taskList.length == 0) return;
   const service = device.services.find(
     (x) => x.uuid === tactileDisplayService.service.uuid,
   );

@@ -26,7 +26,7 @@
         </v-col>
         <v-col
           class="inputDeviceWrapper"
-          cols="4"
+          cols="6"
           v-for="device in devices"
           :key="getDeviceKey(device)"
         >
@@ -34,6 +34,9 @@
             clas="flex-grow-1"
             :device="device"
           />
+        </v-col>
+        <v-col cols="4">
+          <ParticipantSettings />
         </v-col>
       </v-row>
     </v-col>
@@ -82,6 +85,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import TactonGraphWrapper from "@/renderer/components/TactonGraphWrapper.vue";
+import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 import CollaborationDialog from "./CollaborationDialog.vue";
 import CollaborationInputDeviceProfile from "./CollaborationInputDeviceProfile.vue";
 import { GeneralMutations } from "@/renderer/store/modules/generalSettings/generalSettings";
@@ -105,6 +109,7 @@ export default defineComponent({
     TactonGraphWrapper,
     TactonSelectionList,
     CollaborationDialog,
+    ParticipantSettings,
   },
   data() {
     return {

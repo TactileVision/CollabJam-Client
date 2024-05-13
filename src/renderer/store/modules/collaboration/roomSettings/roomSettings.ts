@@ -1,6 +1,7 @@
 import { MutationTree, GetterTree, ActionTree, ActionContext } from "vuex";
-import { RootState } from "@/renderer/store/store";
+import { RootState, useStore } from "@/renderer/store/store";
 import { InteractionMode, User, Room } from "@sharedTypes/roomTypes";
+import { IPC_CHANNELS } from "@/preload/IpcChannels";
 /**
  * Types
  *
@@ -23,6 +24,7 @@ export type State = {
   roomName: string;
   description: string;
   participants: User[];
+  mutedParticipants: Set<string>;
   user: User;
   // isRecording: boolean,
   maxDuration: number;
@@ -37,8 +39,8 @@ export const state: State = {
   roomName: "",
   description: "",
   participants: [],
-  user: { id: "", name: "", color: "" },
-  // isRecording: false,
+  mutedParticipants: new Set(),
+  user: { id: "", name: "", color: "", muted: false }, // isRecording: false,
   maxDuration: 20000,
   mode: InteractionMode.Jamming,
   recordingNamePrefix: "",
@@ -56,6 +58,7 @@ export enum RoomMutations {
   UPDATE_USER = "UPDATE_USER",
   UPDATE_USER_NAME = "UPDATE_USER_NAME",
   UPDATE_PARTICIPANTS = "UPDATE_PARTICIPANTS",
+  UPDATE_PARTICIPANT = "UPDATE_PARTICIPANT",
   UPDATE_RECORD_MODE = "UPDATE_RECORD_MODE",
   UPDATE_MAX_DURATION_TACTON = "UPDATE_MAX_DURATION_TACTON",
   SET_AVAILABLE_ROOMS = "SET_AVAILABLE_ROOMS",
@@ -72,6 +75,7 @@ export type Mutations<S = State> = {
   [RoomMutations.UPDATE_USER](state: S, user: User): void;
   [RoomMutations.UPDATE_USER_NAME](state: S, userName: string): void;
   [RoomMutations.UPDATE_PARTICIPANTS](state: S, participants: User[]): void;
+  [RoomMutations.UPDATE_PARTICIPANT](state: S, participant: User): void;
   [RoomMutations.UPDATE_RECORD_MODE](state: S, mode: InteractionMode): void;
   [RoomMutations.UPDATE_MAX_DURATION_TACTON](
     state: S,
@@ -87,6 +91,7 @@ export const mutations: MutationTree<State> & Mutations = {
     state.roomName = props.roomInfo.name;
     state.description = props.roomInfo.description;
     state.participants = props.roomInfo.participants;
+    state.mutedParticipants.clear();
     // state.isRecording = props.roomInfo.isRecording;
     state.maxDuration = props.roomInfo.maxDurationRecord;
     state.recordingNamePrefix = props.roomInfo.recordingNamePrefix;
@@ -108,6 +113,22 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [RoomMutations.UPDATE_PARTICIPANTS](state, participants) {
     state.participants = participants;
+    participants
+      .filter((participant) => participant.muted)
+      .forEach((participant) => state.mutedParticipants.add(participant.id));
+  },
+  [RoomMutations.UPDATE_PARTICIPANT](state, participant) {
+    const index = state.participants.findIndex(
+      (other) => other.id === participant.id,
+    );
+    if (index !== -1) {
+      state.participants[index] = participant;
+      if (participant.muted) {
+        state.mutedParticipants.add(participant.id);
+      } else {
+        state.mutedParticipants.delete(participant.id);
+      }
+    }
   },
   [RoomMutations.UPDATE_RECORD_MODE](state, mode) {
     state.mode = mode;
@@ -128,6 +149,8 @@ export enum RoomSettingsActionTypes {
   enterRoom = "enterRoom",
   updateRoom = "updateRoom",
   setAvailableRoomList = "setAvailableRoomList",
+  muteParticipant = "muteParticipant",
+  unmuteParticipant = "unmuteParticipant",
 }
 
 type AugmentedActionContext = {
@@ -150,6 +173,14 @@ export interface Actions {
     { commit }: AugmentedActionContext,
     payload: { rooms: Room[] },
   ): void;
+  [RoomSettingsActionTypes.muteParticipant](
+    { commit }: AugmentedActionContext,
+    payload: { participant: User },
+  ): void;
+  [RoomSettingsActionTypes.unmuteParticipant](
+    { commit }: AugmentedActionContext,
+    payload: { participant: User },
+  ): void;
 }
 
 export const actions: ActionTree<State, RootState> & Actions = {
@@ -161,12 +192,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
       (participant) => participant.id == props.userId,
     );
 
-    if (user !== undefined)
-      commit(RoomMutations.UPDATE_USER, {
-        id: user.id,
-        name: user.name,
-        color: user.color,
-      });
+    if (user !== undefined) commit(RoomMutations.UPDATE_USER, { ...user });
 
     commit(RoomMutations.CHANGE_ROOM, {
       roomState: RoomState.Enter,
@@ -210,6 +236,42 @@ export const actions: ActionTree<State, RootState> & Actions = {
     props: { rooms: Room[] },
   ) {
     commit(RoomMutations.SET_AVAILABLE_ROOMS, props.rooms);
+  },
+  [RoomSettingsActionTypes.muteParticipant](
+    { commit },
+    props: { participant: User },
+  ) {
+    const store = useStore();
+    const outputChannel = store.state.tactonSettings.outputChannelState;
+    const channelsToDisable: number[] = [];
+    outputChannel.forEach(({ channelId, intensity, author }) => {
+      if (author?.id === props.participant.id && intensity > 0) {
+        channelsToDisable.push(channelId);
+      }
+    });
+    // debugger;
+    //TODO Change to websoecket API
+    window.api.send(IPC_CHANNELS.bluetooth.main.writeAmplitudeBuffer, [
+      {
+        channelIds: channelsToDisable,
+        intensity: 0,
+        author: props.participant,
+      },
+    ]);
+
+    commit(RoomMutations.UPDATE_PARTICIPANT, {
+      ...props.participant,
+      muted: true,
+    });
+  },
+  [RoomSettingsActionTypes.unmuteParticipant](
+    { commit },
+    props: { participant: User },
+  ) {
+    commit(RoomMutations.UPDATE_PARTICIPANT, {
+      ...props.participant,
+      muted: false,
+    });
   },
 };
 
