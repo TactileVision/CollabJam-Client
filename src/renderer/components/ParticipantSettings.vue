@@ -1,5 +1,5 @@
 <template>
-  <h3>Participants</h3>
+  <h3>Mute Other Participants</h3>
   <ParticipantControls
     v-for="participant in participants"
     :key="participant.id"
@@ -27,7 +27,9 @@ export default defineComponent({
   },
   computed: {
     participants(): User[] {
-      return this.store.state.roomSettings.participants;
+      return this.store.state.roomSettings.participants.filter(
+        (p) => p.id != this.store.state.roomSettings.user.id,
+      );
     },
   },
   methods: {
