@@ -99,8 +99,6 @@ import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
 export default defineComponent({
   name: "CollaborationBody",
   components: {
-    // GridHeader,
-    // GridArea,
     CollaborationInputDeviceProfile,
     TactonGraphWrapper,
     TactonSelectionList,
@@ -118,12 +116,6 @@ export default defineComponent({
   },
   mounted() {
     //set the focus to the gui, so key down and up is working
-    console.log("foo");
-    console.log(this.$refs);
-    console.log(typeof this.$refs.contia);
-    // const container = this.$refs.container;
-    // this.$nextTick(() => (container.$el as HTMLDivElement).focus());
-    // this.isMounted = true;
     this.store.commit(PlayGroundMutations.UPDATE_EDIT_MDOE, false);
     this.devices = getAllDevices();
 

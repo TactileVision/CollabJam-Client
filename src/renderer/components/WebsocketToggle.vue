@@ -44,7 +44,9 @@ export default defineComponent({
   },
   watch: {
     goOnline: function () {
-      this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, []);
+      this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
+        rooms: [],
+      });
       initWebsocket(this.store, this.goOnline ? this.remoteUrl : this.localUrl);
     },
   },

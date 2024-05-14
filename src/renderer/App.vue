@@ -3,7 +3,7 @@
   <div tabindex="0" class="main" @keyup="buttonUp" @keydown="buttonDown">
     <div class="root">
       <v-app>
-        <the-sidebar />
+        <!-- <the-sidebar /> -->
         <!-- <the-app-bar /> -->
         <v-main>
           <v-container fluid class="ma-0">
@@ -32,7 +32,6 @@ import { defineComponent } from "vue";
 import { RouterNames } from "@/renderer/router/Routernames";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { useStore } from "@/renderer/store/store";
-import { initWebsocket } from "@/main/WebSocketManager/";
 import { createInputDetection } from "@/main/Input/InputDetection";
 import { InputEvent } from "@/main/Input/InputDetection/types";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/collaboration/playGround/types";
@@ -45,10 +44,13 @@ import {
   KeyboardDevice,
 } from "@/main/Input/InputDetection/InputBindings";
 // import TheAppBar from "@/renderer/components/TheAppBar.vue";
-import TheSidebar from "@/renderer/components/TheSidebar.vue";
+// import TheSidebar from "@/renderer/components/TheSidebar.vue";
 export default defineComponent({
   name: "App",
-  components: { /* TheAppBar ,*/ TheSidebar },
+  components: {
+    /* TheAppBar ,*/
+    /* TheSidebar */
+  },
   data() {
     return {
       store: useStore(),

@@ -3,22 +3,46 @@
 
 <template>
   <div class="roomView">
-    <!-- <v-row align="center" justify="center" style="margin-top: 40px"> -->
-    <websocket-toggle
-      remote-url="wss://itactjam.informatik.htw-dresden.de/whws"
-      local-url="ws://localhost:3333/"
-    >
-    </websocket-toggle>
-    <v-list lines="one">
-      <v-list-item
-        v-for="room of store.state.roomSettings.availableRooms"
-        :key="room.id"
-        @click="enterRoom(room.id)"
-        :title="room.name"
-      >
-      </v-list-item>
-    </v-list>
-    <!-- </v-row> -->
+    <v-row align="center" justify="center" style="margin-top: 40px">
+      <!-- <v-container> -->
+      <v-navigation-drawer width="100">
+        <ServerSelectionList :servers="servers"></ServerSelectionList>
+      </v-navigation-drawer>
+      <v-navigation-drawer width="300">
+        <RoomSelectionList v-model="room"></RoomSelectionList>
+        <!-- MARK: Setup -->
+
+        <!-- <UserMenuTooltip
+          :users="store.state.roomSettings.participants"
+        ></UserMenuTooltip> -->
+        <!-- <UserMenu /> -->
+        <!-- <DeviceConnectionModal :num-connected-devices="numConnectedDevices">
+        </DeviceConnectionModal> -->
+        <v-btn
+          color="primary"
+          :disabled="store.state.roomSettings.mode != 1"
+          prepend-icon="mdi-logout"
+          @click="logOut(true)"
+          >Log out</v-btn
+        >
+        <RoomInformation :room="room"></RoomInformation>
+        <!-- <v-btn v-if="room != null" @click="enterRoom">ENTER</v-btn> -->
+      </v-navigation-drawer>
+      <v-col>
+        <CollaborationView
+          v-if="store.state.roomSettings.roomState == 'Enter'"
+        ></CollaborationView>
+        <div v-else>
+          <v-alert type="warning" variant="tonal">
+            Select a server and a room to start Jamming
+          </v-alert>
+          <ServerUserSetup
+            v-model="userName"
+            :inputs-disabled="false"
+          ></ServerUserSetup>
+        </div>
+      </v-col>
+    </v-row>
   </div>
 </template>
 
@@ -33,16 +57,44 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
-import { RoomMutations } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
+import {
+  RoomMutations,
+  RoomState,
+} from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { WebSocketAPI } from "@/main/WebSocketManager";
-import WebsocketToggle from "../components/WebsocketToggle.vue";
+import ServerSelectionList from "@/renderer/components/ServerSelectionList.vue";
+import RoomSelectionList from "@/renderer/components/RoomSelectionList.vue";
+import RoomInformation from "@/renderer/components/RoomInformation.vue";
+import ServerUserSetup from "@/renderer/components/ServerUserSetup.vue";
+import { Room } from "@/shared/types/roomTypes";
+import { IPC_CHANNELS } from "@/preload/IpcChannels";
+import CollaborationView from "./CollaborationView.vue";
+// import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
   name: "RoomView",
-  components: { WebsocketToggle },
+  components: {
+    ServerSelectionList,
+    RoomSelectionList,
+    RoomInformation,
+    ServerUserSetup,
+    CollaborationView,
+  },
+
   data() {
     return {
+      room: null as null | Room,
       userName: "",
       store: useStore(),
+      servers: [
+        {
+          url: "wss://itactjam.informatik.htw-dresden.de/whws",
+          name: "HTW",
+        },
+        {
+          url: "ws://localhost:3333/",
+          name: "Local",
+        },
+      ],
     };
   },
   computed: {
@@ -55,13 +107,42 @@ export default defineComponent({
       },
     },
   },
+  watch: {
+    room() {
+      console.log(this.room);
+
+      if (this.room == null) return;
+      this.enterRoom(this.room.id);
+    },
+  },
   methods: {
+    // setRoomSelection(room: Room) {
+    //   this.room = room;
+    // },
     getRooms() {
       WebSocketAPI.requestAvailableRooms();
     },
+    logOut(hideGraph: boolean) {
+      WebSocketAPI.logOut({
+        roomId: this.store.state.roomSettings.id as string,
+        user: this.store.state.roomSettings.user,
+      });
+      if (hideGraph) {
+        this.room = null;
+
+        this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Create);
+      }
+    },
     enterRoom(roomId: string) {
-      WebSocketAPI.getRoomInfos(roomId);
-      this.$router.push("/setup");
+      window.api.send(IPC_CHANNELS.main.changeScan, { scanStatus: false });
+      window.api.send(IPC_CHANNELS.main.saveUserName, {
+        userName: this.userName,
+      });
+      this.logOut(false);
+      WebSocketAPI.enterRoom({
+        id: roomId,
+        userName: this.userName,
+      });
     },
   },
 });
