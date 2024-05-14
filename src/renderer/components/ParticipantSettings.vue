@@ -15,6 +15,7 @@ import { defineComponent } from "vue";
 import ParticipantControls from "./ParticipantControls.vue";
 import { User } from "@sharedTypes/roomTypes";
 import { RoomSettingsActionTypes } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
+import { writeAmplitudeToAllChannels } from "../helpers/TactileDisplayActions";
 
 export default defineComponent({
   name: "ParticipantSettings",
@@ -33,6 +34,9 @@ export default defineComponent({
     muteParticipant(participant: User) {
       this.store.dispatch(RoomSettingsActionTypes.muteParticipant, {
         participant,
+      });
+      this.store.state.deviceManager.connectedTactileDisplays.forEach((d) => {
+        writeAmplitudeToAllChannels(d, 0);
       });
     },
     unmuteParticipant(participant: User) {

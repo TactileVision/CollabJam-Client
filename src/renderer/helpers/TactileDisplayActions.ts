@@ -70,6 +70,14 @@ export function writeAmplitudeForSelection(
     );
   });
 }
+/** Writes the `amplitude` value to all channels of the specificed `TactileDisplay` parameter.*/
+export function writeAmplitudeToAllChannels(
+  device: TactileDisplay,
+  amplitude: number,
+) {
+  const channels = [...Array(device.numOfOutputs).keys()];
+  writeAmplitudeOnDisplay(device.info.id, channels, amplitude);
+}
 
 export function writeFrequencyOnDisplay(
   deviceUuid: string,
