@@ -32,7 +32,6 @@ import { defineComponent } from "vue";
 import { RouterNames } from "@/renderer/router/Routernames";
 import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { useStore } from "@/renderer/store/store";
-import { initWebsocket } from "@/main/WebSocketManager/";
 import { createInputDetection } from "@/main/Input/InputDetection";
 import { InputEvent } from "@/main/Input/InputDetection/types";
 import { PlayGroundActionTypes } from "@/renderer/store/modules/collaboration/playGround/types";

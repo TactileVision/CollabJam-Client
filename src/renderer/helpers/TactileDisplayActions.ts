@@ -1,5 +1,6 @@
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import { ActuatorSelection } from "@/renderer/helpers/TactileDisplayValidation";
+import { TactileDisplay } from "../store/modules/DeviceManager/DeviceManagerStore";
 
 /**
  * Vibrate the first channel of the specified display (`deviceUuid`) for `durationMs` milliseconds

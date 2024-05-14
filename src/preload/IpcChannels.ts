@@ -20,6 +20,7 @@ const IPC_CHANNELS = {
     deviceStatusChanged: "tactile-jam.renderer.deviceStatusChanged",
     numberOfOutputsDiscovered: "tactile-jam.renderer.numberOfOutputsDiscovered",
     initConfig: "tactile-jam.renderer.initConfig",
+    windowWillClose: "collabjam.renderer.windowWillClose",
   },
 
   bluetooth: {

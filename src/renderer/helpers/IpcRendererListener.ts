@@ -13,6 +13,7 @@ import {
   PeripheralInformation,
   TactileDisplay,
 } from "../store/modules/DeviceManager/DeviceManagerStore";
+import { writeAmplitudeToAllChannels } from "./TactileDisplayActions";
 
 const store = useStore();
 /**
@@ -111,4 +112,15 @@ export const initIpcRendererListener = () => {
       store.dispatch(DeviceManagerStoreActionTypes.setFreqInfo, payload);
     },
   );
+
+  window.api.receive(IPC_CHANNELS.renderer.windowWillClose, () => {
+    store.state.deviceManager.connectedTactileDisplays.forEach((d) => {
+      writeAmplitudeToAllChannels(d, 0);
+    });
+    store.state.deviceManager.connectedTactileDisplays.forEach((d) => {
+      window.api.send(IPC_CHANNELS.main.disconnectDevice, {
+        deviceId: d.info.id,
+      });
+    });
+  });
 };

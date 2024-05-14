@@ -2,12 +2,14 @@
 import {
   setBrowserWindow,
   initSettingManager,
+  sendMessageToRenderer,
 } from "./IpcController/IpcMainController";
 import { app, protocol, BrowserWindow } from "electron";
 // import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 import path from "path";
 import { isApiError } from "./ErrorType";
+import { IPC_CHANNELS } from "@/preload/IpcChannels";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 // process.env.DIST_ELECTRON = join(__dirname, "..") as string;
@@ -42,6 +44,10 @@ async function createWindow() {
     //show the GUI in full screen mode
     // win.maximize();
     win.show();
+  });
+  win.on("close", () => {
+    sendMessageToRenderer(IPC_CHANNELS.renderer.windowWillClose, {});
+    console.log("Closing window");
   });
 
   setBrowserWindow(win);
