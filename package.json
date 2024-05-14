@@ -58,6 +58,7 @@
     "@pixi/settings": "^7.4.2",
     "@pixi/unsafe-eval": "^7.4.2",
     "pixi.js": "^8.1.0",
+    "rimraf": "^5.0.7",
     "uuid": "^9.0.1",
     "vue": "^3.4.21",
     "vue-inline-svg": "^3.1.2",
