@@ -85,7 +85,6 @@ export default defineComponent({
     ServerUserSetup,
     CollaborationView,
   },
-
   data() {
     return {
       room: null as null | Room,
@@ -116,10 +115,8 @@ export default defineComponent({
         this.store.commit(RoomMutations.UPDATE_ROOM_NAME, value);
       },
     },
-    loggedIn: {
-      get(): boolean {
-        return this.room != null;
-      },
+    loggedIn(): boolean {
+      return this.room != null;
     },
   },
   watch: {
