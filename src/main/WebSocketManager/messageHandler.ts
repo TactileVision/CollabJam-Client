@@ -15,7 +15,6 @@ import {
   TactonMutations,
   TactonSettingsActionTypes,
 } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
-import { RouterNames } from "@/renderer/router/Routernames";
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { TactileTask } from "@sharedTypes/tactonTypes";
 import { SocketMessage, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
@@ -143,9 +142,9 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
      *   } as payload
      */
     case WS_MSG_TYPE.UPDATE_USER_ACCOUNT_CLI: {
-      //console.log("UPDATE_USER_ACCOUNT_CLI")
-      //console.log(msg.payload)
-      store.commit(RoomMutations.UPDATE_PARTICIPANTS, msg.payload.participants);
+      // console.log("UPDATE_USER_ACCOUNT_CLI");
+      // console.log(msg.payload);
+      store.commit(RoomMutations.UPDATE_PARTICIPANTS, msg.payload);
       break;
     }
     /**
@@ -157,7 +156,8 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
      */
     case WS_MSG_TYPE.SEND_INSTRUCTION_CLI: {
       console.log("SEND_INSTRUCTION_CLI");
-      console.log(msg.payload);
+      // console.log(msg.payload);
+      // console.log(store.state.roomSettings.mode);
       if (store.state.roomSettings.mode != InteractionMode.Playback) {
         store.dispatch(
           TactonSettingsActionTypes.modifySpecificChannel,
@@ -165,7 +165,7 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
         );
       }
       if (
-        store.state.generalSettings.currentView == RouterNames.PLAY_GROUND &&
+        // store.state.generalSettings.currentView == RouterNames.PLAY_GROUND &&
         !store.state.playGround.inEditMode
       ) {
         window.api.send(IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers, {

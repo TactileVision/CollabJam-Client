@@ -2,7 +2,13 @@
   <!--MARK: Recording-->
   <!-- <v-sheet class="pa-1"> -->
   <!-- <div class="text-overline">Create Tacton</div> -->
-  <v-list lines="one" class="selection-list" color="primary" density="compact">
+  <v-list
+    lines="one"
+    class="selection-list"
+    color="primary"
+    density="compact"
+    :disabled="!enabled"
+  >
     <v-list-item
       v-for="server in servers"
       :key="server.name"
@@ -32,6 +38,10 @@ export default defineComponent({
   props: {
     servers: {
       type: Object as PropType<{ url: string; name: string }[]>,
+      required: true,
+    },
+    enabled: {
+      type: Boolean,
       required: true,
     },
   },

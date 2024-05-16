@@ -6,7 +6,10 @@
     <v-row align="center" justify="center" style="margin-top: 40px">
       <!-- <v-container> -->
       <v-navigation-drawer width="100">
-        <ServerSelectionList :servers="servers"></ServerSelectionList>
+        <ServerSelectionList
+          :servers="servers"
+          :enabled="!loggedIn"
+        ></ServerSelectionList>
       </v-navigation-drawer>
       <v-navigation-drawer width="300">
         <RoomSelectionList v-model="room"></RoomSelectionList>
@@ -16,8 +19,8 @@
           :users="store.state.roomSettings.participants"
         ></UserMenuTooltip> -->
         <!-- <UserMenu /> -->
-        <!-- <DeviceConnectionModal :num-connected-devices="numConnectedDevices">
-        </DeviceConnectionModal> -->
+        <DeviceConnectionModal :num-connected-devices="0">
+        </DeviceConnectionModal>
         <v-btn
           color="primary"
           :disabled="store.state.roomSettings.mode != 1"
@@ -69,10 +72,13 @@ import ServerUserSetup from "@/renderer/components/ServerUserSetup.vue";
 import { Room } from "@/shared/types/roomTypes";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import CollaborationView from "./CollaborationView.vue";
+import DeviceConnectionModal from "../components/DeviceConnectionModal.vue";
+import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
 // import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
   name: "RoomView",
   components: {
+    DeviceConnectionModal,
     ServerSelectionList,
     RoomSelectionList,
     RoomInformation,
@@ -91,6 +97,10 @@ export default defineComponent({
           name: "HTW",
         },
         {
+          url: "ws://141.56.185.46:3333/",
+          name: "Alex MBP",
+        },
+        {
           url: "ws://localhost:3333/",
           name: "Local",
         },
@@ -104,6 +114,11 @@ export default defineComponent({
       },
       set(value: string) {
         this.store.commit(RoomMutations.UPDATE_ROOM_NAME, value);
+      },
+    },
+    loggedIn: {
+      get(): boolean {
+        return this.room != null;
       },
     },
   },
@@ -127,18 +142,22 @@ export default defineComponent({
         roomId: this.store.state.roomSettings.id as string,
         user: this.store.state.roomSettings.user,
       });
+      this.store.commit(RoomMutations.UPDATE_PARTICIPANTS, []);
       if (hideGraph) {
-        this.room = null;
-
         this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Create);
+        this.room = null;
       }
     },
+    clearGraph() {
+      this.store.dispatch(TactonPlaybackActionTypes.deselectTacton);
+    },
     enterRoom(roomId: string) {
+      this.clearGraph();
       window.api.send(IPC_CHANNELS.main.changeScan, { scanStatus: false });
-      window.api.send(IPC_CHANNELS.main.saveUserName, {
-        userName: this.userName,
-      });
       this.logOut(false);
+      // window.api.send(IPC_CHANNELS.main.saveUserName, {
+      //   userName: this.userName,
+      // });
       WebSocketAPI.enterRoom({
         id: roomId,
         userName: this.userName,

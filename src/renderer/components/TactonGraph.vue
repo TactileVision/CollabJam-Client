@@ -170,7 +170,10 @@ export default defineComponent({
       console.log("Tacton");
       console.log(this);
 
-      if (tacton == null) return;
+      if (tacton == null) {
+        this.clearGraph();
+        return;
+      }
       const t = tacton as Tacton;
       this.clearGraph();
       this.drawStoredGraph(t.instructions);
