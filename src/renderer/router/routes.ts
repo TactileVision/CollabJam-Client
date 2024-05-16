@@ -32,7 +32,7 @@ export const routes: Array<RouteRecordRaw> = [
     component: EntranceControlView,
   },
   {
-    path: "/",
+    path: "/devices",
     name: RouterNames.DEVICES,
     component: DeviceConnectionView,
   },
@@ -52,7 +52,7 @@ export const routes: Array<RouteRecordRaw> = [
     component: SaltationView,
   },
   {
-    path: "/rooms",
+    path: "/",
     name: RouterNames.ROOM,
     component: ListRoomsView,
   },

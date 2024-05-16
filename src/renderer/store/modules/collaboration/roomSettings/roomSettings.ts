@@ -151,6 +151,7 @@ export enum RoomSettingsActionTypes {
   setAvailableRoomList = "setAvailableRoomList",
   muteParticipant = "muteParticipant",
   unmuteParticipant = "unmuteParticipant",
+  updateParticipantList = "updateParticipantList",
 }
 
 type AugmentedActionContext = {
@@ -180,6 +181,10 @@ export interface Actions {
   [RoomSettingsActionTypes.unmuteParticipant](
     { commit }: AugmentedActionContext,
     payload: { participant: User },
+  ): void;
+  [RoomSettingsActionTypes.updateParticipantList](
+    { commit }: AugmentedActionContext,
+    payload: { participants: User[] },
   ): void;
 }
 
@@ -272,6 +277,12 @@ export const actions: ActionTree<State, RootState> & Actions = {
       ...props.participant,
       muted: false,
     });
+  },
+  [RoomSettingsActionTypes.updateParticipantList](
+    { commit },
+    props: { participants: User[] },
+  ) {
+    commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
 };
 

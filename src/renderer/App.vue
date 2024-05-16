@@ -3,7 +3,7 @@
   <div tabindex="0" class="main" @keyup="buttonUp" @keydown="buttonDown">
     <div class="root">
       <v-app>
-        <the-sidebar />
+        <!-- <the-sidebar /> -->
         <!-- <the-app-bar /> -->
         <v-main>
           <v-container fluid class="ma-0">
@@ -44,10 +44,13 @@ import {
   KeyboardDevice,
 } from "@/main/Input/InputDetection/InputBindings";
 // import TheAppBar from "@/renderer/components/TheAppBar.vue";
-import TheSidebar from "@/renderer/components/TheSidebar.vue";
+// import TheSidebar from "@/renderer/components/TheSidebar.vue";
 export default defineComponent({
   name: "App",
-  components: { /* TheAppBar ,*/ TheSidebar },
+  components: {
+    /* TheAppBar ,*/
+    // TheSidebar,
+  },
   data() {
     return {
       store: useStore(),
@@ -74,7 +77,7 @@ export default defineComponent({
     //   setTimeout(() => (this.isReconnecting = false), 5000);
     // },
     correctFrameForInput(): boolean {
-      return this.store.getters.currentView == RouterNames.PLAY_GROUND;
+      return this.store.getters.currentView == RouterNames.ROOM;
     },
     buttonDown(e: KeyboardEvent) {
       if (e.repeat) return;
@@ -86,6 +89,7 @@ export default defineComponent({
       };
       const device: KeyboardDevice = { type: DeviceType.Keyboard };
 
+      if (e.getModifierState("Meta")) return;
       const profile = this.store.getters.getProfileByDevice(device);
       if (!profile) return;
 
@@ -114,6 +118,7 @@ export default defineComponent({
       });
     },
     onUserInput(e: InputEvent) {
+      console.log(e);
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
 

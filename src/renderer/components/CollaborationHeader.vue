@@ -5,19 +5,6 @@
       cols="1"
       :mode="store.state.roomSettings.mode"
     ></CollaborationInteractionModeIndicator>
-    <UserMenuTooltip
-      :users="store.state.roomSettings.participants"
-    ></UserMenuTooltip>
-    <!-- <UserMenu /> -->
-    <DeviceConnectionModal :num-connected-devices="numConnectedDevices">
-    </DeviceConnectionModal>
-    <v-btn
-      color="primary"
-      :disabled="store.state.roomSettings.mode != 1"
-      prepend-icon="mdi-logout"
-      @click="logOut"
-      >Log out</v-btn
-    >
   </v-toolbar>
 </template>
 
@@ -45,15 +32,15 @@ import {
 import { useStore } from "@/renderer/store/store";
 import { defineComponent } from "vue";
 import { WebSocketAPI } from "@/main/WebSocketManager";
-import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
-import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
+// import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
+// import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
 
 export default defineComponent({
   name: "CollaborationHeader",
   components: {
-    UserMenuTooltip,
-    DeviceConnectionModal,
+    // UserMenuTooltip,
+    // DeviceConnectionModal,
     CollaborationInteractionModeIndicator,
   },
   data: () => ({
@@ -72,7 +59,7 @@ export default defineComponent({
         roomId: this.store.state.roomSettings.id || "",
         user: this.store.state.roomSettings.user,
       });
-      this.$router.push("/rooms");
+      // this.$router.push("/rooms");
     },
     copyAdress() {
       console.log(this.store.getters);
