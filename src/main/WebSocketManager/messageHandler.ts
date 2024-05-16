@@ -184,25 +184,22 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
       //TODO Change tacton state based on received update!
       const update = msg.payload;
       const rm = update.newMode;
-      // console.log("Update Record Mode!")
-      // console.log(msg.payload)
-      // console.log(update)
       switch (rm) {
         case InteractionMode.Jamming:
           console.log("Jamming");
           if (store.state.roomSettings.mode == InteractionMode.Playback) {
             stopPlayback();
             // Set all outputs to 0
-            store.state.generalSettings.deviceList.forEach((device) => {
-              const tt: TactileTask = {
-                channels: [...Array(device.numOfOutputs).keys()],
-                intensity: 0,
-              };
-              window.api.send(
-                IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers,
-                { taskList: [tt] },
-              );
-            });
+            // store.state.generalSettings.deviceList.forEach((device) => {
+            const tt: TactileTask = {
+              channels: [...Array(16).keys()],
+              intensity: 0,
+            };
+            window.api.send(
+              IPC_CHANNELS.bluetooth.main.writeAllAmplitudeBuffers,
+              { taskList: [tt] },
+            );
+            // });
           }
           store.commit(TactonMutations.TRACK_STATE_CHANGES, false);
           break;
