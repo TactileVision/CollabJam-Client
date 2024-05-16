@@ -128,6 +128,7 @@ export enum RoomSettingsActionTypes {
   enterRoom = "enterRoom",
   updateRoom = "updateRoom",
   setAvailableRoomList = "setAvailableRoomList",
+  updateParticipantList = "updateParticipantList",
 }
 
 type AugmentedActionContext = {
@@ -149,6 +150,10 @@ export interface Actions {
   [RoomSettingsActionTypes.setAvailableRoomList](
     { commit }: AugmentedActionContext,
     payload: { rooms: Room[] },
+  ): void;
+  [RoomSettingsActionTypes.updateParticipantList](
+    { commit }: AugmentedActionContext,
+    payload: { participants: User[] },
   ): void;
 }
 
@@ -210,6 +215,12 @@ export const actions: ActionTree<State, RootState> & Actions = {
     props: { rooms: Room[] },
   ) {
     commit(RoomMutations.SET_AVAILABLE_ROOMS, props.rooms);
+  },
+  [RoomSettingsActionTypes.updateParticipantList](
+    { commit },
+    props: { participants: User[] },
+  ) {
+    commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
 };
 

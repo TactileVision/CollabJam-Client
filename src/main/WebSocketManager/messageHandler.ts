@@ -144,7 +144,9 @@ export const handleMessage = (store: Store, msg: SocketMessage) => {
     case WS_MSG_TYPE.UPDATE_USER_ACCOUNT_CLI: {
       // console.log("UPDATE_USER_ACCOUNT_CLI");
       // console.log(msg.payload);
-      store.commit(RoomMutations.UPDATE_PARTICIPANTS, msg.payload);
+      store.dispatch(RoomSettingsActionTypes.updateParticipantList, {
+        participants: msg.payload,
+      });
       break;
     }
     /**
