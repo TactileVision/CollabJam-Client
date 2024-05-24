@@ -3,15 +3,21 @@
 
 <template>
   <div class="roomView">
-    <v-row align="center" justify="center" style="margin-top: 40px">
-      <!-- <v-container> -->
-      <v-navigation-drawer width="100">
+    <v-row align="center" justify="center">
+      <!-- <v-container> -->     
+      <v-navigation-drawer width="150">
+        <v-container>
+          <h6 class="text-h6">Server</h6>
+        </v-container>
         <ServerSelectionList
           :servers="servers"
           :enabled="!loggedIn"
         ></ServerSelectionList>
       </v-navigation-drawer>
-      <v-navigation-drawer width="300">
+      <v-navigation-drawer width="150">
+        <v-container>
+          <h6 class="text-h6">Rooms</h6>
+        </v-container>
         <RoomSelectionList v-model="room"></RoomSelectionList>
         <!-- MARK: Setup -->
 
@@ -19,16 +25,17 @@
           :users="store.state.roomSettings.participants"
         ></UserMenuTooltip> -->
         <!-- <UserMenu /> -->
-        <DeviceConnectionModal :num-connected-devices="0">
-        </DeviceConnectionModal>
-        <v-btn
-          color="primary"
-          :disabled="store.state.roomSettings.mode != 1"
-          prepend-icon="mdi-logout"
-          @click="logOut(true)"
-          >Log out</v-btn
-        >
-        <RoomInformation :room="room"></RoomInformation>
+        <v-container style="display: flex; justify-content: center">
+          <v-btn
+              color="primary"
+              variant="tonal"
+              :disabled="store.state.roomSettings.mode != 1"
+              prepend-icon="mdi-logout"
+              @click="logOut(true)"
+              text="Log out"
+          >
+          </v-btn>
+        </v-container>       
         <!-- <v-btn v-if="room != null" @click="enterRoom">ENTER</v-btn> -->
       </v-navigation-drawer>
       <v-col>
