@@ -1,5 +1,5 @@
 <template>
-  <div class="indicator px-16 py-4 ma-2 text-uppercase">
+  <div class="indicator py-4 ma-2 text-uppercase">
     <v-icon :color="getColor()" :icon="getIcon()"></v-icon>
     {{ getModeString() }}
   </div>
