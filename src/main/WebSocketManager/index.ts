@@ -1,8 +1,4 @@
 import { Store } from "@/renderer/store/store";
-// import { LoggingLevel } from "@/main/FileManager/LoggingLevel";
-// import { IPC_CHANNELS } from "@/preload/IpcChannels";
-import { GeneralMutations } from "@/renderer/store/modules/generalSettings/generalSettings";
-import { handleMessage } from "./messageHandler";
 import { Instruction } from "@/main/Input/InputHandling/InputHandlerManager";
 import { debouncedHandling } from "@/main/Input/InputHandling/Debouincing";
 // import { router } from "@/renderer/router";
@@ -12,32 +8,17 @@ import {
   RequestSendTactileInstruction,
   RequestUpdateRoom,
   RequestUpdateUser,
-  SocketMessage,
   UpdateRoomMode,
   UpdateTacton,
   WS_MSG_TYPE,
 } from "@sharedTypes/websocketTypes";
+import { Socket, io } from "socket.io-client";
+import { RoomSettingsActionTypes } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
+import { handleMessage } from "./messageHandler";
 
-let clientWs = null as WebSocket | null;
 let currentUrl = "";
-/**
- * method to calculate the latency to the server every 30second
- * result get logged
- */
-function heartbeat(store: Store) {
-  if (!store.state.generalSettings.socketConnectionStatus) return;
-
-  //for(let i=0; i<5;i++){
-  clientWs?.send(
-    JSON.stringify({
-      type: WS_MSG_TYPE.PING,
-      startTimeStamp: new Date().getTime(),
-    }),
-  );
-  //}
-  setTimeout(() => heartbeat(store), 30000);
-  //setInterval(heartbeat(store),1000*5)
-}
+export let socket = null as Socket | null;
+// export const socket = io("ws://localhost:4444");
 
 export const bufferedSending = (
   roomId: string,
@@ -63,117 +44,59 @@ export const bufferedSending = (
  * in onmessage Function all custom messages are handled
  */
 export const initWebsocket = (store: Store, url: string) => {
-  if (clientWs !== null && currentUrl !== url) {
-    clientWs.close();
+  if (socket !== null && currentUrl !== url) {
+    console.log("Closing socket");
+    socket.close();
     currentUrl = url;
   }
-  //     //add this token to establish a connection
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-  // clientWs = new WebSocket(
-  //   "wss://itactjam.informatik.htw-dresden.de/whws/path?token=" + token,
-  // );
-  // clientWs = new WebSocket("ws://localhost:3333/path?token=" + token);
-  clientWs = new WebSocket(url + "/path?token=" + token);
+  socket = io("ws://localhost:4444");
+  socket.on("connect", () => {
+    console.log("SOCKET IS CONNECTED!!!!"); // x8WIv7-mJelg7on_ALbx
+    handleMessage(store);
+    console.log(socket?.id); // x8WIv7-mJelg7on_ALbx
+    socket?.emit(WS_MSG_TYPE.GET_AVAILABLE_ROOMS_SERV, {});
+  }); //     //add this token to establish a connection
 
-  if (clientWs !== null) {
-    clientWs.onopen = function (event: Event) {
-      store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, true);
-      heartbeat(store);
-      WebSocketAPI.requestAvailableRooms();
-      console.log("Opened websocket  connection " + event);
-    };
-    clientWs.onclose = function (event: Event) {
-      store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, false);
-      console.log("Closed websocket  connection " + event);
-    };
-    clientWs.onerror = function (event: Event) {
-      store.commit(GeneralMutations.UPDATE_SOCKET_CONNECTION, false);
-      console.log("Error websocket  connection " + event);
-    };
-    clientWs.onmessage = function (event: MessageEvent) {
-      console.log("Message websocket  connection ");
-      console.log(JSON.parse(event.data));
-      try {
-        const data = JSON.parse(event.data);
-        handleMessage(store, data);
-      } catch (err) {
-        console.log("error Past");
-        console.log(`Error occured ${err}`);
-      }
-    };
-  }
-};
-
-export const sendSocketMessage = (msg: SocketMessage) => {
-  if (clientWs?.readyState == 1) {
-    clientWs?.send(JSON.stringify(msg));
-  }
+  socket.on(WS_MSG_TYPE.GET_AVAILABLE_ROOMS_CLI, (rooms) => {
+    store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
+      rooms: rooms,
+    });
+  });
 };
 
 export const WebSocketAPI = {
   sendInstruction: (payload: RequestSendTactileInstruction) => {
-    console.log(payload);
-    sendSocketMessage({
-      type: WS_MSG_TYPE.SEND_INSTRUCTION_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.SEND_INSTRUCTION_SERV, payload);
   },
   requestAvailableRooms: () => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.GET_AVAILABLE_ROOMS_SERV,
-      payload: {},
-    });
+    console.log("get rooms");
+    socket?.emit(WS_MSG_TYPE.GET_AVAILABLE_ROOMS_SERV, {});
   },
   logOut: (payload: RequestUpdateUser) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.LOG_OUT,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.LOG_OUT, payload);
   },
   updateTacton: (payload: UpdateTacton) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.UPDATE_TACTON_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.UPDATE_TACTON_SERV, payload);
   },
   updateTactonDuration: (payload: { roomId: string; duration: number }) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.CHANGE_DURATION_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.CHANGE_DURATION_SERV, payload);
   },
   updateTactonFilenamePrefix: (payload: { roomId: string; prefix: string }) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.CHANGE_ROOMINFO_TACTON_PREFIX_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.CHANGE_ROOMINFO_TACTON_PREFIX_SERV, payload);
   },
   updateRoomMode: (payload: UpdateRoomMode) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, payload);
   },
   changeTactonMetadata: (payload: ChangeTactonMetadata) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV, payload);
   },
   getRoomInfos: (roomId: string) => {
-    sendSocketMessage({ type: WS_MSG_TYPE.ROOM_INFO_SERV, payload: roomId });
+    socket?.emit(WS_MSG_TYPE.ROOM_INFO_SERV, roomId);
   },
   updateRoom: (payload: RequestUpdateRoom) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.UPDATE_ROOM_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.UPDATE_ROOM_SERV, payload);
   },
   enterRoom: (payload: RequestEnterRoom) => {
-    sendSocketMessage({
-      type: WS_MSG_TYPE.ENTER_ROOM_SERV,
-      payload: payload,
-    });
+    socket?.emit(WS_MSG_TYPE.ENTER_ROOM_SERV, payload);
   },
 };

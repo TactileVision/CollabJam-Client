@@ -53,6 +53,7 @@ export default defineComponent({
   computed: {},
   methods: {
     selectServer: function (url: string) {
+      if (this.selection == url) return;
       this.selection = url;
       this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
         rooms: [],

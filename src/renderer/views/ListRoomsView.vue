@@ -81,6 +81,8 @@ import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import CollaborationView from "./CollaborationView.vue";
 import DeviceConnectionModal from "../components/DeviceConnectionModal.vue";
 import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
+import { writeAmplitudeOnDisplay } from "../helpers/TactileDisplayActions";
+import { stopGraphCursor } from "../helpers/GraphCursor";
 // import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
   name: "RoomView",
@@ -95,7 +97,7 @@ export default defineComponent({
   data() {
     return {
       room: null as null | Room,
-      userName: "",
+      userName: "demo",
       store: useStore(),
       servers: [
         {
@@ -128,6 +130,7 @@ export default defineComponent({
   },
   watch: {
     room() {
+      console.log("Room updated");
       console.log(this.room);
 
       if (this.room == null) return;
@@ -146,6 +149,19 @@ export default defineComponent({
         roomId: this.store.state.roomSettings.id as string,
         user: this.store.state.roomSettings.user,
       });
+
+      //TODO Turn off displays
+      this.clearGraph();
+      this.store.state.deviceManager.connectedTactileDisplays.forEach((td) => {
+        console.log(td);
+        writeAmplitudeOnDisplay(
+          td.info.id,
+          [...Array(td.numOfOutputs).keys()],
+          0,
+        );
+      });
+      stopGraphCursor();
+
       this.store.commit(RoomMutations.UPDATE_PARTICIPANTS, []);
       if (hideGraph) {
         this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Create);

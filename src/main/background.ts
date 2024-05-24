@@ -4,7 +4,7 @@ import {
   initSettingManager,
   sendMessageToRenderer,
 } from "./IpcController/IpcMainController";
-import { app, protocol, BrowserWindow } from "electron";
+import { app, protocol, BrowserWindow /* globalShortcut */ } from "electron";
 // import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS3_DEVTOOLS } from "electron-devtools-installer";
 import path from "path";
@@ -111,6 +111,15 @@ app.on("ready", async () => {
   }
   createWindow();
 });
+
+/* app.on("browser-window-focus", function () {
+  globalShortcut.register("CommandOrControl+R", () => {
+    console.log("CommandOrControl+R is pressed: Shortcut Disabled");
+  });
+  globalShortcut.register("F5", () => {
+    console.log("F5 is pressed: Shortcut Disabled");
+  });
+}); */
 
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {

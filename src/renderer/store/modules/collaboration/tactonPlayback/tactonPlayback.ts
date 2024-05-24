@@ -179,8 +179,6 @@ export interface Actions {
 
 export const actions: ActionTree<State, RootState> & Actions = {
   [TactonPlaybackActionTypes.selectTacton]({ commit }, uuid: string) {
-    const x = state.tactons.findIndex((t) => t.uuid === uuid);
-    console.log(x);
     if (state.tactons.findIndex((t) => t.uuid === uuid) != -1) {
       commit(TactonPlaybackMutations.SELECT_TACTON, uuid);
     } else {
