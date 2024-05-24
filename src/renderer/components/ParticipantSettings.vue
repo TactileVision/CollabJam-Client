@@ -1,12 +1,22 @@
 <template>
-  <h3>Mute Other Participants</h3>
-  <ParticipantControls
-    v-for="participant in participants"
-    :key="participant.id"
-    :participant="participant"
-    @muted="muteParticipant"
-    @unmuted="unmuteParticipant"
-  />
+  <h6 class="text-h6">Participants</h6>
+  <div style="display: flex; flex-direction: column; margin-top: 16px">
+    <v-btn
+        style="margin-bottom: 16px"
+        color="primary"
+        variant="tonal"
+        @click="alterAllParticipants"
+        text="Mute All"
+    >
+    </v-btn>
+    <ParticipantControls
+        v-for="participant in participants"
+        :key="participant.id"
+        :participant="participant"
+        @muted="muteParticipant"
+        @unmuted="unmuteParticipant"
+    />
+  </div>
 </template>
 
 <script lang="ts">
@@ -23,6 +33,7 @@ export default defineComponent({
   data() {
     return {
       store: useStore(),
+      isAllMuted: false,
     };
   },
   computed: {
@@ -46,6 +57,17 @@ export default defineComponent({
         participant,
       });
     },
+    alterAllParticipants() {
+      this.isAllMuted = !this.isAllMuted;      
+      // TODO not working      
+      this.participants.forEach((p: User) => {    
+        if (this.isAllMuted) { 
+          this.unmuteParticipant(p);
+        } else {
+          this.muteParticipant(p);
+        }
+      });
+    }
   },
 });
 </script>
