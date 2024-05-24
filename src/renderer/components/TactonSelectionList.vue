@@ -1,19 +1,6 @@
 <template>
-  <!--MARK: Recording-->
-  <!-- <v-sheet class="pa-1"> -->
-  <!-- <div class="text-overline">Create Tacton</div> -->
-  <v-btn
-    block
-    @click="toggleRecording"
-    :disabled="store.state.roomSettings.mode == 3"
-    color="error"
-    :prepend-icon="
-      store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
-    "
-  >
-    {{ store.state.roomSettings.mode == 2 ? "Stop" : "Record Tacton" }}
-  </v-btn>
-  <div>
+  <h5  class="text-h5">Tactons</h5>
+  <div style="margin-top: 16px">
     <span class="overline">Save as: </span>
     <span>
       <strong>
@@ -53,26 +40,6 @@
   <!-- </v-sheet> -->
 
   <!-- MARK: Tacton List -->
-
-  <!-- <v-sheet class="pa-1"> -->
-  <v-btn
-    block
-    @click="togglePlayback"
-    :disabled="
-      store.state.roomSettings.mode == 2 ||
-      store.state.tactonPlayback.currentTacton == null
-    "
-    color="primary"
-    :prepend-icon="store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'"
-    x
-  >
-    {{
-      store.state.roomSettings.mode == 3
-        ? "Stop"
-        : `Play
-			${store.state.tactonPlayback.currentTacton?.metadata.name}`
-    }}
-  </v-btn>
   <v-switch
     v-model="filteredView"
     :disabled="store.state.tactonPlayback.tactons.length == 0"
@@ -133,10 +100,9 @@ import { defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { WebSocketAPI } from "@/main/WebSocketManager";
-import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
+import { InteractionMode, Room } from "@sharedTypes/roomTypes";
 import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
-import { changeRecordMode } from "@/renderer/helpers/recordMode";
 
 export default defineComponent({
   name: "TactonSelectionList",
