@@ -1,6 +1,6 @@
 <template>
   <v-container class="playGroundView ma-0" ref="container" tabindex="-1">
-    <v-navigation-drawer width="300">
+    <v-navigation-drawer width="350">
       <v-sheet elevation="0" class="mr-2 pa-4">
         <TactonSelectionList></TactonSelectionList>
       </v-sheet>
@@ -11,7 +11,7 @@
       </v-sheet>
     </v-col> -->
 
-    <v-col cols="9">
+    <v-col>
       <v-row>
         <v-col
           id="TactonGraphWrapperHeight"
@@ -24,23 +24,37 @@
           <!-- <v-sheet id="TactonGraphWrapper" elevation="0" class="mr-2 pa-4"> -->
           <!-- </v-sheet> -->
         </v-col>
-        <v-col
-          class="inputDeviceWrapper"
-          cols="6"
-          v-for="device in devices"
-          :key="getDeviceKey(device)"
-        >
-          <CollaborationInputDeviceProfile
-            clas="flex-grow-1"
-            :device="device"
-          />
-        </v-col>
-        <v-col cols="4">
-          <ParticipantSettings />
-        </v-col>
+        <v-container style="margin-top: 16px; display: flex; width: 100%; flex-direction: column">
+          <v-row style="display: flex; justify-content: center">
+            <v-btn
+                variant="tonal"
+                color="primary"
+                @click="toggleInputDevices = !toggleInputDevices"
+                text="InputDevices"
+                :prepend-icon="' mdi-controller-classic'"
+            ></v-btn>
+          </v-row>
+          <transition :name="toggleInputDevices ? 'fadeIn' : 'fadeOut'">
+            <v-row v-show="toggleInputDevices">
+              <v-col
+                  class="inputDeviceWrapper overflow-hidden"
+                  cols="6"
+                  v-for="device in devices"
+                  :key="getDeviceKey(device)"
+              >
+                <CollaborationInputDeviceProfile
+                    class="flex-grow-1"
+                    :device="device"
+                />
+              </v-col>
+            </v-row>
+          </transition>
+        </v-container>
       </v-row>
     </v-col>
-
+    <v-col cols="2">
+      <ParticipantSettings></ParticipantSettings>
+    </v-col>
     <v-dialog
       v-model="CollaborationDialog"
       max-width="50%"
@@ -75,6 +89,24 @@
 .TactonGraphWrapperWrapper,
 .inputDeviceWrapper {
   height: 45vh;
+}
+
+.fadeIn-enter-active, .fadeOut-leave-active {
+  transition: all 0.5s ease;
+}
+
+.fadeIn-enter, .fadeOut-leave-to {
+  transform: translateY(400px);
+  opacity: 0;
+}
+
+.fadeIn-leave-active, .fadeOut-enter-active {
+  transition: all 0.5s ease;
+}
+
+.fadeIn-leave-to, .fadeOut-enter  {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 // .devices {
@@ -117,6 +149,7 @@ export default defineComponent({
       isMounted: false,
       devices: [] as InputDevice[],
       pollDevices: -1,
+      toggleInputDevices: false
     };
   },
   mounted() {
