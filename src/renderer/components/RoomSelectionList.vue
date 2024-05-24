@@ -16,8 +16,7 @@
 
 <style lang="scss" scoped>
 .selection-list {
-  height: 70vh;
-  overflow-y: scroll !important;
+  height: 70vh; 
 }
 </style>
 
