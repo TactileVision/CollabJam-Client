@@ -46,38 +46,226 @@
     hide-details
     label="Show Favorites only"
     color="primary"
-  ></v-switch>
-
-  <v-list
-    lines="one"
-    class="selection-list"
-    :selected="selectedItems"
-    color="primary"
-    density="compact"
-  >
-    <v-list-item
-      v-for="tacton of getTactons()"
-      :disabled="store.state.roomSettings.mode != 1"
-      :key="tacton.uuid"
-      class="non-selectable"
-      :title="tacton.metadata.name"
-      :subtitle="`${(calculateDuration(tacton) / 1000).toFixed(2)} s    ${tacton.metadata.recordDate}`"
-      :active="tacton.uuid == selection"
-      @click="selectTacton(tacton)"
+  ></v-switch>  
+  <v-expansion-panels>
+    <v-expansion-panel
+        v-for="group of sortByPrefix()"
+        :title="group.prefix"        
+        :elevation="'0'"
     >
-      <template #prepend>
-        <v-list-item-action>
-          <v-btn
-            :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'"
-            variant="plain"
-            @click="toggleFavorite(tacton)"
+      <v-expansion-panel-text
+      >
+        <v-list
+            lines="one"            
+            :selected="selectedItems"
+            color="primary"
+            density="compact"
+        > 
+          <v-list-item
+              style="padding-left: 0;"
+              v-for="tacton of group.tactons"
+              :disabled="store.state.roomSettings.mode != 1"
+              :key="tacton.uuid"
+              class="non-selectable show-buttons-on-hover"             
+              :active="tacton === selection"
+              @click=""
           >
-          </v-btn>
-        </v-list-item-action>
-      </template>
-    </v-list-item>
-  </v-list>
+            <template #prepend>
+              <v-list-item-action>
+                <v-btn                    
+                    :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'"
+                    variant="plain"
+                    @click="toggleFavorite(tacton)"
+                >
+                </v-btn>
+              </v-list-item-action>
+            </template>   
+            
+            <v-list-item-title @click="handleLeftClickOnTacton(tacton)">
+              {{tacton.metadata.name}}
+            </v-list-item-title>
+            
+            <v-list-item-subtitle>
+              {{`${(calculateDuration(tacton) / 1000).toFixed(2)} s    ${tacton.metadata.recordDate}`}}
+            </v-list-item-subtitle>
+            
+            <template #append>
+              <v-list-item-action>
+                <div class="show-on-hover">
+                  <v-btn
+                      :icon="'mdi-dots-vertical'"
+                      variant="plain"
+                      @click="openOptionsMenu(tacton)"
+                  >
+                  </v-btn>
+                </div>                
+              </v-list-item-action>
+            </template>
+            </v-list-item>          
+        </v-list>
+      </v-expansion-panel-text>
+    </v-expansion-panel>
+  </v-expansion-panels>
   <!-- </v-sheet> -->
+  <!--MARK: TactonMetadataDialog-->
+  <v-dialog width="800px" v-model="showEditMetadata">
+    <v-card>
+      <v-card-title>
+        <v-text-field
+            v-model="tactonTitle"
+            variant="underlined"
+        ></v-text-field>
+      </v-card-title>
+      <v-card-text>
+        <v-row dense>
+          <v-col
+              cols="12"
+              md="4"
+              sm="6"
+          >
+            <v-text-field
+                label="Duration"
+                :model-value="`${(calculateDuration(selection!) / 1000).toFixed(2)} s`"
+                variant="underlined"
+                readonly
+            ></v-text-field>
+          </v-col>
+
+          <v-col
+              cols="12"
+              md="4"
+              sm="6"
+          >
+            <v-text-field
+                label="RecordDate"
+                :model-value="
+                Intl.DateTimeFormat('default', {dateStyle: 'long'}).format(new Date(selection!.metadata.recordDate))"
+                variant="underlined"
+                readonly
+            ></v-text-field>
+          </v-col>
+          
+          <v-col cols="12">
+              <v-textarea
+                  label="Description"                        
+                  v-model="tactonDescription"
+                  variant="underlined"
+                  auto-grow
+              ></v-textarea>
+          </v-col>
+          
+          <v-col cols="12">   
+              <v-combobox
+                  v-model="selectedCustomTags"
+                  variant="underlined"
+                  label="CustomTags"
+                  :items="customTags"
+                  multiple
+              ></v-combobox>          
+          </v-col>
+
+          <v-col cols="12">
+            <v-autocomplete
+                :items="Object.keys(bodyTags).filter((item) => {return isNaN(Number(item));})"
+                variant="underlined"
+                label="BodyTags"
+                auto-select-first
+                multiple
+                return-object
+                v-model="selectedBodyTags"
+            ></v-autocomplete>
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-divider></v-divider>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+            text="Close"
+            variant="plain"
+            @click="showEditMetadata = false"
+        ></v-btn>
+        <v-btn
+            color="primary"
+            text="Save"
+            variant="tonal"
+            @click="saveNewMetadata()"
+        ></v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <!--MARK: MoveTactonDialog-->
+  <v-dialog width="300px"  v-model="showTactonMenu">    
+    <v-card>
+      <!--OptionTitleSlide-->
+      <div v-show="!isMovingTacton">
+        <v-card-title>Options</v-card-title>
+        <v-card-text >
+          <v-list>
+            <v-list-item>
+              <v-btn
+                  color="primary"
+                  variant="tonal"
+                  class="w-100"
+                  prepend-icon="mdi-trash-can-outline"
+                  text="Delete"
+                  @click="deleteTacton()"
+              >
+              </v-btn>
+            </v-list-item>
+            <v-list-item>
+              <v-btn
+                  color="primary"
+                  variant="tonal"
+                  class="w-100"
+                  prepend-icon="mdi-content-copy"
+                  text="Clone"
+                  @click="cloneTacton()"
+              >
+              </v-btn>
+            </v-list-item>
+            <v-list-item>
+              <v-btn
+                  color="primary"
+                  variant="tonal"
+                  class="w-100"
+                  prepend-icon="mdi-arrow-left-bottom"
+                  text="Move"
+                  @click="isMovingTacton = true"
+              >
+              </v-btn>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </div>
+      <!--MoveTactonSlide-->
+      <div v-show="isMovingTacton">
+        <v-card-title>{{'Move ' + optionsTacton?.metadata.name + ' to'}}</v-card-title>
+        <v-card-text >
+          <v-list lines="one" color="primary" density="compact">
+            <v-list-item
+                style="width: 100%"
+                v-for="room of store.state.roomSettings.availableRooms"
+                :key="room.id"
+                :title="room.name"
+                @click="moveTacton(room)"
+            >
+            </v-list-item>
+          </v-list>
+      </v-card-text>
+      </div>
+      <v-divider></v-divider>
+      <!--Exit Menu-->
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+            text="Close"
+            variant="plain"
+            @click="showTactonMenu = false;"
+        ></v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style lang="scss" scoped>
@@ -88,6 +276,15 @@
 .selection-list {
   height: 70vh;
   overflow-y: scroll !important;
+}
+
+.show-buttons-on-hover:hover .show-on-hover {
+  opacity: 100%;
+}
+
+.show-on-hover {
+  opacity: 0;
+  transition: 0.5s;
 }
 
 // #prefix-input {
@@ -104,6 +301,22 @@ import { InteractionMode, Room } from "@sharedTypes/roomTypes";
 import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
 
+enum BodyTags {
+  Head,
+  LeftShoulder,
+  RightShoulder,
+  LeftUpperArm,
+  LeftForearm,
+  LeftHand,
+  RightUpperArm,
+  RightForeArm,
+  RightHand,
+  Torso,
+  LeftThigh,
+  LeftLowerLeg,
+  RightThigh,
+  RightLowerLeg,
+}
 export default defineComponent({
   name: "TactonSelectionList",
   // props: {},
@@ -113,8 +326,21 @@ export default defineComponent({
       showEditPrefix: false,
       editPrefixText: "",
       filteredView: false,
-      selection: null as null | string,
-      selectedItems: [], // don't know why this has to exist
+      selection: null as null | Tacton,
+      selectedItems: [], // don't know why this has to exist,
+      showEditMetadata: false,
+      showTactonMenu: false,
+      optionsTacton: null as null | Tacton,
+      isMovingTacton: false,
+      bodyTags: BodyTags,
+      rooms: null as null | Room[],
+      //optionsMenu
+      tactonTitle: "",
+      tactonDescription: "",
+      selectedBodyTags: [],
+      selectedCustomTags: [],
+      // list of previously used customTags user can choose from
+      customTags: ["Workshop", "SampleCustomTag"]
     };
   },
   computed: {
@@ -127,33 +353,14 @@ export default defineComponent({
       if (tacton == null) {
         this.selection = null;
       } else {
-        this.selection = tacton.uuid;
+        this.selection = tacton;
       }
     },
   },
   methods: {
-    toggleRecording() {
-      changeRecordMode(this.store, InteractionModeChange.toggleRecording);
-      // if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
-      // 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
-      // 		roomId: this.store.state.roomSettings.id,
-      // 		newMode: InteractionMode.Jamming
-      // 	});
-
-      // }
-      // else {
-      // 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
-      // 		roomId: this.store.state.roomSettings.id,
-      // 		newMode: InteractionMode.Recording
-      // 	});
-      // }
-    },
     selectTacton(tacton: Tacton) {
-      this.selection = tacton.uuid;
+      this.selection = tacton;
       this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
-    },
-    togglePlayback() {
-      changeRecordMode(this.store, InteractionModeChange.togglePlayback);
     },
     calculateDuration(tacton: Tacton): number {
       let d = 0;
@@ -211,6 +418,76 @@ export default defineComponent({
         default:
           return "Unkwown";
       }
+    },
+    openOptionsMenu(tacton: Tacton) {
+      this.isMovingTacton = false;
+      this.optionsTacton = tacton;
+      this.showTactonMenu = true;
+    },
+    handleLeftClickOnTacton(tacton: Tacton) {
+      if (this.selection === tacton) {
+        // TODO load current metaData of this.selection
+        this.tactonTitle = this.selection.metadata.name;
+
+        // open metadata menu
+        this.showEditMetadata = true;
+      } else {
+        // load and select
+        this.selectTacton(tacton);
+      }
+    },
+    sortByPrefix(): {prefix: string, tactons: Tacton[]}[] {
+      const tactons: Tacton[] = this.getTactons();
+      const prefixMap: { [key: string]: Tacton[] } = {};
+      
+      tactons.forEach((t: Tacton) => {
+        // remove last two chars to get prefix
+        const prefix = t.metadata.name.slice(0, -2);
+        if(!prefixMap[prefix]) {
+          //add new prefix
+          prefixMap[prefix] = [];
+        }
+        prefixMap[prefix].push(t);
+      });   
+      
+      return Object.keys(prefixMap).map(prefix => ({
+        prefix,
+        tactons: prefixMap[prefix]
+      }));
+    },
+    moveTacton(room: Room) {      
+      console.log("moving ", this.optionsTacton?.metadata.name, " to ", room.name);
+      
+      //TODO move tacton to room
+      
+      this.optionsTacton = null;
+      this.showTactonMenu = false;
+    },
+    deleteTacton() {
+      console.log("deleting ", this.optionsTacton?.metadata.name);
+
+      //TODO delete tacton
+
+      this.optionsTacton = null;
+      this.showTactonMenu = false;
+    },
+    cloneTacton() {
+      console.log("cloning ", this.optionsTacton?.metadata.name);
+
+      //TODO clone tacton
+
+      this.optionsTacton = null;
+      this.showTactonMenu = false;
+    },
+    saveNewMetadata() {
+      console.log("new tactonTitle: ", this.tactonTitle);
+      console.log("new description: ", this.tactonDescription);
+      console.log("new customTags: ", this.selectedCustomTags);
+      console.log("new bodyTags: ", this.selectedBodyTags);
+      
+      //TODO save new Metadata      
+      
+      this.showEditMetadata = false;
     },
   },
 });
