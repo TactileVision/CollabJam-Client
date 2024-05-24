@@ -1,9 +1,17 @@
 <template>
   <v-checkbox
-    :label="name"
+    :true-icon="'mdi-access-point-off'"
+    :false-icon="'mdi-access-point'"
+    :hide-details="true"
     v-model="muted"
     @change="updateMuteStatus"
-  ></v-checkbox>
+  >
+    <template v-slot:label>
+      <div style="margin-left: 8px">
+        {{name}}
+      </div>
+    </template>
+  </v-checkbox>
 </template>
 
 <style lang="scss" scoped></style>
