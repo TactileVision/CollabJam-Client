@@ -1,10 +1,38 @@
 <template>
-  <v-toolbar :title="store.state.roomSettings.roomName">
+  <v-toolbar style="margin-top: 0px" >
+    <!--MARK: Recording-->
+    <!-- <v-sheet class="pa-1"> -->
+    <!-- <div class="text-overline">Create Tacton</div> -->
+    <v-btn
+        width="40px"
+        height="40px"
+        style="border-radius: 4px"
+        @click="toggleRecording"
+        :disabled="store.state.roomSettings.mode == 3"
+        color="error"
+        :icon="store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'"
+    >
+    </v-btn>
+    <v-btn
+        width="40px"
+        height="40px"
+        style="border-radius: 4px"
+        @click="togglePlayback"
+        :disabled="
+      store.state.roomSettings.mode == 2 ||
+      store.state.tactonPlayback.currentTacton == null
+    "
+        color="primary"
+        :icon="store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'"
+    >
+    </v-btn>
     <CollaborationInteractionModeIndicator
       class="v-col"
-      cols="1"
+      cols="1>"
       :mode="store.state.roomSettings.mode"
     ></CollaborationInteractionModeIndicator>
+    <DeviceConnectionModal :num-connected-devices="0">
+    </DeviceConnectionModal>
   </v-toolbar>
 </template>
 
@@ -35,10 +63,14 @@ import { WebSocketAPI } from "@/main/WebSocketManager";
 // import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
 // import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
+import {changeRecordMode} from "@/renderer/helpers/recordMode";
+import {InteractionModeChange} from "@sharedTypes/roomTypes";
+import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 
 export default defineComponent({
   name: "CollaborationHeader",
   components: {
+    DeviceConnectionModal,
     // UserMenuTooltip,
     // DeviceConnectionModal,
     CollaborationInteractionModeIndicator,
@@ -75,6 +107,25 @@ export default defineComponent({
     devices() {
       this.$router.push("/devices");
     },
+    toggleRecording() {
+      changeRecordMode(this.store, InteractionModeChange.toggleRecording);
+      // if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
+      // 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
+      // 		roomId: this.store.state.roomSettings.id,
+      // 		newMode: InteractionMode.Jamming
+      // 	});
+
+      // }
+      // else {
+      // 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
+      // 		roomId: this.store.state.roomSettings.id,
+      // 		newMode: InteractionMode.Recording
+      // 	});
+      // }
+    },
+    togglePlayback() {
+      changeRecordMode(this.store, InteractionModeChange.togglePlayback);
+    }
   },
 });
 </script>
