@@ -103,6 +103,7 @@ export default defineComponent({
       endOfTactonIndicator: new Cursor(0x83be63),
       selectedBlock: null as {
         moving: boolean;
+        moved: boolean;
         channel: number;
         index: number;
         container: PIXI.Container;
@@ -113,6 +114,7 @@ export default defineComponent({
         previousScale: number;
         block: PIXI.Container;
         direction: StretchDirection;
+        stretched: boolean;
       } | null,
       blocksByChannel: [] as GraphBlock[][],
       isMounted: false,
@@ -451,6 +453,9 @@ export default defineComponent({
       }
       console.log("starting ticker");
       this.ticker?.add(this.loop);
+
+      this.selectedBlock = null;
+      this.currentStretch = null;
     },
     drawStoredGraph(instructions: TactonInstruction[]) {
       console.log("Drawing graph");
@@ -661,6 +666,7 @@ export default defineComponent({
               // );
               this.selectedBlock = {
                 moving: true,
+                moved: false,
                 channel: i,
                 index: currentIndex,
                 container: blockContainer,
@@ -991,6 +997,7 @@ export default defineComponent({
               block: container,
               direction:
                 x === 0 ? StretchDirection.NEGATIVE : StretchDirection.POSITIVE,
+              stretched: false,
             };
             this.pixiApp?.stage?.addEventListener(
               "pointermove",
@@ -1091,6 +1098,7 @@ export default defineComponent({
         const abort = shouldAbort();
 
         container.x = newX;
+        selectedBlock.moved = true;
 
         if (abort) {
           this.moveBlockEnd();
@@ -1099,7 +1107,7 @@ export default defineComponent({
     },
     moveBlockEnd() {
       const selectedBlock = this.selectedBlock;
-      if (selectedBlock && selectedBlock.moving) {
+      if (selectedBlock && selectedBlock.moved && selectedBlock.moving) {
         const { channel, index, container } = selectedBlock;
         const block = this.blocksByChannel[channel][index];
         block.startMs =
@@ -1107,6 +1115,7 @@ export default defineComponent({
           (this.width.original - 2 * this.paddingRL);
         this.updateTacton();
         selectedBlock.moving = false;
+        selectedBlock.moved = false;
       }
       this.pixiApp?.stage?.removeEventListener("pointermove", this.moveBlock);
     },
@@ -1233,6 +1242,7 @@ export default defineComponent({
           container.width,
           toRaw(container) as PIXI.Container,
         );
+        currentStretch.stretched = true;
 
         if (abort) {
           this.stretchBlockEnd();
@@ -1241,7 +1251,7 @@ export default defineComponent({
     },
     stretchBlockEnd() {
       const currentStretch = this.currentStretch;
-      if (currentStretch) {
+      if (currentStretch && currentStretch.stretched) {
         const {
           channel,
           index,
