@@ -23,9 +23,9 @@ protocol.registerSchemesAsPrivileged([
 async function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 1920,
-    height: 1080,
-    resizable: true,
+    width: 1600,
+    height: 900,
+    resizable: false,
     autoHideMenuBar: true,
     title: "Collaborative Tacton Generator",
     backgroundColor: "#121212",
