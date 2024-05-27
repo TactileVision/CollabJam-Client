@@ -652,13 +652,13 @@ export default defineComponent({
                 blockContainer.removeChild(oldControls);
                 oldControls.destroy({ children: true });
               }
-              // const newControls = this.drawBlockControls(
-              //   i,
-              //   currentIndex,
-              //   blockContainer.width,
-              //   blockContainer,
-              //   true,
-              // );
+              this.drawBlockControls(
+                i,
+                currentIndex,
+                blockContainer.width,
+                blockContainer,
+                true,
+              );
               this.selectedBlock = {
                 moving: true,
                 channel: i,
@@ -931,11 +931,12 @@ export default defineComponent({
 
       const blockControls = new PIXI.Container();
 
-      const lineWidth = highlighted ? 4 : 2;
+      const color = highlighted ? 0xec660c : 0x6c6c60;
+      const lineWidth = 2;
       const rect = new PIXI.Graphics();
       rect.setStrokeStyle({
         width: lineWidth,
-        color: 0xec660c,
+        color,
         matrix: new PIXI.Matrix(),
       });
       // rect.lineStyle(lineWidth, 0xec660c);
@@ -951,7 +952,7 @@ export default defineComponent({
         // border.lineStyle(2, 0xec660c);
         border.setStrokeStyle({
           width: 2,
-          color: 0xec660c,
+          color,
           matrix: new PIXI.Matrix(),
         });
         //border.lineStyle(2, 0x0000000);
