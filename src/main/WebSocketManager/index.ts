@@ -90,6 +90,18 @@ export const WebSocketAPI = {
   changeTactonMetadata: (payload: ChangeTactonMetadata) => {
     socket?.emit(WS_MSG_TYPE.CHANGE_TACTON_METADATA_SERV, payload);
   },
+  duplicateTacton: (tactonId: string, roomId: string) => {
+    socket?.emit(WS_MSG_TYPE.DUPLICATE_TACTON_SERV, {
+      tactonId: tactonId,
+      roomId: roomId,
+    });
+  },
+  deleteTacton: (tactonId: string, roomId: string) => {
+    socket?.emit(WS_MSG_TYPE.DELETE_TACTON_SERV, {
+      tactonId: tactonId,
+      roomId: roomId,
+    });
+  },
   getRoomInfos: (roomId: string) => {
     socket?.emit(WS_MSG_TYPE.ROOM_INFO_SERV, roomId);
   },

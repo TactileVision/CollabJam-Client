@@ -8,7 +8,13 @@ import {
 import { TactonSettingsActionTypes } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import { InteractionMode, Room, User } from "@sharedTypes/roomTypes";
 import { InstructionToClient, Tacton } from "@sharedTypes/tactonTypes";
-import { UpdateRoomMode, WS_MSG_TYPE } from "@sharedTypes/websocketTypes";
+import {
+  ChangeTactonMetadata,
+  TactonDeletion,
+  UpdateRoomMode,
+  UpdateTacton,
+  WS_MSG_TYPE,
+} from "@sharedTypes/websocketTypes";
 import {
   RoomMutations,
   RoomSettingsActionTypes,
@@ -122,8 +128,25 @@ export const handleMessage = (store: Store) => {
   });
 
   socket.on(WS_MSG_TYPE.GET_TACTON_CLI, (res: Tacton) => {
+    console.log("new tacton added!");
     store.dispatch(TactonPlaybackActionTypes.addTacton, res);
     store.dispatch(TactonPlaybackActionTypes.selectTacton, res.uuid);
+  });
+
+  socket.on(
+    WS_MSG_TYPE.CHANGE_TACTON_METADATA_CLI,
+    (res: ChangeTactonMetadata) => {
+      console.log("Tacton Metadata updated!");
+      store.dispatch(TactonPlaybackActionTypes.updateMetadata, {
+        tactonUuid: res.tactonId,
+        metadata: res.metadata,
+      });
+    },
+  );
+
+  socket.on(WS_MSG_TYPE.UPDATE_TACTON_CLI, (res: UpdateTacton) => {
+    console.log("Tacton Metadata updated!");
+    store.dispatch(TactonPlaybackActionTypes.updateTacton, res.tacton);
   });
 
   socket.on(WS_MSG_TYPE.ROOM_INFO_CLI, (room: Room) => {
@@ -142,6 +165,16 @@ export const handleMessage = (store: Store) => {
       },
     });
   });
+
+  socket.on(WS_MSG_TYPE.DELETE_TACTON_CLI, (res: TactonDeletion) => {
+    if (res.delted) {
+      store.dispatch(
+        TactonPlaybackActionTypes.deleteTacton,
+        res.tacton.tactonId,
+      );
+    }
+  });
+
   // const router = useRouter()
   /**
    * every message containing:
