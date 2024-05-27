@@ -49,7 +49,7 @@ export const initWebsocket = (store: Store, url: string) => {
     socket.close();
     currentUrl = url;
   }
-  socket = io("ws://localhost:4444");
+  socket = io(url, { path: "/whws/" });
   socket.on("connect", () => {
     console.log("SOCKET IS CONNECTED!!!!"); // x8WIv7-mJelg7on_ALbx
     handleMessage(store);

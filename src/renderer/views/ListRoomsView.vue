@@ -101,7 +101,7 @@ export default defineComponent({
       store: useStore(),
       servers: [
         {
-          url: "wss://itactjam.informatik.htw-dresden.de/whws",
+          url: "https://itactjam.informatik.htw-dresden.de/",
           name: "HTW",
         },
         {
