@@ -115,6 +115,9 @@ export const mutations: MutationTree<State> & Mutations = {
     const i = state.tactons.findIndex((e) => e.uuid === tacton.uuid);
     if (i === undefined) return;
     state.tactons[i] = tacton;
+    if (state.currentTacton?.uuid === tacton.uuid) {
+      state.currentTacton = tacton;
+    }
   },
 };
 
