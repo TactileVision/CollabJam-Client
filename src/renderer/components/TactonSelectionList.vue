@@ -46,11 +46,18 @@
     color="primary"
   ></v-switch>
   <v-expansion-panels>
-    <v-expansion-panel
-      v-for="group of sortByPrefix()"
-      :title="group.prefix + ' (' + group.tactons.length + ')'"
-      :elevation="'0'"
-    >
+    <v-expansion-panel v-for="group of sortByPrefix()" :elevation="'0'">
+      <v-expansion-panel-title>
+        <v-chip
+          prepend-icon="mdi-waveform"
+          class="ma-2"
+          color="primary"
+          size="x-small"
+        >
+          {{ group.tactons.length }}
+        </v-chip>
+        {{ group.prefix }}
+      </v-expansion-panel-title>
       <v-expansion-panel-text>
         <v-list
           lines="one"
@@ -81,7 +88,8 @@
             </template>
 
             <v-list-item-title @click="handleLeftClickOnTacton(tacton)">
-              {{ tacton.metadata.name }} {{ tacton.metadata.iteration }}
+              {{ tacton.metadata.name }}
+              {{ tacton.metadata.iteration }}
             </v-list-item-title>
 
             <v-list-item-subtitle>
