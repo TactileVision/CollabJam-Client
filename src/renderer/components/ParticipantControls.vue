@@ -5,9 +5,11 @@
     :hide-details="true"
     :model-value="participant.muted"
     @change="updateMuteStatus"
+    :color="participant.color"
+    :base-color="participant.color"
   >
     <template #label>
-      <div style="margin-left: 8px">
+      <div :style="`color:${participant.color}`" style="margin-left: 8px">
         {{ name }}
       </div>
     </template>
@@ -36,7 +38,7 @@ export default defineComponent({
   },
   methods: {
     updateMuteStatus() {
-      const event = this.participant.muted ?  "unmuted" : "muted";
+      const event = this.participant.muted ? "unmuted" : "muted";
       this.$emit(event, this.participant);
     },
   },
