@@ -2,6 +2,7 @@ import { MutationTree, GetterTree, ActionTree, ActionContext } from "vuex";
 import { RootState, useStore } from "@/renderer/store/store";
 import { InteractionMode, User, Room } from "@sharedTypes/roomTypes";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
+import { toRaw } from "vue";
 /**
  * Types
  *
@@ -260,7 +261,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
       {
         channelIds: channelsToDisable,
         intensity: 0,
-        author: props.participant,
+        author: toRaw(props.participant),
       },
     ]);
 

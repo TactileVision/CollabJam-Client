@@ -3,7 +3,7 @@
     :true-icon="'mdi-access-point-off'"
     :false-icon="'mdi-access-point'"
     :hide-details="true"
-    v-model="muted"
+    :model-value="participant.muted"
     @change="updateMuteStatus"
   >
     <template v-slot:label>
@@ -28,11 +28,6 @@ export default defineComponent({
       required: true,
     },
   },
-  data() {
-    return {
-      muted: this.participant.muted,
-    };
-  },
   emits: ["muted", "unmuted"],
   computed: {
     name() {
@@ -41,8 +36,8 @@ export default defineComponent({
   },
   methods: {
     updateMuteStatus() {
-      const event = this.muted ? "muted" : "unmuted";
-      this.$emit(event, { ...this.participant, muted: this.muted });
+      const event = this.participant.muted ?  "unmuted" : "muted";
+      this.$emit(event, this.participant);
     },
   },
 });
