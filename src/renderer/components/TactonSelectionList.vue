@@ -3,9 +3,7 @@
   <div style="margin-top: 16px">
     <span class="overline">Save as: </span>
     <span>
-      <strong>
-        {{ store.state.roomSettings.recordingNamePrefix }}-<em>n</em></strong
-      >
+      <strong> {{ store.state.roomSettings.recordingNamePrefix }}</strong>
     </span>
     <v-btn
       variant="text"
@@ -83,7 +81,7 @@
             </template>
 
             <v-list-item-title @click="handleLeftClickOnTacton(tacton)">
-              {{ tacton.metadata.name }} ({{ tacton.metadata.iteration }})
+              {{ tacton.metadata.name }} {{ tacton.metadata.iteration }}
             </v-list-item-title>
 
             <v-list-item-subtitle>
@@ -300,6 +298,7 @@ import { WebSocketAPI } from "@/main/WebSocketManager";
 import { InteractionMode, Room } from "@sharedTypes/roomTypes";
 import { Tacton } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
+import WebsocketToggle from "./WebsocketToggle.vue";
 
 enum BodyTags {
   Head,
@@ -469,8 +468,18 @@ export default defineComponent({
       console.log(
         `moving ${this.optionsTacton?.metadata.name} ${this.store.state.roomSettings.roomName} to  ${room.name} `,
       );
+      if (
+        this.store.state.roomSettings.id == undefined ||
+        this.optionsTacton?.uuid == undefined
+      ) {
+        return;
+      }
       //TODO move tacton to room
-
+      WebSocketAPI.moveTacton(
+        this.store.state.roomSettings.id,
+        room.id,
+        this.optionsTacton?.uuid,
+      );
       this.optionsTacton = null;
       this.showTactonMenu = false;
     },

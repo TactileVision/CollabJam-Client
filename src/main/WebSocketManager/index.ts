@@ -111,4 +111,10 @@ export const WebSocketAPI = {
   enterRoom: (payload: RequestEnterRoom) => {
     socket?.emit(WS_MSG_TYPE.ENTER_ROOM_SERV, payload);
   },
+  moveTacton: (currentRoomId: string, newRoomId: string, tactonId: string) => {
+    socket?.emit(WS_MSG_TYPE.MOVE_TACTON_SERV, {
+      tacton: { roomId: currentRoomId, tactonId: tactonId },
+      newRoomId: newRoomId,
+    });
+  },
 };
