@@ -103,6 +103,7 @@ export default defineComponent({
       endOfTactonIndicator: new Cursor(0x83be63),
       selectedBlock: null as {
         moving: boolean;
+        moved: boolean;
         channel: number;
         index: number;
         container: PIXI.Container;
@@ -113,6 +114,7 @@ export default defineComponent({
         previousScale: number;
         block: PIXI.Container;
         direction: StretchDirection;
+        stretched: boolean;
       } | null,
       blocksByChannel: [] as GraphBlock[][],
       isMounted: false,
@@ -451,6 +453,9 @@ export default defineComponent({
       }
       console.log("starting ticker");
       this.ticker?.add(this.loop);
+
+      this.selectedBlock = null;
+      this.currentStretch = null;
     },
     drawStoredGraph(instructions: TactonInstruction[]) {
       console.log("Drawing graph");
@@ -652,15 +657,16 @@ export default defineComponent({
                 blockContainer.removeChild(oldControls);
                 oldControls.destroy({ children: true });
               }
-              // const newControls = this.drawBlockControls(
-              //   i,
-              //   currentIndex,
-              //   blockContainer.width,
-              //   blockContainer,
-              //   true,
-              // );
+              this.drawBlockControls(
+                i,
+                currentIndex,
+                blockContainer.width,
+                blockContainer,
+                true,
+              );
               this.selectedBlock = {
                 moving: true,
+                moved: false,
                 channel: i,
                 index: currentIndex,
                 container: blockContainer,
@@ -931,11 +937,12 @@ export default defineComponent({
 
       const blockControls = new PIXI.Container();
 
-      const lineWidth = highlighted ? 4 : 2;
+      const color = highlighted ? 0xec660c : 0x6c6c60;
+      const lineWidth = 2;
       const rect = new PIXI.Graphics();
       rect.setStrokeStyle({
         width: lineWidth,
-        color: 0xec660c,
+        color,
         matrix: new PIXI.Matrix(),
       });
       // rect.lineStyle(lineWidth, 0xec660c);
@@ -951,7 +958,7 @@ export default defineComponent({
         // border.lineStyle(2, 0xec660c);
         border.setStrokeStyle({
           width: 2,
-          color: 0xec660c,
+          color,
           matrix: new PIXI.Matrix(),
         });
         //border.lineStyle(2, 0x0000000);
@@ -991,6 +998,7 @@ export default defineComponent({
               block: container,
               direction:
                 x === 0 ? StretchDirection.NEGATIVE : StretchDirection.POSITIVE,
+              stretched: false,
             };
             this.pixiApp?.stage?.addEventListener(
               "pointermove",
@@ -1091,6 +1099,7 @@ export default defineComponent({
         const abort = shouldAbort();
 
         container.x = newX;
+        selectedBlock.moved = true;
 
         if (abort) {
           this.moveBlockEnd();
@@ -1099,7 +1108,7 @@ export default defineComponent({
     },
     moveBlockEnd() {
       const selectedBlock = this.selectedBlock;
-      if (selectedBlock && selectedBlock.moving) {
+      if (selectedBlock && selectedBlock.moved && selectedBlock.moving) {
         const { channel, index, container } = selectedBlock;
         const block = this.blocksByChannel[channel][index];
         block.startMs =
@@ -1107,6 +1116,7 @@ export default defineComponent({
           (this.width.original - 2 * this.paddingRL);
         this.updateTacton();
         selectedBlock.moving = false;
+        selectedBlock.moved = false;
       }
       this.pixiApp?.stage?.removeEventListener("pointermove", this.moveBlock);
     },
@@ -1233,6 +1243,7 @@ export default defineComponent({
           container.width,
           toRaw(container) as PIXI.Container,
         );
+        currentStretch.stretched = true;
 
         if (abort) {
           this.stretchBlockEnd();
@@ -1241,7 +1252,7 @@ export default defineComponent({
     },
     stretchBlockEnd() {
       const currentStretch = this.currentStretch;
-      if (currentStretch) {
+      if (currentStretch && currentStretch.stretched) {
         const {
           channel,
           index,
