@@ -50,7 +50,7 @@
   <v-expansion-panels>
     <v-expansion-panel
       v-for="group of sortByPrefix()"
-      :title="group.prefix"
+      :title="group.prefix + ' (' + group.tactons.length + ')'"
       :elevation="'0'"
     >
       <v-expansion-panel-text>
@@ -83,7 +83,7 @@
             </template>
 
             <v-list-item-title @click="handleLeftClickOnTacton(tacton)">
-              {{ tacton.metadata.name }}
+              {{ tacton.metadata.name }} ({{ tacton.metadata.iteration }})
             </v-list-item-title>
 
             <v-list-item-subtitle>
@@ -246,7 +246,11 @@
           <v-list lines="one" color="primary" density="compact">
             <v-list-item
               style="width: 100%"
-              v-for="room of store.state.roomSettings.availableRooms"
+              v-for="room of store.state.roomSettings.availableRooms.filter(
+                (r) => {
+                  return r.id !== store.state.roomSettings.id;
+                },
+              )"
               :key="room.id"
               :title="room.name"
               @click="moveTacton(room)"
@@ -274,11 +278,6 @@
   user-select: none;
 }
 
-.selection-list {
-  height: 70vh;
-  overflow-y: scroll !important;
-}
-
 .show-buttons-on-hover:hover .show-on-hover {
   opacity: 100%;
 }
@@ -299,7 +298,7 @@ import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import { InteractionMode, Room } from "@sharedTypes/roomTypes";
-import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
+import { Tacton } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
 
 enum BodyTags {
@@ -382,16 +381,18 @@ export default defineComponent({
       return;
     },
     toggleFavorite(tacton: Tacton) {
-      const m: TactonMetadata = {
-        name: tacton.metadata.name,
-        favorite: !tacton.metadata.favorite,
-        recordDate: tacton.metadata.recordDate,
-      };
+      // const m: TactonMetadata = {
+      //   name: tacton.metadata.name,
+      //   // iteration: tacton.metadata.iteration,
+      //   favorite: !tacton.metadata.favorite,
+      //   recordDate: tacton.metadata.recordDate,
+      // };
+      tacton.metadata.favorite = !tacton.metadata.favorite;
       if (this.store.state.roomSettings.id != undefined) {
         const payload: ChangeTactonMetadata = {
           roomId: this.store.state.roomSettings.id,
           tactonId: tacton.uuid,
-          metadata: m,
+          metadata: tacton.metadata,
         };
         WebSocketAPI.changeTactonMetadata(payload);
       }
@@ -435,6 +436,7 @@ export default defineComponent({
       } else {
         // load and select
         this.selectTacton(tacton);
+        this.optionsTacton = tacton;
       }
     },
     sortByPrefix(): { prefix: string; tactons: Tacton[] }[] {
@@ -443,7 +445,8 @@ export default defineComponent({
 
       tactons.forEach((t: Tacton) => {
         // remove last two chars to get prefix
-        const prefix = t.metadata.name.slice(0, -2);
+        // const prefix = t.metadata.name.slice(0, -2);
+        const prefix = t.metadata.name;
         if (!prefixMap[prefix]) {
           //add new prefix
           prefixMap[prefix] = [];
@@ -451,6 +454,12 @@ export default defineComponent({
         prefixMap[prefix].push(t);
       });
 
+      console.log(
+        Object.keys(prefixMap).map((prefix) => ({
+          prefix,
+          tactons: prefixMap[prefix],
+        })),
+      );
       return Object.keys(prefixMap).map((prefix) => ({
         prefix,
         tactons: prefixMap[prefix],
@@ -458,12 +467,8 @@ export default defineComponent({
     },
     moveTacton(room: Room) {
       console.log(
-        "moving ",
-        this.optionsTacton?.metadata.name,
-        " to ",
-        room.name,
+        `moving ${this.optionsTacton?.metadata.name} ${this.store.state.roomSettings.roomName} to  ${room.name} `,
       );
-
       //TODO move tacton to room
 
       this.optionsTacton = null;
@@ -502,6 +507,10 @@ export default defineComponent({
       this.showTactonMenu = false;
     },
     saveNewMetadata() {
+      console.log("SAVING METADATA");
+      console.log(this.optionsTacton);
+      console.log(this.store.state.roomSettings.id);
+
       if (
         this.optionsTacton == null ||
         this.store.state.roomSettings.id == null
@@ -516,6 +525,7 @@ export default defineComponent({
       WebSocketAPI.changeTactonMetadata({
         metadata: {
           name: this.tactonTitle,
+          iteration: this.optionsTacton.metadata.iteration,
           bodyTags: this.selectedBodyTags,
           customTags: this.selectedCustomTags,
           description: this.tactonDescription,

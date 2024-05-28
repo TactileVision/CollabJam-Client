@@ -4,7 +4,7 @@
 <template>
   <div class="roomView">
     <v-row align="center" justify="center">
-      <!-- <v-container> -->     
+      <!-- <v-container> -->
       <v-navigation-drawer width="150">
         <v-container>
           <h6 class="text-h6">Server</h6>
@@ -27,15 +27,15 @@
         <!-- <UserMenu /> -->
         <v-container style="display: flex; justify-content: center">
           <v-btn
-              color="primary"
-              variant="tonal"
-              :disabled="store.state.roomSettings.mode != 1"
-              prepend-icon="mdi-logout"
-              @click="logOut(true)"
-              text="Log out"
+            color="primary"
+            variant="tonal"
+            :disabled="store.state.roomSettings.mode != 1"
+            prepend-icon="mdi-logout"
+            @click="logOut(true)"
+            text="Log out"
           >
           </v-btn>
-        </v-container>       
+        </v-container>
         <!-- <v-btn v-if="room != null" @click="enterRoom">ENTER</v-btn> -->
       </v-navigation-drawer>
       <v-col>
@@ -74,12 +74,10 @@ import {
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import ServerSelectionList from "@/renderer/components/ServerSelectionList.vue";
 import RoomSelectionList from "@/renderer/components/RoomSelectionList.vue";
-import RoomInformation from "@/renderer/components/RoomInformation.vue";
 import ServerUserSetup from "@/renderer/components/ServerUserSetup.vue";
 import { Room } from "@/shared/types/roomTypes";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import CollaborationView from "./CollaborationView.vue";
-import DeviceConnectionModal from "../components/DeviceConnectionModal.vue";
 import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { writeAmplitudeOnDisplay } from "../helpers/TactileDisplayActions";
 import { stopGraphCursor } from "../helpers/GraphCursor";
@@ -87,10 +85,8 @@ import { stopGraphCursor } from "../helpers/GraphCursor";
 export default defineComponent({
   name: "RoomView",
   components: {
-    DeviceConnectionModal,
     ServerSelectionList,
     RoomSelectionList,
-    RoomInformation,
     ServerUserSetup,
     CollaborationView,
   },

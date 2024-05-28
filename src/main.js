@@ -4,7 +4,6 @@ import vuetify from "@/plugins/vuetify";
 // import { loadFonts } from '@/plugins/webfontloader';
 import { router } from "@/renderer/router";
 import { useStore } from "@/renderer/store/store";
-import { initWebsocket } from "@/main/WebSocketManager";
 import { initIpcRendererListener } from "@/renderer/helpers/IpcRendererListener";
 import { registerInputAdapter } from "@/main/Input/InputDetection/InputAdapter/InputAdapterRegistry";
 import GamepadAdapter from "@/main/Input/InputDetection/InputAdapter/GamepadAdapter";

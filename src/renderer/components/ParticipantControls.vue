@@ -6,9 +6,9 @@
     :model-value="participant.muted"
     @change="updateMuteStatus"
   >
-    <template v-slot:label>
+    <template #label>
       <div style="margin-left: 8px">
-        {{name}}
+        {{ name }}
       </div>
     </template>
   </v-checkbox>

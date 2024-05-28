@@ -27,19 +27,6 @@ export const createTactonInstructionsFromPayload = (
   return t;
 };
 
-export const createTacton = () => {
-  const t: Tacton = {
-    uuid: Date.now().toString(36) + Math.random().toString(36).substring(2),
-    metadata: {
-      recordDate: new Date(),
-      name: "unnamed_tacton",
-      favorite: false,
-    },
-    instructions: [] as TactonInstruction[],
-  };
-  return t;
-};
-
 /**state**/
 export type State = {
   tactons: Tacton[];
