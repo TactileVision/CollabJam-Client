@@ -5,10 +5,16 @@
         style="margin-bottom: 16px"
         color="primary"
         variant="tonal"
-        @click="alterAllParticipants"
+        @click="muteAllParticipants"
         text="Mute All"
-    >
-    </v-btn>
+    />
+    <v-btn
+        style="margin-bottom: 16px"
+        color="primary"
+        variant="tonal"
+        @click="unmuteAllParticipants"
+        text="Unmute All"
+    />
     <ParticipantControls
         v-for="participant in participants"
         :key="participant.id"
@@ -45,6 +51,8 @@ export default defineComponent({
   },
   methods: {
     muteParticipant(participant: User) {
+      if(participant.muted) return;
+      
       this.store.dispatch(RoomSettingsActionTypes.muteParticipant, {
         participant,
       });
@@ -53,20 +61,17 @@ export default defineComponent({
       });
     },
     unmuteParticipant(participant: User) {
+      if(!participant.muted) return;
+
       this.store.dispatch(RoomSettingsActionTypes.unmuteParticipant, {
         participant,
       });
     },
-    alterAllParticipants() {
-      this.isAllMuted = !this.isAllMuted;      
-      // TODO not working      
-      this.participants.forEach((p: User) => {    
-        if (this.isAllMuted) { 
-          this.unmuteParticipant(p);
-        } else {
-          this.muteParticipant(p);
-        }
-      });
+    muteAllParticipants() {
+      this.participants.forEach(this.muteParticipant);
+    },
+    unmuteAllParticipants() {
+      this.participants.forEach(this.unmuteParticipant);
     }
   },
 });
