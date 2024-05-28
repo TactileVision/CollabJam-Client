@@ -1,29 +1,29 @@
 <template>
-  <v-toolbar style="margin-top: 0px" >
+  <v-toolbar style="margin-top: 0px">
     <!--MARK: Recording-->
     <!-- <v-sheet class="pa-1"> -->
     <!-- <div class="text-overline">Create Tacton</div> -->
     <v-btn
-        width="40px"
-        height="40px"
-        style="border-radius: 4px"
-        @click="toggleRecording"
-        :disabled="store.state.roomSettings.mode == 3"
-        color="error"
-        :icon="store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'"
+      width="40px"
+      height="40px"
+      style="border-radius: 4px"
+      @click="toggleRecording"
+      :disabled="store.state.roomSettings.mode == 3"
+      color="error"
+      :icon="store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'"
     >
     </v-btn>
     <v-btn
-        width="40px"
-        height="40px"
-        style="border-radius: 4px"
-        @click="togglePlayback"
-        :disabled="
-      store.state.roomSettings.mode == 2 ||
-      store.state.tactonPlayback.currentTacton == null
-    "
-        color="primary"
-        :icon="store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'"
+      width="40px"
+      height="40px"
+      style="border-radius: 4px"
+      @click="togglePlayback"
+      :disabled="
+        store.state.roomSettings.mode == 2 ||
+        store.state.tactonPlayback.currentTacton == null
+      "
+      color="primary"
+      :icon="store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'"
     >
     </v-btn>
     <CollaborationInteractionModeIndicator
@@ -31,8 +31,7 @@
       cols="1>"
       :mode="store.state.roomSettings.mode"
     ></CollaborationInteractionModeIndicator>
-    <DeviceConnectionModal :num-connected-devices="0">
-    </DeviceConnectionModal>
+    <DeviceConnectionModal :num-connected-devices="0"> </DeviceConnectionModal>
   </v-toolbar>
 </template>
 
@@ -63,8 +62,8 @@ import { WebSocketAPI } from "@/main/WebSocketManager";
 // import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
 // import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
-import {changeRecordMode} from "@/renderer/helpers/recordMode";
-import {InteractionModeChange} from "@sharedTypes/roomTypes";
+import { changeRecordMode } from "@/renderer/helpers/recordMode";
+import { InteractionModeChange } from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 
 export default defineComponent({
@@ -87,6 +86,14 @@ export default defineComponent({
   },
   methods: {
     logOut() {
+      // console.log("LOG OUT REQUESTED");
+      console.log(this.store.state.roomSettings);
+      if (
+        this.store.state.roomSettings.id == "" ||
+        this.store.state.roomSettings.user.id == ""
+      )
+        return;
+
       WebSocketAPI.logOut({
         roomId: this.store.state.roomSettings.id || "",
         user: this.store.state.roomSettings.user,
@@ -94,7 +101,7 @@ export default defineComponent({
       // this.$router.push("/rooms");
     },
     copyAdress() {
-      console.log(this.store.getters);
+      // console.log(this.store.getters);
       this.store.dispatch(GeneralSettingsActionTypes.copyAdressToClipboard);
       window.api.send(IPC_CHANNELS.main.copyToClipBoard, {
         adress: `${this.store.state.roomSettings.roomName}#${this.store.state.roomSettings.id}`,
@@ -125,7 +132,7 @@ export default defineComponent({
     },
     togglePlayback() {
       changeRecordMode(this.store, InteractionModeChange.togglePlayback);
-    }
+    },
   },
 });
 </script>
