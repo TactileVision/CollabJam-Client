@@ -10,8 +10,12 @@
         <TactonSelectionList></TactonSelectionList>
       </v-sheet>
     </v-col> -->
-
-    <v-col>
+    <v-navigation-drawer width="200" location="right">
+      <v-sheet elevation="0" class="mr-2 pa-4">
+        <ParticipantSettings></ParticipantSettings>
+      </v-sheet>
+    </v-navigation-drawer>
+    <v-col cols="10">
       <v-row>
         <v-col
           id="TactonGraphWrapperHeight"
@@ -23,37 +27,41 @@
           </div>
           <!-- <v-sheet id="TactonGraphWrapper" elevation="0" class="mr-2 pa-4"> -->
           <!-- </v-sheet> -->
-        </v-col>
-        <v-container style="margin-top: 16px; display: flex; width: 100%; flex-direction: column">
-          <v-row style="display: flex; justify-content: center">
-            <v-btn
-                variant="tonal"
-                color="primary"
-                @click="toggleInputDevices = !toggleInputDevices"
-                text="InputDevices"
-                :prepend-icon="' mdi-controller-classic'"
-            ></v-btn>
-          </v-row>
-          <transition :name="toggleInputDevices ? 'fadeIn' : 'fadeOut'">
-            <v-row v-show="toggleInputDevices">
+        </v-col>        
+        <v-navigation-drawer 
+            :width="windowHeight * 0.4"
+            floating 
+            location="bottom" 
+            v-model="inputDeviceDrawer"
+        >
+          <v-container>
+            <v-row>
               <v-col
-                  class="inputDeviceWrapper overflow-hidden"
-                  cols="6"
+                  cols="5"
                   v-for="device in devices"
                   :key="getDeviceKey(device)"
               >
-                <CollaborationInputDeviceProfile
-                    class="flex-grow-1"
-                    :device="device"
-                />
+                <CollaborationInputDeviceProfile :device="device"/>
               </v-col>
             </v-row>
-          </transition>
-        </v-container>
+          </v-container>
+        </v-navigation-drawer>
+        <v-navigation-drawer
+            floating
+            width="50"
+            location="bottom"
+            class="d-flex align-center"
+            style="background: none; border: none;"
+        >
+          <v-btn
+              variant="tonal"
+              color="primary"
+              @click="inputDeviceDrawer = !inputDeviceDrawer"
+              text="InputDevices"
+              :prepend-icon="'mdi-controller-classic'"
+          ></v-btn>
+        </v-navigation-drawer>        
       </v-row>
-    </v-col>
-    <v-col cols="2">
-      <ParticipantSettings></ParticipantSettings>
     </v-col>
     <v-dialog
       v-model="CollaborationDialog"
@@ -109,6 +117,9 @@
   opacity: 1;
 }
 
+.v-navigation-drawer__content{
+  overflow-y: hidden !important;
+}
 // .devices {
 //   margin: 2rem;
 // }
@@ -149,7 +160,9 @@ export default defineComponent({
       isMounted: false,
       devices: [] as InputDevice[],
       pollDevices: -1,
-      toggleInputDevices: false
+      toggleInputDevices: false,
+      inputDeviceDrawer: true,
+      windowHeight: window.innerHeight
     };
   },
   mounted() {
@@ -163,6 +176,13 @@ export default defineComponent({
     };
 
     this.pollDevices = requestAnimationFrame(pollFunction);
+
+    this.$nextTick(() => {
+      window.addEventListener('resize', this.onResize);
+    });
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.onResize);
   },
   unmounted() {
     if (this.pollDevices !== -1) {
@@ -193,6 +213,9 @@ export default defineComponent({
       if (isKeyboardDevice(device)) return "keyboard";
       else if (isGamepadDevice(device)) return `gamepad-${device.name}`;
     },
+    onResize() {
+      this.windowHeight = window.innerHeight
+    }
   },
 });
 </script>
