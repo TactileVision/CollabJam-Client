@@ -172,6 +172,11 @@ export const handleMessage = (store: Store) => {
         TactonPlaybackActionTypes.deleteTacton,
         res.tacton.tactonId,
       );
+      if (
+        res.tacton.tactonId == store.state.tactonPlayback.currentTacton?.uuid
+      ) {
+        store.dispatch(TactonPlaybackActionTypes.deselectTacton);
+      }
     }
   });
 
