@@ -140,6 +140,9 @@ export default defineComponent({
     playbackTime(): number {
       return this.store.state.tactonPlayback.playbackTime;
     },
+    channelStates(): OutputChannelState[] {
+      return [...this.store.state.tactonSettings.outputChannelState];
+    }
   },
   watch: {
     //start to drawing if all components are mounted
@@ -188,6 +191,18 @@ export default defineComponent({
       // this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
       this.positionCursor(time);
     },
+    channelStates() {
+      const coordinateContainer = this.coordinateContainer;
+      if(!coordinateContainer) return;
+
+      this.channelStates.forEach(state => {
+        const graphics = coordinateContainer.getChildByLabel(`actuation-indicator-${state.channelId}`) as PIXI.Graphics | null;
+        if(graphics) {
+          const color = state.intensity > 0 ? state.author?.color || 0xec660c : 0x6c6c60;
+          graphics.tint = color;
+        }
+      })
+    }
   },
   async mounted() {
     try {
@@ -372,6 +387,15 @@ export default defineComponent({
         yPosition += distLinesY;
         graphics.moveTo(this.paddingRL, yPosition);
         graphics.lineTo(this.width.actual - this.paddingRL, yPosition).stroke();
+
+        if(i < this.numberOfOutputs) {
+          const actuationIndicator = new PIXI.Graphics();
+          actuationIndicator.circle(this.paddingRL / 2, yPosition, (this.paddingRL * 0.4) / 2);
+          actuationIndicator.tint = 0x6c6c60;
+          actuationIndicator.fill({ color: 0xffffff, matrix: new PIXI.Matrix(), alpha: 1 });
+          actuationIndicator.label = `actuation-indicator-${i}`;
+          this.coordinateContainer?.addChild(actuationIndicator);
+        }
       }
 
       //draw vertil lines and labels
