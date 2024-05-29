@@ -377,7 +377,7 @@ export default defineComponent({
      */
     calcLegend() {
       console.log("Calculating legend");
-      const parts = 10;
+      const parts = 20;
       this.coordinateContainer?.removeChildren();
       let xPosition = this.width.actual - this.paddingRL;
       let yPosition = 0;
@@ -411,8 +411,8 @@ export default defineComponent({
 
       //draw vertil lines and labels
       for (let i = 0; i <= parts; i++) {
-        graphics.moveTo(xPosition, yPosition - 10);
-        graphics.lineTo(xPosition, yPosition + 10).stroke();
+        graphics.moveTo(xPosition, yPosition - 7.5);
+        graphics.lineTo(xPosition, yPosition + 7.5).stroke();
         // const label = new PIXI.Text({
         //   text: duration.toString() + " s",
         //   style: {
@@ -945,7 +945,7 @@ export default defineComponent({
       const blockControls = new PIXI.Container();
 
       const color = highlighted ? 0xec660c : 0x6c6c60;
-      const lineWidth = 2;
+      const lineWidth = highlighted ? 2 : 0;
       const rect = new PIXI.Graphics();
       rect.setStrokeStyle({
         width: lineWidth,
