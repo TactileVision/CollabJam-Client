@@ -1,6 +1,4 @@
-<template>
-  <div id="tactonDisplay"></div>
-</template>
+<template><div id="tactonDisplay"></div></template>
 
 <script lang="ts">
 import * as PIXI from "pixi.js";
@@ -163,6 +161,20 @@ export default defineComponent({
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
         this.clearGraph();
         this.ticker?.start();
+      } else if (mode == InteractionMode.Overdubbing) {
+        this.clearGraph();
+        if (this.tacton != null) {
+          this.drawStoredGraph(this.tacton.instructions);
+          this.endOfTactonIndicator.moveToPosition(
+            getDuration(this.tacton) * this.growRatio + this.paddingRL,
+          );
+          this.endOfTactonIndicator.drawCursor(this.height.actual);
+          this.graphContainer?.addChild(
+            this.endOfTactonIndicator.getContainer(),
+          );
+        }
+        this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
+        this.ticker?.start();
       } else {
         this.ticker?.stop();
         this.ticker?.remove(this.loop);
@@ -187,7 +199,7 @@ export default defineComponent({
       this.rerenderGraph();
     },
     playbackTime(time) {
-      console.log(time);
+      // console.log(time);
       // this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
       this.positionCursor(time);
     },
@@ -292,7 +304,6 @@ export default defineComponent({
 
         this.pixiApp!.stage.removeChildren;
         this.coordinateContainer = new PIXI.Container();
-        console.log("ADDING coordinates");
         this.pixiApp!.stage.addChild(
           this.coordinateContainer! as PIXI.Container,
         );
@@ -307,9 +318,9 @@ export default defineComponent({
       //recalculate the size if of the container if something is changed
       const xRatio = newWidth / this.width.actual;
       const yRatio = newHeight / this.height.actual;
-      console.log(
+      /*       console.log(
         `newHeight: ${newHeight} / this.height.actual ${this.height.actual} =  ${yRatio}`,
-      );
+      ); */
       this.width.actual = newWidth;
       this.height.actual = newHeight;
 
@@ -366,7 +377,7 @@ export default defineComponent({
      */
     calcLegend() {
       console.log("Calculating legend");
-      const parts = 20;
+      const parts = 10;
       this.coordinateContainer?.removeChildren();
       let xPosition = this.width.actual - this.paddingRL;
       let yPosition = 0;
@@ -1475,7 +1486,6 @@ export default defineComponent({
      * method wich will called every frame, to draw and update figures
      */
     loop() {
-      console.log("loop");
       //calculate the additional width, which has to add for the time frame
       const numOfInst = this.channelGraphs.reduce(
         (acc, val) => acc + val.intensities.length,

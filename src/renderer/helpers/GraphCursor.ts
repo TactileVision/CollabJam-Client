@@ -1,6 +1,6 @@
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { useStore } from "@/renderer/store/store";
-const updateTimeInterval = 10;
+const updateTimeInterval = 1000 / 60;
 // Store current playback time in the client store to move the cursor when playing back and stop playback after 20s
 let cursorTimer: NodeJS.Timeout | null = null;
 

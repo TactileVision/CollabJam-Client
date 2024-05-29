@@ -43,6 +43,8 @@ export default defineComponent({
           return "mdi-record";
         case InteractionMode.Playback:
           return "mdi-play";
+        case InteractionMode.Overdubbing:
+          return "mdi-layers-edit";
         default:
           return "Unkwown";
       }
@@ -54,6 +56,8 @@ export default defineComponent({
         case InteractionMode.Recording:
           return "red";
         case InteractionMode.Playback:
+          return "secondary";
+        case InteractionMode.Overdubbing:
           return "secondary";
         default:
           return "Unkwown";
@@ -68,6 +72,8 @@ export default defineComponent({
           return "Recording";
         case InteractionMode.Playback:
           return "Playback";
+        case InteractionMode.Overdubbing:
+          return "Overdubbing";
         default:
           return "Unkwown";
       }

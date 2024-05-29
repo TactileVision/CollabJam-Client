@@ -42,7 +42,7 @@ export const state: State = {
   participants: [],
   mutedParticipants: new Set(),
   user: { id: "", name: "", color: "", muted: false }, // isRecording: false,
-  maxDuration: 20000,
+  maxDuration: 10000,
   mode: InteractionMode.Jamming,
   recordingNamePrefix: "",
   availableRooms: [],

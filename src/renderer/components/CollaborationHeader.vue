@@ -32,6 +32,22 @@
             : "Play"
       }}
     </v-btn>
+
+    <v-btn
+      width="40px"
+      height="40px"
+      style="border-radius: 4px"
+      @click="toggleOverdubbing"
+      :disabled="
+        store.state.roomSettings.mode == 2 ||
+        store.state.tactonPlayback.currentTacton == null
+      "
+      color="secondary"
+      :icon="
+        store.state.roomSettings.mode == 4 ? 'mdi-stop' : 'mdi-layers-edit'
+      "
+    >
+    </v-btn>
     <CollaborationInteractionModeIndicator
       class="v-col"
       cols="1>"
@@ -138,6 +154,9 @@ export default defineComponent({
     },
     togglePlayback() {
       changeRecordMode(this.store, InteractionModeChange.togglePlayback);
+    },
+    toggleOverdubbing() {
+      changeRecordMode(this.store, InteractionModeChange.toggleOverdubbing);
     },
   },
 });

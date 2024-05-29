@@ -29,6 +29,16 @@ export const changeRecordMode = function (
     } else if (currentMode == InteractionMode.Jamming) {
       payload.newMode = InteractionMode.Recording;
     }
+  } else if (change == InteractionModeChange.toggleOverdubbing) {
+    if (currentMode == InteractionMode.Overdubbing) {
+      payload.newMode = InteractionMode.Jamming;
+    } else if (
+      currentMode == InteractionMode.Jamming &&
+      store.state.tactonPlayback.currentTacton != null
+    ) {
+      payload.newMode = InteractionMode.Overdubbing;
+      payload.tactonId = store.state.tactonPlayback.currentTacton.uuid;
+    }
   } else {
     //InteractionModeChange.togglePlayback
     if (
@@ -41,6 +51,7 @@ export const changeRecordMode = function (
       payload.newMode = InteractionMode.Jamming;
     }
   }
+  console.log("REQUESTING CHANGE IN INTERACTION MODE");
   console.log(payload);
   WebSocketAPI.updateRoomMode(payload);
 };
@@ -49,7 +60,10 @@ export const updateInteractionMode = (store: Store, res: UpdateRoomMode) => {
   switch (res.newMode) {
     case InteractionMode.Jamming:
       console.log("Jamming");
-      if (store.state.roomSettings.mode == InteractionMode.Playback) {
+      if (
+        store.state.roomSettings.mode == InteractionMode.Playback ||
+        store.state.roomSettings.mode == InteractionMode.Overdubbing
+      ) {
         stopGraphCursor();
         // Set all outputs to 0
         // store.state.generalSettings.deviceList.forEach((device) => {
@@ -68,6 +82,17 @@ export const updateInteractionMode = (store: Store, res: UpdateRoomMode) => {
       console.log("Recording");
       store.commit(TactonMutations.TRACK_STATE_CHANGES, true);
       break;
+    case InteractionMode.Overdubbing:
+      console.log("Overdubbing");
+      store.commit(TactonMutations.TRACK_STATE_CHANGES, true);
+      if (res.tactonId != undefined) {
+        store.dispatch(TactonPlaybackActionTypes.selectTacton, res.tactonId);
+        if (store.state.tactonPlayback.currentTacton != undefined) {
+          startGraphCursor();
+        }
+      }
+      break;
+
     case InteractionMode.Playback:
       console.log("Playback");
       if (res.tactonId != undefined) {
