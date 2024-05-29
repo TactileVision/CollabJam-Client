@@ -118,6 +118,7 @@ export default defineComponent({
       } | null,
       blocksByChannel: [] as GraphBlock[][],
       isMounted: false,
+      editingEnabled: true,
     };
   },
   computed: {
@@ -166,24 +167,21 @@ export default defineComponent({
         if (mode == InteractionMode.Jamming) {
           this.cursor.moveToPosition(0);
         }
+
+        if (mode === InteractionMode.Playback) {
+          this.editingEnabled = false;
+        } else {
+          this.editingEnabled = true;
+        }
       }
     },
-    tacton(tacton) {
+    editingEnabled() {
+      this.rerenderGraph();
+    },
+    tacton() {
       console.log("Tacton");
       console.log(this);
-
-      if (tacton == null) {
-        this.clearGraph();
-        return;
-      }
-      const t = tacton as Tacton;
-      this.clearGraph();
-      this.drawStoredGraph(t.instructions);
-      this.endOfTactonIndicator.moveToPosition(
-        getDuration(tacton) * this.growRatio + this.paddingRL,
-      );
-      this.endOfTactonIndicator.drawCursor(this.height.actual);
-      this.graphContainer?.addChild(this.endOfTactonIndicator.getContainer());
+      this.rerenderGraph();
     },
     playbackTime(time) {
       console.log(time);
@@ -241,6 +239,20 @@ export default defineComponent({
     document.removeEventListener("pointerdown", this.unselectBlock);
   },
   methods: {
+    rerenderGraph() {
+      if(this.tacton === null) {
+        this.clearGraph();
+        return;
+      }
+
+      this.clearGraph();
+      this.drawStoredGraph(this.tacton.instructions);
+      this.endOfTactonIndicator.moveToPosition(
+        getDuration(this.tacton) * this.growRatio + this.paddingRL,
+      );
+      this.endOfTactonIndicator.drawCursor(this.height.actual);
+      this.graphContainer?.addChild(this.endOfTactonIndicator.getContainer());
+    },
     resizeScreen() {
       /**
        * be aware that changing the width will apply a scaling factor in the background
@@ -455,6 +467,9 @@ export default defineComponent({
       this.ticker?.add(this.loop);
 
       this.selectedBlock = null;
+      document.removeEventListener("pointerdown", this.unselectBlock);
+      document.removeEventListener("keydown", this.handleBlockKeyDown);
+
       this.currentStretch = null;
     },
     drawStoredGraph(instructions: TactonInstruction[]) {
@@ -628,57 +643,14 @@ export default defineComponent({
 
           blockContainer.eventMode = "static";
           const currentIndex = blockIndex;
+
           blockContainer.addEventListener(
             "pointerdown",
             (e: PIXI.FederatedPointerEvent) => {
               // Prevent document pointerdown to unselect block
               e.preventDefault();
 
-              // Remove highlight of currently selected block
-              const currentlySelected = this.selectedBlock;
-              if (currentlySelected) {
-                const { index, channel } = currentlySelected;
-                // Do nothing if the currently selected block is this block
-                if (channel === i && index === currentIndex) {
-                  currentlySelected.moving = true;
-                  this.pixiApp?.stage?.addEventListener(
-                    "pointermove",
-                    this.moveBlock,
-                  );
-                  return;
-                }
-
-                this.unselectBlock();
-              }
-
-              // add highlight to current block
-              const oldControls = blockContainer.getChildByName("controls");
-              if (oldControls) {
-                blockContainer.removeChild(oldControls);
-                oldControls.destroy({ children: true });
-              }
-              this.drawBlockControls(
-                i,
-                currentIndex,
-                blockContainer.width,
-                blockContainer,
-                true,
-              );
-              this.selectedBlock = {
-                moving: true,
-                moved: false,
-                channel: i,
-                index: currentIndex,
-                container: blockContainer,
-              };
-
-              this.pixiApp?.stage?.addEventListener(
-                "pointermove",
-                this.moveBlock,
-              );
-
-              document.addEventListener("keydown", this.handleBlockKeyDown);
-              document.addEventListener("pointerdown", this.unselectBlock);
+              this.selectBlock(currentIndex, i, blockContainer);
             },
           );
 
@@ -963,34 +935,19 @@ export default defineComponent({
         });
         //border.lineStyle(2, 0x0000000);
         border.lineTo(0, height).stroke();
-        border.cursor = "col-resize";
+
+        if (this.editingEnabled) {
+          border.cursor = "col-resize";
+        }
+
         border.x = x;
-
-        // border.hitArea = {
-        //   contains: (x: number, y: number) => {
-        //     //TODO PIXI Change
-        //     const points = border.geometry.points;
-        //     const od = [];
-        //     const even = [];
-
-        //     for (let index = 0; index * 2 < points.length; index++) {
-        //       const x = points[index * 2];
-        //       const y = points[index * 2 + 1];
-        //       const z = points[index * 2 + 2];
-        //       if (index % 2 === 0) {
-        //         od.push({ x, y, z });
-        //       } else {
-        //         even.push({ x, y, z });
-        //       }
-        //     }
-        //     return new PIXI.Polygon([...od, ...even.reverse()]).contains(x, y);
-        //   },
-        // };
 
         border.addEventListener(
           "pointerdown",
           (e: PIXI.FederatedPointerEvent) => {
             e.stopPropagation();
+            if(!this.editingEnabled) return;
+
             this.currentStretch = {
               channel: channelIndex,
               index: blockIndex,
@@ -1291,6 +1248,55 @@ export default defineComponent({
       this.blocksByChannel[channel][index].deleted = true;
       this.selectedBlock = null;
       this.updateTacton();
+    },
+    selectBlock(blockIndex: number, channelIndex: number, blockContainer: PIXI.Container) {
+      if(!this.editingEnabled) return;
+
+      // Remove highlight of currently selected block
+      const currentlySelected = this.selectedBlock;
+      if (currentlySelected) {
+        const { index, channel } = currentlySelected;
+        // Do nothing if the currently selected block is this block
+        if (channel === channelIndex && index === blockIndex) {
+          currentlySelected.moving = true;
+          this.pixiApp?.stage?.addEventListener(
+            "pointermove",
+            this.moveBlock,
+          );
+          return;
+        }
+
+        this.unselectBlock();
+      }
+
+      // add highlight to current block
+      const oldControls = blockContainer.getChildByName("controls");
+      if (oldControls) {
+        blockContainer.removeChild(oldControls);
+        oldControls.destroy({ children: true });
+      }
+      this.drawBlockControls(
+        channelIndex,
+        blockIndex,
+        blockContainer.width,
+        blockContainer,
+        true,
+      );
+      this.selectedBlock = {
+        moving: true,
+        moved: false,
+        channel: channelIndex,
+        index: blockIndex,
+        container: blockContainer,
+      };
+
+      this.pixiApp?.stage?.addEventListener(
+        "pointermove",
+        this.moveBlock,
+      );
+
+      document.addEventListener("keydown", this.handleBlockKeyDown);
+      document.addEventListener("pointerdown", this.unselectBlock);
     },
     unselectBlock(e?: PointerEvent) {
       if (e && e.defaultPrevented) return;
