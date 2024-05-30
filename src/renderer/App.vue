@@ -1,6 +1,6 @@
 <!--inital view initiate the router and the toast for user messages -->
 <template>
-  <div tabindex="0" class="main" @keyup="buttonUp" @keydown="buttonDown">
+  <div tabindex="0" class="main prevent-select" @keyup="buttonUp" @keydown="buttonDown">
     <div class="root">
       <v-app>
         <!-- <the-sidebar /> -->
@@ -25,6 +25,12 @@
 .root {
   display: block;
   width: 100%;
+}
+
+.prevent-select {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
 }
 </style>
 <script lang="ts">
