@@ -474,6 +474,7 @@ export default defineComponent({
             duration * this.growRatio,
             intensityArray[z].intensity,
             graph.container as PIXI.Container,
+            "0x6c6c60",
             intensityArray[z].author,
           );
 
@@ -508,6 +509,10 @@ export default defineComponent({
       this.currentStretch = null;
     },
     drawStoredGraph(instructions: TactonInstruction[]) {
+      let color = "0x6c6c60";
+      if (this.store.state.roomSettings.mode == InteractionMode.Overdubbing) {
+        color = "0xAAAAAA";
+      }
       console.log("Drawing graph");
       // Divide instructions into blocks
       this.blocksByChannel = Array.from(
@@ -651,6 +656,7 @@ export default defineComponent({
                 additionalWidth,
                 i.setParameter.intensity,
                 instructionsContainer,
+                color,
                 undefined,
               );
 
@@ -885,6 +891,7 @@ export default defineComponent({
       additionalWidth: number,
       intensity: number,
       container: PIXI.Container,
+      color: string,
       author?: User,
     ) {
       // not du anything at intensity of 0
@@ -907,7 +914,7 @@ export default defineComponent({
       //calculate colour
       if (author == undefined) {
         rect.setFillStyle({
-          color: "0x6c6c60",
+          color: color,
           matrix: new PIXI.Matrix(),
         });
       } else {
@@ -944,7 +951,11 @@ export default defineComponent({
 
       const blockControls = new PIXI.Container();
 
-      const color = highlighted ? 0xec660c : 0x6c6c60;
+      const unselectedColor =
+        this.store.state.roomSettings.mode == InteractionMode.Overdubbing
+          ? 0xbbbbbb
+          : 0x6c6c60;
+      const color = highlighted ? 0xec660c : unselectedColor;
       const lineWidth = highlighted ? 2 : 0;
       const rect = new PIXI.Graphics();
       rect.setStrokeStyle({
@@ -963,12 +974,13 @@ export default defineComponent({
         const border = new PIXI.Graphics();
         border.eventMode = "static";
         // border.lineStyle(2, 0xec660c);
+        const borderColor = highlighted ? 0xec660c : 0xffffff;
         border.setStrokeStyle({
           width: 2,
-          color,
+          color: borderColor,
           matrix: new PIXI.Matrix(),
         });
-        //border.lineStyle(2, 0x0000000);
+        // border.lineStyle(2, 0x0000000);
         border.lineTo(0, height).stroke();
 
         if (this.editingEnabled) {
