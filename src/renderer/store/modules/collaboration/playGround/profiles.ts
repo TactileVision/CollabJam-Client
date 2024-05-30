@@ -1,8 +1,18 @@
 import { v4 as uuidv4 } from "uuid";
-import keyboardImage from "@/renderer/assets/inputs/keyboard.svg";
+// mappings
 import mappingAImage from "@/renderer/assets/inputs/mappingA.svg";
 import mappingBImage from "@/renderer/assets/inputs/mappingB.svg";
 import mappingCImage from "@/renderer/assets/inputs/mappingC.svg";
+import qwertyImage from "@/renderer/assets/inputs/qwerty.svg";
+import qwertzImage from "@/renderer/assets/inputs/qwertz.svg";
+
+// thumbnails
+import mappingAThumbnail from "@/renderer/assets/inputs/mappingA_thumbnail.svg";
+import mappingBThumbnail from "@/renderer/assets/inputs/mappingB_thumbnail.svg";
+import mappingCThumbnail from "@/renderer/assets/inputs/mappingC_thumbnail.svg";
+import qwertyThumbnail from "@/renderer/assets/inputs/qwerty_thumbnail.svg";
+import qwertzThumbnail from "@/renderer/assets/inputs/qwertz_thumbnail.svg";
+
 import {
   DeviceType,
   TactileAction,
@@ -126,6 +136,7 @@ const profiles: StateProfile[] = [
     uid: uuidv4(),
     name: "Mapping A",
     imagePath: mappingAImage,
+    thumbnailPath: mappingAThumbnail,
     deviceType: DeviceType.StandardGamepad,
     bindings: [
       //MARK: Function Buttons
@@ -327,6 +338,7 @@ const profiles: StateProfile[] = [
     uid: uuidv4(),
     name: "Mapping B",
     imagePath: mappingBImage,
+    thumbnailPath: mappingBThumbnail,
     deviceType: DeviceType.StandardGamepad,
     bindings: [
       //MARK: Function Buttons
@@ -656,6 +668,7 @@ const profiles: StateProfile[] = [
     uid: uuidv4(),
     name: "Mapping C",
     imagePath: mappingCImage,
+    thumbnailPath: mappingCThumbnail,
     deviceType: DeviceType.StandardGamepad,
     bindings: [
       //MARK: Function Buttons
@@ -1025,7 +1038,8 @@ const profiles: StateProfile[] = [
   {
     uid: uuidv4(),
     name: "QWERTY Keyboard",
-    imagePath: keyboardImage,
+    imagePath: qwertyImage,
+    thumbnailPath: qwertyThumbnail,
     deviceType: DeviceType.Keyboard,
     bindings: [
       //MARK: Row 1
@@ -1770,7 +1784,8 @@ const profiles: StateProfile[] = [
   {
     uid: uuidv4(),
     name: "QWERTZ Keyboard",
-    imagePath: keyboardImage,
+    imagePath: qwertzImage,
+    thumbnailPath: qwertzThumbnail,
     deviceType: DeviceType.Keyboard,
     bindings: [
       //MARK: Row 1
