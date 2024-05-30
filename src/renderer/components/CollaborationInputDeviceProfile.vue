@@ -1,5 +1,5 @@
 <template>
-  <div class="input-device-info mb-8">
+  <div class="input-device-info">
     <v-card class="mx-auto">
       <v-card-title>
         {{
@@ -21,9 +21,28 @@
           ></v-radio>
         </v-radio-group>
       </v-card-actions>
-      <inline-svg class="input-device-illustration" :src="imagePath" />
+      <div class="pa-2">
+        <inline-svg 
+            @click="openMappingImage = true"
+            style="cursor: pointer"
+            class="input-device-thumbnail" 
+            :src="thumbnailPath" 
+        />
+      </div>      
     </v-card>
   </div>
+  <v-dialog width="600px"  v-model="openMappingImage">
+    <v-card>
+      <v-card-title>
+        {{
+          name.indexOf("(") == -1 ? name : name.substring(0, name.indexOf("("))
+        }}
+      </v-card-title>
+      <v-card-text>
+        <inline-svg :src="imagePath"/>
+      </v-card-text>
+    </v-card>    
+  </v-dialog>
 </template>
 
 <style lang="scss" scoped>
@@ -33,9 +52,10 @@
 //   // height: 33.3%;
 // }
 
-.input-device-illustration {
+.input-device-thumbnail {
   // max-height: 25vh
   // max-width: 90%;
+  max-height: 15vh;
 }
 </style>
 <script lang="ts">
@@ -60,6 +80,7 @@ export default defineComponent({
       store: useStore(),
       selectedProfileUid: null as string | null,
       profileCheckbox: null as string | null,
+      openMappingImage: false
     };
   },
   mounted() {
@@ -82,6 +103,13 @@ export default defineComponent({
     imagePath(): string {
       if (this.selectedProfile) {
         return this.selectedProfile.imagePath;
+      } else {
+        return defaultImagePath;
+      }
+    },
+    thumbnailPath(): string {
+      if (this.selectedProfile) {
+        return this.selectedProfile.thumbnailPath;
       } else {
         return defaultImagePath;
       }
