@@ -2,79 +2,82 @@
 <!-- input field to enter a name or adress of the room -->
 
 <template>
-  <div class="roomView">
-    <v-row align="center" justify="center">
-      <!-- <v-container> -->
-      <v-navigation-drawer width="50">
-        <div class="d-flex flex-column ga-2" >
-          <v-tooltip text="show serverlist" open-delay="500">
-            <template v-slot:activator="{ props }">
-              <v-btn
-                  v-bind="props"
-                  color="primary"
-                  variant="plain"
-                  icon="mdi-server-outline"
-                  @click="serverDrawer = !serverDrawer">
-              </v-btn>
-            </template>
-          </v-tooltip>
-          <v-tooltip text="show roomlist" open-delay="500">
-            <template v-slot:activator="{ props }">
-              <v-btn
-                  v-bind="props"
-                  color="primary"
-                  variant="plain"
-                  :icon="roomDrawer ? 'mdi-chevron-left' : 'mdi-chevron-right'"
-                  @click="roomDrawer = !roomDrawer">
-              </v-btn>
-            </template>
-          </v-tooltip>
-        </div>       
-      </v-navigation-drawer>
-      <v-navigation-drawer 
-          width="150" 
-          v-model="serverDrawer"
-      >
-        <v-container>
-            <h6 class="text-h6">Server</h6> 
-        </v-container>
-        <ServerSelectionList
-          :servers="servers"
-          :enabled="!loggedIn"
-        ></ServerSelectionList>
-      </v-navigation-drawer>
-      <v-navigation-drawer 
-          width="150" 
-          v-model="roomDrawer" 
-          :style="
+  <!--iconBar-->
+  <v-navigation-drawer width="50">
+    <div class="d-flex flex-column ga-2" >
+      <v-tooltip text="show serverlist" open-delay="500">
+        <template v-slot:activator="{ props }">
+          <v-btn
+              v-bind="props"
+              :color="serverDrawer ? 'primary' : 'secondary' "
+              variant="plain"
+              icon="mdi-server-outline"
+              @click="serverDrawer = !serverDrawer">
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip text="show roomlist" open-delay="500">
+        <template v-slot:activator="{ props }">
+          <v-btn
+              v-bind="props"
+              :color="roomDrawer ? 'primary' : 'secondary' "
+              variant="plain"
+              :icon="roomDrawer ? 'mdi-chevron-left' : 'mdi-chevron-right'"
+              @click="roomDrawer = !roomDrawer">
+          </v-btn>
+        </template>
+      </v-tooltip>
+    </div>
+  </v-navigation-drawer>
+  <!--serverList-->
+  <v-navigation-drawer
+      width="150"
+      v-model="serverDrawer"
+  >
+    <v-container>
+      <h6 class="text-h6">Server</h6>
+    </v-container>
+    <ServerSelectionList
+        :servers="servers"
+        :enabled="!loggedIn"
+    ></ServerSelectionList>
+  </v-navigation-drawer>
+  <!--roomList-->
+  <v-navigation-drawer
+      width="150"
+      v-model="roomDrawer"
+      :style="
           roomDrawer && serverDrawer 
           ? 'left: 200px' 
           : 'left: 50px'"
-      >
-        <v-container>
-          <h6 class="text-h6">Rooms</h6>
-        </v-container>
-        <RoomSelectionList v-model="room"></RoomSelectionList>
-        <!-- MARK: Setup -->
+  >
+    <v-container>
+      <h6 class="text-h6">Rooms</h6>
+    </v-container>
+    <RoomSelectionList v-model="room"></RoomSelectionList>
+    <!-- MARK: Setup -->
 
-        <!-- <UserMenuTooltip
-          :users="store.state.roomSettings.participants"
-        ></UserMenuTooltip> -->
-        <!-- <UserMenu /> -->
-        <v-container style="display: flex; justify-content: center">
-          <v-btn
-              color="primary"
-              variant="tonal"
-              :disabled="store.state.roomSettings.mode != 1"
-              prepend-icon="mdi-logout"
-              @click="logOut(true)"
-              text="Log out"
-          >
-          </v-btn>
-        </v-container>       
-        <!-- <v-btn v-if="room != null" @click="enterRoom">ENTER</v-btn> -->
-      </v-navigation-drawer>
-      <v-col>
+    <!-- <UserMenuTooltip
+      :users="store.state.roomSettings.participants"
+    ></UserMenuTooltip> -->
+    <!-- <UserMenu /> -->
+    <v-container style="display: flex; justify-content: center">
+      <v-btn
+          color="primary"
+          variant="tonal"
+          :disabled="store.state.roomSettings.mode != 1"
+          prepend-icon="mdi-logout"
+          @click="logOut(true)"
+          text="Log out"
+      >
+      </v-btn>
+    </v-container>
+    <!-- <v-btn v-if="room != null" @click="enterRoom">ENTER</v-btn> -->
+  </v-navigation-drawer>
+  <div class="roomView">
+    <v-row align="center" justify="center">
+      <!-- <v-container> -->
+      <v-col style="padding: 0">
         <CollaborationView
           v-if="store.state.roomSettings.roomState == 'Enter'"
         ></CollaborationView>
@@ -90,6 +93,7 @@
       </v-col>
     </v-row>
   </div>
+  <SnackBar :text="snackbarText"></SnackBar>
 </template>
 
 <style lang="scss" scoped>
@@ -117,10 +121,12 @@ import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import CollaborationView from "./CollaborationView.vue";
 import DeviceConnectionModal from "../components/DeviceConnectionModal.vue";
 import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
+import SnackBar from "@/renderer/components/Snackbar.vue";
 // import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
   name: "RoomView",
   components: {
+    SnackBar,
     DeviceConnectionModal,
     ServerSelectionList,
     RoomSelectionList,
@@ -148,7 +154,8 @@ export default defineComponent({
         },
       ],
       serverDrawer: true,
-      roomDrawer: true
+      roomDrawer: true,
+      snackbarText: ''
     };
   },
   computed: {
@@ -204,6 +211,7 @@ export default defineComponent({
         id: roomId,
         userName: this.userName,
       });
+      this.snackbarText = "Entered Room: " + this.room?.name;
     },
   },
 });
