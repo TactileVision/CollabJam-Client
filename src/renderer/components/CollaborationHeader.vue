@@ -1,41 +1,35 @@
 <template>
-  <v-toolbar style="margin-top: 0" >
+  <v-toolbar style="margin-top: 0">
     <!--MARK: Recording-->
     <!-- <v-sheet class="pa-1"> -->
     <!-- <div class="text-overline">Create Tacton</div> -->
     <v-btn
-        style="border-radius: 4px"
-        @click="toggleRecording"
-        :disabled="store.state.roomSettings.mode == 3"
-        color="error"
-        :prepend-icon="store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'"
+      style="border-radius: 4px"
+      @click="toggleRecording"
+      :disabled="store.state.roomSettings.mode == 3"
+      color="error"
+      :prepend-icon="
+        store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
+      "
     >
-      {{
-        store.state.roomSettings.mode == 2
-            ? "Stop"
-            : "Record"
-      }}
+      {{ store.state.roomSettings.mode == 2 ? "Stop" : "Record" }}
     </v-btn>
     <v-btn
-        style="border-radius: 4px"
-        @click="togglePlayback"
-        :disabled="
-          store.state.roomSettings.mode == 2 ||
-          store.state.tactonPlayback.currentTacton == null
-        "
-        color="primary"
-        :prepend-icon="store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'"
+      style="border-radius: 4px"
+      @click="togglePlayback"
+      :disabled="
+        store.state.roomSettings.mode == 2 ||
+        store.state.tactonPlayback.currentTacton == null
+      "
+      color="primary"
+      :prepend-icon="
+        store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'
+      "
     >
-      {{
-        store.state.roomSettings.mode == 3
-            ? "Stop"
-            : "Play"
-      }}
+      {{ store.state.roomSettings.mode == 3 ? "Stop" : "Play" }}
     </v-btn>
 
     <v-btn
-      width="40px"
-      height="40px"
       style="border-radius: 4px"
       @click="toggleOverdubbing"
       :disabled="
@@ -43,10 +37,11 @@
         store.state.tactonPlayback.currentTacton == null
       "
       color="secondary"
-      :icon="
+      :prepend-icon="
         store.state.roomSettings.mode == 4 ? 'mdi-stop' : 'mdi-layers-edit'
       "
     >
+      {{ store.state.roomSettings.mode == 4 ? "Stop" : "Overdub" }}
     </v-btn>
     <CollaborationInteractionModeIndicator
       class="v-col"
