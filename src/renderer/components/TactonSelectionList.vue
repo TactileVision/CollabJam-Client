@@ -35,7 +35,7 @@
       Save
     </v-btn>
   </div>
-  <!-- </v-sheet> -->  
+  <!-- </v-sheet> -->
   <v-switch
     v-model="filteredView"
     :disabled="store.state.tactonPlayback.tactons.length == 0"
@@ -44,55 +44,69 @@
     color="primary"
   ></v-switch>
   <!-- MARK: Tacton List -->
-  <v-virtual-scroll      
-      :height="windowHeight - 172" 
-      :items="sortByPrefix()"
-  >
+  <v-virtual-scroll :height="windowHeight - 172" :items="sortByPrefix()">
     <template v-slot:default="{ item }">
       <v-expansion-panels>
-        <v-expansion-panel
-            :title="item.prefix"
-            :elevation="'0'"
-        >
-          <v-expansion-panel-text
-          >
+        <v-expansion-panel :elevation="'0'">
+          <v-expansion-panel-title>
+            <v-chip
+              prepend-icon="mdi-waveform"
+              class="ma-2"
+              color="primary"
+              size="x-small"
+            >
+              {{ item.tactons.length }}
+            </v-chip>
+            {{ item.prefix }}
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-list
-                lines="one"
-                :selected="selectedItems"
-                color="primary"
-                density="compact"
+              lines="one"
+              :selected="selectedItems"
+              color="primary"
+              density="compact"
             >
               <v-list-item
-                  style="padding-left: 0;"
-                  v-for="tacton of item.tactons"
-                  :disabled="store.state.roomSettings.mode != 1"
-                  :key="tacton.uuid"
-                  class="non-selectable show-buttons-on-hover"
-                  :active="tacton === selection"
-                  @click=""
+                style="padding-left: 0"
+                v-for="tacton of item.tactons"
+                :disabled="store.state.roomSettings.mode != 1"
+                :key="tacton.uuid"
+                class="non-selectable show-buttons-on-hover"
+                :active="tacton === selection"
+                @click=""
               >
                 <template #prepend>
                   <v-list-item-action>
                     <v-btn
-                        :icon="tacton.metadata.favorite ? 'mdi-star' : 'mdi-star-outline'"
-                        variant="plain"
-                        @click="toggleFavorite(tacton)"
+                      :icon="
+                        tacton.metadata.favorite
+                          ? 'mdi-star'
+                          : 'mdi-star-outline'
+                      "
+                      variant="plain"
+                      @click="toggleFavorite(tacton)"
                     >
                     </v-btn>
                   </v-list-item-action>
                 </template>
 
                 <v-list-item-title @click="selectTacton(tacton)">
-                  {{tacton.metadata.name}}
+                  {{ tacton.metadata.name }} {{ tacton.metadata.iteration }}
                 </v-list-item-title>
 
-                <v-list-item-subtitle  @click="selectTacton(tacton)">
+                <v-list-item-subtitle @click="selectTacton(tacton)">
                   <div v-show="!hasMetadata(tacton)">
-                    <v-icon size="" icon="mdi-file-document-remove-outline"></v-icon>
+                    <v-icon
+                      size=""
+                      icon="mdi-file-document-remove-outline"
+                    ></v-icon>
                     No metadata
                   </div>
                   <div v-show="hasMetadata(tacton)">
-                    <v-icon size="" icon="mdi-file-document-check-outline"></v-icon>
+                    <v-icon
+                      size=""
+                      icon="mdi-file-document-check-outline"
+                    ></v-icon>
                     Metadata
                   </div>
                 </v-list-item-subtitle>
@@ -100,9 +114,9 @@
                   <v-list-item-action>
                     <div class="show-on-hover">
                       <v-btn
-                          :icon="'mdi-dots-vertical'"
-                          variant="plain"
-                          @click="openOptionsMenu(tacton)"
+                        :icon="'mdi-dots-vertical'"
+                        variant="plain"
+                        @click="openOptionsMenu(tacton)"
                       >
                       </v-btn>
                     </div>
@@ -113,9 +127,9 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
-    </template>    
+    </template>
   </v-virtual-scroll>
-  
+
   <!-- </v-sheet> -->
   <!--MARK: TactonMetadataDialog-->
   <v-dialog width="800px" v-model="showEditMetadata">
@@ -123,68 +137,67 @@
       <v-form v-model="metadataForm">
         <v-card-title>
           <v-text-field
-              v-model="tactonTitle"
-              variant="underlined"
-              :rules="[rules.required, rules.charLimit]"
+            v-model="tactonTitle"
+            variant="underlined"
+            :rules="[rules.required, rules.charLimit]"
           ></v-text-field>
         </v-card-title>
         <v-card-text>
           <v-row dense>
-            <v-col
-                cols="12"
-                md="4"
-                sm="6"
-            >
+            <v-col cols="12" md="4" sm="6">
               <v-text-field
-                  label="Duration"
-                  :model-value="`${(calculateDuration(optionsTacton!) / 1000).toFixed(2)} s`"
-                  variant="underlined"
-                  readonly
+                label="Duration"
+                :model-value="`${(calculateDuration(optionsTacton!) / 1000).toFixed(2)} s`"
+                variant="underlined"
+                readonly
               ></v-text-field>
             </v-col>
-      
-            <v-col
-                cols="12"
-                md="4"
-                sm="6"
-            >
+
+            <v-col cols="12" md="4" sm="6">
               <v-text-field
-                  label="RecordDate"
-                  :model-value="
-                  Intl.DateTimeFormat('default', {dateStyle: 'long'}).format(new Date(optionsTacton!.metadata.recordDate))"
-                  variant="underlined"
-                  readonly
+                label="RecordDate"
+                :model-value="
+                  Intl.DateTimeFormat('default', { dateStyle: 'long' }).format(
+                    new Date(optionsTacton!.metadata.recordDate),
+                  )
+                "
+                variant="underlined"
+                readonly
               ></v-text-field>
             </v-col>
-            
+
             <v-col cols="12">
-                <v-textarea
-                    label="Description"                        
-                    v-model="tactonDescription"
-                    variant="underlined"
-                    auto-grow
-                ></v-textarea>
+              <v-textarea
+                label="Description"
+                v-model="tactonDescription"
+                variant="underlined"
+                auto-grow
+              ></v-textarea>
             </v-col>
-            
-            <v-col cols="12">   
-                <v-combobox
-                    v-model="selectedCustomTags"
-                    variant="underlined"
-                    label="CustomTags"
-                    :items="customTags"
-                    multiple
-                ></v-combobox>          
+
+            <v-col cols="12">
+              <v-combobox
+                v-model="selectedCustomTags"
+                variant="underlined"
+                label="CustomTags"
+                :items="customTags"
+                multiple
+              ></v-combobox>
             </v-col>
-      
+
             <v-col cols="12">
               <v-autocomplete
-                  :items="Object.keys(bodyTags).filter((item) => {return isNaN(Number(item));})"
-                  variant="underlined"
-                  label="BodyTags"
-                  auto-select-first
-                  multiple
-                  return-object
-                  v-model="selectedBodyTags"
+                :items="
+                  Object.keys(bodyTags).filter((item) => {
+                    return isNaN(Number(item));
+                  })
+                "
+                variant="underlined"
+                label="BodyTags"
+                auto-select-first
+                multiple
+                return-object
+                v-model="selectedBodyTags"
               ></v-autocomplete>
             </v-col>
           </v-row>
@@ -193,23 +206,23 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
-              text="Close"
-              variant="plain"
-              @click="showEditMetadata = false"
+            text="Close"
+            variant="plain"
+            @click="showEditMetadata = false"
           ></v-btn>
           <v-btn
-              :disabled="!metadataForm"
-              color="primary"
-              text="Save"
-              variant="tonal"
-              @click="saveNewMetadata()"
+            :disabled="!metadataForm"
+            color="primary"
+            text="Save"
+            variant="tonal"
+            @click="saveNewMetadata()"
           ></v-btn>
         </v-card-actions>
       </v-form>
     </v-card>
   </v-dialog>
   <!--MARK: TactonOptionsDialog-->
-  <v-dialog width="300px"  v-model="showTactonMenu">    
+  <v-dialog width="300px" v-model="showTactonMenu">
     <v-card>
       <!--OptionTitleSlide-->
       <div v-show="!isMovingTacton">
@@ -218,23 +231,23 @@
           <v-list>
             <v-list-item>
               <v-btn
-                  color="primary"
-                  variant="tonal"
-                  class="w-100"
-                  prepend-icon="mdi-file-document-outline"
-                  text="Metadata"
-                  @click="openMetadataMenu()"
+                color="primary"
+                variant="tonal"
+                class="w-100"
+                prepend-icon="mdi-file-document-outline"
+                text="Metadata"
+                @click="openMetadataMenu()"
               >
               </v-btn>
             </v-list-item>
             <v-list-item>
               <v-btn
-                  color="primary"
-                  variant="tonal"
-                  class="w-100"
-                  prepend-icon="mdi-trash-can-outline"
-                  text="Delete"
-                  @click="deleteTacton()"
+                color="primary"
+                variant="tonal"
+                class="w-100"
+                prepend-icon="mdi-trash-can-outline"
+                text="Delete"
+                @click="deleteTacton()"
               >
               </v-btn>
             </v-list-item>
@@ -319,14 +332,13 @@
 </style>
 
 <script lang="ts">
-import {defineComponent, ref} from "vue";
+import { defineComponent, ref } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import { InteractionMode, Room } from "@sharedTypes/roomTypes";
 import { Tacton } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
-import WebsocketToggle from "./WebsocketToggle.vue";
 
 export enum BodyTags {
   Head,
@@ -368,13 +380,14 @@ export default defineComponent({
       selectedBodyTags: [],
       selectedCustomTags: [],
       // list of previously used customTags user can choose from
-      customTags: ["Workshop", "SampleCustomTag"],      
+      customTags: ["Workshop", "SampleCustomTag"],
       // rules for validating input
       rules: {
-        required: (value: any) => !!value || 'Field is required',
-        charLimit: (value: string) => value.length <= 50 || 'Input is limited to 50 characters'
+        required: (value: any) => !!value || "Field is required",
+        charLimit: (value: string) =>
+          value.length <= 50 || "Input is limited to 50 characters",
       },
-      windowHeight: window.innerHeight
+      windowHeight: window.innerHeight,
     };
   },
   computed: {
@@ -389,6 +402,9 @@ export default defineComponent({
       } else {
         this.selection = tacton;
       }
+      this.tactonDescription = tacton.metadata.description;
+      this.selectedBodyTags = tacton.metadata.bodyTags;
+      this.selectedCustomTags = tacton.metadata.customTags;
     },
   },
   methods: {
@@ -456,7 +472,7 @@ export default defineComponent({
           return "Unkwown";
       }
     },
-    sortByPrefix(): {prefix: string, tactons: Tacton[]}[] {
+    sortByPrefix(): { prefix: string; tactons: Tacton[] }[] {
       const tactons: Tacton[] = this.getTactons();
       const prefixMap: { [key: string]: Tacton[] } = {};
 
@@ -483,17 +499,25 @@ export default defineComponent({
       }));
     },
     hasMetadata(tacton: Tacton) {
-      // TODO true if tacton has description | customTag | bodyTag
-      return false;
+      return (
+        tacton.metadata.bodyTags.length !== 0 ||
+        tacton.metadata.customTags.length !== 0 ||
+        tacton.metadata.description !== ""
+      );
     },
     openOptionsMenu(tacton: Tacton) {
       this.isMovingTacton = false;
       this.optionsTacton = tacton;
       this.showTactonMenu = true;
     },
-    moveTacton(room: Room) {      
-      console.log("moving ", this.optionsTacton?.metadata.name, " to ", room.name);
-      
+    moveTacton(room: Room) {
+      console.log(
+        "moving ",
+        this.optionsTacton?.metadata.name,
+        " to ",
+        room.name,
+      );
+
       //TODO move tacton to room
       WebSocketAPI.moveTacton(
         this.store.state.roomSettings.id,
@@ -535,14 +559,14 @@ export default defineComponent({
       this.optionsTacton = null;
       this.showTactonMenu = false;
     },
-    openMetadataMenu() {    
+    openMetadataMenu() {
       if (this.optionsTacton === null) return;
-      
+
       // TODO load current metaData of this.selection
       this.tactonTitle = this.optionsTacton.metadata.name;
-      
+
       // close options dialog
-      this.showTactonMenu = false;      
+      this.showTactonMenu = false;
       // open metadata menu
       this.showEditMetadata = true;
     },
@@ -579,16 +603,16 @@ export default defineComponent({
       this.showEditMetadata = false;
     },
     onResize() {
-      this.windowHeight = window.innerHeight
-    }
+      this.windowHeight = window.innerHeight;
+    },
   },
   mounted() {
     this.$nextTick(() => {
-      window.addEventListener('resize', this.onResize);
+      window.addEventListener("resize", this.onResize);
     });
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener("resize", this.onResize);
   },
 });
 </script>
