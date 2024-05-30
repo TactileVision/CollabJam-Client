@@ -6,22 +6,22 @@
           name.indexOf("(") == -1 ? name : name.substring(0, name.indexOf("("))
         }}
       </v-card-title>
-      <inline-svg class="input-device-illustration" :src="imagePath" />
       <v-card-actions>
         <v-radio-group
-          inline
-          hide-details
-          color="primary"
-          v-model="selectedProfileUid"
+            inline
+            hide-details
+            color="primary"
+            v-model="selectedProfileUid"
         >
           <v-radio
-            v-for="profile in allProfileOptions"
-            :key="profile.value"
-            :label="profile.title"
-            :value="profile.value"
+              v-for="profile in allProfileOptions"
+              :key="profile.value"
+              :label="profile.title"
+              :value="profile.value"
           ></v-radio>
         </v-radio-group>
       </v-card-actions>
+      <inline-svg class="input-device-illustration" :src="imagePath" />
     </v-card>
   </div>
 </template>

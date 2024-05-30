@@ -5,16 +5,52 @@
   <div class="roomView">
     <v-row align="center" justify="center">
       <!-- <v-container> -->
-      <v-navigation-drawer width="150">
+      <v-navigation-drawer width="50">
+        <div class="d-flex flex-column ga-2" >
+          <v-tooltip text="show serverlist" open-delay="500">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                  v-bind="props"
+                  color="primary"
+                  variant="plain"
+                  icon="mdi-server-outline"
+                  @click="serverDrawer = !serverDrawer">
+              </v-btn>
+            </template>
+          </v-tooltip>
+          <v-tooltip text="show roomlist" open-delay="500">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                  v-bind="props"
+                  color="primary"
+                  variant="plain"
+                  :icon="roomDrawer ? 'mdi-chevron-left' : 'mdi-chevron-right'"
+                  @click="roomDrawer = !roomDrawer">
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </div>       
+      </v-navigation-drawer>
+      <v-navigation-drawer 
+          width="150" 
+          v-model="serverDrawer"
+      >
         <v-container>
-          <h6 class="text-h6">Server</h6>
+            <h6 class="text-h6">Server</h6> 
         </v-container>
         <ServerSelectionList
           :servers="servers"
           :enabled="!loggedIn"
         ></ServerSelectionList>
       </v-navigation-drawer>
-      <v-navigation-drawer width="150">
+      <v-navigation-drawer 
+          width="150" 
+          v-model="roomDrawer" 
+          :style="
+          roomDrawer && serverDrawer 
+          ? 'left: 200px' 
+          : 'left: 50px'"
+      >
         <v-container>
           <h6 class="text-h6">Rooms</h6>
         </v-container>
@@ -109,6 +145,8 @@ export default defineComponent({
           name: "Local",
         },
       ],
+      serverDrawer: true,
+      roomDrawer: true
     };
   },
   computed: {
