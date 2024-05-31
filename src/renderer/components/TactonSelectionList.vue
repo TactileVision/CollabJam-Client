@@ -47,7 +47,7 @@
   </v-sheet>
   <!-- MARK: Tacton List -->
   <v-virtual-scroll :height="windowHeight - 172" :items="sortByPrefix()">
-    <template v-slot:default="{ item, index: groupIndex }">
+    <template #default="{ item, index: groupIndex }">
       <v-expansion-panels :key="groupIndex">
         <v-expansion-panel :elevation="'0'">
           <v-expansion-panel-title
@@ -77,7 +77,8 @@
                 :key="tacton.uuid"
                 class="non-selectable show-buttons-on-hover"
                 :active="tacton === selection"
-                @click=""
+                selectable="true"
+                @click="selectTacton(tacton, groupIndex)"
               >
                 <template #prepend>
                   <v-list-item-action>
@@ -95,14 +96,11 @@
                   </v-list-item-action>
                 </template>
 
-                <v-list-item-title @click="selectTacton(tacton)">
+                <v-list-item-title>
                   {{ tacton.metadata.name }} {{ tacton.metadata.iteration }}
                 </v-list-item-title>
 
-                <v-list-item-subtitle
-                  class="py-2"
-                  @click="selectTacton(tacton, groupIndex)"
-                >
+                <v-list-item-subtitle class="py-2">
                   <v-chip size="small" v-show="!hasMetadata(tacton)">
                     <v-icon
                       size=""
@@ -321,10 +319,6 @@
 </template>
 
 <style lang="scss" scoped>
-.v-list {
-  padding: 0;
-}
-
 :deep(.v-expansion-panel-text__wrapper) {
   padding: 0 !important;
 }
@@ -340,10 +334,11 @@
 .show-on-hover {
   opacity: 0;
   transition: 0.5s;
+
+  :hover {
+    background-color: gren;
+  }
 }
-// #prefix-input {
-//   border-style: solid;
-// }
 </style>
 
 <script lang="ts">
@@ -400,7 +395,7 @@ export default defineComponent({
       customTags: ["Workshop", "SampleCustomTag"],
       // rules for validating input
       rules: {
-        required: (value: any) => !!value || "Field is required",
+        required: (value: string) => !!value || "Field is required",
         charLimit: (value: string) =>
           value.length <= charLimit ||
           `Input is limited to ${charLimit} characters`,
@@ -551,6 +546,15 @@ export default defineComponent({
         room.name,
       );
 
+      if (
+        this.store.state.roomSettings.id == null ||
+        this.optionsTacton == undefined
+      ) {
+        console.log(
+          "Error, can't move tacton because current roomid or tacton to move are null/undefined ",
+        );
+        return;
+      }
       //TODO move tacton to room
       WebSocketAPI.moveTacton(
         this.store.state.roomSettings.id,

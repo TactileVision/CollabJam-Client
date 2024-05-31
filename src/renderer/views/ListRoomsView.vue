@@ -6,7 +6,7 @@
   <v-navigation-drawer width="50">
     <div class="d-flex flex-column ga-2">
       <v-tooltip text="show serverlist" open-delay="500">
-        <template v-slot:activator="{ props }">
+        <template #activator="{ props }">
           <v-btn
             v-bind="props"
             :color="serverDrawer ? 'primary' : 'secondary'"
@@ -18,7 +18,7 @@
         </template>
       </v-tooltip>
       <v-tooltip text="show roomlist" open-delay="500">
-        <template v-slot:activator="{ props }">
+        <template #activator="{ props }">
           <v-btn
             v-bind="props"
             :color="roomDrawer ? 'primary' : 'secondary'"
@@ -123,7 +123,6 @@ export default defineComponent({
   name: "RoomView",
   components: {
     SnackBar,
-    DeviceConnectionModal,
     // DeviceConnectionModal,
     ServerSelectionList,
     RoomSelectionList,

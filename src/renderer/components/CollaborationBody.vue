@@ -9,12 +9,9 @@
       <ParticipantSettings></ParticipantSettings>
     </v-sheet>
   </v-navigation-drawer>
-  <v-container class="playGroundView ma-0" ref="container" tabindex="-1"> 
+  <v-container class="playGroundView ma-0" ref="container" tabindex="-1">
     <v-row>
-      <v-col
-          id="TactonGraphWrapperHeight"
-          class="TactonGraphWrapperWrapper"
-      >
+      <v-col id="TactonGraphWrapperHeight" class="TactonGraphWrapperWrapper">
         <div id="TactonGraphWrapper">
           <TactonGraphWrapper :is-mounted="isMounted" />
         </div>
@@ -24,47 +21,43 @@
     </v-row>
     <!--inputDevices-->
     <v-navigation-drawer
-        :width="windowHeight * 0.35"
-        floating 
-        location="bottom" 
-        v-model="inputDeviceDrawer"
+      :width="windowHeight * 0.35"
+      floating
+      location="bottom"
+      v-model="inputDeviceDrawer"
     >
       <v-sheet elevation="0">
         <v-row class="px-4">
-          <v-col
-              cols="5"
-              v-for="device in devices"
-              :key="getDeviceKey(device)"
-          >
-            <CollaborationInputDeviceProfile :device="device"/>
+          <v-col cols="5" v-for="device in devices" :key="getDeviceKey(device)">
+            <CollaborationInputDeviceProfile :device="device" />
           </v-col>
         </v-row>
       </v-sheet>
     </v-navigation-drawer>
     <v-navigation-drawer
-        floating
-        width="50"
-        location="bottom"
-        class="d-flex align-center"
-        style="background: none; border: none;"
+      floating
+      width="50"
+      location="bottom"
+      class="d-flex align-center"
+      style="background: none; border: none"
     >
       <v-btn
-          variant="tonal"
-          :color="inputDeviceDrawer ? 'primary' : 'secondary'"
-          @click="inputDeviceDrawer = !inputDeviceDrawer"
-          text="InputDevices"
-          :prepend-icon="'mdi-controller-classic'"
+        variant="tonal"
+        :color="inputDeviceDrawer ? 'primary' : 'secondary'"
+        @click="inputDeviceDrawer = !inputDeviceDrawer"
+        text="InputDevices"
+        :prepend-icon="'mdi-controller-classic'"
       ></v-btn>
     </v-navigation-drawer>
     <v-dialog
-        v-model="CollaborationDialog"
-        max-width="50%"
-        class="tesing"
-        @click:outside="closeDialog"
+      v-model="CollaborationDialog"
+      max-width="50%"
+      class="tesing"
+      @click:outside="closeDialog"
     >
       <CollaborationDialog
-          @close-dialog="closeDialog"
-          :key-button-id="idOfEditableButton"
+        @close-dialog="closeDialog"
+        :key-button-id="idOfEditableButton"
       />
     </v-dialog>
   </v-container>
@@ -82,40 +75,6 @@
 .playGroundView:focus {
   outline: none;
 }
-
-#TactonGraphWrapper {
-  //border-right: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-.TactonGraphWrapperWrapper,
-.inputDeviceWrapper {
-  height: 45vh;
-}
-
-.fadeIn-enter-active, .fadeOut-leave-active {
-  transition: all 0.5s ease;
-}
-
-.fadeIn-enter, .fadeOut-leave-to {
-  transform: translateY(400px);
-  opacity: 0;
-}
-
-.fadeIn-leave-active, .fadeOut-enter-active {
-  transition: all 0.5s ease;
-}
-
-.fadeIn-leave-to, .fadeOut-enter  {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-.v-navigation-drawer__content{
-  overflow-y: hidden !important;
-}
-// .devices {
-//   margin: 2rem;
-// }
 </style>
 
 <script lang="ts">
@@ -155,7 +114,7 @@ export default defineComponent({
       pollDevices: -1,
       toggleInputDevices: false,
       inputDeviceDrawer: false,
-      windowHeight: window.innerHeight
+      windowHeight: window.innerHeight,
     };
   },
   mounted() {
@@ -171,11 +130,11 @@ export default defineComponent({
     this.pollDevices = requestAnimationFrame(pollFunction);
 
     this.$nextTick(() => {
-      window.addEventListener('resize', this.onResize);
+      window.addEventListener("resize", this.onResize);
     });
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener("resize", this.onResize);
   },
   unmounted() {
     if (this.pollDevices !== -1) {
@@ -207,8 +166,8 @@ export default defineComponent({
       else if (isGamepadDevice(device)) return `gamepad-${device.name}`;
     },
     onResize() {
-      this.windowHeight = window.innerHeight
-    }
+      this.windowHeight = window.innerHeight;
+    },
   },
 });
 </script>
