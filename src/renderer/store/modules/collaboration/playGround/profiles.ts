@@ -134,7 +134,7 @@ const mappingBStickActuatorsDirectional = [
 const profiles: StateProfile[] = [
   {
     uid: uuidv4(),
-    name: "Mapping A",
+    name: "A",
     imagePath: mappingAImage,
     thumbnailPath: mappingAThumbnail,
     deviceType: DeviceType.StandardGamepad,
@@ -336,7 +336,7 @@ const profiles: StateProfile[] = [
   },
   {
     uid: uuidv4(),
-    name: "Mapping B",
+    name: "B",
     imagePath: mappingBImage,
     thumbnailPath: mappingBThumbnail,
     deviceType: DeviceType.StandardGamepad,
@@ -666,7 +666,7 @@ const profiles: StateProfile[] = [
   },
   {
     uid: uuidv4(),
-    name: "Mapping C",
+    name: "C",
     imagePath: mappingCImage,
     thumbnailPath: mappingCThumbnail,
     deviceType: DeviceType.StandardGamepad,
@@ -1037,7 +1037,7 @@ const profiles: StateProfile[] = [
   },
   {
     uid: uuidv4(),
-    name: "QWERTY Keyboard",
+    name: "QWERTY",
     imagePath: qwertyImage,
     thumbnailPath: qwertyThumbnail,
     deviceType: DeviceType.Keyboard,
@@ -1783,7 +1783,7 @@ const profiles: StateProfile[] = [
   },
   {
     uid: uuidv4(),
-    name: "QWERTZ Keyboard",
+    name: "QWERTZ",
     imagePath: qwertzImage,
     thumbnailPath: qwertzThumbnail,
     deviceType: DeviceType.Keyboard,

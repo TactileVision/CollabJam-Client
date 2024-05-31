@@ -16,7 +16,7 @@
 
 <style lang="scss" scoped>
 .selection-list {
-  height: 70vh; 
+  height: 40vh;
 }
 </style>
 

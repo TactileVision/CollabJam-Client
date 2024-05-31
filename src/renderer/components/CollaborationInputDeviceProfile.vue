@@ -8,30 +8,30 @@
       </v-card-title>
       <v-card-actions>
         <v-radio-group
-            inline
-            hide-details
-            color="primary"
-            v-model="selectedProfileUid"
+          inline
+          hide-details
+          color="primary"
+          v-model="selectedProfileUid"
         >
           <v-radio
-              v-for="profile in allProfileOptions"
-              :key="profile.value"
-              :label="profile.title"
-              :value="profile.value"
+            v-for="profile in allProfileOptions"
+            :key="profile.value"
+            :label="profile.title"
+            :value="profile.value"
           ></v-radio>
         </v-radio-group>
       </v-card-actions>
       <div class="pa-2">
-        <inline-svg 
-            @click="openMappingImage = true"
-            style="cursor: pointer"
-            class="input-device-thumbnail" 
-            :src="thumbnailPath" 
+        <inline-svg
+          @click="openMappingImage = true"
+          style="cursor: pointer"
+          class="input-device-thumbnail"
+          :src="thumbnailPath"
         />
-      </div>      
+      </div>
     </v-card>
   </div>
-  <v-dialog width="600px"  v-model="openMappingImage">
+  <v-dialog width="600px" v-model="openMappingImage">
     <v-card>
       <v-card-title>
         {{
@@ -39,9 +39,9 @@
         }}
       </v-card-title>
       <v-card-text>
-        <inline-svg :src="imagePath"/>
+        <inline-svg :src="imagePath" />
       </v-card-text>
-    </v-card>    
+    </v-card>
   </v-dialog>
 </template>
 
@@ -80,7 +80,7 @@ export default defineComponent({
       store: useStore(),
       selectedProfileUid: null as string | null,
       profileCheckbox: null as string | null,
-      openMappingImage: false
+      openMappingImage: false,
     };
   },
   mounted() {

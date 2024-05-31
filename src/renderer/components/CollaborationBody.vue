@@ -4,11 +4,7 @@
     <TactonSelectionList></TactonSelectionList>
   </v-navigation-drawer>
   <!--participantList-->
-  <v-navigation-drawer width="200" location="right">
-    <v-sheet elevation="0" class="mr-2 pa-4">
-      <ParticipantSettings></ParticipantSettings>
-    </v-sheet>
-  </v-navigation-drawer>
+
   <v-container class="playGroundView ma-0" ref="container" tabindex="-1">
     <v-row>
       <v-col id="TactonGraphWrapperHeight" class="TactonGraphWrapperWrapper">
@@ -80,7 +76,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import TactonGraphWrapper from "@/renderer/components/TactonGraphWrapper.vue";
-import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
+// import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 import CollaborationDialog from "./CollaborationDialog.vue";
 import CollaborationInputDeviceProfile from "./CollaborationInputDeviceProfile.vue";
 import { GeneralMutations } from "@/renderer/store/modules/generalSettings/generalSettings";
