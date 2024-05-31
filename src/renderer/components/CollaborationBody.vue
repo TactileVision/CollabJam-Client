@@ -1,77 +1,70 @@
 <template>
-  <v-container class="playGroundView ma-0" ref="container" tabindex="-1">
-    <v-navigation-drawer width="350">
-      <v-sheet elevation="0" class="mr-2 pa-4">
-        <TactonSelectionList></TactonSelectionList>
-      </v-sheet>
-    </v-navigation-drawer>
-    <!-- <v-col cols="3">
-      <v-sheet elevation="0" class="mr-2 pa-4">
-        <TactonSelectionList></TactonSelectionList>
-      </v-sheet>
-    </v-col> -->
-    <v-navigation-drawer width="200" location="right">
-      <v-sheet elevation="0" class="mr-2 pa-4">
-        <ParticipantSettings></ParticipantSettings>
-      </v-sheet>
-    </v-navigation-drawer>
-    <v-col cols="10">
-      <v-row>
-        <v-col
+  <!--tactonList-->
+  <v-navigation-drawer width="350">
+    <TactonSelectionList></TactonSelectionList>
+  </v-navigation-drawer>
+  <!--participantList-->
+  <v-navigation-drawer width="200" location="right">
+    <v-sheet elevation="0" class="mr-2 pa-4">
+      <ParticipantSettings></ParticipantSettings>
+    </v-sheet>
+  </v-navigation-drawer>
+  <v-container class="playGroundView ma-0" ref="container" tabindex="-1"> 
+    <v-row>
+      <v-col
           id="TactonGraphWrapperHeight"
           class="TactonGraphWrapperWrapper"
-          cols="12"
-        >
-          <div id="TactonGraphWrapper">
-            <TactonGraphWrapper :is-mounted="isMounted" />
-          </div>
-          <!-- <v-sheet id="TactonGraphWrapper" elevation="0" class="mr-2 pa-4"> -->
-          <!-- </v-sheet> -->
-        </v-col>        
-        <v-navigation-drawer 
-            :width="windowHeight * 0.4"
-            floating 
-            location="bottom" 
-            v-model="inputDeviceDrawer"
-        >
-          <v-container>
-            <v-row>
-              <v-col
-                  cols="5"
-                  v-for="device in devices"
-                  :key="getDeviceKey(device)"
-              >
-                <CollaborationInputDeviceProfile :device="device"/>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-navigation-drawer>
-        <v-navigation-drawer
-            floating
-            width="50"
-            location="bottom"
-            class="d-flex align-center"
-            style="background: none; border: none;"
-        >
-          <v-btn
-              variant="tonal"
-              color="primary"
-              @click="inputDeviceDrawer = !inputDeviceDrawer"
-              text="InputDevices"
-              :prepend-icon="'mdi-controller-classic'"
-          ></v-btn>
-        </v-navigation-drawer>        
-      </v-row>
-    </v-col>
+      >
+        <div id="TactonGraphWrapper">
+          <TactonGraphWrapper :is-mounted="isMounted" />
+        </div>
+        <!-- <v-sheet id="TactonGraphWrapper" elevation="0" class="mr-2 pa-4"> -->
+        <!-- </v-sheet> -->
+      </v-col>
+    </v-row>
+    <!--inputDevices-->
+    <v-navigation-drawer
+        :width="windowHeight * 0.35"
+        floating 
+        location="bottom" 
+        v-model="inputDeviceDrawer"
+    >
+      <v-sheet elevation="0">
+        <v-row class="px-4">
+          <v-col
+              cols="5"
+              v-for="device in devices"
+              :key="getDeviceKey(device)"
+          >
+            <CollaborationInputDeviceProfile :device="device"/>
+          </v-col>
+        </v-row>
+      </v-sheet>
+    </v-navigation-drawer>
+    <v-navigation-drawer
+        floating
+        width="50"
+        location="bottom"
+        class="d-flex align-center"
+        style="background: none; border: none;"
+    >
+      <v-btn
+          variant="tonal"
+          :color="inputDeviceDrawer ? 'primary' : 'secondary'"
+          @click="inputDeviceDrawer = !inputDeviceDrawer"
+          text="InputDevices"
+          :prepend-icon="'mdi-controller-classic'"
+      ></v-btn>
+    </v-navigation-drawer>
     <v-dialog
-      v-model="CollaborationDialog"
-      max-width="50%"
-      class="tesing"
-      @click:outside="closeDialog"
+        v-model="CollaborationDialog"
+        max-width="50%"
+        class="tesing"
+        @click:outside="closeDialog"
     >
       <CollaborationDialog
-        @close-dialog="closeDialog"
-        :key-button-id="idOfEditableButton"
+          @close-dialog="closeDialog"
+          :key-button-id="idOfEditableButton"
       />
     </v-dialog>
   </v-container>
@@ -91,7 +84,7 @@
 }
 
 #TactonGraphWrapper {
-  border-right: 1px solid rgba(0, 0, 0, 0.2);
+  //border-right: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .TactonGraphWrapperWrapper,
@@ -161,7 +154,7 @@ export default defineComponent({
       devices: [] as InputDevice[],
       pollDevices: -1,
       toggleInputDevices: false,
-      inputDeviceDrawer: true,
+      inputDeviceDrawer: false,
       windowHeight: window.innerHeight
     };
   },

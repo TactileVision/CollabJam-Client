@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 1344 803" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
-    <g transform="matrix(1,0,0,1,0,-7331)">
-        <g id="mapping_B" transform="matrix(0.541861,0,0,0.228604,4.54747e-13,7331.53)">
+<svg width="100%" height="100%" viewBox="0 0 583 667" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g transform="matrix(1,0,0,1,-1737,-8517)">
+        <g id="mapping_C_thumbnail" transform="matrix(0.234736,0,0,0.189766,1737.17,8517.73)">
             <rect x="0" y="0" width="2480.32" height="3507.87" style="fill:none;"/>
             <clipPath id="_clip1">
                 <rect x="0" y="0" width="2480.32" height="3507.87"/>
             </clipPath>
             <g clip-path="url(#_clip1)">
-                <g transform="matrix(1.84549,0,0,4.37438,-418.924,-1163.58)">
+                <g transform="matrix(4.2601,0,0,5.26965,-2482.84,-1649.33)">
                     <path d="M781.883,486.27L679.024,486.27L694.281,500.455L714.25,500.455C714.25,500.455 718.282,500.791 718.282,505.469C718.282,511.178 714.25,511.059 714.25,511.059L699.628,511.059C699.628,511.059 694.281,510.38 694.281,515.71C694.281,521.039 699.628,520.347 699.628,520.347L761.279,520.347C761.279,520.347 766.626,521.039 766.626,515.71C766.626,510.38 761.279,511.059 761.279,511.059L746.657,511.059C746.657,511.059 742.625,511.178 742.625,505.469C742.625,500.791 746.657,500.455 746.657,500.455L766.626,500.455L781.883,486.27Z" style="fill:rgb(230,230,230);stroke:black;stroke-width:1.87px;"/>
                     <g transform="matrix(1,0,0,1,232.744,0)">
                         <path d="M781.883,486.27L679.024,486.27L694.281,500.455L714.25,500.455C714.25,500.455 718.282,500.791 718.282,505.469C718.282,511.178 714.25,511.059 714.25,511.059L699.628,511.059C699.628,511.059 694.281,510.38 694.281,515.71C694.281,521.039 699.628,520.347 699.628,520.347L761.279,520.347C761.279,520.347 766.626,521.039 766.626,515.71C766.626,510.38 761.279,511.059 761.279,511.059L746.657,511.059C746.657,511.059 742.625,511.178 742.625,505.469C742.625,500.791 746.657,500.455 746.657,500.455L766.626,500.455L781.883,486.27Z" style="fill:rgb(230,230,230);stroke:black;stroke-width:1.87px;"/>
@@ -52,41 +52,7 @@
                         <path d="M777.386,453.367C777.386,445.205 767.317,438.58 754.916,438.58L693.957,438.58C681.556,438.58 671.487,445.205 671.487,453.367C671.487,461.528 681.556,468.153 693.957,468.153L754.916,468.153C767.317,468.153 777.386,461.528 777.386,453.367Z" style="fill:white;stroke:black;stroke-width:2.24px;"/>
                     </g>
                 </g>
-                <g transform="matrix(1,0,0,1.37166,0,-920.247)">
-                    <g transform="matrix(1.84549,0,0,3.1891,-418.924,-177.403)">
-                        <path d="M1051.61,332.555L1095.97,288.198L1236.1,288.198" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(-1.84549,0,0,3.1891,2805.13,-177.403)">
-                        <path d="M1051.61,332.555L1095.97,288.198L1236.1,288.198" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-418.924,-177.403)">
-                        <path d="M1078.9,453.367L1236.1,453.367" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(-1.71772,0,0,3.1891,2647.2,-177.403)">
-                        <path d="M1067.37,453.367L1236.1,453.367" style="fill:none;stroke:black;stroke-width:0.65px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,-144.334)">
-                        <g transform="matrix(37.5,0,0,37.5,1456.14,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1361.1px " y="287.522px ">o</tspan>r 1-4</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2163.51,-144.334)">
-                        <g transform="matrix(37.5,0,0,37.5,1447.51,287.522)">
-                        </g>
-                        <text x="1283.74px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">amplitude</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2163.51,384.98)">
-                        <g transform="matrix(37.5,0,0,37.5,1447.51,287.522)">
-                        </g>
-                        <text x="1207.53px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">lock amplitude</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,383.754)">
-                        <g transform="matrix(37.5,0,0,37.5,1459.72,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">all actuat<tspan x="1407.12px " y="287.522px ">o</tspan>rs</text>
-                    </g>
-                </g>
-                <g transform="matrix(1.84549,0,0,4.37438,-418.924,-927.89)">
+                <g transform="matrix(4.2601,0,0,5.26965,-2482.84,-1786.97)">
                     <path d="M873.602,888.886C873.602,888.886 952.57,888.475 972.676,888.886C992.783,889.297 1087.76,995.049 1103.36,999.557C1124.79,1005.75 1139.73,992.199 1149.43,975.568C1159.13,958.938 1155.29,902.953 1155.36,885.879C1155.42,868.805 1091.34,620.116 1065.41,599.388C1045.42,583.41 994.815,570.99 976.757,578.731C963.142,584.567 940.192,619.037 915.32,619.037L831.883,619.037C807.011,619.037 784.061,584.567 770.446,578.731C752.388,570.99 701.78,583.41 681.793,599.388C655.865,620.116 591.782,868.805 591.846,885.879C591.91,902.953 588.069,958.938 597.771,975.568C607.474,992.199 622.416,1005.75 643.846,999.557C659.44,995.049 754.42,889.297 774.527,888.886C794.633,888.475 873.602,888.886 873.602,888.886Z" style="fill:white;stroke:black;stroke-width:3.13px;"/>
                     <ellipse cx="964.329" cy="808.371" rx="51.131" ry="60.404" style="fill:none;stroke:black;stroke-width:1.87px;"/>
                     <circle cx="1025.53" cy="653.489" r="21.669" style="fill:rgb(236,102,12);stroke:black;stroke-width:1.87px;"/>
@@ -154,105 +120,7 @@
                     </g>
                     <path d="M748.637,780.556C756.357,780.556 763.762,777.489 769.221,772.03C774.68,766.571 777.747,759.167 777.747,751.447L777.747,747.967C786.765,745.408 795.783,745.398 804.801,747.967L804.801,751.447C804.801,759.167 807.868,766.571 813.327,772.03C818.787,777.489 826.191,780.556 833.911,780.556L837.391,780.556C839.972,789.575 839.962,798.593 837.391,807.611L833.911,807.611C826.191,807.611 818.787,810.678 813.327,816.137C807.868,821.596 804.801,829 804.801,836.721L804.801,840.2C795.783,843.111 786.765,843.122 777.747,840.2L777.747,836.721C777.747,829 774.68,821.596 769.221,816.137C763.762,810.678 756.357,807.611 748.637,807.611L745.158,807.611C742.326,798.593 742.356,789.575 745.158,780.556L748.637,780.556Z" style="fill:rgb(236,102,12);stroke:black;stroke-width:1.87px;"/>
                 </g>
-                <g transform="matrix(1,0,0,1.37166,0,-920.247)">
-                    <g transform="matrix(1.84549,0,0,3.1891,-418.924,-81.7302)">
-                        <path d="M991.417,859.339L1084.95,952.875L1236.1,952.875" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-418.924,-81.7302)">
-                        <path d="M1043.45,659.453L1119.82,583.083L1236.1,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-418.924,170.607)">
-                        <path d="M1082.77,620.134L1119.82,583.083L1236.1,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,-3.1891,-418.924,4491.01)">
-                        <path d="M1004.49,698.413L1119.82,583.083L1236.1,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-475.268,-232.075)">
-                        <path d="M966.273,736.631L1119.82,583.083L1266.63,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(2.65154,0,0,-3.1891,-1496.23,4189.15)">
-                        <path d="M1137.81,583.083L1266.63,583.083" style="fill:none;stroke:black;stroke-width:0.5px;"/>
-                    </g>
-                    <g transform="matrix(-1.84549,0,0,3.1891,2863.48,-232.075)">
-                        <path d="M966.273,736.631L1119.82,583.083L1266.63,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(-1.84549,0,0,3.1891,2861.4,32.6729)">
-                        <path d="M1072.72,630.182L1119.82,583.083L1266.63,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2163.51,743.374)">
-                        <g transform="matrix(37.5,0,0,37.5,1447.51,287.522)">
-                        </g>
-                        <text x="1276.42px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">t<tspan x="1288.1px " y="287.522px ">o</tspan>ggle r<tspan x="1399.87px " y="287.522px ">e</tspan>c.</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2163.51,1009.97)">
-                        <g transform="matrix(37.5,0,0,37.5,1447.51,287.522)">
-                        </g>
-                        <text x="1248.66px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1352.48px " y="287.522px ">o</tspan>r 1-4</text>
-                    </g>
-                    <g transform="matrix(-1.84549,0,0,3.1891,2808.66,332.424)">
-                        <path d="M963.207,636.765L1016.89,583.083L1236.1,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(-1.84549,0,0,3.1891,2808.66,584.761)">
-                        <path d="M1009.69,614.311L1038.55,585.451L1236.1,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(-1.84549,0,0,-3.1891,2808.66,4905.16)">
-                        <path d="M904.094,740.429L1061.44,583.083L1236.1,583.083" style="fill:none;stroke:black;stroke-width:0.63px;"/>
-                    </g>
-                    <g transform="matrix(-2.65154,0,0,-3.1891,3885.97,4603.31)">
-                        <path d="M1076.69,600.213L1088.62,583.083L1266.63,583.083" style="fill:none;stroke:black;stroke-width:0.5px;"/>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2198.94,1307.87)">
-                        <g transform="matrix(37.5,0,0,37.5,1466.57,287.522)">
-                        </g>
-                        <text x="1299.23px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1403.05px " y="287.522px ">o</tspan>r 1</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2198.94,1573.61)">
-                        <g transform="matrix(37.5,0,0,37.5,1466.57,287.522)">
-                        </g>
-                        <text x="1299.23px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1403.05px " y="287.522px ">o</tspan>r 2</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2198.94,1872.26)">
-                        <g transform="matrix(37.5,0,0,37.5,1466.57,287.522)">
-                        </g>
-                        <text x="1299.23px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1403.05px " y="287.522px ">o</tspan>r 3</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-2198.94,2172.08)">
-                        <g transform="matrix(37.5,0,0,37.5,1466.57,287.522)">
-                        </g>
-                        <text x="1299.23px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1403.05px " y="287.522px ">o</tspan>r 4</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,742.761)">
-                        <g transform="matrix(37.5,0,0,37.5,1513.83,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">t<tspan x="1268.97px " y="287.522px ">o</tspan>ggle pla<tspan x="1417.46px " y="287.522px ">y</tspan>back</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,893.719)">
-                        <g transform="matrix(37.5,0,0,37.5,1424.62,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1361.1px " y="287.522px ">o</tspan>r 1</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,1159.45)">
-                        <g transform="matrix(37.5,0,0,37.5,1424.62,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1361.1px " y="287.522px ">o</tspan>r 2</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,1458.1)">
-                        <g transform="matrix(37.5,0,0,37.5,1424.62,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1361.1px " y="287.522px ">o</tspan>r 3</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,1757.93)">
-                        <g transform="matrix(37.5,0,0,37.5,1424.62,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1361.1px " y="287.522px ">o</tspan>r 4</text>
-                    </g>
-                    <g transform="matrix(1.84549,0,0,3.1891,-440.343,2072.41)">
-                        <g transform="matrix(37.5,0,0,37.5,1447.02,287.522)">
-                        </g>
-                        <text x="1257.28px" y="287.522px" style="font-family:'Roboto-Light', 'Roboto';font-weight:300;font-size:37.5px;">actuat<tspan x="1361.1px " y="287.522px ">o</tspan>r1-4</text>
-                    </g>
-                </g>
-                <g transform="matrix(1.97281,0,0,4.83975,-3245.11,-7059.91)">
+                <g transform="matrix(4.554,0,0,5.83027,-9006.77,-9173.99)">
                     <rect x="1644.92" y="1392.28" width="1257.25" height="870.501" style="fill:none;stroke:white;stroke-width:1.15px;"/>
                 </g>
             </g>

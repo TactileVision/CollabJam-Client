@@ -71,6 +71,7 @@ export interface InputProfile {
   uid: string;
   name: string;
   imagePath: string;
+  thumbnailPath: string;
   deviceType: DeviceType;
   bindings: InputBinding[];
 }

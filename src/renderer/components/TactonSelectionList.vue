@@ -1,54 +1,58 @@
 <template>
-  <h5 class="text-h5">Tactons</h5>
-  <div style="margin-top: 16px">
-    <span class="overline">Save as: </span>
-    <span>
-      <strong> {{ store.state.roomSettings.recordingNamePrefix }}</strong>
-    </span>
-    <v-btn
-      variant="text"
-      @click="showEditPrefix = !showEditPrefix"
-      color="primary"
-    >
-      {{ showEditPrefix ? "Close" : "Edit" }}
-    </v-btn>
-  </div>
-  <div v-if="showEditPrefix" class="editPrefix">
-    <v-text-field
-      v-model="editPrefixText"
-      id="edit-prefix-input"
-      type="text"
-      label="Enter prefix"
+  <v-sheet elevation="0" class="mr-2 pa-4">
+    <h6 class="text-h6">Tactons</h6>
+    <div style="margin-top: 16px">
+      <span class="overline">Save as: </span>
+      <span>
+        <strong> {{ store.state.roomSettings.recordingNamePrefix }}</strong>
+      </span>
+      <v-btn
+        variant="text"
+        @click="showEditPrefix = !showEditPrefix"
+        color="primary"
+      >
+        {{ showEditPrefix ? "Close" : "Edit" }}
+      </v-btn>
+    </div>
+    <div v-if="showEditPrefix" class="editPrefix">
+      <v-text-field
+        v-model="editPrefixText"
+        id="edit-prefix-input"
+        type="text"
+        label="Enter prefix"
+        hide-details
+        variant="outlined"
+        class="mb-2"
+      ></v-text-field>
+      <v-btn
+        block
+        :disabled="
+          editPrefixText == '' ||
+          editPrefixText == store.state.roomSettings.recordingNamePrefix
+        "
+        @click="updatePrefix"
+        color="primary"
+      >
+        Save
+      </v-btn>
+    </div>
+    <!-- </v-sheet> -->
+    <v-switch
+      v-model="filteredView"
+      :disabled="store.state.tactonPlayback.tactons.length == 0"
       hide-details
-      variant="outlined"
-      class="mb-2"
-    ></v-text-field>
-    <v-btn
-      block
-      :disabled="
-        editPrefixText == '' ||
-        editPrefixText == store.state.roomSettings.recordingNamePrefix
-      "
-      @click="updatePrefix"
+      label="Show Favorites only"
       color="primary"
-    >
-      Save
-    </v-btn>
-  </div>
-  <!-- </v-sheet> -->
-  <v-switch
-    v-model="filteredView"
-    :disabled="store.state.tactonPlayback.tactons.length == 0"
-    hide-details
-    label="Show Favorites only"
-    color="primary"
-  ></v-switch>
+    ></v-switch>
+  </v-sheet>
   <!-- MARK: Tacton List -->
   <v-virtual-scroll :height="windowHeight - 172" :items="sortByPrefix()">
-    <template v-slot:default="{ item }">
-      <v-expansion-panels>
+    <template v-slot:default="{ item, index: groupIndex }">
+      <v-expansion-panels :key="groupIndex">
         <v-expansion-panel :elevation="'0'">
-          <v-expansion-panel-title>
+          <v-expansion-panel-title
+            :class="groupIndex === selectedPrefixgroupId ? 'text-primary' : ''"
+          >
             <v-chip
               prepend-icon="mdi-waveform"
               class="ma-2"
@@ -78,6 +82,7 @@
                 <template #prepend>
                   <v-list-item-action>
                     <v-btn
+                      size="small"
                       :icon="
                         tacton.metadata.favorite
                           ? 'mdi-star'
@@ -94,21 +99,24 @@
                   {{ tacton.metadata.name }} {{ tacton.metadata.iteration }}
                 </v-list-item-title>
 
-                <v-list-item-subtitle @click="selectTacton(tacton)">
-                  <div v-show="!hasMetadata(tacton)">
+                <v-list-item-subtitle
+                  class="py-2"
+                  @click="selectTacton(tacton, groupIndex)"
+                >
+                  <v-chip size="small" v-show="!hasMetadata(tacton)">
                     <v-icon
                       size=""
                       icon="mdi-file-document-remove-outline"
                     ></v-icon>
-                    No metadata
-                  </div>
-                  <div v-show="hasMetadata(tacton)">
+                    No details
+                  </v-chip>
+                  <v-chip v-show="hasMetadata(tacton)">
                     <v-icon
                       size=""
                       icon="mdi-file-document-check-outline"
                     ></v-icon>
-                    Metadata
-                  </div>
+                    details
+                  </v-chip>
                 </v-list-item-subtitle>
                 <template #append>
                   <v-list-item-action>
@@ -313,6 +321,14 @@
 </template>
 
 <style lang="scss" scoped>
+.v-list {
+  padding: 0;
+}
+
+:deep(.v-expansion-panel-text__wrapper) {
+  padding: 0 !important;
+}
+
 .non-selectable {
   user-select: none;
 }
@@ -325,7 +341,6 @@
   opacity: 0;
   transition: 0.5s;
 }
-
 // #prefix-input {
 //   border-style: solid;
 // }
@@ -356,6 +371,8 @@ export enum BodyTags {
   RightThigh,
   RightLowerLeg,
 }
+
+const charLimit = 20;
 export default defineComponent({
   name: "TactonSelectionList",
   // props: {},
@@ -385,9 +402,11 @@ export default defineComponent({
       rules: {
         required: (value: any) => !!value || "Field is required",
         charLimit: (value: string) =>
-          value.length <= 50 || "Input is limited to 50 characters",
+          value.length <= charLimit ||
+          `Input is limited to ${charLimit} characters`,
       },
       windowHeight: window.innerHeight,
+      selectedPrefixgroupId: null as null | number,
     };
   },
   computed: {
@@ -399,8 +418,21 @@ export default defineComponent({
     currentTacton(tacton) {
       if (tacton == null) {
         this.selection = null;
+        this.selectedPrefixgroupId = -1;
       } else {
         this.selection = tacton;
+
+        // TODO only get this list once on startup
+        const groupedTactons = this.sortByPrefix();
+
+        let id = 0;
+        for (let group of groupedTactons) {
+          if (group.tactons.indexOf(tacton) > -1) {
+            break;
+          }
+          id++;
+        }
+        this.selectedPrefixgroupId = id;
       }
       this.tactonDescription = tacton.metadata.description;
       this.selectedBodyTags = tacton.metadata.bodyTags;
@@ -409,9 +441,10 @@ export default defineComponent({
   },
   methods: {
     ref,
-    selectTacton(tacton: Tacton) {
+    selectTacton(tacton: Tacton, groupId: number) {
       this.selection = tacton;
       this.store.dispatch(TactonPlaybackActionTypes.selectTacton, tacton.uuid);
+      this.selectedPrefixgroupId = groupId;
     },
     calculateDuration(tacton: Tacton): number {
       let d = 0;
