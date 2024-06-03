@@ -98,7 +98,6 @@ export default defineComponent({
     TactonGraphWrapper,
     TactonSelectionList,
     CollaborationDialog,
-    ParticipantSettings,
   },
   data() {
     return {

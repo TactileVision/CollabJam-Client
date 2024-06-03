@@ -66,6 +66,22 @@ class Cursor {
     this.container.position.set(xPosition, 0);
   }
 }
+/*
+interface InteractionModeGraphHandler {
+  onEnteringMode: () => void;
+  onLeavingMode: () => void;
+  onLoop: () => void;
+  // onInstructions: () => void
+  // onHasFinished: (() => void) | null
+}
+
+const JammingGraphHandler: InteractionModeGraphHandler = {
+  onEnteringMode: () => {
+    this.clearGraph;
+  },
+  onLeavingMode: () => {},
+  onLoop: () => {},
+}; */
 
 export default defineComponent({
   name: "TactonGraph",
@@ -140,7 +156,7 @@ export default defineComponent({
     },
     channelStates(): OutputChannelState[] {
       return [...this.store.state.tactonSettings.outputChannelState];
-    }
+    },
   },
   watch: {
     //start to drawing if all components are mounted
@@ -156,13 +172,31 @@ export default defineComponent({
     },
     //update store from server, response retrieved
     interactionMode(mode) {
+      //Cleanup after ending current mode by emptying the graph
+      this.clearGraph();
+
       if (mode == InteractionMode.Recording) {
-        //Coming into recording mode
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
-        this.clearGraph();
+        this.ticker?.add(this.pixiLoopRecording);
         this.ticker?.start();
+        // this.editingEnabled = false;
       } else if (mode == InteractionMode.Overdubbing) {
-        this.clearGraph();
+        //TODO Add loadTactonIntoGraph function
+        if (this.tacton != null) {
+          this.drawStoredGraph(this.tacton.instructions);
+          this.endOfTactonIndicator.moveToPosition(
+            getDuration(this.tacton) * this.growRatio + this.paddingRL,
+          );
+          this.endOfTactonIndicator.drawCursor(this.height.actual);
+          this.graphContainer?.addChild(
+            this.endOfTactonIndicator.getContainer(),
+          );
+          // this.editingEnabled = false;
+          this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
+          this.ticker?.add(this.pixiLoopRecording);
+          this.ticker?.start();
+        }
+      } else if (mode == InteractionMode.Jamming) {
         if (this.tacton != null) {
           this.drawStoredGraph(this.tacton.instructions);
           this.endOfTactonIndicator.moveToPosition(
@@ -173,22 +207,27 @@ export default defineComponent({
             this.endOfTactonIndicator.getContainer(),
           );
         }
-        this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
-        this.ticker?.start();
-      } else {
-        this.ticker?.stop();
-        this.ticker?.remove(this.loop);
-
-        if (mode == InteractionMode.Jamming) {
-          this.cursor.moveToPosition(0);
+        this.cursor.moveToPosition(0);
+        this.editingEnabled = true;
+      } else if (mode == InteractionMode.Playback) {
+        //TODO Add loadTactonIntoGraph function
+        if (this.tacton != null) {
+          this.drawStoredGraph(this.tacton.instructions);
+          this.endOfTactonIndicator.moveToPosition(
+            getDuration(this.tacton) * this.growRatio + this.paddingRL,
+          );
+          this.endOfTactonIndicator.drawCursor(this.height.actual);
+          this.graphContainer?.addChild(
+            this.endOfTactonIndicator.getContainer(),
+          );
+          this.ticker?.add(this.pixiLoopPlayback);
+          this.ticker?.start();
         }
-
-        if (mode === InteractionMode.Playback) {
-          this.editingEnabled = false;
-        } else {
-          this.editingEnabled = true;
-        }
-      }
+        // this.editingEnabled = false;
+      } /* else {
+        //Non existent editing mode
+        this.editingEnabled = true;
+      } */
     },
     editingEnabled() {
       this.rerenderGraph();
@@ -198,23 +237,22 @@ export default defineComponent({
       console.log(this);
       this.rerenderGraph();
     },
-    playbackTime(time) {
-      // console.log(time);
-      // this.cursor.moveToPosition(time * this.growRatio + this.paddingRL)
-      this.positionCursor(time);
-    },
+
     channelStates() {
       const coordinateContainer = this.coordinateContainer;
-      if(!coordinateContainer) return;
+      if (!coordinateContainer) return;
 
-      this.channelStates.forEach(state => {
-        const graphics = coordinateContainer.getChildByLabel(`actuation-indicator-${state.channelId}`) as PIXI.Graphics | null;
-        if(graphics) {
-          const color = state.intensity > 0 ? state.author?.color || 0xec660c : 0x6c6c60;
+      this.channelStates.forEach((state) => {
+        const graphics = coordinateContainer.getChildByLabel(
+          `actuation-indicator-${state.channelId}`,
+        ) as PIXI.Graphics | null;
+        if (graphics) {
+          const color =
+            state.intensity > 0 ? state.author?.color || 0xec660c : 0x6c6c60;
           graphics.tint = color;
         }
-      })
-    }
+      });
+    },
   },
   async mounted() {
     try {
@@ -257,8 +295,9 @@ export default defineComponent({
   },
   beforeUnmount() {
     //remove listener and loop if the component is clossed
+    //TODO Check which listener to remove
     if (this.ticker !== null && this.ticker.count > 0)
-      this.ticker?.remove(this.loop);
+      this.ticker?.remove(this.pixiLoopRecording);
 
     this.pixiApp?.destroy(false, { children: true });
     window.removeEventListener("resize", this.resizeScreen);
@@ -267,7 +306,7 @@ export default defineComponent({
   },
   methods: {
     rerenderGraph() {
-      if(this.tacton === null) {
+      if (this.tacton === null) {
         this.clearGraph();
         return;
       }
@@ -399,11 +438,19 @@ export default defineComponent({
         graphics.moveTo(this.paddingRL, yPosition);
         graphics.lineTo(this.width.actual - this.paddingRL, yPosition).stroke();
 
-        if(i < this.numberOfOutputs) {
+        if (i < this.numberOfOutputs) {
           const actuationIndicator = new PIXI.Graphics();
-          actuationIndicator.circle(this.paddingRL / 2, yPosition, (this.paddingRL * 0.4) / 2);
+          actuationIndicator.circle(
+            this.paddingRL / 2,
+            yPosition,
+            (this.paddingRL * 0.4) / 2,
+          );
           actuationIndicator.tint = 0x6c6c60;
-          actuationIndicator.fill({ color: 0xffffff, matrix: new PIXI.Matrix(), alpha: 1 });
+          actuationIndicator.fill({
+            color: 0xffffff,
+            matrix: new PIXI.Matrix(),
+            alpha: 1,
+          });
           actuationIndicator.label = `actuation-indicator-${i}`;
           this.coordinateContainer?.addChild(actuationIndicator);
         }
@@ -497,10 +544,9 @@ export default defineComponent({
       this.channelGraphs = [];
       if (this.ticker !== null && this.ticker.count > 0) {
         console.log("stopped ticker");
-        this.ticker?.remove(this.loop);
+        this.ticker?.remove(this.pixiLoopRecording);
+        this.ticker?.remove(this.pixiLoopPlayback);
       }
-      console.log("starting ticker");
-      this.ticker?.add(this.loop);
 
       this.selectedBlock = null;
       document.removeEventListener("pointerdown", this.unselectBlock);
@@ -993,7 +1039,7 @@ export default defineComponent({
           "pointerdown",
           (e: PIXI.FederatedPointerEvent) => {
             e.stopPropagation();
-            if(!this.editingEnabled) return;
+            if (!this.editingEnabled) return;
 
             this.currentStretch = {
               channel: channelIndex,
@@ -1296,8 +1342,12 @@ export default defineComponent({
       this.selectedBlock = null;
       this.updateTacton();
     },
-    selectBlock(blockIndex: number, channelIndex: number, blockContainer: PIXI.Container) {
-      if(!this.editingEnabled) return;
+    selectBlock(
+      blockIndex: number,
+      channelIndex: number,
+      blockContainer: PIXI.Container,
+    ) {
+      if (!this.editingEnabled) return;
 
       // Remove highlight of currently selected block
       const currentlySelected = this.selectedBlock;
@@ -1306,10 +1356,7 @@ export default defineComponent({
         // Do nothing if the currently selected block is this block
         if (channel === channelIndex && index === blockIndex) {
           currentlySelected.moving = true;
-          this.pixiApp?.stage?.addEventListener(
-            "pointermove",
-            this.moveBlock,
-          );
+          this.pixiApp?.stage?.addEventListener("pointermove", this.moveBlock);
           return;
         }
 
@@ -1337,10 +1384,7 @@ export default defineComponent({
         container: blockContainer,
       };
 
-      this.pixiApp?.stage?.addEventListener(
-        "pointermove",
-        this.moveBlock,
-      );
+      this.pixiApp?.stage?.addEventListener("pointermove", this.moveBlock);
 
       document.addEventListener("keydown", this.handleBlockKeyDown);
       document.addEventListener("pointerdown", this.unselectBlock);
@@ -1497,7 +1541,7 @@ export default defineComponent({
     /**
      * method wich will called every frame, to draw and update figures
      */
-    loop() {
+    pixiLoopRecording() {
       //calculate the additional width, which has to add for the time frame
       const numOfInst = this.channelGraphs.reduce(
         (acc, val) => acc + val.intensities.length,
@@ -1506,8 +1550,14 @@ export default defineComponent({
       if (numOfInst == this.numberOfOutputs) {
         this.currentTime = 0;
       }
+
       const channels = this.store.state.tactonSettings.outputChannelState;
       this.drawLiveGraph(channels);
+
+      this.positionCursor(this.currentTime);
+      this.currentTime += this.ticker!.elapsedMS;
+    },
+    pixiLoopPlayback() {
       this.positionCursor(this.currentTime);
       this.currentTime += this.ticker!.elapsedMS;
     },

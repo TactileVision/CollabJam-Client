@@ -2,7 +2,6 @@ import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import { UpdateRoomMode } from "@sharedTypes/websocketTypes";
 import { Store } from "@/renderer/store/store";
-import { startGraphCursor, stopGraphCursor } from "./GraphCursor";
 import { TactileTask } from "@/shared/types/tactonTypes";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import { TactonMutations } from "../store/modules/collaboration/tactonSettings/tactonSettings";
@@ -64,7 +63,6 @@ export const updateInteractionMode = (store: Store, res: UpdateRoomMode) => {
         store.state.roomSettings.mode == InteractionMode.Playback ||
         store.state.roomSettings.mode == InteractionMode.Overdubbing
       ) {
-        stopGraphCursor();
         // Set all outputs to 0
         // store.state.generalSettings.deviceList.forEach((device) => {
         const tt: TactileTask = {
@@ -87,9 +85,6 @@ export const updateInteractionMode = (store: Store, res: UpdateRoomMode) => {
       store.commit(TactonMutations.TRACK_STATE_CHANGES, true);
       if (res.tactonId != undefined) {
         store.dispatch(TactonPlaybackActionTypes.selectTacton, res.tactonId);
-        if (store.state.tactonPlayback.currentTacton != undefined) {
-          startGraphCursor();
-        }
       }
       break;
 
@@ -97,9 +92,6 @@ export const updateInteractionMode = (store: Store, res: UpdateRoomMode) => {
       console.log("Playback");
       if (res.tactonId != undefined) {
         store.dispatch(TactonPlaybackActionTypes.selectTacton, res.tactonId);
-        if (store.state.tactonPlayback.currentTacton != undefined) {
-          startGraphCursor();
-        }
       }
       store.commit(TactonMutations.TRACK_STATE_CHANGES, false);
       break;

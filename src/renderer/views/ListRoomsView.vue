@@ -119,7 +119,6 @@ import CollaborationView from "./CollaborationView.vue";
 import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
 import SnackBar from "@/renderer/components/Snackbar.vue";
 import { writeAmplitudeOnDisplay } from "../helpers/TactileDisplayActions";
-import { stopGraphCursor } from "../helpers/GraphCursor";
 import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 // import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
@@ -202,7 +201,6 @@ export default defineComponent({
           0,
         );
       });
-      stopGraphCursor();
 
       this.store.commit(RoomMutations.UPDATE_PARTICIPANTS, []);
       if (hideGraph) {
