@@ -428,10 +428,11 @@ export default defineComponent({
           id++;
         }
         this.selectedPrefixgroupId = id;
+
+        this.tactonDescription = tacton.metadata.description;
+        this.selectedBodyTags = tacton.metadata.bodyTags;
+        this.selectedCustomTags = tacton.metadata.customTags;
       }
-      this.tactonDescription = tacton.metadata.description;
-      this.selectedBodyTags = tacton.metadata.bodyTags;
-      this.selectedCustomTags = tacton.metadata.customTags;
     },
   },
   methods: {
