@@ -67,7 +67,9 @@
   max-width: 100%;
   padding: 0;
 }
-
+#TactonGraphWrapper {
+  width: 1192px;
+}
 .playGroundView:focus {
   outline: none;
 }
