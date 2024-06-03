@@ -66,22 +66,6 @@ class Cursor {
     this.container.position.set(xPosition, 0);
   }
 }
-/*
-interface InteractionModeGraphHandler {
-  onEnteringMode: () => void;
-  onLeavingMode: () => void;
-  onLoop: () => void;
-  // onInstructions: () => void
-  // onHasFinished: (() => void) | null
-}
-
-const JammingGraphHandler: InteractionModeGraphHandler = {
-  onEnteringMode: () => {
-    this.clearGraph;
-  },
-  onLeavingMode: () => {},
-  onLoop: () => {},
-}; */
 
 export default defineComponent({
   name: "TactonGraph",
@@ -357,13 +341,13 @@ export default defineComponent({
       //recalculate the size if of the container if something is changed
       const xRatio = newWidth / this.width.actual;
       const yRatio = newHeight / this.height.actual;
-      /*       console.log(
-        `newHeight: ${newHeight} / this.height.actual ${this.height.actual} =  ${yRatio}`,
-      ); */
+      // console.log(
+      //   `newHeight: ${newHeight} / this.height.actual ${this.height.actual} =  ${yRatio}`,
+      // );
       this.width.actual = newWidth;
       this.height.actual = newHeight;
 
-      // console.log(`height: ${this.height.actual}, Y ratio: ${yRatio}`)
+      console.log(`height: ${this.height.actual}, Y ratio: ${yRatio}`);
       this.graphContainer!.width = this.graphContainer!.width * xRatio;
       this.graphContainer!.height = this.graphContainer!.height * yRatio;
       /*       console.log(
@@ -743,7 +727,7 @@ export default defineComponent({
 
           // +1 for the legend, + 1 because numberOfOutputs starts counting at 0
           const numberOfRows = this.numberOfOutputs + 1 + 1;
-          const distLinesY = this.height.original / numberOfRows;
+          const distLinesY = this.height.actual / numberOfRows;
           const ratioHeight = 35 / numberOfRows;
           const height = distLinesY - ratioHeight * numberOfRows;
           const yPosition = (i + 1) * distLinesY - height * 0.5;
@@ -883,13 +867,14 @@ export default defineComponent({
       if (intensity == 0) return { intensity: 0 };
       //+1 for the legend, + 1 because numberOfOutputs starts counting at 0
       const numberOfRows = this.numberOfOutputs + 1 + 1;
-      const distLinesY = this.height.original / numberOfRows;
+      const distLinesY = this.height.actual / numberOfRows;
       const ratioHeight = 35 / numberOfRows;
       const height = (distLinesY - ratioHeight * numberOfRows) * intensity;
       let yPosition = (idGraph + 1) * distLinesY - height * 0.5;
 
+      // console.log(this.height.actual);
       // console.log("draw Rectangle at x: " + xPosition);
-      // console.log("draw Rectangle at x" + yPosition);
+      // console.log("draw Rectangle at y:" + yPosition);
       // console.log("draw Rectangle width: " + additionalWidth);
       // console.log("draw Rectangle height: " + height);
       // draw the rectangle
@@ -944,7 +929,7 @@ export default defineComponent({
       if (intensity == 0) return { intensity: 0 };
 
       const numberOfRows = this.numberOfOutputs + 1 + 1;
-      const distLinesY = this.height.original / numberOfRows;
+      const distLinesY = this.height.actual / numberOfRows;
       const ratioHeight = 35 / numberOfRows;
       const rowHeight = distLinesY - ratioHeight * numberOfRows;
       const height = rowHeight * intensity;
@@ -991,7 +976,7 @@ export default defineComponent({
       highlighted = false,
     ) {
       const numberOfRows = this.numberOfOutputs + 1 + 1;
-      const distLinesY = this.height.original / numberOfRows;
+      const distLinesY = this.height.actual / numberOfRows;
       const ratioHeight = 35 / numberOfRows;
       const height = distLinesY - ratioHeight * numberOfRows;
 
