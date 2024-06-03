@@ -59,7 +59,7 @@ class Cursor {
     // this.graphic.beginFill(this.color);
     // this.graphic.drawRect(0, 0, 2, height);
     this.graphic.setFillStyle({ color: this.color, matrix: new PIXI.Matrix() });
-    this.graphic.rect(0, 30, 1, height-150).fill();
+    this.graphic.rect(0, 30, 1, height - 150).fill();
     this.hasDrawnCursor = true;
   }
   moveToPosition(xPosition: number) {
@@ -163,7 +163,7 @@ export default defineComponent({
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
         this.ticker?.add(this.pixiLoopRecording);
         this.ticker?.start();
-        // this.editingEnabled = false;
+        this.editingEnabled = false;
       } else if (mode == InteractionMode.Overdubbing) {
         //TODO Add loadTactonIntoGraph function
         if (this.tacton != null) {
@@ -175,7 +175,7 @@ export default defineComponent({
           this.graphContainer?.addChild(
             this.endOfTactonIndicator.getContainer(),
           );
-          // this.editingEnabled = false;
+          this.editingEnabled = false;
           this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
           this.ticker?.add(this.pixiLoopRecording);
           this.ticker?.start();
@@ -207,14 +207,14 @@ export default defineComponent({
           this.ticker?.add(this.pixiLoopPlayback);
           this.ticker?.start();
         }
-        // this.editingEnabled = false;
+        this.editingEnabled = false;
       } /* else {
         //Non existent editing mode
         this.editingEnabled = true;
       } */
     },
     editingEnabled() {
-      this.rerenderGraph();
+      // this.rerenderGraph();
     },
     tacton() {
       console.log("Tacton");
