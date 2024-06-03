@@ -59,7 +59,7 @@ class Cursor {
     // this.graphic.beginFill(this.color);
     // this.graphic.drawRect(0, 0, 2, height);
     this.graphic.setFillStyle({ color: this.color, matrix: new PIXI.Matrix() });
-    this.graphic.rect(0, 0, 2, height).fill();
+    this.graphic.rect(0, 30, 1, height-150).fill();
     this.hasDrawnCursor = true;
   }
   moveToPosition(xPosition: number) {
