@@ -11,6 +11,7 @@ import { InstructionToClient, Tacton } from "@sharedTypes/tactonTypes";
 import {
   ChangeTactonMetadata,
   TactonDeletion,
+  UpdateAvailableTags,
   UpdateRoomMode,
   UpdateTacton,
   WS_MSG_TYPE,
@@ -46,6 +47,7 @@ export const handleMessage = (store: Store) => {
           store.state.tactonSettings.debounceInstructionsBuffer,
         );
 
+        // console.log(instructionsToSend);
         store.dispatch(TactonSettingsActionTypes.clearDebounceBuffer);
 
         if (instructionsToSend.length > 0) {
@@ -145,7 +147,6 @@ export const handleMessage = (store: Store) => {
   );
 
   socket.on(WS_MSG_TYPE.UPDATE_TACTON_CLI, (res: UpdateTacton) => {
-    console.log("Tacton Metadata updated!");
     store.dispatch(TactonPlaybackActionTypes.updateTacton, res.tacton);
   });
 
@@ -179,6 +180,14 @@ export const handleMessage = (store: Store) => {
       }
     }
   });
+
+  socket.on(
+    WS_MSG_TYPE.UPDATE_AVAILABLE_TAGS_CLI,
+    (res: UpdateAvailableTags) => {
+      console.log(res);
+      store.commit(RoomMutations.SET_AVAILABLE_CUSTOM_TAGS, res.customTags);
+    },
+  );
 
   // const router = useRouter()
   /**
