@@ -186,7 +186,7 @@
                 v-model="selectedCustomTags"
                 variant="underlined"
                 label="CustomTags"
-                :items="customTags"
+                :items="availableCustomTags"
                 multiple
               ></v-combobox>
             </v-col>
@@ -392,7 +392,6 @@ export default defineComponent({
       selectedBodyTags: [],
       selectedCustomTags: [],
       // list of previously used customTags user can choose from
-      customTags: ["Workshop", "SampleCustomTag"],
       // rules for validating input
       rules: {
         required: (value: string) => !!value || "Field is required",
@@ -407,6 +406,9 @@ export default defineComponent({
   computed: {
     currentTacton(): Tacton | null {
       return this.store.state.tactonPlayback.currentTacton;
+    },
+    availableCustomTags(): string[] {
+      return this.store.state.roomSettings.availableCustomTags;
     },
   },
   watch: {
@@ -516,12 +518,12 @@ export default defineComponent({
         prefixMap[prefix].push(t);
       });
 
-      console.log(
-        Object.keys(prefixMap).map((prefix) => ({
-          prefix,
-          tactons: prefixMap[prefix],
-        })),
-      );
+      // console.log(
+      //   Object.keys(prefixMap).map((prefix) => ({
+      //     prefix,
+      //     tactons: prefixMap[prefix],
+      //   })),
+      // );
       return Object.keys(prefixMap).map((prefix) => ({
         prefix,
         tactons: prefixMap[prefix],

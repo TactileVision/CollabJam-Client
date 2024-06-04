@@ -32,6 +32,7 @@ export type State = {
   mode: InteractionMode;
   recordingNamePrefix: string;
   availableRooms: Room[];
+  availableCustomTags: string[];
 };
 
 export const state: State = {
@@ -46,6 +47,7 @@ export const state: State = {
   mode: InteractionMode.Jamming,
   recordingNamePrefix: "",
   availableRooms: [],
+  availableCustomTags: [],
 };
 /**
  * mutations
@@ -63,6 +65,7 @@ export enum RoomMutations {
   UPDATE_RECORD_MODE = "UPDATE_RECORD_MODE",
   UPDATE_MAX_DURATION_TACTON = "UPDATE_MAX_DURATION_TACTON",
   SET_AVAILABLE_ROOMS = "SET_AVAILABLE_ROOMS",
+  SET_AVAILABLE_CUSTOM_TAGS = "SET_AVAILABLE_CUSTOM_TAGS",
 }
 
 export type Mutations<S = State> = {
@@ -83,6 +86,7 @@ export type Mutations<S = State> = {
     maxDuration: number,
   ): void;
   [RoomMutations.SET_AVAILABLE_ROOMS](state: S, rooms: Room[]): void;
+  [RoomMutations.SET_AVAILABLE_CUSTOM_TAGS](state: S, tags: string[]): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -139,6 +143,9 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [RoomMutations.SET_AVAILABLE_ROOMS](state, rooms) {
     state.availableRooms = rooms;
+  },
+  [RoomMutations.SET_AVAILABLE_CUSTOM_TAGS](state, tags) {
+    state.availableCustomTags = tags;
   },
 };
 
