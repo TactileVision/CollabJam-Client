@@ -1,6 +1,8 @@
 <template>
-  <h6 class="text-h6">Participants</h6>
-  <div style="display: flex; flex-direction: column; margin-top: 16px">
+  <v-container>
+    <h6 class="text-h6">Participants</h6>
+  </v-container>
+  <v-container style="display: flex; flex-direction: column; margin-top: 16px">
     <v-btn
         style="margin-bottom: 16px"
         color="primary"
@@ -22,7 +24,7 @@
         @muted="muteParticipant"
         @unmuted="unmuteParticipant"
     />
-  </div>
+  </v-container>
 </template>
 
 <script lang="ts">
@@ -52,7 +54,7 @@ export default defineComponent({
   methods: {
     muteParticipant(participant: User) {
       if(participant.muted) return;
-      
+
       this.store.dispatch(RoomSettingsActionTypes.muteParticipant, {
         participant,
       });
