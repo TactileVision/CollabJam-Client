@@ -345,7 +345,7 @@ import { useStore } from "@/renderer/store/store";
 import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import { InteractionMode, Room } from "@sharedTypes/roomTypes";
-import { Tacton } from "@sharedTypes/tactonTypes";
+import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
 
 export const BodyTags = [
@@ -404,6 +404,9 @@ export default defineComponent({
     currentTacton(): Tacton | null {
       return this.store.state.tactonPlayback.currentTacton;
     },
+    currentTactonMetadata(): TactonMetadata | null {
+      return this.store.state.tactonPlayback.currentTacton?.metadata;
+    },
     availableCustomTags(): string[] {
       return this.store.state.roomSettings.availableCustomTags;
     },
@@ -435,6 +438,11 @@ export default defineComponent({
         this.selectedBodyTags = tacton.metadata.bodyTags;
         this.selectedCustomTags = tacton.metadata.customTags;
       }
+    },
+    currentTactonMetadata(metadata) {
+      this.tactonDescription = metadata.description || "";
+      this.selectedBodyTags = metadata.bodyTags || [];
+      this.selectedCustomTags = metadata.customTags || [];
     },
   },
   methods: {
