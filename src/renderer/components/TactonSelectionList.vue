@@ -188,22 +188,20 @@
                 label="CustomTags"
                 :items="availableCustomTags"
                 multiple
+                chips
               ></v-combobox>
             </v-col>
 
             <v-col cols="12">
               <v-autocomplete
-                :items="
-                  Object.keys(bodyTags).filter((item) => {
-                    return isNaN(Number(item));
-                  })
-                "
+                :items="bodyTags"
                 variant="underlined"
                 label="BodyTags"
                 auto-select-first
                 multiple
                 return-object
                 v-model="selectedBodyTags"
+                chips
               ></v-autocomplete>
             </v-col>
           </v-row>
@@ -350,22 +348,22 @@ import { InteractionMode, Room } from "@sharedTypes/roomTypes";
 import { Tacton } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
 
-export enum BodyTags {
-  Head,
-  LeftShoulder,
-  RightShoulder,
-  LeftUpperArm,
-  LeftForearm,
-  LeftHand,
-  RightUpperArm,
-  RightForeArm,
-  RightHand,
-  Torso,
-  LeftThigh,
-  LeftLowerLeg,
-  RightThigh,
-  RightLowerLeg,
-}
+export const BodyTags = [
+  "Head",
+  "LeftShoulder",
+  "RightShoulder",
+  "LeftUpperArm",
+  "LeftForearm",
+  "LeftHand",
+  "RightUpperArm",
+  "RightForeArm",
+  "RightHand",
+  "Torso",
+  "LeftThigh",
+  "LeftLowerLeg",
+  "RightThigh",
+  "RightLowerLeg",
+];
 
 const charLimit = 20;
 export default defineComponent({
@@ -383,7 +381,6 @@ export default defineComponent({
       showTactonMenu: false,
       optionsTacton: null as null | Tacton,
       isMovingTacton: false,
-      bodyTags: BodyTags,
       rooms: null as null | Room[],
       //optionsMenu
       metadataForm: false,
@@ -409,6 +406,9 @@ export default defineComponent({
     },
     availableCustomTags(): string[] {
       return this.store.state.roomSettings.availableCustomTags;
+    },
+    bodyTags(): string[] {
+      return this.store.state.roomSettings.availableBodyTags;
     },
   },
   watch: {
@@ -620,10 +620,10 @@ export default defineComponent({
         this.store.state.roomSettings.id == null
       )
         return;
-      console.log("new tactonTitle: ", this.tactonTitle);
-      console.log("new description: ", this.tactonDescription);
-      console.log("new customTags: ", this.selectedCustomTags);
-      console.log("new bodyTags: ", this.selectedBodyTags);
+      // console.log("new tactonTitle: ", this.tactonTitle);
+      // console.log("new description: ", this.tactonDescription);
+      // console.log("new customTags: ", this.selectedCustomTags);
+      // console.log("new bodyTags: ", this.selectedBodyTags);
 
       //TODO save new Metadata
       WebSocketAPI.changeTactonMetadata({

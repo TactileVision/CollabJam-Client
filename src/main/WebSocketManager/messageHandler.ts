@@ -184,8 +184,12 @@ export const handleMessage = (store: Store) => {
   socket.on(
     WS_MSG_TYPE.UPDATE_AVAILABLE_TAGS_CLI,
     (res: UpdateAvailableTags) => {
-      console.log(res);
+      // console.log("NEW TAGS!");
+      // console.log(res);
       store.commit(RoomMutations.SET_AVAILABLE_CUSTOM_TAGS, res.customTags);
+      if (res.bodyTags != undefined) {
+        store.commit(RoomMutations.SET_AVAILABLE_BODY_TAGS, res.bodyTags);
+      }
     },
   );
 
