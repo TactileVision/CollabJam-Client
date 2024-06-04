@@ -518,16 +518,15 @@ export default defineComponent({
         prefixMap[prefix].push(t);
       });
 
-      // console.log(
-      //   Object.keys(prefixMap).map((prefix) => ({
-      //     prefix,
-      //     tactons: prefixMap[prefix],
-      //   })),
-      // );
-      return Object.keys(prefixMap).map((prefix) => ({
+      const o = Object.keys(prefixMap).map((prefix) => ({
         prefix,
         tactons: prefixMap[prefix],
       }));
+      o.sort((a, b) =>
+        a.prefix > b.prefix ? 1 : b.prefix > a.prefix ? -1 : 0,
+      );
+
+      return o;
     },
     hasMetadata(tacton: Tacton) {
       return (

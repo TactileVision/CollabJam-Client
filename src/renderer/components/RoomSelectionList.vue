@@ -1,24 +1,16 @@
 <template>
   <!--MARK: Recording-->
-  <!-- <v-sheet class="pa-1"> -->
-  <!-- <div class="text-overline">Create Tacton</div> -->
-  <v-list lines="one" class="selection-list" color="primary" density="compact">
-    <v-list-item
-      v-for="room of store.state.roomSettings.availableRooms"
-      :key="room.id"
-      :title="room.name"
-      :active="room.id == selection?.id"
-      @click="selectRoom(room)"
-    >
-    </v-list-item>
-  </v-list>
+  <v-virtual-scroll :items="rooms" height="40vh">
+    <template #default="{ item }">
+      <v-list-item
+        :title="item.name"
+        :active="item.id == selection?.id"
+        @click="selectRoom(item)"
+      >
+      </v-list-item>
+    </template>
+  </v-virtual-scroll>
 </template>
-
-<style lang="scss" scoped>
-.selection-list {
-  height: 40vh;
-}
-</style>
 
 <script lang="ts">
 import { PropType, defineComponent } from "vue";
@@ -48,6 +40,11 @@ export default defineComponent({
       set: function (value: Room | null) {
         this.$emit("update:modelValue", value);
       },
+    },
+    rooms() {
+      const r = this.store.state.roomSettings.availableRooms;
+      r.sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+      return r;
     },
   },
   watch: {},
