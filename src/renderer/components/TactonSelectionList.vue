@@ -440,9 +440,11 @@ export default defineComponent({
       }
     },
     currentTactonMetadata(metadata) {
-      this.tactonDescription = metadata.description || "";
-      this.selectedBodyTags = metadata.bodyTags || [];
-      this.selectedCustomTags = metadata.customTags || [];
+      if (metadata != null) {
+        this.tactonDescription = metadata.description;
+        this.selectedBodyTags = metadata.bodyTags;
+        this.selectedCustomTags = metadata.customTags;
+      }
     },
   },
   methods: {
