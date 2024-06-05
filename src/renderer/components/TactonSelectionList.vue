@@ -405,6 +405,9 @@ export default defineComponent({
       return this.store.state.tactonPlayback.currentTacton;
     },
     currentTactonMetadata(): TactonMetadata | null {
+      if (this.store.state.tactonPlayback.currentTacton == undefined) {
+        return null;
+      }
       return this.store.state.tactonPlayback.currentTacton?.metadata;
     },
     availableCustomTags(): string[] {
