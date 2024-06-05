@@ -4,9 +4,11 @@
     label="Username"
     hide-details="auto"
     v-model="username"
-    :rules="[rules.required]"
     :disabled="inputsDisabled"
   ></v-text-field>
+  <v-alert v-if="username.length == 0" type="warning" variant="tonal">
+    Please enter a name
+  </v-alert>
 </template>
 
 <style scoped lang="scss"></style>
@@ -25,11 +27,7 @@ export default defineComponent({
   },
   emits: ["update:modelValue"],
   data() {
-    return {
-      rules: {
-        required: (value) => !!value || "Required.",
-      },
-    };
+    return {};
   },
   computed: {
     username: {
