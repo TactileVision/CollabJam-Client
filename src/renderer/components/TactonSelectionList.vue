@@ -143,6 +143,7 @@
       <v-form v-model="metadataForm">
         <v-card-title>
           <v-text-field
+            label="Name"
             v-model="tactonTitle"
             variant="underlined"
             :rules="[rules.required, rules.charLimit]"
@@ -173,9 +174,28 @@
             </v-col>
 
             <v-col cols="12">
+              <v-combobox
+                v-model="tactonPrompt"
+                variant="underlined"
+                label="Prompt"
+                :items="availablePromptTags"
+                chips
+              ></v-combobox>
+            </v-col>
+
+            <v-col cols="12">
               <v-textarea
-                label="Description"
-                v-model="tactonDescription"
+                label="Intention"
+                v-model="tactonIntention"
+                variant="underlined"
+                auto-grow
+              ></v-textarea>
+            </v-col>
+
+            <v-col cols="12">
+              <v-textarea
+                label="Notes"
+                v-model="tactonNotes"
                 variant="underlined"
                 auto-grow
               ></v-textarea>
@@ -385,9 +405,11 @@ export default defineComponent({
       //optionsMenu
       metadataForm: false,
       tactonTitle: "",
-      tactonDescription: "",
-      selectedBodyTags: [],
-      selectedCustomTags: [],
+      tactonNotes: "",
+      tactonIntention: "",
+      tactonPrompt: null as string | null,
+      selectedBodyTags: [] as string[],
+      selectedCustomTags: [] as string[],
       // list of previously used customTags user can choose from
       // rules for validating input
       rules: {
@@ -413,6 +435,9 @@ export default defineComponent({
     availableCustomTags(): string[] {
       return this.store.state.roomSettings.availableCustomTags;
     },
+    availablePromptTags(): string[] {
+      return this.store.state.roomSettings.availablePromptTags;
+    },
     bodyTags(): string[] {
       return this.store.state.roomSettings.availableBodyTags;
     },
@@ -437,16 +462,12 @@ export default defineComponent({
         }
         this.selectedPrefixgroupId = id;
 
-        this.tactonDescription = tacton.metadata.description;
-        this.selectedBodyTags = tacton.metadata.bodyTags;
-        this.selectedCustomTags = tacton.metadata.customTags;
+        this.updateComponentMetadata(tacton.metadata);
       }
     },
     currentTactonMetadata(metadata) {
       if (metadata != null) {
-        this.tactonDescription = metadata.description;
-        this.selectedBodyTags = metadata.bodyTags;
-        this.selectedCustomTags = metadata.customTags;
+        this.updateComponentMetadata(metadata);
       }
     },
   },
@@ -466,6 +487,18 @@ export default defineComponent({
         }
       });
       return d;
+    },
+    updateComponentMetadata(metadata: TactonMetadata) {
+      this.tactonIntention = metadata.intention;
+      this.tactonNotes = metadata.notes;
+
+      if (metadata.prompt == "") {
+        this.tactonPrompt = null;
+      } else {
+        this.tactonPrompt = metadata.prompt;
+      }
+      this.selectedBodyTags = metadata.bodyTags;
+      this.selectedCustomTags = metadata.customTags;
     },
     updatePrefix() {
       console.log(this.editPrefixText);
@@ -545,7 +578,9 @@ export default defineComponent({
       return (
         tacton.metadata.bodyTags.length !== 0 ||
         tacton.metadata.customTags.length !== 0 ||
-        tacton.metadata.description !== ""
+        tacton.metadata.notes !== "" ||
+        tacton.metadata.prompt !== "" ||
+        tacton.metadata.intention != ""
       );
     },
     openOptionsMenu(tacton: Tacton) {
@@ -633,7 +668,7 @@ export default defineComponent({
       )
         return;
       // console.log("new tactonTitle: ", this.tactonTitle);
-      // console.log("new description: ", this.tactonDescription);
+      // console.log("new notes: ", this.tactonNotes);
       // console.log("new customTags: ", this.selectedCustomTags);
       // console.log("new bodyTags: ", this.selectedBodyTags);
 
@@ -644,7 +679,9 @@ export default defineComponent({
           iteration: this.optionsTacton.metadata.iteration,
           bodyTags: this.selectedBodyTags,
           customTags: this.selectedCustomTags,
-          description: this.tactonDescription,
+          notes: this.tactonNotes,
+          prompt: this.tactonPrompt == null ? "" : this.tactonPrompt,
+          intention: this.tactonIntention,
           recordDate: this.optionsTacton.metadata.recordDate,
           favorite: this.optionsTacton.metadata.favorite,
         },

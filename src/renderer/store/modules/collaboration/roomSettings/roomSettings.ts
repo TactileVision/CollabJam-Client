@@ -34,6 +34,7 @@ export type State = {
   availableRooms: Room[];
   availableCustomTags: string[];
   availableBodyTags: string[];
+  availablePromptTags: string[];
 };
 
 export const state: State = {
@@ -50,6 +51,7 @@ export const state: State = {
   availableRooms: [],
   availableCustomTags: [],
   availableBodyTags: [],
+  availablePromptTags: [],
 };
 /**
  * mutations
@@ -69,6 +71,7 @@ export enum RoomMutations {
   SET_AVAILABLE_ROOMS = "SET_AVAILABLE_ROOMS",
   SET_AVAILABLE_CUSTOM_TAGS = "SET_AVAILABLE_CUSTOM_TAGS",
   SET_AVAILABLE_BODY_TAGS = "SET_AVAILABLE_BODY_TAGS",
+  SET_AVAILABLE_PROMPT_TAGS = "SET_AVAILABLE_PROMPT_TAGS",
 }
 
 export type Mutations<S = State> = {
@@ -91,6 +94,7 @@ export type Mutations<S = State> = {
   [RoomMutations.SET_AVAILABLE_ROOMS](state: S, rooms: Room[]): void;
   [RoomMutations.SET_AVAILABLE_CUSTOM_TAGS](state: S, tags: string[]): void;
   [RoomMutations.SET_AVAILABLE_BODY_TAGS](state: S, tags: string[]): void;
+  [RoomMutations.SET_AVAILABLE_PROMPT_TAGS](state: S, tags: string[]): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -153,6 +157,9 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [RoomMutations.SET_AVAILABLE_BODY_TAGS](state, tags) {
     state.availableBodyTags = tags;
+  },
+  [RoomMutations.SET_AVAILABLE_PROMPT_TAGS](state, tags) {
+    state.availablePromptTags = tags;
   },
 };
 
