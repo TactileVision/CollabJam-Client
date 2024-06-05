@@ -50,7 +50,10 @@
     <v-container>
       <h6 class="text-h6">Rooms</h6>
     </v-container>
-    <RoomSelectionList v-model="room"></RoomSelectionList>
+    <RoomSelectionList
+      v-model="room"
+      :enabled="userName != ''"
+    ></RoomSelectionList>
     <ParticipantSettings></ParticipantSettings>
 
     <!-- MARK: Setup -->

@@ -4,6 +4,7 @@
     label="Username"
     hide-details="auto"
     v-model="username"
+    :rules="[rules.required]"
     :disabled="inputsDisabled"
   ></v-text-field>
 </template>
@@ -24,7 +25,11 @@ export default defineComponent({
   },
   emits: ["update:modelValue"],
   data() {
-    return {};
+    return {
+      rules: {
+        required: (value) => !!value || "Required.",
+      },
+    };
   },
   computed: {
     username: {

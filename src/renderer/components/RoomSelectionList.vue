@@ -3,6 +3,7 @@
   <v-virtual-scroll :items="rooms" height="40vh">
     <template #default="{ item }">
       <v-list-item
+        :disabled="!enabled"
         :title="item.name"
         :active="item.id == selection?.id"
         @click="selectRoom(item)"
@@ -23,6 +24,11 @@ export default defineComponent({
     modelValue: {
       type: null as unknown as PropType<Room | null>,
       required: true,
+    },
+    enabled: {
+      type: Boolean,
+      required: false,
+      default: true,
     },
   },
   emits: ["update:modelValue"],
