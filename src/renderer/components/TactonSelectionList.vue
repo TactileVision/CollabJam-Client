@@ -163,7 +163,7 @@
 
             <v-col cols="12" md="4" sm="6">
               <v-text-field
-                label="RecordDate"
+                label="Recording Date"
                 :model-value="
                   Intl.DateTimeFormat('default', { dateStyle: 'long' }).format(
                     new Date(optionsTacton!.metadata.recordDate),
@@ -209,7 +209,7 @@
               <v-combobox
                 v-model="selectedCustomTags"
                 variant="underlined"
-                label="CustomTags"
+                label="Custom Tags"
                 :items="availableCustomTags"
                 :hint="hint.customTags"
                 multiple
@@ -222,7 +222,7 @@
                 :items="bodyTags"
                 :hint="hint.bodyTags"
                 variant="underlined"
-                label="BodyTags"
+                label="Body Tags"
                 auto-select-first
                 multiple
                 return-object

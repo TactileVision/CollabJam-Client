@@ -138,7 +138,7 @@ export default defineComponent({
   data() {
     return {
       room: null as null | Room,
-      userName: "demo",
+      userName: "",
       store: useStore(),
       servers: [
         {
