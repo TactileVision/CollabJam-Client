@@ -256,6 +256,9 @@ export const actions: ActionTree<State, RootState> & Actions = {
 
     const binding = payload.profile.bindings[index];
 
+    // Prevent deactivate if the binding was never activated
+    if (binding.activeTriggers <= 0) return;
+
     const store = useStore();
     const newBinding = {
       ...binding,

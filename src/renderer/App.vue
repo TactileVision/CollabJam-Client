@@ -40,13 +40,14 @@ import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSett
 import { useStore } from "@/renderer/store/store";
 import { createInputDetection } from "@/main/Input/InputDetection";
 import { InputEvent } from "@/main/Input/InputDetection/types";
-import { PlayGroundActionTypes } from "@/renderer/store/modules/collaboration/playGround/types";
+import { PlayGroundActionTypes, PlayGroundMutations } from "@/renderer/store/modules/collaboration/playGround/types";
 import {
   KeyInput,
   UserInputType,
 } from "@/main/Input/InputDetection/InputDetection";
 import {
   DeviceType,
+  InputDevice,
   KeyboardDevice,
 } from "@/main/Input/InputDetection/InputBindings";
 // import TheAppBar from "@/renderer/components/TheAppBar.vue";
@@ -123,6 +124,21 @@ export default defineComponent({
         input,
       });
     },
+    findOrCreateProfileFor(device: InputDevice) {
+      const profile = this.store.getters.getProfileByDevice(device);
+      if(profile) {
+        return profile;
+      }
+
+      const profileUid = this.store.state.playGround.profiles.filter(({ deviceType }) => deviceType == device.type)[0]?.uid;
+      if(!profileUid) {
+        console.warn("Unknown device detected. Cannot create profile!", device);
+        return null;
+      }
+
+      this.store.commit(PlayGroundMutations.UPDATE_PROFILE, { device, profileUid });
+      return this.store.getters.getProfileByDevice(device);
+    },
     onUserInput(e: InputEvent) {
       console.log(e);
       if (this.store.state.playGround.inEditMode) return;
@@ -130,8 +146,8 @@ export default defineComponent({
 
       const { input, device, value, wasActive } = e;
 
-      const profile = this.store.getters.getProfileByDevice(device);
-      if (!profile) return;
+      const profile = this.findOrCreateProfileFor(device);
+      if(!profile) return;
 
       if (value === 0) {
         this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
