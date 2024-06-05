@@ -147,6 +147,7 @@
             v-model="tactonTitle"
             variant="underlined"
             :rules="[rules.required, rules.charLimit]"
+            :hint="hint.name"
           ></v-text-field>
         </v-card-title>
         <v-card-text>
@@ -178,6 +179,7 @@
                 v-model="tactonPrompt"
                 variant="underlined"
                 label="Prompt"
+                :hint="hint.prompt"
                 :items="availablePromptTags"
                 chips
               ></v-combobox>
@@ -187,6 +189,7 @@
               <v-textarea
                 label="Intention"
                 v-model="tactonIntention"
+                :hint="hint.intention"
                 variant="underlined"
                 auto-grow
               ></v-textarea>
@@ -196,6 +199,7 @@
               <v-textarea
                 label="Notes"
                 v-model="tactonNotes"
+                :hint="hint.notes"
                 variant="underlined"
                 auto-grow
               ></v-textarea>
@@ -207,6 +211,7 @@
                 variant="underlined"
                 label="CustomTags"
                 :items="availableCustomTags"
+                :hint="hint.customTags"
                 multiple
                 chips
               ></v-combobox>
@@ -215,6 +220,7 @@
             <v-col cols="12">
               <v-autocomplete
                 :items="bodyTags"
+                :hint="hint.bodyTags"
                 variant="underlined"
                 label="BodyTags"
                 auto-select-first
@@ -417,6 +423,18 @@ export default defineComponent({
         charLimit: (value: string) =>
           value.length <= charLimit ||
           `Input is limited to ${charLimit} characters`,
+      },
+      hint: {
+        name: "Please provide a name for this tacton. Note, if the same name already exists, a number is automatically added at the end.",
+        prompt:
+          "Please select or type the prompt-id you designed for. We provide a list of prompt separately.",
+        intention:
+          "Please write briefly what you intend to express or represent with this tacton. For instance, have you focused on a particular aspect of the prompt.",
+        notes:
+          "You can add further notes here. For example, how you would like to develop the tacton further, or if you want to share further details on the actuator arrangement.",
+        customTags: "Select or add tags to classify tactons.",
+        bodyTags:
+          "Select one or more tags to indicate where you placed the actuators.",
       },
       windowHeight: window.innerHeight,
       selectedPrefixgroupId: null as null | number,
