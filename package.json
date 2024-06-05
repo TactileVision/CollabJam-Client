@@ -84,7 +84,6 @@
       "dist_electron/**/*"
     ],
     "directories": {
-      "buildResources": "assets",
       "output": "dist_electron"
     }
   }
