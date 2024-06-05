@@ -89,6 +89,8 @@ export default defineComponent({
       if (e.repeat) return;
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
+      if (document.activeElement?.tagName === 'INPUT') return;
+
       const input: KeyInput = {
         type: UserInputType.Key,
         key: e.key.toUpperCase(),
@@ -109,6 +111,8 @@ export default defineComponent({
     buttonUp(e: KeyboardEvent) {
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
+      if (document.activeElement?.tagName === 'INPUT') return;
+
       const input: KeyInput = {
         type: UserInputType.Key,
         key: e.key.toUpperCase(),
