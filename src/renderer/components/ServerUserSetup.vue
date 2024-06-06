@@ -6,6 +6,9 @@
     v-model="username"
     :disabled="inputsDisabled"
   ></v-text-field>
+  <v-alert v-if="username.length == 0" type="warning" variant="tonal">
+    Please enter a name
+  </v-alert>
 </template>
 
 <style scoped lang="scss"></style>

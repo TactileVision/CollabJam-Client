@@ -186,9 +186,14 @@ export const handleMessage = (store: Store) => {
     (res: UpdateAvailableTags) => {
       // console.log("NEW TAGS!");
       // console.log(res);
-      store.commit(RoomMutations.SET_AVAILABLE_CUSTOM_TAGS, res.customTags);
-      if (res.bodyTags != undefined) {
+      if (res.customTags != null) {
+        store.commit(RoomMutations.SET_AVAILABLE_CUSTOM_TAGS, res.customTags);
+      }
+      if (res.bodyTags != null) {
         store.commit(RoomMutations.SET_AVAILABLE_BODY_TAGS, res.bodyTags);
+      }
+      if (res.promptTags != null) {
+        store.commit(RoomMutations.SET_AVAILABLE_PROMPT_TAGS, res.promptTags);
       }
     },
   );
