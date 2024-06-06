@@ -2,7 +2,7 @@
   "author": "Tactile Vision Research Group",
   "name": "collabjam-client",
   "main": "dist_electron/background.js",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "engines": {
     "node": ">=20.12.1"
@@ -71,7 +71,7 @@
   "build": {
     "appId": "edu.tactile-vision.collabjam-client",
     "productName": "Collaborative Tacton Generator",
-    "copyright": "Copyright © 2019 ${author}",
+    "copyright": "Copyright © 2024 ${author}",
     "mac": {
       "category": "public.app-category.utilities"
     },
