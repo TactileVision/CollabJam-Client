@@ -46,7 +46,7 @@
     ></v-switch>
   </v-sheet>
   <!-- MARK: Tacton List -->
-  <v-virtual-scroll :height="windowHeight - 172" :items="sortByPrefix()">
+  <v-virtual-scroll :height="windowHeight - 196" :items="sortByPrefix()">
     <template #default="{ item, index: groupIndex }">
       <v-expansion-panels :key="groupIndex">
         <v-expansion-panel :elevation="'0'">
@@ -360,7 +360,7 @@
   transition: 0.5s;
 
   :hover {
-    background-color: gren;
+    background-color: green;
   }
 }
 </style>
@@ -373,23 +373,6 @@ import { WebSocketAPI } from "@/main/WebSocketManager";
 import { InteractionMode, Room } from "@sharedTypes/roomTypes";
 import { Tacton, TactonMetadata } from "@sharedTypes/tactonTypes";
 import { ChangeTactonMetadata } from "@sharedTypes/websocketTypes";
-
-export const BodyTags = [
-  "Head",
-  "LeftShoulder",
-  "RightShoulder",
-  "LeftUpperArm",
-  "LeftForearm",
-  "LeftHand",
-  "RightUpperArm",
-  "RightForeArm",
-  "RightHand",
-  "Torso",
-  "LeftThigh",
-  "LeftLowerLeg",
-  "RightThigh",
-  "RightLowerLeg",
-];
 
 const charLimit = 20;
 export default defineComponent({
