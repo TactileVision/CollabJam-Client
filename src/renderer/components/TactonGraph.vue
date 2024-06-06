@@ -1197,8 +1197,8 @@ export default defineComponent({
             return true;
           }
           // Check if new length is negative
-          if (length < 0) {
-            newWidth = 1;
+          if (length < 50) {
+            newWidth = 50 * this.growRatio;
             if (direction === StretchDirection.NEGATIVE) {
               newX = container.x + instructionsContainer.width - newWidth;
             }
