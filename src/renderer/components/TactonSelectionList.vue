@@ -358,10 +358,6 @@
 .show-on-hover {
   opacity: 0;
   transition: 0.5s;
-
-  :hover {
-    background-color: green;
-  }
 }
 </style>
 
