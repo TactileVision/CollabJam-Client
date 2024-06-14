@@ -144,7 +144,7 @@
         <v-card-title>
           <v-text-field
             label="Name"
-            v-model="tactonTitle"
+            v-model.trim="tactonTitle"
             variant="underlined"
             :rules="[rules.required, rules.charLimit]"
             :hint="hint.name"
@@ -176,7 +176,7 @@
 
             <v-col cols="12">
               <v-combobox
-                v-model="tactonPrompt"
+                v-model.trim="tactonPrompt"
                 variant="underlined"
                 label="Prompt"
                 :hint="hint.prompt"
@@ -207,7 +207,7 @@
 
             <v-col cols="12">
               <v-combobox
-                v-model="selectedCustomTags"
+                v-model.trim="selectedCustomTags"
                 variant="underlined"
                 label="Custom Tags"
                 :items="availableCustomTags"
