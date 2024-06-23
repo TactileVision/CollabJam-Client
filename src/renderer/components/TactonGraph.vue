@@ -20,6 +20,7 @@ import {
   InstructionSetParameter,
   GraphBlock,
   StretchDirection,
+  StretchType
 } from "@sharedTypes/tactonTypes";
 import { toRaw } from "vue";
 import { WebSocketAPI } from "@/main//WebSocketManager";
@@ -107,6 +108,7 @@ export default defineComponent({
         container: PIXI.Container;
       } | null,
       currentStretch: null as {
+        type: StretchType,
         channel: number;
         index: number;
         previousScale: number;
@@ -982,26 +984,7 @@ export default defineComponent({
 
       const blockControls = new PIXI.Container();
 
-      const unselectedColor =
-        this.store.state.roomSettings.mode == InteractionMode.Overdubbing
-          ? 0xbbbbbb
-          : 0x6c6c60;
-      const color = highlighted ? 0xec660c : unselectedColor;
-      const lineWidth = highlighted ? 2 : 0;
-      const rect = new PIXI.Graphics();
-      rect.setStrokeStyle({
-        width: lineWidth,
-        color,
-        matrix: new PIXI.Matrix(),
-      });
-      // rect.lineStyle(lineWidth, 0xec660c);
-      // rect.beginFill(0xec660c, highlighted ? 0.4 : 0.2);
-      rect.moveTo(0, 0);
-      rect.rect(0, 0, width, height).stroke();
-      // rect.drawRect(0, 0, width, height);
-      // rect.endFill();
-
-      const renderBorder = (x: number) => {
+      const renderBorder = (axisPos: number, type: StretchType) => {
         const border = new PIXI.Graphics();
         border.eventMode = "static";
         // border.lineStyle(2, 0xec660c);
@@ -1011,44 +994,77 @@ export default defineComponent({
           color: borderColor,
           matrix: new PIXI.Matrix(),
         });
-        // border.lineStyle(2, 0x0000000);
-        border.lineTo(0, height).stroke();
 
-        if (this.editingEnabled) {
-          border.cursor = "col-resize";
+        switch(type) {
+          case StretchType.HORIZONTAL:
+            if (this.editingEnabled)
+              border.cursor = "col-resize";
+
+            border.lineTo(0, height).stroke();
+
+            border.x = axisPos;
+
+            border.addEventListener(
+              "pointerdown",
+              (e: PIXI.FederatedPointerEvent) => {
+                e.stopPropagation();
+                if (!this.editingEnabled) return;
+
+                this.currentStretch = {
+                  channel: channelIndex,
+                  index: blockIndex,
+                  type: StretchType.HORIZONTAL,
+                  previousScale: container.children[0].scale.x,
+                  block: container,
+                  direction:
+                    axisPos === 0 ? StretchDirection.NEGATIVE : StretchDirection.POSITIVE,
+                  stretched: false,
+                };
+                this.pixiApp?.stage?.addEventListener(
+                  "pointermove",
+                  this.stretchBlock,
+                );
+              },
+            );
+            break;
+          case StretchType.VERTICAL:
+            if(this.editingEnabled)
+              border.cursor = "row-resize";
+
+            border.lineTo(width, 0).stroke();
+            border.y = axisPos;
+            border.addEventListener(
+              "pointerdown",
+              (e: PIXI.FederatedPointerEvent) => {
+                e.stopPropagation();
+                if(!this.editingEnabled) return;
+
+                this.currentStretch = {
+                  channel: channelIndex,
+                  index: blockIndex,
+                  type: StretchType.VERTICAL,
+                  previousScale: container.children[0].children[0].scale.x,
+                  block: container,
+                  direction:
+                    axisPos === 0 ? StretchDirection.NEGATIVE : StretchDirection.POSITIVE,
+                  stretched: false,
+                }
+                this.pixiApp?.stage?.addEventListener(
+                  "pointermove",
+                  this.stretchBlock,
+                );
+              }
+            )
         }
 
-        border.x = x;
-
-        border.addEventListener(
-          "pointerdown",
-          (e: PIXI.FederatedPointerEvent) => {
-            e.stopPropagation();
-            if (!this.editingEnabled) return;
-
-            this.currentStretch = {
-              channel: channelIndex,
-              index: blockIndex,
-              previousScale: container.children[0].scale.x,
-              block: container,
-              direction:
-                x === 0 ? StretchDirection.NEGATIVE : StretchDirection.POSITIVE,
-              stretched: false,
-            };
-            this.pixiApp?.stage?.addEventListener(
-              "pointermove",
-              this.stretchBlock,
-            );
-          },
-        );
 
         return border;
       };
 
-      blockControls.addChild(rect);
-
-      blockControls.addChild(renderBorder(0));
-      blockControls.addChild(renderBorder(width));
+      blockControls.addChild(renderBorder(0, StretchType.HORIZONTAL));
+      blockControls.addChild(renderBorder(width, StretchType.HORIZONTAL));
+      blockControls.addChild(renderBorder(0, StretchType.VERTICAL))
+      blockControls.addChild(renderBorder(height, StretchType.VERTICAL))
 
       // blockControls.name = "controls";
       blockControls.label = "controls";
@@ -1158,132 +1174,175 @@ export default defineComponent({
     stretchBlock(e: PIXI.FederatedPointerEvent) {
       const currentStretch = this.currentStretch;
       if (currentStretch) {
-        const { channel, index, block: container, direction } = currentStretch;
-        const instructionsContainer = container.children[0] as PIXI.Container;
+        const { type } = currentStretch;
 
-        // Collision detection
-        const block = this.blocksByChannel[channel][index];
-        let length = block.length;
-        let startMs = block.startMs;
-        let newX = container.x;
-        let newWidth = instructionsContainer.width;
+        switch(type) {
+          case StretchType.HORIZONTAL:
+            this.stretchBlockHorizontally(e);
+            break;
+          case StretchType.VERTICAL:
+            this.stretchBlockVertically(e);
+            break;
+        }
+      }
+    },
+    stretchBlockHorizontally(e: PIXI.FederatedPointerEvent) {
+      const currentStretch = this.currentStretch;
+      if(!currentStretch) return;
 
+      const { channel, index, block: container, direction } = currentStretch;
+      const instructionsContainer = container.children[0] as PIXI.Container;
+
+      // Collision detection
+      const block = this.blocksByChannel[channel][index];
+      let length = block.length;
+      let startMs = block.startMs;
+      let newX = container.x;
+      let newWidth = instructionsContainer.width;
+
+      switch (direction) {
+        case StretchDirection.NEGATIVE: {
+          newX += e.movement.x;
+          newWidth -= e.movement.x;
+          startMs =
+            ((newX - this.paddingRL) * this.maxDurationStore) /
+            (this.width.original - 2 * this.paddingRL);
+          length =
+            (newWidth * this.maxDurationStore) /
+            (this.width.original - 2 * this.paddingRL);
+          break;
+        }
+        case StretchDirection.POSITIVE: {
+          newWidth += e.movement.x;
+          length =
+            (newWidth * this.maxDurationStore) /
+            (this.width.original - 2 * this.paddingRL);
+          break;
+        }
+      }
+
+      const shouldAbort = () => {
+        // Return if moved over left end of timeline
+        if (startMs < 0) {
+          newX = this.paddingRL;
+          newWidth = instructionsContainer.width + instructionsContainer.x;
+          return true;
+        }
+        // Check if new length is negative
+        if (length < 50) {
+          newWidth = 50 * this.growRatio;
+          if (direction === StretchDirection.NEGATIVE) {
+            newX = container.x + instructionsContainer.width - newWidth;
+          }
+          return true;
+        }
+        // Return if moved over right end of timeline
+        if (startMs + length > this.maxDurationStore) {
+          newWidth =
+            ((this.width.original - 2 * this.paddingRL) *
+              (this.maxDurationStore - startMs)) /
+            this.maxDurationStore;
+          return true;
+        }
+
+        // Check if another block conflicts
+        const otherBlocksByDistance = this.blocksByChannel[channel]
+          .filter(
+            (other, otherIndex) => !other.deleted && otherIndex !== index,
+          )
+          .sort(
+            (a, b) =>
+              Math.abs(a.startMs - block.startMs) -
+              Math.abs(b.startMs - block.startMs),
+          );
         switch (direction) {
           case StretchDirection.NEGATIVE: {
-            newX += e.movement.x;
-            newWidth -= e.movement.x;
-            startMs =
-              ((newX - this.paddingRL) * this.maxDurationStore) /
-              (this.width.original - 2 * this.paddingRL);
-            length =
-              (newWidth * this.maxDurationStore) /
-              (this.width.original - 2 * this.paddingRL);
+            const leftBlock = otherBlocksByDistance.find(
+              (other) => other.startMs - block.startMs < 0,
+            );
+            if (
+              leftBlock &&
+              startMs <= leftBlock.startMs + leftBlock.length
+            ) {
+              newX =
+                ((this.width.original - 2 * this.paddingRL) *
+                  (leftBlock.startMs + leftBlock.length + 5)) /
+                  this.maxDurationStore +
+                this.paddingRL;
+              newWidth = container.x + instructionsContainer.width - newX;
+              return true;
+            }
             break;
           }
           case StretchDirection.POSITIVE: {
-            newWidth += e.movement.x;
-            length =
-              (newWidth * this.maxDurationStore) /
-              (this.width.original - 2 * this.paddingRL);
+            const rightBlock = otherBlocksByDistance.find(
+              (other) => other.startMs - block.startMs > 0,
+            );
+            if (rightBlock && startMs + length >= rightBlock.startMs) {
+              // Subtracting 5 here makes it easier to grab the container again
+              newWidth =
+                ((this.width.original - 2 * this.paddingRL) *
+                  (rightBlock.startMs - startMs - 5)) /
+                this.maxDurationStore;
+              return true;
+            }
             break;
           }
         }
 
-        const shouldAbort = () => {
-          // Return if moved over left end of timeline
-          if (startMs < 0) {
-            newX = this.paddingRL;
-            newWidth = instructionsContainer.width + instructionsContainer.x;
-            return true;
-          }
-          // Check if new length is negative
-          if (length < 50) {
-            newWidth = 50 * this.growRatio;
-            if (direction === StretchDirection.NEGATIVE) {
-              newX = container.x + instructionsContainer.width - newWidth;
-            }
-            return true;
-          }
-          // Return if moved over right end of timeline
-          if (startMs + length > this.maxDurationStore) {
-            newWidth =
-              ((this.width.original - 2 * this.paddingRL) *
-                (this.maxDurationStore - startMs)) /
-              this.maxDurationStore;
-            return true;
-          }
+        return false;
+      };
 
-          // Check if another block conflicts
-          const otherBlocksByDistance = this.blocksByChannel[channel]
-            .filter(
-              (other, otherIndex) => !other.deleted && otherIndex !== index,
-            )
-            .sort(
-              (a, b) =>
-                Math.abs(a.startMs - block.startMs) -
-                Math.abs(b.startMs - block.startMs),
-            );
-          switch (direction) {
-            case StretchDirection.NEGATIVE: {
-              const leftBlock = otherBlocksByDistance.find(
-                (other) => other.startMs - block.startMs < 0,
-              );
-              if (
-                leftBlock &&
-                startMs <= leftBlock.startMs + leftBlock.length
-              ) {
-                newX =
-                  ((this.width.original - 2 * this.paddingRL) *
-                    (leftBlock.startMs + leftBlock.length + 5)) /
-                    this.maxDurationStore +
-                  this.paddingRL;
-                newWidth = container.x + instructionsContainer.width - newX;
-                return true;
-              }
-              break;
-            }
-            case StretchDirection.POSITIVE: {
-              const rightBlock = otherBlocksByDistance.find(
-                (other) => other.startMs - block.startMs > 0,
-              );
-              if (rightBlock && startMs + length >= rightBlock.startMs) {
-                // Subtracting 5 here makes it easier to grab the container again
-                newWidth =
-                  ((this.width.original - 2 * this.paddingRL) *
-                    (rightBlock.startMs - startMs - 5)) /
-                  this.maxDurationStore;
-                return true;
-              }
-              break;
-            }
-          }
+      // Notice that this function sets newX and newWidth to the last location that is valid.
+      const abort = shouldAbort();
 
-          return false;
-        };
-
-        // Notice that this function sets newX and newWidth to the last location that is valid.
-        const abort = shouldAbort();
-
-        const controls = container.getChildByName("controls");
-        if (controls) {
-          container.removeChild(controls as PIXI.Container);
-          controls.destroy({ children: true });
-        }
-
-        instructionsContainer.width = newWidth;
-        container.x = newX;
-        this.drawBlockControls(
-          channel,
-          index,
-          container.width,
-          toRaw(container) as PIXI.Container,
-        );
-        currentStretch.stretched = true;
-
-        if (abort) {
-          this.stretchBlockEnd();
-        }
+      const controls = container.getChildByName("controls");
+      if (controls) {
+        container.removeChild(controls as PIXI.Container);
+        controls.destroy({ children: true });
       }
+
+      instructionsContainer.width = newWidth;
+      container.x = newX;
+      this.drawBlockControls(
+        channel,
+        index,
+        container.width,
+        toRaw(container) as PIXI.Container,
+      );
+      currentStretch.stretched = true;
+
+      if (abort) {
+        this.stretchBlockEnd();
+      }
+    },
+    stretchBlockVertically(e: PIXI.FederatedPointerEvent) {
+      const currentStretch = this.currentStretch;
+      if(!currentStretch) return;
+
+      const { block: container, direction } = currentStretch;
+      const instructionsContainer = container.children[0] as PIXI.Container;
+      const numberOfRows = this.numberOfOutputs + 1 + 1;
+      const distLinesY = this.height.actual / numberOfRows;
+      const ratioHeight = 35 / numberOfRows;
+      const rowHeight = distLinesY - ratioHeight * numberOfRows;
+      const multiplier = direction == StretchDirection.POSITIVE ? 1 : -1
+
+      if(instructionsContainer.children.some(child => {
+        const newHeight = child.height + multiplier * e.movement.y
+        return newHeight < 5 || newHeight > container.height
+      })) {
+        return;
+      }
+
+      instructionsContainer.children.forEach(child => {
+        const height = Math.max(5, Math.min(container.height, child.height + multiplier * e.movement.y));
+        const yPosition = (rowHeight - height) * 0.5;
+
+        child.height = height;
+        child.position.set(child.x, yPosition);
+      })
+      currentStretch.stretched = true;
     },
     stretchBlockEnd() {
       const currentStretch = this.currentStretch;
@@ -1293,21 +1352,34 @@ export default defineComponent({
           index,
           block: blockContainer,
           previousScale,
+          type,
         } = currentStretch;
         const block = this.blocksByChannel[channel][index];
+
         let length = 0;
-        block.instructions.forEach((instruction) => {
-          if (isInstructionWait(instruction)) {
-            const i = instruction as InstructionWait;
-            i.wait.miliseconds *=
-              blockContainer.children[0].scale.x / previousScale;
-            length += i.wait.miliseconds;
-          }
-        });
-        block.startMs =
-          ((blockContainer.x - this.paddingRL) * this.maxDurationStore) /
-          (this.width.original - 2 * this.paddingRL);
-        block.length = length;
+        switch(type) {
+          case StretchType.HORIZONTAL:
+            block.instructions.forEach((instruction) => {
+              if (isInstructionWait(instruction)) {
+                const i = instruction as InstructionWait;
+                i.wait.miliseconds *=
+                  blockContainer.children[0].scale.x / previousScale;
+                length += i.wait.miliseconds;
+              }
+            });
+            block.startMs =
+              ((blockContainer.x - this.paddingRL) * this.maxDurationStore) /
+              (this.width.original - 2 * this.paddingRL);
+            block.length = length;
+            break;
+          case StretchType.VERTICAL:
+            block.instructions.filter(isInstructionSetParameter).filter(instruction => instruction.setParameter.intensity > 0).forEach((instruction, index) => {
+              instruction.setParameter.intensity *= blockContainer.children[0].children[index].scale.y / previousScale;
+            });
+
+            break;
+        }
+
         this.updateTacton();
       }
 
