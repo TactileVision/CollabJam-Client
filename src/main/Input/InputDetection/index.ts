@@ -6,10 +6,7 @@ import {
   InputAdapter,
   getInputAdapters,
 } from "./InputAdapter/InputAdapterRegistry";
-import {
-  DeviceType,
-  InputDevice,
-} from "@/main/Input/InputDetection/InputBindings";
+import { InputDevice } from "@/main/Input/InputDetection/InputBindings";
 
 const defaultConfig = (): Omit<InputDetectionConfig, "onInput"> =>
   Object.freeze({
@@ -53,7 +50,5 @@ export const getAllDevices = (
   adapters: InputAdapter[] | undefined = undefined,
 ): InputDevice[] => {
   const adaptersWithDefaults = adapters || defaultConfig().adapters;
-  return adaptersWithDefaults
-    .flatMap((adapter) => adapter.getDevices())
-    .concat({ type: DeviceType.Keyboard });
+  return adaptersWithDefaults.flatMap((adapter) => adapter.getDevices());
 };
