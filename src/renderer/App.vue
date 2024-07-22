@@ -1,6 +1,6 @@
 <!--inital view initiate the router and the toast for user messages -->
 <template>
-  <div tabindex="0" class="main prevent-select" @keyup="buttonUp" @keydown="buttonDown">
+  <div tabindex="0" class="main prevent-select">
     <div class="root">
       <v-app>
         <!-- <the-sidebar /> -->
@@ -40,16 +40,11 @@ import { GeneralSettingsActionTypes } from "@/renderer/store/modules/generalSett
 import { useStore } from "@/renderer/store/store";
 import { createInputDetection } from "@/main/Input/InputDetection";
 import { InputEvent } from "@/main/Input/InputDetection/types";
-import { PlayGroundActionTypes, PlayGroundMutations } from "@/renderer/store/modules/collaboration/playGround/types";
 import {
-  KeyInput,
-  UserInputType,
-} from "@/main/Input/InputDetection/InputDetection";
-import {
-  DeviceType,
-  InputDevice,
-  KeyboardDevice,
-} from "@/main/Input/InputDetection/InputBindings";
+  PlayGroundActionTypes,
+  PlayGroundMutations,
+} from "@/renderer/store/modules/collaboration/playGround/types";
+import { InputDevice } from "@/main/Input/InputDetection/InputBindings";
 // import TheAppBar from "@/renderer/components/TheAppBar.vue";
 // import TheSidebar from "@/renderer/components/TheSidebar.vue";
 export default defineComponent({
@@ -86,72 +81,34 @@ export default defineComponent({
     correctFrameForInput(): boolean {
       return this.store.getters.currentView == RouterNames.ROOM;
     },
-    buttonDown(e: KeyboardEvent) {
-      if (e.repeat) return;
-      if (this.store.state.playGround.inEditMode) return;
-      if (!this.correctFrameForInput()) return;
-      if (document.activeElement?.tagName === 'INPUT') return;
-
-      const input: KeyInput = {
-        type: UserInputType.Key,
-        key: e.key.toUpperCase(),
-      };
-      const device: KeyboardDevice = { type: DeviceType.Keyboard };
-
-      if (e.getModifierState("Meta")) return;
-      const profile = this.store.getters.getProfileByDevice(device);
-      if (!profile) return;
-
-      this.store.dispatch(PlayGroundActionTypes.activateKey, {
-        profile,
-        input,
-        value: 1,
-        wasActive: false,
-      });
-    },
-    buttonUp(e: KeyboardEvent) {
-      if (this.store.state.playGround.inEditMode) return;
-      if (!this.correctFrameForInput()) return;
-      if (document.activeElement?.tagName === 'INPUT') return;
-
-      const input: KeyInput = {
-        type: UserInputType.Key,
-        key: e.key.toUpperCase(),
-      };
-      const device: KeyboardDevice = { type: DeviceType.Keyboard };
-
-      const profile = this.store.getters.getProfileByDevice(device);
-      if (!profile) return;
-
-      this.store.dispatch(PlayGroundActionTypes.deactivateKey, {
-        profile,
-        input,
-      });
-    },
     findOrCreateProfileFor(device: InputDevice) {
       const profile = this.store.getters.getProfileByDevice(device);
-      if(profile) {
+      if (profile) {
         return profile;
       }
 
-      const profileUid = this.store.state.playGround.profiles.filter(({ deviceType }) => deviceType == device.type)[0]?.uid;
-      if(!profileUid) {
+      const profileUid = this.store.state.playGround.profiles.filter(
+        ({ deviceType }) => deviceType == device.type,
+      )[0]?.uid;
+      if (!profileUid) {
         console.warn("Unknown device detected. Cannot create profile!", device);
         return null;
       }
 
-      this.store.commit(PlayGroundMutations.UPDATE_PROFILE, { device, profileUid });
+      this.store.commit(PlayGroundMutations.UPDATE_PROFILE, {
+        device,
+        profileUid,
+      });
       return this.store.getters.getProfileByDevice(device);
     },
     onUserInput(e: InputEvent) {
-      console.log(e);
       if (this.store.state.playGround.inEditMode) return;
       if (!this.correctFrameForInput()) return;
 
       const { input, device, value, wasActive } = e;
 
       const profile = this.findOrCreateProfileFor(device);
-      if(!profile) return;
+      if (!profile) return;
 
       if (value === 0) {
         this.store.dispatch(PlayGroundActionTypes.deactivateKey, {

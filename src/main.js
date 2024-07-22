@@ -15,11 +15,13 @@ import DynamicActuatorHandler from "@/main/Input//InputHandling/handlers/Dynamic
 import LockIntensityHandler from "@/main/Input/InputHandling/handlers/LockIntensityHandler";
 import ChangeInteractionModeHandler from "@/main/Input/InputHandling/handlers/ChangeInteractionModeHandler";
 import InlineSvg from "vue-inline-svg";
+import KeyboardAdapter from "./main/Input/InputDetection/InputAdapter/KeyboardAdapter";
 
 // loadFonts()
 const store = useStore();
 
 registerInputAdapter(GamepadAdapter);
+registerInputAdapter(KeyboardAdapter);
 
 registerInputHandler(VariableIntensityHandler());
 registerInputHandler(TriggerActuatorHandler());
@@ -36,4 +38,3 @@ createApp(App)
   .mount("#app");
 
 initIpcRendererListener();
-
