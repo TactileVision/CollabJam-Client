@@ -70,8 +70,8 @@
   },
   "build": {
     "appId": "edu.tactile-vision.collabjam-client",
-    "productName": "Collaborative Tacton Generator",
-    "copyright": "Copyright © 2024 ${author}",
+    "productName": "CollabJam",
+    "copyright": "Copyright © 2025 ${author}",
     "mac": {
       "category": "public.app-category.utilities"
     },
