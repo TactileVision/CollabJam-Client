@@ -140,20 +140,7 @@ export default defineComponent({
       room: null as null | Room,
       userName: "",
       store: useStore(),
-      servers: [
-        {
-          url: "https://itactjam.informatik.htw-dresden.de/",
-          name: "HTW",
-        },
-        {
-          url: "ws://141.56.185.46:3333/",
-          name: "Alex MBP",
-        },
-        {
-          url: "ws://localhost:3333/",
-          name: "Local",
-        },
-      ],
+      servers: JSON.parse(import.meta.env.VITE_COLLABJAM_SERVERS || "[]"),
       serverDrawer: true,
       roomDrawer: true,
       snackbarText: "",
