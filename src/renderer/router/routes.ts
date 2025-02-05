@@ -10,6 +10,7 @@ import { RouteRecordRaw } from "vue-router";
 import { RouterNames } from "@/renderer/router/Routernames";
 import DeviceConnectionView from "../views/DeviceConnectionView.vue";
 import ListRoomsView from "../views/ListRoomsView.vue";
+import ServerWizardView from "@/renderer/views/ServerWizardView.vue";
 
 /**
  * set the paths for the single components in the views folder
@@ -53,6 +54,11 @@ export const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/",
+    name: RouterNames.SERVER_WIZARD,
+    component: ServerWizardView,
+  },
+  {
+    path: "/roomView",
     name: RouterNames.ROOM,
     component: ListRoomsView,
   },

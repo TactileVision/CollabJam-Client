@@ -11,4 +11,5 @@ export enum RouterNames {
   SITEMAP = "SITEMAP",
   DEVICES = "DEVICES",
   DOOR = "DOOR",
+  SERVER_WIZARD = "SERVER_WIZARD",
 }
