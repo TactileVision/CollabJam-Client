@@ -29,7 +29,7 @@
 <script lang="ts">
 import { PropType, defineComponent } from "vue";
 import { useStore } from "@/renderer/store/store";
-import { RoomSettingsActionTypes } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
+import { RoomMutations, RoomSettingsActionTypes } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { initWebsocket } from "@/main/WebSocketManager";
 
 export default defineComponent({
@@ -41,6 +41,10 @@ export default defineComponent({
     },
     enabled: {
       type: Boolean,
+      required: true,
+    },
+    username: {
+      type: String,
       required: true,
     },
   },
@@ -60,6 +64,8 @@ export default defineComponent({
       });
       initWebsocket(this.store, url);
       console.log(url);
+      this.store.commit(RoomMutations.UPDATE_USER_NAME, this.username);
+      this.$router.push("/roomView");
     },
   },
 });

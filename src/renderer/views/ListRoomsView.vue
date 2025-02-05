@@ -5,18 +5,6 @@
   <!--iconBar-->
   <v-navigation-drawer width="50">
     <div class="d-flex flex-column ga-2">
-      <v-tooltip text="show serverlist" open-delay="500">
-        <template #activator="{ props }">
-          <v-btn
-            v-bind="props"
-            :color="serverDrawer ? 'primary' : 'secondary'"
-            variant="plain"
-            icon="mdi-server-outline"
-            @click="serverDrawer = !serverDrawer"
-          >
-          </v-btn>
-        </template>
-      </v-tooltip>
       <v-tooltip text="show roomlist" open-delay="500">
         <template #activator="{ props }">
           <v-btn
@@ -31,29 +19,13 @@
       </v-tooltip>
     </div>
   </v-navigation-drawer>
-  <!--serverList-->
-  <v-navigation-drawer width="150" v-model="serverDrawer">
-    <v-container>
-      <h6 class="text-h6">Server</h6>
-    </v-container>
-    <ServerSelectionList
-      :servers="servers"
-      :enabled="!loggedIn"
-    ></ServerSelectionList>
-  </v-navigation-drawer>
+
   <!--roomList-->
-  <v-navigation-drawer
-    width="150"
-    v-model="roomDrawer"
-    :style="roomDrawer && serverDrawer ? 'left: 200px' : 'left: 50px'"
-  >
+  <v-navigation-drawer width="150" v-model="roomDrawer">
     <v-container>
       <h6 class="text-h6">Rooms</h6>
     </v-container>
-    <RoomSelectionList
-      v-model="room"
-      :enabled="userName != ''"
-    ></RoomSelectionList>
+    <RoomSelectionList v-model="room"></RoomSelectionList>
     <ParticipantSettings></ParticipantSettings>
 
     <!-- MARK: Setup -->
@@ -79,18 +51,7 @@
     <v-row align="center" justify="center">
       <!-- <v-container> -->
       <v-col style="padding: 0">
-        <CollaborationView
-          v-if="store.state.roomSettings.roomState == 'Enter'"
-        ></CollaborationView>
-        <div v-else>
-          <v-alert type="warning" variant="tonal">
-            Select a server and a room to start Jamming
-          </v-alert>
-          <ServerUserSetup
-            v-model="userName"
-            :inputs-disabled="false"
-          ></ServerUserSetup>
-        </div>
+        <CollaborationView></CollaborationView>
       </v-col>
     </v-row>
   </div>
@@ -113,9 +74,7 @@ import {
   RoomState,
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { WebSocketAPI } from "@/main/WebSocketManager";
-import ServerSelectionList from "@/renderer/components/ServerSelectionList.vue";
 import RoomSelectionList from "@/renderer/components/RoomSelectionList.vue";
-import ServerUserSetup from "@/renderer/components/ServerUserSetup.vue";
 import { Room } from "@/shared/types/roomTypes";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import CollaborationView from "./CollaborationView.vue";
@@ -129,16 +88,13 @@ export default defineComponent({
   components: {
     SnackBar,
     // DeviceConnectionModal,
-    ServerSelectionList,
     RoomSelectionList,
-    ServerUserSetup,
     CollaborationView,
     ParticipantSettings,
   },
   data() {
     return {
       room: null as null | Room,
-      userName: "",
       store: useStore(),
       servers: JSON.parse(import.meta.env.VITE_COLLABJAM_SERVERS || "[]"),
       serverDrawer: true,
@@ -155,8 +111,8 @@ export default defineComponent({
         this.store.commit(RoomMutations.UPDATE_ROOM_NAME, value);
       },
     },
-    loggedIn(): boolean {
-      return this.room != null;
+    userName(): string {
+      return this.store.state.roomSettings.user.name;
     },
   },
   watch: {
@@ -197,6 +153,8 @@ export default defineComponent({
         this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Create);
         this.room = null;
       }
+
+      this.$router.push("/");
     },
     clearGraph() {
       this.store.dispatch(TactonPlaybackActionTypes.deselectTacton);

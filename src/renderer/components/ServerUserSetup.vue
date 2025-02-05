@@ -1,5 +1,5 @@
 <template>
-  <h3>Server Setup</h3>
+  <!--<h3>Server Setup</h3>-->
   <v-text-field
     label="Username"
     hide-details="auto"
