@@ -154,7 +154,13 @@ export default defineComponent({
         this.room = null;
       }
 
-      this.$router.push("/");
+      if (hideGraph) {
+        // logOut
+        this.$router.push("/");
+      } else {
+        // switch room
+        this.$router.push("/roomView");
+      }      
     },
     clearGraph() {
       this.store.dispatch(TactonPlaybackActionTypes.deselectTacton);
