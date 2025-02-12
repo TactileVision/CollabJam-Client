@@ -4,26 +4,31 @@
   <!-- <div class="text-overline">Create Tacton</div> -->
   <v-list
     lines="one"
-    class="selection-list"
     color="primary"
     density="compact"
     :disabled="!enabled"
   >
-    <v-list-item
-      v-for="server in servers"
-      :key="server.name"
-      :title="server.name"
-      :active="server.url == selection"
-      @click="selectServer(server.url)"
+    <v-tooltip 
+        v-for="server in servers" 
+        :text="server.url"
+        location="top"
     >
-    </v-list-item>
+      <template v-slot:activator="{ props }">
+        <v-list-item
+            v-bind="props"
+            :key="server.name"
+            :title="server.name"
+            :active="server.url == selection"
+            @click="selectServer(server.url)"
+        >
+        </v-list-item>
+      </template>
+    </v-tooltip>    
   </v-list>
 </template>
 
 <style lang="scss" scoped>
-.selection-list {
-  height: 70vh;
-}
+
 </style>
 
 <script lang="ts">

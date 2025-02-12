@@ -1,126 +1,165 @@
 <template>
-  <v-navigation-drawer width="150">
-    <v-container>
-      <h6 class="text-h6">Server</h6>
-    </v-container>
-    <ServerSelectionList
-        :username="username"
-        :servers="servers"
-        :enabled="username != ''"
-    ></ServerSelectionList>
-    <template #append>
-      <v-container class="d-flex justify-center">
-        <!--Add server setup-->
-        <v-dialog max-width="600" height="350">
-          <template #activator="{ props: activatorProps }">
+  <v-dialog v-model="dialog" width="800" height="350" persistent>
+      <v-container class="h-100" v-if="setupState == SetupState.INIT">
+        <v-card  title="Server Setup" class="dialog-card">
+          <v-form @submit.prevent="setUsername" v-model="isUsernameValid" ref="setUsername" class="dialog-card">
+            <v-card-text>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-text-field
+                      label="Username*"
+                      v-model="username"
+                      :rules="usernameRules"
+                      required
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <small class="text-caption text-medium-emphasis">*indicates required field</small>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                  color="primary"
+                  text="Choose Server"
+                  variant="tonal"
+                  type="submit"
+                  :disabled="!isUsernameValid"
+              ></v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card>
+      </v-container>
+      <v-container class="h-100" v-if="setupState == SetupState.USERNAME">
+        <v-card
+            title="Server Setup"
+            class="dialog-card"
+        >
+          <v-card-text class="overflow-y-auto">
+            <p v-if="servers.length == 0">No servers available.</p>
+            <ServerSelectionList
+                :username="username"
+                :servers="servers"
+                :enabled="true"
+            ></ServerSelectionList>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
             <v-btn
-                :disabled="username == ''"
-                v-bind="activatorProps"
+                color="primary"
                 icon="mdi-plus"
                 variant="tonal"
-                @click="connectionState = ConnectionState.NONE;">
-            </v-btn>
-          </template>
-          <template #default="{ isActive }">
-            <v-card
-                v-show="connectionState == ConnectionState.NONE"
-                title="Server Setup"
-                class="h-100"
-            >
-              <v-form @submit.prevent="submit" v-model="isValid" ref="addServerForm">
-                <v-card-text>
-                  <v-row dense>
-                    <v-col cols="12" sm="10">
-                      <v-text-field
-                          label="Address*"
-                          v-model="url"
-                          :rules="urlRules"
-                          required
-                      ></v-text-field>
-                    </v-col>
-  
-                    <v-col cols="12" md="2">
-                      <v-text-field
-                          label="Port"
-                          v-model="port"
-                      ></v-text-field>
-                    </v-col>
-  
-                    <v-col cols="12" md="10">
-                      <v-text-field
-                          label="Servername*"
-                          v-model="name"
-                          :rules="nameRules"
-                          required
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                  <small class="text-caption text-medium-emphasis">*indicates required field</small>
-                </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn
-                      color="primary"
-                      text="Connect"
-                      variant="tonal"
-                      type="submit"
-                  ></v-btn>
-                  <v-btn
-                      text="Close Dialog"
-                      @click="isActive.value = false; $refs.addServerForm.reset();"
-                  ></v-btn>
-                </v-card-actions>
-              </v-form>
-            </v-card>
-            <v-card
-                v-if="connectionState == ConnectionState.CONNECTING"
-                title="Connecting"
-                class="h-100"
-            >
-              <v-card-text>
-                <div class="d-flex justify-center align-center h-100">
-                  <v-progress-circular color="primary" indeterminate :size="36"></v-progress-circular>
-                </div>              
-              </v-card-text>
-            </v-card>
-            <v-card
-                v-if="connectionState == ConnectionState.FAILED"
-                title="Connection Failed"
-                class="h-100"
-            >
-              <v-card-text>
-                <p class="text-red">Could not establish a connection to Server.</p>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                    color="primary"
-                    text="Reconnect"
-                    variant="tonal"
-                    @click="connectToServer"
-                ></v-btn>
-                <v-btn
-                    text="Close Dialog"
-                    @click="isActive.value = false; $refs.addServerForm.reset();"
-                ></v-btn>
-              </v-card-actions>
-            </v-card>
-          </template>
-        </v-dialog>
+                type="submit"
+                @click="setupState = SetupState.ADD_SERVER"
+            ></v-btn>
+          </v-card-actions>
+        </v-card>
       </v-container>
-    </template>
-  </v-navigation-drawer>
-  <ServerUserSetup
-      v-model="username"
-      :inputs-disabled="false"
-  ></ServerUserSetup>
-  <v-alert type="warning" variant="tonal">
-    Select a server to start Jamming
-  </v-alert>
+      <v-container class="h-100" v-if="setupState == SetupState.ADD_SERVER">
+        <!--Server form-->
+        <v-card
+            v-show="connectionState == ConnectionState.NONE"
+            title="Server Setup"
+            class="dialog-card"
+        >
+          <v-form @submit.prevent="submit" v-model="isServerFormValid" ref="addServerForm" class="dialog-card">
+            <v-card-text>
+              <v-row dense>
+                <v-col cols="12" sm="10">
+                  <v-text-field
+                      label="Address*"
+                      v-model="url"
+                      :rules="urlRules"
+                      required
+                  ></v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="2">
+                  <v-text-field
+                      label="Port"
+                      v-model="port"
+                  ></v-text-field>
+                </v-col>
+
+                <v-col cols="12" md="10">
+                  <v-text-field
+                      label="Servername*"
+                      v-model="name"
+                      :rules="servernameRules"
+                      required
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <small class="text-caption text-medium-emphasis">*indicates required field</small>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                  color="primary"
+                  text="Connect"
+                  variant="tonal"
+                  type="submit"
+                  :disabled="!isServerFormValid"
+              ></v-btn>
+              <v-btn
+                  text="Choose Server from list"
+                  @click="setupState = SetupState.USERNAME; $refs.addServerForm.reset(); port=3333"
+              ></v-btn>
+            </v-card-actions>
+          </v-form>
+        </v-card>
+        <!--Spinner-->
+        <v-card
+            v-if="connectionState == ConnectionState.CONNECTING"
+            title="Connecting"
+            class="dialog-card"
+        >
+          <v-card-text class="dialog-card">
+            <div class="d-flex justify-center align-center h-100 flex-column" style="gap: 24px">
+              <v-progress-circular color="primary" indeterminate :size="36"></v-progress-circular>
+              <p>{{connectionInfo}}</p>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+                text="Cancel Connection"
+                @click="cancelConnection"
+            ></v-btn>
+          </v-card-actions>
+        </v-card>
+        <!--Connection failed-->
+        <v-card
+            v-if="connectionState == ConnectionState.FAILED"
+            title="Connection Failed"
+            class="dialog-card"
+        >
+          <v-card-text class="dialog-card">
+            <p class="text-red">Could not establish a connection to Server.</p>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+                color="primary"
+                text="Reconnect"
+                variant="tonal"
+                @click="connectToServer"
+            ></v-btn>
+            <v-btn
+                text="Edit server"
+                @click="connectionState = ConnectionState.NONE"
+            ></v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-container>
+    </v-dialog>
 </template>
 
 <style scoped lang="scss">
-
+.dialog-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 </style>
 
 <script lang="ts">
@@ -128,7 +167,6 @@ import {defineComponent} from 'vue'
 import ServerSelectionList from "@/renderer/components/ServerSelectionList.vue";
 import {Room} from "@sharedTypes/roomTypes";
 import {useStore} from "@/renderer/store/store";
-import ServerUserSetup from "@/renderer/components/ServerUserSetup.vue";
 import {initWebsocket, socket} from "@/main/WebSocketManager";
 import {RoomMutations, RoomSettingsActionTypes} from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 interface Server {
@@ -140,16 +178,20 @@ interface Server {
 enum LocalStorageKey {
   SERVER_LIST = "serverList"
 }
-
 enum ConnectionState {
   NONE = "none",
   CONNECTING = "connecting",
   FAILED = "failed"
 }
+
+enum SetupState {
+  INIT = "init",
+  USERNAME = "username",
+  ADD_SERVER = "add_server"
+}
 export default defineComponent({
   name: "ServerWizardView",
   components: {
-    ServerUserSetup,
     ServerSelectionList
   },
   data() {
@@ -159,44 +201,57 @@ export default defineComponent({
       store: useStore(),
       servers: [] as { url: string; name: string }[],
       serverList: [] as Server[],
+      dialog: true,
+      SetupState: SetupState,
+      setupState: SetupState.INIT,
       ConnectionState: ConnectionState,
-      connectionState: ConnectionState.NONE, 
-      isValid: false,
+      connectionState: ConnectionState.NONE,
+      isUsernameValid: false,
+      isServerFormValid: false,
+      connectionInfo: null as null | string,
       url: '',
       port: 3333,
       name: '',
       urlRules: [
         (url: string) => {
           if (url) {
-            const isDuplicate = this.checkForExistingServerUrl(url);
-            if (isDuplicate) {
-              return 'Server-address was already added.'
-            }        
-            
+            const duplicateServerName: string = this.checkForExistingServerUrl(url);
+            if (duplicateServerName != undefined) {
+              return `Server-address was already added under the following name: ${duplicateServerName}`;
+            }                        
             return true;
-          } else {
-            return 'You must enter a server-address.';
-          }
+          } 
+          return 'You must enter a server-address.';          
         },
       ],
-      nameRules: [
-        // needs to be unique?
+      servernameRules: [
         (name: string) => {
-          if (name) return true
-
+          if (name) {
+            let isDuplicate = this.checkForExistingServerName(name);
+            if (isDuplicate) {
+              return 'Server-name was already added.'
+            }
+            return true
+          }
           return 'You must enter a name.';
+        },
+      ],
+      usernameRules: [
+        (username: string) => {
+          if (username) return true      
+          return 'You must enter a username.';
         },
       ]
     }
   },
   methods: {
+    setUsername() {
+      if (this.isUsernameValid) {
+        this.setupState = SetupState.USERNAME;
+      }          
+    },
     async submit () {
-      if (this.isValid) {
-        console.log("try connecting to: ", {
-          url: this.url,
-          port: this.port,
-          name: this.name
-        });
+      if (this.isServerFormValid) {
         this.connectToServer();        
       }
     },
@@ -205,11 +260,17 @@ export default defineComponent({
       this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
         rooms: [],
       });
-      initWebsocket(this.store, this.url);
+      let url = this.url;
+      if (this.port != 0) {
+        url = `${this.url}:${this.port}`;
+      }      
+      console.log("URL: ", url);
+      initWebsocket(this.store, url);
       
       if (socket) { 
         const maxConnectionCount = 3;
         let connectionCount = 1;
+        this.connectionInfo = `${connectionCount}/${maxConnectionCount}`;
         
         socket.on('connect', () => {
           console.log("Valid Server")
@@ -218,7 +279,7 @@ export default defineComponent({
           this.$router.push("/roomView");
         });
                 
-        socket.on('connect_error', () => {          
+        socket.on('connect_error', () => {      
           if (connectionCount == maxConnectionCount) {
             socket?.close();
             console.log("cancel Connection");
@@ -229,7 +290,16 @@ export default defineComponent({
           
           console.log("connection failed ", connectionCount, "/", maxConnectionCount);
           connectionCount ++;
+          
+          this.connectionInfo = `${connectionCount}/${maxConnectionCount}`;
         });
+      }
+    },
+    cancelConnection(): void {
+      if (socket) {
+        console.log("Closing Socket");
+        socket.close();
+        this.connectionState = ConnectionState.NONE;
       }
     },
     saveServer(): void {
@@ -251,8 +321,15 @@ export default defineComponent({
         console.warn("no saved serverList yet");
       }
     },
-    checkForExistingServerUrl(url: string): boolean {
-      return this.servers.some((server) => {return server.url == url});
+    checkForExistingServerUrl(url: string): string | undefined {
+      const index = this.servers.findIndex((server) => {return server.url == url});
+      if (index != -1) {
+        return this.servers[index].name;
+      }
+      return undefined;
+    },
+    checkForExistingServerName(name: string): boolean {
+      return this.servers.some((server) => {return server.name.toLowerCase() == name.toLowerCase()});
     }
   },
   mounted() {
@@ -264,6 +341,7 @@ export default defineComponent({
       servers.push({url: server.url, name: server.name});
     });
     this.servers = servers.concat(serverFromEnv);
+    this.username = this.store.state.roomSettings.user.name;
   }
 })
 </script>
