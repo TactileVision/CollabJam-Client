@@ -172,7 +172,6 @@ import {RoomMutations, RoomSettingsActionTypes} from "@/renderer/store/modules/c
 interface Server {
   url: string;
   name: string;
-  port: number;
 }
 
 enum LocalStorageKey {
@@ -260,12 +259,7 @@ export default defineComponent({
       this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
         rooms: [],
       });
-      let url = this.url;
-      if (this.port != 0) {
-        url = `${this.url}:${this.port}`;
-      }      
-      console.log("URL: ", url);
-      initWebsocket(this.store, url);
+      initWebsocket(this.store, this.buildURL());
       
       if (socket) { 
         const maxConnectionCount = 3;
@@ -302,11 +296,17 @@ export default defineComponent({
         this.connectionState = ConnectionState.NONE;
       }
     },
+    buildURL(): string {
+      if (this.port != 0) {
+        return `${this.url}:${this.port}`;
+      } else {
+        return this.url
+      }
+    },
     saveServer(): void {
       const newServer: Server = {
-        url: this.url,
+        url: this.buildURL(),
         name: this.name !== '' ? this.name : `Server${this.serverList.length + 1}`,
-        port: this.port
       };      
       this.serverList.push(newServer);
       localStorage.setItem(LocalStorageKey.SERVER_LIST, JSON.stringify(this.serverList));
