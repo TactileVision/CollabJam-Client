@@ -222,9 +222,16 @@ export default defineComponent({
               return `Server-address was already added under the following name: ${duplicateServerName}`;
             }                        
             return true;
-          } 
+          }
           return 'You must enter a server-address.';      
         },
+        (url: string) => {
+          const valid = URL.canParse(url);
+          if (!valid) {
+            return 'Invalid URL'
+          }
+          return true;
+        }
       ],
       servernameRules: [
         (name: string) => {
