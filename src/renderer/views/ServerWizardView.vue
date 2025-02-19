@@ -35,10 +35,10 @@
             class="dialog-card"
         >
           <v-card-text class="overflow-y-auto">
-            <p v-if="servers.length == 0">No servers available.</p>
+            <p v-if="serversToDisplay.length == 0">No servers available.</p>
             <ServerSelectionList
                 :username="username"
-                :servers="servers"
+                :servers="serversToDisplay"
                 :enabled="true"
             ></ServerSelectionList>
           </v-card-text>
@@ -102,7 +102,7 @@
               ></v-btn>
               <v-btn
                   text="Choose Server from list"
-                  @click="setupState = SetupState.USERNAME; $refs.addServerForm.reset(); port=3333"
+                  @click="setupState = SetupState.USERNAME; $refs.addServerForm.reset();"
               ></v-btn>
             </v-card-actions>
           </v-form>
@@ -169,6 +169,8 @@ import {Room} from "@sharedTypes/roomTypes";
 import {useStore} from "@/renderer/store/store";
 import {initWebsocket, socket} from "@/main/WebSocketManager";
 import {RoomMutations, RoomSettingsActionTypes} from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
+import {io, Socket} from "socket.io-client";
+
 interface Server {
   url: string;
   name: string;
@@ -198,8 +200,8 @@ export default defineComponent({
       room: null as null | Room,
       username: "",
       store: useStore(),
-      servers: [] as { url: string; name: string }[],
-      serverList: [] as Server[],
+      serversToDisplay: [] as { url: string; name: string; online: boolean | null }[],
+      serversFromJSON: [] as Server[],
       dialog: true,
       SetupState: SetupState,
       setupState: SetupState.INIT,
@@ -220,7 +222,7 @@ export default defineComponent({
             }                        
             return true;
           } 
-          return 'You must enter a server-address.';          
+          return 'You must enter a server-address.';      
         },
       ],
       servernameRules: [
@@ -297,7 +299,7 @@ export default defineComponent({
       }
     },
     buildURL(): string {
-      if (this.port != 0) {
+      if (this.port != '') {
         return `${this.url}:${this.port}`;
       } else {
         return this.url
@@ -306,41 +308,74 @@ export default defineComponent({
     saveServer(): void {
       const newServer: Server = {
         url: this.buildURL(),
-        name: this.name !== '' ? this.name : `Server${this.serverList.length + 1}`,
+        name: this.name !== '' ? this.name : `Server${this.serversFromJSON.length + 1}`,
       };      
-      this.serverList.push(newServer);
-      localStorage.setItem(LocalStorageKey.SERVER_LIST, JSON.stringify(this.serverList));
+      this.serversFromJSON.push(newServer);
+      localStorage.setItem(LocalStorageKey.SERVER_LIST, JSON.stringify(this.serversFromJSON));
       console.log('Added new Server', newServer); 
     },
     loadServerListFromJSON(){
       const savedData = localStorage.getItem(LocalStorageKey.SERVER_LIST);
       if (savedData) {
-        this.serverList = JSON.parse(savedData);
-        console.log("saved serverList: ", this.serverList);
+        this.serversFromJSON = JSON.parse(savedData);
+        console.log("saved serverList: ", this.serversFromJSON);
       } else {
         console.warn("no saved serverList yet");
       }
     },
     checkForExistingServerUrl(url: string): string | undefined {
-      const index = this.servers.findIndex((server) => {return server.url == url});
+      const index = this.serversToDisplay.findIndex((server) => {
+        return (server.url == url || server.url == `${url}:${this.port}`)
+      });
       if (index != -1) {
-        return this.servers[index].name;
+        return this.serversToDisplay[index].name;
       }
       return undefined;
     },
     checkForExistingServerName(name: string): boolean {
-      return this.servers.some((server) => {return server.name.toLowerCase() == name.toLowerCase()});
+      return this.serversToDisplay.some((server) => {return server.name.toLowerCase() == name.toLowerCase()});
+    },
+    async checkServerStatus() {
+      await Promise.all(
+          this.serversToDisplay.map(async (server: any, index: number) => {
+            const isOnline = await this.isServerOnline(server.url);
+            console.log("Server: ", server, " isOnline: ", isOnline);
+            this.serversToDisplay[index].online = isOnline;
+          })
+      );
+    },
+    isServerOnline(url: string): Promise<boolean> {
+      return new Promise((resolve) => {
+        const socket: Socket = io(url, {
+          reconnectionAttempts: 1,
+          timeout: 2000,
+          path: "/whws/"
+        });
+        
+        socket.on('connect', () => {
+          socket.close();
+          resolve(true);
+        });
+        
+        socket.on('connect_error', () => {
+          socket.close();
+          resolve(false);
+        })
+      });
     }
   },
   mounted() {
     this.loadServerListFromJSON();
     const serverFromEnv = JSON.parse(import.meta.env.VITE_COLLABJAM_SERVERS || "[]");
-    let servers = [] as { url: string; name: string }[];
+    const allServers = [...serverFromEnv, ...this.serversFromJSON];
+
+    this.serversToDisplay = allServers.map((server: any) => ({
+      url: server.url,
+      name: server.name,
+      online: null,
+    }));    
     
-    this.serverList.forEach((server: Server) => {
-      servers.push({url: server.url, name: server.name});
-    });
-    this.servers = servers.concat(serverFromEnv);
+    this.checkServerStatus();
     this.username = this.store.state.roomSettings.user.name;
   }
 })
