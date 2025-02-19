@@ -209,7 +209,7 @@ export default defineComponent({
       isServerFormValid: false,
       connectionInfo: null as null | string,
       url: '',
-      port: 3333,
+      port: '',
       name: '',
       urlRules: [
         (url: string) => {
