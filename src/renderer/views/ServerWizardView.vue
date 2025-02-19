@@ -69,14 +69,15 @@
                       label="Address*"
                       v-model="url"
                       :rules="urlRules"
+                      ref="urlInput"
                       required
                   ></v-text-field>
                 </v-col>
-
                 <v-col cols="12" md="2">
                   <v-text-field
                       label="Port"
                       v-model="port"
+                      :rules="portRules"
                   ></v-text-field>
                 </v-col>
 
@@ -163,7 +164,7 @@
 </style>
 
 <script lang="ts">
-import {defineComponent} from 'vue'
+import {defineComponent, watch} from 'vue'
 import ServerSelectionList from "@/renderer/components/ServerSelectionList.vue";
 import {Room} from "@sharedTypes/roomTypes";
 import {useStore} from "@/renderer/store/store";
@@ -241,6 +242,17 @@ export default defineComponent({
         (username: string) => {
           if (username) return true      
           return 'You must enter a username.';
+        },
+      ],
+      portRules: [
+        (port: any) => {
+          if (port == '') return true;
+          const toNum = Number.parseInt(port);
+          
+          if (isNaN(toNum)) return 'Invalid Port';
+          
+          if (toNum > 0 && toNum <= 65535) return true;
+          return 'Invalid Port';
         },
       ]
     }
@@ -377,7 +389,10 @@ export default defineComponent({
     
     this.checkServerStatus();
     this.username = this.store.state.roomSettings.user.name;
+        
+    watch(() => this.port, () => {
+      this.$refs.urlInput.validate();
+    });
   }
 })
 </script>
-
