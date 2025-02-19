@@ -8,26 +8,43 @@
     density="compact"
     :disabled="!enabled"
   >
-    <v-tooltip 
-        v-for="server in servers" 
-        :text="server.url"
-        location="top"
+    <v-list-item
+        v-for="server in servers"
+        :key="server.name"
+        :active="server.url == selection"
+        @click="selectServer(server.url)"
+        :disabled="!server.online"
     >
-      <template v-slot:activator="{ props }">
-        <v-list-item
-            v-bind="props"
-            :key="server.name"
-            :title="server.name"
-            :active="server.url == selection"
-            @click="selectServer(server.url)"
-        >
-        </v-list-item>
-      </template>
-    </v-tooltip>    
+      <v-row>
+        <v-col cols="1">
+          <v-icon :class="getStatusClass(server.online)" icon="mdi-circle"></v-icon>
+        </v-col>
+        <v-col cols="3  ">
+          <p class="server-name">{{server.name}}</p>
+        </v-col>
+        <v-col>
+          <p>{{server.url}}</p>
+        </v-col>  
+      </v-row>
+    </v-list-item>
   </v-list>
 </template>
 
 <style lang="scss" scoped>
+.server-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dot-green {
+  color: green;
+}
+.dot-red {
+  color: red;
+}
+.dot-grey {
+  color: grey;
+}
 
 </style>
 
@@ -41,7 +58,7 @@ export default defineComponent({
   name: "ServerSelectionList",
   props: {
     servers: {
-      type: Object as PropType<{ url: string; name: string }[]>,
+      type: Object as PropType<{ url: string; name: string; online: boolean | null }[]>,
       required: true,
     },
     enabled: {
@@ -72,6 +89,13 @@ export default defineComponent({
       this.store.commit(RoomMutations.UPDATE_USER_NAME, this.username);
       this.$router.push("/roomView");
     },
+    getStatusClass(isOnline: boolean | null) {
+      switch (isOnline) {
+        case true: return 'dot-green';
+        case false: return 'dot-red';
+        case null: return 'dot-grey';
+      }
+    }
   },
 });
 </script>
