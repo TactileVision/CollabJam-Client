@@ -76,6 +76,8 @@
                 <v-col cols="12" md="2">
                   <v-text-field
                       label="Port"
+                      type="number"
+                      hide-spin-buttons
                       v-model="port"
                       :rules="portRules"
                   ></v-text-field>
@@ -175,6 +177,7 @@ import {io, Socket} from "socket.io-client";
 interface Server {
   url: string;
   name: string;
+  port: number | null;
 }
 
 enum LocalStorageKey {
@@ -201,7 +204,7 @@ export default defineComponent({
       room: null as null | Room,
       username: "",
       store: useStore(),
-      serversToDisplay: [] as { url: string; name: string; online: boolean | null }[],
+      serversToDisplay: [] as { url: string; port: number | null; name: string; online: boolean | null }[],
       serversFromJSON: [] as Server[],
       dialog: true,
       SetupState: SetupState,
@@ -280,7 +283,13 @@ export default defineComponent({
       this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
         rooms: [],
       });
-      initWebsocket(this.store, this.buildURL());
+      
+      let url = this.url;
+      if (this.port != '') {
+        url = `${this.url}:${this.port}`;
+      }
+      console.log("connecting to ", url);
+      initWebsocket(this.store, url);
       
       if (socket) { 
         const maxConnectionCount = 3;
@@ -317,17 +326,11 @@ export default defineComponent({
         this.connectionState = ConnectionState.NONE;
       }
     },
-    buildURL(): string {
-      if (this.port != '') {
-        return `${this.url}:${this.port}`;
-      } else {
-        return this.url
-      }
-    },
     saveServer(): void {
       const newServer: Server = {
-        url: this.buildURL(),
+        url: this.url,
         name: this.name !== '' ? this.name : `Server${this.serversFromJSON.length + 1}`,
+        port: Number.parseInt(this.port)
       };      
       this.serversFromJSON.push(newServer);
       localStorage.setItem(LocalStorageKey.SERVER_LIST, JSON.stringify(this.serversFromJSON));
@@ -344,7 +347,16 @@ export default defineComponent({
     },
     checkForExistingServerUrl(url: string): string | undefined {
       const index = this.serversToDisplay.findIndex((server) => {
-        return (server.url == url || server.url == `${url}:${this.port}`)
+        const port = Number.parseInt(this.port);
+        if (!server.port) {
+          return server.url === url;
+        }
+        
+        if (!port) {
+          return server.url === url;
+        }
+        
+        return server.url === url && server.port === port;
       });
       if (index != -1) {
         return this.serversToDisplay[index].name;
@@ -357,9 +369,7 @@ export default defineComponent({
     async checkServerStatus() {
       await Promise.all(
           this.serversToDisplay.map(async (server: any, index: number) => {
-            const isOnline = await this.isServerOnline(server.url);
-            console.log("Server: ", server, " isOnline: ", isOnline);
-            this.serversToDisplay[index].online = isOnline;
+            this.serversToDisplay[index].online = await this.isServerOnline(server.url);
           })
       );
     },
@@ -390,6 +400,7 @@ export default defineComponent({
 
     this.serversToDisplay = allServers.map((server: any) => ({
       url: server.url,
+      port: server.port,
       name: server.name,
       online: null,
     }));    

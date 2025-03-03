@@ -23,7 +23,7 @@
           <p class="server-name">{{server.name}}</p>
         </v-col>
         <v-col>
-          <p>{{server.url}}</p>
+          <p>{{server.url + (server.port ? `:${server.port}` : '')}}</p>
         </v-col>  
       </v-row>
     </v-list-item>
@@ -58,7 +58,7 @@ export default defineComponent({
   name: "ServerSelectionList",
   props: {
     servers: {
-      type: Object as PropType<{ url: string; name: string; online: boolean | null }[]>,
+      type: Object as PropType<{ url: string; port: number | null; name: string; online: boolean | null }[]>,
       required: true,
     },
     enabled: {
