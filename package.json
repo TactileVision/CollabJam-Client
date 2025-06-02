@@ -57,7 +57,7 @@
     "@pixi/canvas-renderer": "^7.4.2",
     "@pixi/settings": "^7.4.2",
     "@pixi/unsafe-eval": "^7.4.2",
-    "pixi.js": "^8.1.0",
+    "pixi.js": "8.5.2",
     "rimraf": "^5.0.7",
     "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1",
