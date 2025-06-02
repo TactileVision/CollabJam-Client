@@ -160,7 +160,7 @@ export default defineComponent({
       } else {
         // switch room
         this.$router.push("/roomView");
-      }      
+      }
     },
     clearGraph() {
       this.store.dispatch(TactonPlaybackActionTypes.deselectTacton);
