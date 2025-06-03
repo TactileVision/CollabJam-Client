@@ -43,6 +43,10 @@ import {
 
 import { State as DeviceManagerState } from "./modules/DeviceManager/DeviceManagerStore";
 
+import { store as timeline, TimelineStore } from "./modules/timeline";
+
+import { State as TimelineState } from "./modules/timeline/state";
+
 export type RootState = {
   deviceManager: DeviceManagerState;
   generalSettings: GeneralSettingsState;
@@ -50,6 +54,7 @@ export type RootState = {
   playGround: PlayGroundState;
   tactonSettings: TactonSettingsState;
   tactonPlayback: TactonPlaybackState;
+  timeline: TimelineState;
 };
 
 /**
@@ -63,7 +68,8 @@ export type Store = DeviceManagerStore<Pick<RootState, "deviceManager">> &
   RoomSettingsStore<Pick<RootState, "roomSettings">> &
   PlayGroundStore<Pick<RootState, "playGround">> &
   TactonSettingsStore<Pick<RootState, "tactonSettings">> &
-  TactonPlaybackStore<Pick<RootState, "tactonPlayback">>;
+  TactonPlaybackStore<Pick<RootState, "tactonPlayback">> &
+  TimelineStore<Pick<RootState, "timeline">>;
 
 export const store = createStore({
   modules: {
@@ -73,6 +79,7 @@ export const store = createStore({
     playGround,
     tactonSettings,
     tactonPlayback,
+    timeline,
   },
 });
 declare global {
