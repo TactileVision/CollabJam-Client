@@ -8,9 +8,7 @@
   <v-container class="playGroundView ma-0" ref="container" tabindex="-1">
     <v-row>
       <v-col id="TactonGraphWrapperHeight" class="TactonGraphWrapperWrapper">
-        <div id="TactonGraphWrapper">
-          <TactonGraphWrapper :is-mounted="isMounted" />
-        </div>
+        <TheTimeline></TheTimeline>
         <!-- <v-sheet id="TactonGraphWrapper" elevation="0" class="mr-2 pa-4"> -->
         <!-- </v-sheet> -->
       </v-col>
@@ -77,7 +75,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import TactonGraphWrapper from "@/renderer/components/TactonGraphWrapper.vue";
 // import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 import CollaborationDialog from "./CollaborationDialog.vue";
 import CollaborationInputDeviceProfile from "./CollaborationInputDeviceProfile.vue";
@@ -92,12 +89,13 @@ import {
   isKeyboardDevice,
 } from "@/main/Input/InputDetection/InputBindings";
 import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
+import TheTimeline from "@/renderer/components/TheTimeline.vue";
 
 export default defineComponent({
   name: "CollaborationBody",
   components: {
+    TheTimeline,
     CollaborationInputDeviceProfile,
-    TactonGraphWrapper,
     TactonSelectionList,
     CollaborationDialog,
   },
