@@ -14,6 +14,7 @@ export default defineComponent({
     let showIndicator: boolean = true;
     let lastX: number = 0;
     let lastY: number = 0;
+    let animationFrameId: number | null = null;
     dynamicContainer.addChild(positionIndicator);
     renderIndicator();
 
@@ -25,10 +26,16 @@ export default defineComponent({
     );
 
     pixiApp.canvas.addEventListener("pointermove", (event: PointerEvent) => {
-      renderIndicator(
-        event.clientX - store.state.timeline.wrapperXOffset,
-        event.clientY,
-      );
+      if (animationFrameId != null) return;
+      
+      animationFrameId = requestAnimationFrame(() => {
+        renderIndicator(
+            event.clientX - store.state.timeline.wrapperXOffset,
+            event.clientY,
+        );
+        
+        animationFrameId = null;
+      });
     });
     function renderIndicator(newX?: number, newY?: number) {
       if (!newX) {
