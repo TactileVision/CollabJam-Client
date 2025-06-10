@@ -39,6 +39,7 @@ export enum TimelineActionTypes {
   UPDATE_CANVAS_TOP_OFFSET = "updateCanvasTopOffset",
   UPDATE_WRAPPER_X_OFFSET = "updateWrapperXOffset",
   UPDATE_WRAPPER_Y_OFFSET = "updateWrapperYOffset",
+  UPDATE_CANVAS_WIDTH = "updateCanvasWidth",
 }
 
 type AugmentedActionContext = {
@@ -159,6 +160,10 @@ export interface Actions {
     payload: number,
   ): void;
   [TimelineActionTypes.UPDATE_WRAPPER_Y_OFFSET](
+    { commit }: AugmentedActionContext,
+    payload: number,
+  ): void;
+  [TimelineActionTypes.UPDATE_CANVAS_WIDTH](
     { commit }: AugmentedActionContext,
     payload: number,
   ): void;
@@ -361,5 +366,11 @@ export const actions: ActionTree<State, RootState> & Actions = {
     yOffset: number,
   ): void {
     commit(TimelineMutations.SET_WRAPPER_Y_OFFSET, yOffset);
+  },
+  [TimelineActionTypes.UPDATE_CANVAS_WIDTH](
+    { commit }: { commit: Commit },
+    width: number,
+  ): void {
+    commit(TimelineMutations.SET_CANVAS_WIDTH, width);
   },
 };

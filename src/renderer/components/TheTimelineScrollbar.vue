@@ -2,9 +2,7 @@
 import { defineComponent, onMounted, watch } from "vue";
 import { Store, useStore } from "@/renderer/store/store";
 import {
-  dynamicContainer,
-  observeWrapperResize,
-  pixiApp,
+  getDynamicContainer, getPixiApp,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
@@ -13,9 +11,11 @@ import { Graphics } from "pixi.js";
 export default defineComponent({
   name: "TheTimelineScrollbar",
   setup() {
+    const store: Store = useStore();
+    
     const scrollBar = new Graphics();
     scrollBar.rect(
-      pixiApp.canvas.width - config.scrollBarWidth,
+        store.state.timeline.canvasWidth - config.scrollBarWidth,
       config.sliderHeight,
       config.scrollBarWidth,
       config.scrollBarHeight,
@@ -25,9 +25,7 @@ export default defineComponent({
     scrollBar.cursor = "pointer";
     scrollBar.alpha = config.scrollBarPassiveAlpha;
     scrollBar.visible = false;
-    pixiApp.stage.addChild(scrollBar);
-
-    const store: Store = useStore();
+    getPixiApp().stage.addChild(scrollBar);
 
     let isDragging = false;
     let isScrollable = false;
@@ -35,14 +33,20 @@ export default defineComponent({
     let initialScrollY = 0;
     let scrollOffset = 0;
     let maxY = 0;
-    let canvasOffset = 0;
-    let initialCanvasWidth = pixiApp.canvas.width;
+    let initialCanvasWidth = store.state.timeline.canvasWidth;
 
     watch(
       () => store.state.timeline.trackCount,
       () => {
         checkForScrollable();
         updateScrollbar();
+      },
+    );
+    
+    watch(
+        () => store.state.timeline.canvasWidth, 
+        (newWidth: number) => {
+          scrollBar.x = newWidth - initialCanvasWidth;
       },
     );
 
@@ -65,12 +69,12 @@ export default defineComponent({
 
     window.addEventListener("pointermove", (event) => {
       if (isDragging) {
-        const deltaY = event.clientY - startY - canvasOffset;
+        const deltaY = event.clientY - startY - store.state.timeline.wrapperYOffset;
         const newY = initialScrollY + deltaY;
         scrollBar.y = Math.min(Math.max(newY, 0), maxY);
         const scrollRatio = scrollBar.y / maxY;
         scrollOffset = scrollRatio * store.state.timeline.scrollableHeight;
-        dynamicContainer.y = -scrollOffset;
+        getDynamicContainer().y = -scrollOffset;
       }
     });
 
@@ -83,18 +87,14 @@ export default defineComponent({
       }
     });
 
-    pixiApp.canvas.addEventListener("wheel", (event: WheelEvent) => {
+    getPixiApp().canvas.addEventListener("wheel", (event: WheelEvent) => {
       if (!isScrollable) return;
       if (isNaN(initialScrollY)) initialScrollY = 0;
       scrollBar.y = Math.min(Math.max(initialScrollY + event.deltaY, 0), maxY);
       initialScrollY = scrollBar.y;
       const scrollRatio = scrollBar.y / maxY;
       scrollOffset = scrollRatio * store.state.timeline.scrollableHeight;
-      dynamicContainer.y = -scrollOffset;
-    });
-
-    observeWrapperResize((width: number) => {
-      scrollBar.x = width - initialCanvasWidth;
+      getDynamicContainer().y = -scrollOffset;
     });
     function checkForScrollable() {
       if (store.state.timeline.scrollableHeight > 0 && !isScrollable) {
@@ -104,7 +104,7 @@ export default defineComponent({
       } else if (store.state.timeline.scrollableHeight <= 0 && isScrollable) {
         isScrollable = false;
         scrollBar.visible = false;
-        dynamicContainer.y = 0;
+        getDynamicContainer().y = 0;
       }
     }
     function updateScrollbar() {
@@ -117,7 +117,7 @@ export default defineComponent({
         (store.state.timeline.visibleHeight -
           scrollBar.height +
           config.componentPadding);
-      dynamicContainer.y = -scrollOffset;
+      getDynamicContainer().y = -scrollOffset;
     }
 
     watch(

@@ -1,23 +1,18 @@
 <script lang="ts">
-import { defineComponent } from "vue";
-import { Tacton } from "@sharedTypes/tactonTypes";
-import { useStore } from "@/renderer/store/store";
-import { InstructionParser } from "@/renderer/helpers/timeline/instructionParser";
-import { BlockManager } from "@/renderer/helpers/timeline/blockManager";
-import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
-import {
-  dynamicContainer,
-  initPixiApp,
-  observeWrapperResize,
-  pixiApp,
-} from "@/renderer/helpers/timeline/pixiApp";
-import { Container, Graphics, Text } from "pixi.js";
+import {defineComponent, watch} from "vue";
+import {Tacton} from "@sharedTypes/tactonTypes";
+import {useStore} from "@/renderer/store/store";
+import {InstructionParser} from "@/renderer/helpers/timeline/instructionParser";
+import {BlockManager} from "@/renderer/helpers/timeline/blockManager";
+import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
+import {clearPixiApp, createPixiApp, getDynamicContainer,} from "@/renderer/helpers/timeline/pixiApp";
+import {Container, Graphics, Text} from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheTimelineSlider from "@/renderer/components/TheTimelineSlider.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import { BlockData } from "@/renderer/helpers/timeline/types";
+import {BlockData} from "@/renderer/helpers/timeline/types";
 
 export default defineComponent({
   name: "TheTimeline",
@@ -34,7 +29,7 @@ export default defineComponent({
       store: useStore(),
       trackCount: 0,
       mounted: false,
-      tracks: [] as Container[]
+      tracks: [] as Container[],
     };
   },
   computed: {
@@ -51,12 +46,10 @@ export default defineComponent({
         trackContainer.destroy({ children: true });
       }      
       this.tracks = [];
-      
-      const trackLines: Graphics[] = [];
       for (let i = 0; i <= this.trackCount; i++) {
         const trackContainer: Container = new Container();
         trackContainer.height = config.trackHeight;
-        trackContainer.width = pixiApp.canvas.width;
+        trackContainer.width = this.store.state.timeline.canvasWidth;
         trackContainer.y =
           config.sliderHeight +
           config.componentPadding +
@@ -65,7 +58,7 @@ export default defineComponent({
         trackContainer.zIndex = -1;
 
         const trackLine = new Graphics();
-        trackLine.rect(0, config.trackHeight / 2, pixiApp.canvas.width, 2);
+        trackLine.rect(0, config.trackHeight / 2, this.store.state.timeline.canvasWidth, 2);
         trackLine.fill(config.colors.trackLineColor);
         trackContainer.addChild(trackLine);
 
@@ -76,18 +69,12 @@ export default defineComponent({
         trackLabel.y = config.trackHeight / 2 - trackLabel.height / 2;
         trackContainer.addChild(trackLabel);
 
-        dynamicContainer.addChild(trackContainer);
+        getDynamicContainer().addChild(trackContainer);
         this.tracks.push(trackContainer);
-        trackLines.push(trackLine);
       }
-      observeWrapperResize((width: number) => {
-        for (const trackLine of trackLines) {
-          trackLine.width = width;
-        }
-      });
     },
     calculateInitialZoom(duration: number) {
-      const viewportWidth = pixiApp.canvas.width - config.leftPadding;
+      const viewportWidth = this.store.state.timeline.canvasWidth - config.leftPadding;
       const durationInSeconds = duration / 1000;
       const durationInPixels =
         durationInSeconds * config.pixelsPerSecond + config.pixelsPerSecond;
@@ -117,20 +104,16 @@ export default defineComponent({
   watch: {
     async tacton() {
       if (this.tacton) {
-        // calculate duration
-
         // parse instructions
         const parsed = this.parser.parseInstructionsToBlocks(
           this.tacton.instructions,
         );
         const blockData: BlockData[] = parsed.blockData;
-
-        if (this.blockManager == null) {
-          // init pixiCanvas
-          await initPixiApp();
-
+        
+        if (this.store.state.timeline.blockManager == null) {
+          await createPixiApp();
           // create blockManager --> depends on the existence of canvas
-          this.blockManager = new BlockManager();
+          this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
         }
 
         // set initZoom
@@ -157,7 +140,7 @@ export default defineComponent({
         this.store.dispatch(TimelineActionTypes.CALCULATE_SCROLLABLE_HEIGHT);
 
         // create blocks
-        this.blockManager.createBlocksFromData(blockData);
+        this.store.state.timeline.blockManager?.createBlocksFromData(blockData);
 
         // render trackLines
         this.renderTrackLines();
@@ -169,6 +152,18 @@ export default defineComponent({
         this.mounted = true;
       }
     },
+  },
+  mounted() {
+    watch(() => this.store.state.timeline.canvasWidth, (newWidth: number) => {
+      for (const trackLine of this.tracks) {
+        trackLine.width = newWidth;
+      }
+    });
+  },
+  beforeUnmount() {
+    clearPixiApp();
+    this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS); 
+    this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
   },
 });
 </script>

@@ -26,6 +26,7 @@ export type State = {
   canvasTopOffset: number;
   wrapperXOffset: number;
   wrapperYOffset: number;
+  canvasWidth: number;
 };
 export const state: State = {
   blockManager: null,
@@ -52,4 +53,5 @@ export const state: State = {
   canvasTopOffset: 0,
   wrapperXOffset: 0,
   wrapperYOffset: 0,
+  canvasWidth: 0,
 };

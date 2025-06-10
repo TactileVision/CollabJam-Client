@@ -3,9 +3,7 @@ import { defineComponent, watch } from "vue";
 import { useStore } from "@/renderer/store/store";
 import { Container, Graphics } from "pixi.js";
 import {
-  observeWrapperResize,
-  pixiApp,
-  staticContainer,
+  getStaticContainer,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
@@ -20,9 +18,8 @@ export default defineComponent({
   },
   setup(props) {
     const store = useStore();
-    let windowWidth = pixiApp.canvas.width;
-    let viewportWidth = windowWidth - config.leftPadding;
-    let sliderMaxWidth = windowWidth - 2 * config.sliderHandleWidth;
+    let viewportWidth = store.state.timeline.canvasWidth - config.leftPadding;
+    let sliderMaxWidth = store.state.timeline.canvasWidth - 2 * config.sliderHandleWidth;
 
     let sliderWidth = sliderMaxWidth;
     let initialSliderWidth = sliderWidth;
@@ -40,7 +37,7 @@ export default defineComponent({
     // slider
     const sliderRect = new Graphics();
     sliderRect.rect(
-      (windowWidth - sliderWidth) / 2,
+      (store.state.timeline.canvasWidth - sliderWidth) / 2,
       0,
       sliderWidth,
       config.sliderHeight,
@@ -71,7 +68,7 @@ export default defineComponent({
     sliderContainer.addChild(leftSliderHandle);
     sliderContainer.addChild(sliderRect);
     sliderContainer.addChild(rightSliderHandle);
-    staticContainer.addChild(sliderContainer);
+    getStaticContainer().addChild(sliderContainer);
 
     //*************** EventListeners / Watcher ***************
 
@@ -104,15 +101,6 @@ export default defineComponent({
       store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
       window.addEventListener("pointermove", onScale);
       window.addEventListener("pointerup", onScaleEnd);
-    });
-
-    // install observer for width-changes
-    observeWrapperResize((width: number) => {
-      windowWidth = width;
-      sliderMaxWidth = width - 2 * config.sliderHandleWidth;
-      viewportWidth = width - config.leftPadding;
-      updateLastZoomLevel();
-      updateSliderToViewport();
     });
 
     // TODO is resizing of the window also allowed?
@@ -154,6 +142,16 @@ export default defineComponent({
         });
       },
     );
+    
+    watch(
+        () => store.state.timeline.canvasWidth,
+        (newWidth: number) => {
+          sliderMaxWidth = newWidth - 2 * config.sliderHandleWidth;
+          viewportWidth = newWidth - config.leftPadding;
+          updateLastZoomLevel();
+          updateSliderToViewport();
+        }
+    )
 
     //*************** functions ***************
     async function updateLastZoomLevel(newZoomLevel?: number) {
@@ -218,7 +216,7 @@ export default defineComponent({
             config.sliderHandleWidth,
             Math.min(
               initialSliderX + deltaX,
-              windowWidth - sliderWidth - config.sliderHandleWidth,
+                store.state.timeline.canvasWidth - sliderWidth - config.sliderHandleWidth,
             ),
           );
         }
@@ -229,7 +227,7 @@ export default defineComponent({
           Math.max(initialSliderWidth + deltaX, config.sliderMinWidth),
           Math.min(
             sliderMaxWidth,
-            windowWidth - sliderX - config.sliderHandleWidth,
+              store.state.timeline.canvasWidth - sliderX - config.sliderHandleWidth,
           ),
         );
       }
@@ -239,7 +237,7 @@ export default defineComponent({
           config.sliderHandleWidth,
           Math.min(
             initialSliderX + deltaX,
-            windowWidth - sliderWidth - config.sliderHandleWidth,
+              store.state.timeline.canvasWidth - sliderWidth - config.sliderHandleWidth,
           ),
         );
       }
@@ -268,7 +266,7 @@ export default defineComponent({
         store.state.timeline.currentVirtualViewportWidth -
         config.pixelsPerSecond;
       const currentViewportSize =
-        (pixiApp.canvas.width - config.leftPadding) /
+        (store.state.timeline.canvasWidth - config.leftPadding) /
         store.state.timeline.zoomLevel;
       let ro =
         (virtualViewportWidth -
@@ -286,8 +284,8 @@ export default defineComponent({
       const lo = store.state.timeline.horizontalViewportOffset;
       const ro = getRightOverflow();
 
-      const currentViewportWidth = pixiApp.canvas.width + lo + ro;
-      const currentViewportRatio = pixiApp.canvas.width / currentViewportWidth;
+      const currentViewportWidth = store.state.timeline.canvasWidth + lo + ro;
+      const currentViewportRatio = store.state.timeline.canvasWidth / currentViewportWidth;
 
       sliderWidth = sliderMaxWidth * currentViewportRatio;
       sliderX =

@@ -26,6 +26,7 @@ export type Getters = {
   canvasTopOffset(state: State): number;
   wrapperXOffset(state: State): number;
   wrapperYOffset(state: State): number;
+  canvasWidth(state: State): number;
 };
 export const getters: GetterTree<State, RootState> & Getters = {
   blockManager: (state: State): BlockManager | null => state.blockManager,
@@ -54,4 +55,5 @@ export const getters: GetterTree<State, RootState> & Getters = {
   canvasTopOffset: (state: State): number => state.canvasTopOffset,
   wrapperXOffset: (state: State): number => state.wrapperXOffset,
   wrapperYOffset: (state: State): number => state.wrapperYOffset,
+  canvasWidth: (state: State): number => state.canvasWidth,
 };

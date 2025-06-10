@@ -6,7 +6,6 @@ import {
 } from "@sharedTypes/tactonTypes";
 import { Store, useStore } from "@/renderer/store/store";
 import { BlockDTO, BlockData } from "@/renderer/helpers/timeline/types";
-import { pixiApp } from "@/renderer/helpers/timeline/pixiApp";
 
 interface BlockEvent {
   time: number;
@@ -77,7 +76,7 @@ export class InstructionParser {
 
     const events: BlockEvent[] = [];
     const instructions: TactonInstruction[] = [];
-    const timelineWidth: number = pixiApp.canvas.width;
+    const timelineWidth: number = this.store.state.timeline.canvasWidth;
     const totalDuration: number =
       (timelineWidth / config.pixelsPerSecond) * 1000;
     let currentTime: number = 0;

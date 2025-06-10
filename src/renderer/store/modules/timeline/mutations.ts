@@ -2,7 +2,7 @@ import { MutationTree } from "vuex";
 import { BlockManager } from "@/renderer/helpers/timeline/blockManager";
 import { BlockDTO, BlockSelection } from "@/renderer/helpers/timeline/types";
 import { ContainerChild, Graphics } from "pixi.js";
-import { dynamicContainer } from "@/renderer/helpers/timeline/pixiApp";
+import { getDynamicContainer } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { State } from "./state";
 export enum TimelineMutations {
@@ -37,6 +37,7 @@ export enum TimelineMutations {
   SET_CANVAS_TOP_OFFSET = "setCanvasTopOffset",
   SET_WRAPPER_X_OFFSET = "setWrapperXOffset",
   SET_WRAPPER_Y_OFFSET = "setWrapperYOffset",
+  SET_CANVAS_WIDTH = "setCanvasWidth",
 }
 
 export type Mutations<S = State> = {
@@ -101,6 +102,7 @@ export type Mutations<S = State> = {
   [TimelineMutations.SET_CANVAS_TOP_OFFSET](state: S, topOffset: number): void;
   [TimelineMutations.SET_WRAPPER_X_OFFSET](state: S, xOffset: number): void;
   [TimelineMutations.SET_WRAPPER_Y_OFFSET](state: S, yOffset: number): void;
+  [TimelineMutations.SET_CANVAS_WIDTH](state: S, width: number): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -235,7 +237,7 @@ export const mutations: MutationTree<State> & Mutations = {
 
     state.selectedBlocks.forEach((blockSelection: BlockSelection) => {
       const block = state.blocks[blockSelection.trackId][blockSelection.index];
-      dynamicContainer.removeChild(block.container);
+      getDynamicContainer().removeChild(block.container);
       block.container.children.forEach((child: ContainerChild): void => {
         child.removeAllListeners();
       });
@@ -253,7 +255,7 @@ export const mutations: MutationTree<State> & Mutations = {
   ): void {
     if (state.blocks[trackId] == undefined) return;
     state.blocks[trackId].forEach((block: BlockDTO): void => {
-      dynamicContainer.removeChild(block.container);
+      getDynamicContainer().removeChild(block.container);
       block.container.children.forEach((child: ContainerChild): void => {
         child.removeAllListeners();
       });
@@ -429,5 +431,8 @@ export const mutations: MutationTree<State> & Mutations = {
     yOffset: number,
   ): void {
     state.wrapperYOffset = yOffset;
+  },
+  [TimelineMutations.SET_CANVAS_WIDTH](state: State, width: number): void {
+    state.canvasWidth = width;
   },
 };

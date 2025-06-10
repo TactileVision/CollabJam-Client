@@ -1,11 +1,15 @@
-import { Container, FederatedPointerEvent, Graphics } from "pixi.js";
-import { onMounted, watch } from "vue";
+import {
+  Container,
+  FederatedPointerEvent,
+  Graphics,
+  Application,
+} from "pixi.js";
+import { watch } from "vue";
 import { Store, useStore } from "@/renderer/store/store";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 import {
-  debouncedObserveWrapperResize,
-  dynamicContainer,
-  pixiApp,
+  getDynamicContainer,
+  getPixiApp,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import {
@@ -130,7 +134,6 @@ export class BlockManager {
   // vertical viewport-scrolling
   private currentYAdjustment: number = 0;
   private lastVerticalOffset: number = 0;
-  private canvasOffset: number = 0;
 
   // copy & paste
   private isMacOS: boolean = false;
@@ -189,16 +192,14 @@ export class BlockManager {
       () => this.store.state.timeline.isEditable,
       this.handleEditMode.bind(this),
     );
-
-    onMounted((): void => {
-      this.canvasOffset = pixiApp.canvas.getBoundingClientRect().top;
-    });
-
-    debouncedObserveWrapperResize(() => {
-      console.log("updating thresholds");
-      this.calculateVirtualViewportLength();
-      this.generateThresholds();
-    }, 5);
+    watch(
+      () => this.store.state.timeline.canvasWidth,
+      (): void => {
+        console.log("updating thresholds");
+        this.calculateVirtualViewportLength();
+        this.generateThresholds();
+      },
+    );
 
     this.generateThresholds();
 
@@ -262,33 +263,7 @@ export class BlockManager {
       }
     });
 
-    // paste on click
-    pixiApp.canvas.addEventListener("mousedown", (event: MouseEvent) => {
-      if (!this.store.state.timeline.isInteracting) {
-        this.pasteSelection();
-      }
-
-      if (this.isSelecting) return;
-      if (event.button === 0 && !this.store.state.timeline.isInteracting) {
-        this.isMouseDragging = true;
-        this.selectionStart = { x: event.clientX, y: event.clientY };
-        this.selectionEnd = { ...this.selectionStart };
-        this.drawSelectionBox();
-      }
-    });
-
-    pixiApp.canvas.addEventListener("mousemove", (event: MouseEvent) => {
-      if (!this.isMouseDragging) return;
-      this.selectionEnd = { x: event.clientX, y: event.clientY };
-      this.drawSelectionBox();
-    });
-
-    pixiApp.canvas.addEventListener("mouseup", (event: MouseEvent) => {
-      if (event.button !== 0 || !this.isMouseDragging) return;
-      this.isMouseDragging = false;
-      this.removeSelectionBox();
-      this.selectRectanglesWithin();
-    });
+    this.installEventListeners();
 
     // init as not editable
     this.handleEditMode();
@@ -535,7 +510,7 @@ export class BlockManager {
       trackId: block.trackId,
       block: dto,
     });
-    dynamicContainer.addChild(blockContainer);
+    getDynamicContainer().addChild(blockContainer);
     return dto;
   }
   private createCopiedBLock(block: CopiedBlockData): CopiedBlockDTO {
@@ -566,7 +541,7 @@ export class BlockManager {
     );
   }
   private calculatePosition(tacton: BlockData): { x: number; width: number } {
-    const timelineWidth: number = pixiApp.canvas.width;
+    const timelineWidth: number = this.store.state.timeline.canvasWidth;
     const totalDuration: number =
       (timelineWidth / config.pixelsPerSecond) * 1000;
     return {
@@ -579,7 +554,7 @@ export class BlockManager {
     blocks: BlockDTO[] | CopiedBlockDTO[],
   ): CopiedBlockData[] {
     const blockData: CopiedBlockData[] = [];
-    const timelineWidth: number = pixiApp.canvas.width;
+    const timelineWidth: number = this.store.state.timeline.canvasWidth;
     const totalDuration: number =
       (timelineWidth / config.pixelsPerSecond) * 1000;
 
@@ -616,10 +591,10 @@ export class BlockManager {
           this.store.state.timeline.zoomLevel,
       ) + 1;
     this.rightThreshold =
-      pixiApp.canvas.width - config.horizontalScrollThreshold / scaleFactor;
+      this.store.state.timeline.canvasWidth -
+      config.horizontalScrollThreshold / scaleFactor;
     this.leftThreshold = config.horizontalScrollThreshold / scaleFactor;
-    this.topThreshold =
-      this.canvasOffset + config.sliderHeight + config.verticalScrollThreshold;
+    this.topThreshold = config.sliderHeight + config.verticalScrollThreshold;
     this.bottomThreshold = window.innerHeight - config.verticalScrollThreshold;
   }
   private applyChanges(changes: BlockChanges): void {
@@ -691,8 +666,7 @@ export class BlockManager {
       Math.max(
         0,
         this.store.state.timeline.currentCursorPosition.y -
-          dynamicContainer.y -
-          this.canvasOffset -
+          getDynamicContainer().y -
           config.sliderHeight -
           config.componentPadding,
       ) / config.trackHeight,
@@ -880,7 +854,7 @@ export class BlockManager {
     this.generateThresholds();
     this.updateSelectionBorder();
     this.renderedGroupBorders.forEach(
-      (groupBorder: GroupBorderData, groupId: number) => {
+      (groupBorder: GroupBorderData, groupId: number): void => {
         this.updateGroup(groupId, true);
       },
     );
@@ -892,7 +866,7 @@ export class BlockManager {
     if (!this.updated) {
       if (this.isScrolling) {
         // update only blocks that are not selected
-        this.forEachUnselectedBlock((block: BlockDTO) => {
+        this.forEachUnselectedBlock((block: BlockDTO): void => {
           this.updateBlock(block);
         });
       } else {
@@ -907,7 +881,7 @@ export class BlockManager {
       }
       this.updateSelectionBorder();
       this.renderedGroupBorders.forEach(
-        (groupBorder: GroupBorderData, groupId: number) => {
+        (groupBorder: GroupBorderData, groupId: number): void => {
           this.updateGroup(groupId, true);
         },
       );
@@ -1108,7 +1082,7 @@ export class BlockManager {
         const block: CopiedBlockDTO = this.createCopiedBLock(blockData);
         if (block.rect.x < lowestXofCopies) lowestXofCopies = block.rect.x;
         this.copiedBlocks.push(block);
-        dynamicContainer.addChild(block.container);
+        getDynamicContainer().addChild(block.container);
 
         if (block.trackId > maxTrackId) maxTrackId = block.trackId;
         if (block.trackId < minTrackId) minTrackId = block.trackId;
@@ -1121,8 +1095,7 @@ export class BlockManager {
         Math.max(
           0,
           this.store.state.timeline.currentCursorPosition.y -
-            dynamicContainer.y -
-            this.canvasOffset -
+            getDynamicContainer().y -
             config.sliderHeight -
             config.componentPadding,
         ) / config.trackHeight,
@@ -1917,11 +1890,9 @@ export class BlockManager {
     if (direction == Direction.TOP) {
       deltaY = this.initialY - event.clientY;
       deltaY += this.store.state.timeline.wrapperYOffset;
-      deltaY += this.canvasOffset;
     } else if (direction == Direction.BOTTOM) {
       deltaY = event.clientY - this.initialY;
       deltaY -= this.store.state.timeline.wrapperYOffset;
-      deltaY -= this.canvasOffset;
     }
 
     const prevHeight: number = block.rect.height;
@@ -2294,7 +2265,7 @@ export class BlockManager {
       lastBlockOfGroup: lastBlockOfGroup!,
     };
 
-    dynamicContainer.addChild(borderContainer);
+    getDynamicContainer().addChild(borderContainer);
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
   }
   private resizeSelectionBorder(
@@ -2381,7 +2352,7 @@ export class BlockManager {
   }
   private clearSelectionBorder(): void {
     if (this.selectionBorder != null) {
-      dynamicContainer.removeChild(this.selectionBorder.container);
+      getDynamicContainer().removeChild(this.selectionBorder.container);
       this.selectionBorder.container.destroy({ children: true });
       this.selectionBorder = null;
       this.renderedGroupBorders.forEach(
@@ -2603,20 +2574,20 @@ export class BlockManager {
 
     this.renderedGroupBorders.set(groupId, groupBorder);
 
-    dynamicContainer.addChild(borderContainer);
+    getDynamicContainer().addChild(borderContainer);
   }
   private clearGroupBorder(groupId?: number): void {
     if (groupId != undefined) {
       const borderData: GroupBorderData =
         this.renderedGroupBorders.get(groupId)!;
-      dynamicContainer.removeChild(borderData.container);
+      getDynamicContainer().removeChild(borderData.container);
       borderData.container.destroy({ children: true });
       this.renderedGroupBorders.delete(groupId);
     } else {
       // clear all
       this.renderedGroupBorders.forEach(
         (borderData: GroupBorderData, groupId: number): void => {
-          dynamicContainer.removeChild(borderData.container);
+          getDynamicContainer().removeChild(borderData.container);
           borderData.container.destroy({ children: true });
 
           const groupSelection: BlockSelection[] | undefined =
@@ -2782,7 +2753,7 @@ export class BlockManager {
     switch (this.currentDirection) {
       case Direction.TOP: {
         const newOffset: number = Math.min(
-          dynamicContainer.y + verticalScrollSpeed,
+          getDynamicContainer().y + verticalScrollSpeed,
           0,
         );
         this.currentYAdjustment = newOffset - this.lastVerticalOffset;
@@ -2795,7 +2766,7 @@ export class BlockManager {
 
       case Direction.BOTTOM: {
         const newOffset: number = Math.max(
-          dynamicContainer.y - verticalScrollSpeed,
+          getDynamicContainer().y - verticalScrollSpeed,
           -this.store.state.timeline.scrollableHeight,
         );
         this.currentYAdjustment = newOffset - this.lastVerticalOffset;
@@ -2890,7 +2861,7 @@ export class BlockManager {
 
     // calculate rightOverflow
     const viewport: number =
-      (pixiApp.canvas.width -
+      (this.store.state.timeline.canvasWidth -
         config.leftPadding +
         this.store.state.timeline.horizontalViewportOffset) /
       this.store.state.timeline.zoomLevel;
@@ -3306,7 +3277,7 @@ export class BlockManager {
     y -= this.store.state.timeline.wrapperYOffset;
 
     // adjust for scrolling
-    y -= dynamicContainer.y;
+    y -= getDynamicContainer().y;
 
     // calculate tracks to check --> only check tracks that could contain selection
     const startTrack: number = Math.floor(y / config.trackHeight);
@@ -3368,5 +3339,60 @@ export class BlockManager {
         block.rect.interactive = true;
       });
     }
+  }
+
+  //******* event-listener *******
+
+  private onCanvasMouseDown(event: MouseEvent): void {
+    if (!this.store.state.timeline.isInteracting) {
+      this.pasteSelection();
+    }
+
+    if (this.isSelecting) return;
+    if (event.button === 0 && !this.store.state.timeline.isInteracting) {
+      this.isMouseDragging = true;
+      this.selectionStart = { x: event.clientX, y: event.clientY };
+      this.selectionEnd = { ...this.selectionStart };
+      this.drawSelectionBox();
+    }
+  }
+
+  private onCanvasMouseMove(event: MouseEvent): void {
+    if (!this.isMouseDragging) return;
+    this.selectionEnd = { x: event.clientX, y: event.clientY };
+    this.drawSelectionBox();
+  }
+
+  private onCanvasMouseUp(event: MouseEvent): void {
+    if (event.button !== 0 || !this.isMouseDragging) return;
+    this.isMouseDragging = false;
+    this.removeSelectionBox();
+    this.selectRectanglesWithin();
+  }
+  public installEventListeners(): void {
+    const pixiApp: Application = getPixiApp();
+    // remove existing Event-Listeners
+    pixiApp.canvas.removeEventListener(
+      "mousedown",
+      this.onCanvasMouseDown.bind(this),
+    );
+    pixiApp.canvas.removeEventListener(
+      "mousemove",
+      this.onCanvasMouseMove.bind(this),
+    );
+    pixiApp.canvas.removeEventListener(
+      "mouseup",
+      this.onCanvasMouseUp.bind(this),
+    );
+
+    pixiApp.canvas.addEventListener(
+      "mousedown",
+      this.onCanvasMouseDown.bind(this),
+    );
+    pixiApp.canvas.addEventListener(
+      "mousemove",
+      this.onCanvasMouseMove.bind(this),
+    );
+    pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp.bind(this));
   }
 }

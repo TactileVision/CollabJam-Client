@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, watch } from "vue";
 import { Store, useStore } from "@/renderer/store/store";
-import { dynamicContainer, pixiApp } from "@/renderer/helpers/timeline/pixiApp";
+import {getDynamicContainer, getPixiApp} from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { Graphics } from "pixi.js";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
@@ -15,7 +15,7 @@ export default defineComponent({
     let lastX: number = 0;
     let lastY: number = 0;
     let animationFrameId: number | null = null;
-    dynamicContainer.addChild(positionIndicator);
+    getDynamicContainer().addChild(positionIndicator);
     renderIndicator();
 
     watch(
@@ -25,7 +25,7 @@ export default defineComponent({
       },
     );
 
-    pixiApp.canvas.addEventListener("pointermove", (event: PointerEvent) => {
+    getPixiApp().canvas.addEventListener("pointermove", (event: PointerEvent) => {
       if (animationFrameId != null) return;
       
       animationFrameId = requestAnimationFrame(() => {

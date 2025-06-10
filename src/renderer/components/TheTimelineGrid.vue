@@ -2,9 +2,8 @@
 import { defineComponent, onUnmounted, watch } from "vue";
 import { Container, Graphics, Text } from "pixi.js";
 import {
-  staticContainer,
-  dynamicContainer,
-  pixiApp,
+  getDynamicContainer,
+  getStaticContainer,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { useStore, Store } from "@/renderer/store/store";
@@ -18,21 +17,32 @@ export default defineComponent({
     let labelContainer: Container | null;
     let gridGraphics: Graphics | null;
     let rerenderLabels: boolean = true;
+    let animationFrameId: number | null = null;
 
     renderGrid();
 
     watch(
       () => store.state.timeline.zoomLevel,
       () => {
-        rerenderLabels = true;
-        rerenderGrid();
+        if (animationFrameId != null) return;
+
+        animationFrameId = requestAnimationFrame(() => {
+          rerenderLabels = true;
+          rerenderGrid();
+          animationFrameId = null;
+        });
       },
     );
     watch(
       () => store.state.timeline.horizontalViewportOffset,
       () => {
-        rerenderLabels = true;
-        rerenderGrid();
+        if (animationFrameId != null) return;
+        
+        animationFrameId = requestAnimationFrame(() => {
+          rerenderLabels = true;
+          rerenderGrid();
+          animationFrameId = null;
+        });
       },
     );
     watch(
@@ -53,6 +63,7 @@ export default defineComponent({
       clearGrid();
     });
     function renderGrid() {
+      console.log("grid rendering");
       // +1 as first trackId is 0
       const trackCount = store.state.timeline.trackCount + 1;
       gridContainer = new Container();
@@ -64,8 +75,8 @@ export default defineComponent({
 
       const adjustedPixelsPerSecond =
         config.pixelsPerSecond * store.state.timeline.zoomLevel;
-      const totalWidth =
-        pixiApp.canvas.width +
+      const totalWidth = 
+        store.state.timeline.canvasWidth +
         Math.abs(store.state.timeline.horizontalViewportOffset) -
         config.leftPadding;
       const gridOffset =
@@ -101,7 +112,7 @@ export default defineComponent({
               (config.componentPadding / 2 - label.height / 2);
             labelContainer!.addChild(label);
             labelContainer!.x = gridOffset;
-            staticContainer.addChild(labelContainer!);
+            getStaticContainer().addChild(labelContainer!);
           }
         }
       }
@@ -109,7 +120,8 @@ export default defineComponent({
       gridContainer.addChild(gridGraphics);
       gridContainer.x = gridOffset;
       gridContainer.zIndex = -1;
-      dynamicContainer.addChild(gridContainer);
+      getDynamicContainer().addChild(gridContainer);
+      // TODO could only update store on pointerUp
       store.dispatch(TimelineActionTypes.UPDATE_GRID_LINES, gridLines);
     }
     function rerenderGrid() {
@@ -124,12 +136,12 @@ export default defineComponent({
       )
         return;
 
-      dynamicContainer.removeChild(gridContainer);
+      getDynamicContainer().removeChild(gridContainer);
       gridContainer.destroy({ children: true });
       gridContainer = null;
 
       if (rerenderLabels) {
-        staticContainer.removeChild(labelContainer);
+        getStaticContainer().removeChild(labelContainer);
         labelContainer.destroy({ children: true });
         labelContainer = null;
       }
