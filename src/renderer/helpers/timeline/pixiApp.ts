@@ -77,6 +77,7 @@ export async function createPixiApp(): Promise<void> {
   store.dispatch(TimelineActionTypes.UPDATE_CANVAS_WIDTH, wrapper.clientWidth);
 }
 export function clearPixiApp(): void {
+  if (pixiApp == undefined) return;
   pixiApp.destroy({ removeView: true }, { children: true });
   resizeObserver.disconnect();
 }

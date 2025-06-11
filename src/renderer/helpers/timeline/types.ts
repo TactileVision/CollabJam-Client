@@ -1,4 +1,8 @@
 import { Container, Graphics } from "pixi.js";
+import * as PIXI from "pixi.js";
+import { getDynamicContainer } from "@/renderer/helpers/timeline/pixiApp";
+import config from "@/renderer/helpers/timeline/config";
+import { Store, useStore } from "@/renderer/store/store";
 
 export class BlockChanges {
   x: number | null = null;
@@ -66,4 +70,37 @@ export interface BlockData {
   startTime: number;
   endTime: number;
   intensity: number;
+}
+
+export class Cursor {
+  graphic: PIXI.Graphics = new PIXI.Graphics();
+  position: number = 0;
+  hasDrawnCursor: boolean = false;
+  color: number;
+  store: Store = useStore();
+
+  constructor(color: number) {
+    getDynamicContainer().addChild(this.graphic);
+    this.color = color;
+  }
+  drawCursor(): void {
+    this.hasDrawnCursor = true;
+
+    this.graphic.clear();
+    this.graphic.moveTo(
+      config.leftPadding,
+      config.sliderHeight + config.componentPadding,
+    );
+    this.graphic.lineTo(
+      config.leftPadding,
+      config.trackHeight * (this.store.state.timeline.trackCount + 1) +
+        config.sliderHeight +
+        config.componentPadding,
+    );
+    this.graphic.stroke({ width: 4, color: this.color });
+    this.graphic._zIndex = 1;
+  }
+  moveToPosition(xPosition: number): void {
+    this.graphic.x = xPosition;
+  }
 }

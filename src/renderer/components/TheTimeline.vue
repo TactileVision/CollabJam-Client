@@ -12,7 +12,10 @@ import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheTimelineSlider from "@/renderer/components/TheTimelineSlider.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import {BlockData} from "@/renderer/helpers/timeline/types";
+import {BlockData, Cursor} from "@/renderer/helpers/timeline/types";
+import {InteractionMode} from "@sharedTypes/roomTypes";
+import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
+import * as PIXI from "pixi.js";
 
 export default defineComponent({
   name: "TheTimeline",
@@ -30,11 +33,17 @@ export default defineComponent({
       trackCount: 0,
       mounted: false,
       tracks: [] as Container[],
+      cursor: null as Cursor | null,
+      ticker: null as PIXI.Ticker | null,
+      currentTime: 0,
     };
   },
   computed: {
     tacton(): Tacton | null {
       return this.store.state.tactonPlayback.currentTacton;
+    },
+    interactionMode(): InteractionMode {
+      return this.store.state.roomSettings.mode;
     },
   },
   methods: {
@@ -100,6 +109,11 @@ export default defineComponent({
       this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
       this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
     },
+    startPlayback() {
+      const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
+      this.cursor?.moveToPosition(x);
+      this.currentTime += this.ticker!.elapsedMS;
+    }
   },
   watch: {
     async tacton() {
@@ -109,12 +123,6 @@ export default defineComponent({
           this.tacton.instructions,
         );
         const blockData: BlockData[] = parsed.blockData;
-        
-        if (this.store.state.timeline.blockManager == null) {
-          await createPixiApp();
-          // create blockManager --> depends on the existence of canvas
-          this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
-        }
 
         // set initZoom
         this.calculateInitialZoom(parsed.duration);
@@ -148,22 +156,65 @@ export default defineComponent({
         // TODO remove - just for debugging
         this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE, true);
 
+        this.cursor?.drawCursor();
+        
         // render components
         this.mounted = true;
       }
     },
+    interactionMode(mode) {
+      //Cleanup after ending current mode by emptying the graph
+      //this.clearGraph();
+
+      this.currentTime = 0;
+      if (this.ticker !== null && this.ticker.count > 0) {
+        console.log("stopped ticker");
+        //this.ticker?.remove(this.pixiLoopRecording);
+        this.ticker?.remove(this.startPlayback);
+      }
+
+      if (mode == InteractionMode.Recording) {
+      } else if (mode == InteractionMode.Overdubbing) {
+        if (this.tacton != null) {
+          
+        }
+      } else if (mode == InteractionMode.Jamming) {
+        this.cursor?.moveToPosition(0);
+      } else if (mode == InteractionMode.Playback) {
+        this.ticker?.add(this.startPlayback);
+        this.ticker?.start();
+      } /* else {
+        //Non existent editing mode
+        this.editingEnabled = true;
+      } */
+    }
   },
-  mounted() {
+  async mounted() {
     watch(() => this.store.state.timeline.canvasWidth, (newWidth: number) => {
       for (const trackLine of this.tracks) {
         trackLine.width = newWidth;
       }
     });
+
+    await createPixiApp();
+    
+    // blockManager and cursor depend on the existence of canvas
+    this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
+    this.cursor = new Cursor(0xec660c);
+    this.cursor.moveToPosition(0);
+
+    this.ticker = PIXI.Ticker.shared;
+    this.ticker.autoStart = false;
+    this.ticker.stop();
   },
   beforeUnmount() {
     clearPixiApp();
     this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS); 
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
+
+    if (this.ticker !== null && this.ticker.count > 0) {
+      //this.ticker?.remove(this.pixiLoopRecording);
+    }
   },
 });
 </script>
