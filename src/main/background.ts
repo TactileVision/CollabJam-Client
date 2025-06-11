@@ -27,7 +27,7 @@ async function createWindow() {
     height: 900,
     resizable: false,
     autoHideMenuBar: true,
-    title: "Collaborative Tacton Generator",
+    title: "CollabJam",
     backgroundColor: "#121212",
     // show: false,
     webPreferences: {
