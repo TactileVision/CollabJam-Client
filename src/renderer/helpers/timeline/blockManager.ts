@@ -17,6 +17,7 @@ import {
   BlockDTO,
   BlockSelection,
   BlockData,
+  TimelineEvents,
 } from "@/renderer/helpers/timeline/types";
 interface SelectionBorderData {
   container: Container;
@@ -80,6 +81,9 @@ class CopiedBlockDTO {
 export class BlockManager {
   // store
   private store: Store;
+
+  // event
+  public eventBus: EventTarget = new EventTarget();
 
   // cursor
   private initialX: number = 0;
@@ -653,6 +657,9 @@ export class BlockManager {
   }
 
   //*************** Update-Methods ***************
+
+  // maybe improve performance by not storing strokes and handles and keeping them updated
+  // rather create, render and update them, only if they are needed
   private updateBlock(block: BlockDTO): void {
     block.rect.width = block.initWidth * this.store.state.timeline.zoomLevel;
     block.rect.x =
@@ -1438,6 +1445,7 @@ export class BlockManager {
 
     this.calculateVirtualViewportLength();
     this.currentTacton = null;
+    this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private onSelectingEnd(): void {
     if (this.pointerUpHandler == null) return;

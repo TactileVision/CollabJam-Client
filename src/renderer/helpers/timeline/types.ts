@@ -71,7 +71,6 @@ export interface BlockData {
   endTime: number;
   intensity: number;
 }
-
 export class Cursor {
   graphic: PIXI.Graphics = new PIXI.Graphics();
   position: number = 0;
@@ -103,4 +102,8 @@ export class Cursor {
   moveToPosition(xPosition: number): void {
     this.graphic.x = xPosition;
   }
+}
+
+export enum TimelineEvents {
+  TACTON_WAS_EDITED = "tactonWasEdited",
 }

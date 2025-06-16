@@ -59,8 +59,6 @@ export class InstructionParser {
     return { blockData: blocks, duration: currentTime };
   }
 
-  // TODO check if this method is needed
-
   public parseBlocksToInstructions(): TactonInstruction[] {
     // flatten (per track) stored blocks into one sequence
     const sequence: BlockDTO[] = [];
@@ -118,7 +116,6 @@ export class InstructionParser {
       // insert set-Parameter instruction
       instructions.push({
         setParameter: {
-          //startTime: currentTime,
           intensity: event.intensity,
           channels: [event.trackId],
         },
