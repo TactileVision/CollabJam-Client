@@ -3,6 +3,7 @@ import * as PIXI from "pixi.js";
 import { getDynamicContainer } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { Store, useStore } from "@/renderer/store/store";
+import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 
 export class BlockChanges {
   x: number | null = null;
@@ -77,7 +78,6 @@ export class Cursor {
   hasDrawnCursor: boolean = false;
   color: number;
   store: Store = useStore();
-
   constructor(color: number) {
     getDynamicContainer().addChild(this.graphic);
     this.color = color;
@@ -99,11 +99,22 @@ export class Cursor {
     this.graphic.stroke({ width: 4, color: this.color });
     this.graphic._zIndex = 1;
   }
-  moveToPosition(xPosition: number): void {
-    this.graphic.x = xPosition;
+  moveToPosition(xPosition: number, isSliderFollowing: boolean = false): void {
+    const middleOfCanvas: number = this.store.state.timeline.canvasWidth / 2;
+    const isIndicatorAtViewportCenter: boolean =
+      xPosition + config.leftPadding >= middleOfCanvas;
+    if (isIndicatorAtViewportCenter && isSliderFollowing) {
+      this.store.dispatch(
+        TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
+        xPosition + config.leftPadding - middleOfCanvas,
+      );
+      this.graphic.x =
+        xPosition - this.store.state.timeline.horizontalViewportOffset;
+    } else {
+      this.graphic.x = xPosition;
+    }
   }
 }
-
 export enum TimelineEvents {
   TACTON_WAS_EDITED = "tactonWasEdited",
 }

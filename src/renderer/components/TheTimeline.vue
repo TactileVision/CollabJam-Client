@@ -6,6 +6,7 @@ import {InstructionParser} from "@/renderer/helpers/timeline/instructionParser";
 import {BlockManager} from "@/renderer/helpers/timeline/blockManager";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
 import {clearPixiApp, createPixiApp, getDynamicContainer,} from "@/renderer/helpers/timeline/pixiApp";
+import * as PIXI from "pixi.js";
 import {Container, Graphics, Text} from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
@@ -15,7 +16,6 @@ import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue
 import {BlockData, Cursor, TimelineEvents} from "@/renderer/helpers/timeline/types";
 import {InteractionMode} from "@sharedTypes/roomTypes";
 import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
-import * as PIXI from "pixi.js";
 import {WebSocketAPI} from "@/main/WebSocketManager";
 
 export default defineComponent({
@@ -37,7 +37,9 @@ export default defineComponent({
       cursor: null as Cursor | null,
       ticker: null as PIXI.Ticker | null,
       currentTime: 0,
-      lastTactonId: null as string | null
+      lastTactonId: null as string | null,
+      lastHorizontalViewportOffset: 0,
+      isSliderFollowing: false
     };
   },
   computed: {
@@ -111,7 +113,12 @@ export default defineComponent({
       this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
       this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
     },
-    startPlayback() {
+    playback() {
+      const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
+      this.cursor?.moveToPosition(x, this.isSliderFollowing);
+      this.currentTime += this.ticker!.elapsedMS;
+    },
+    recording() {
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
       this.cursor?.moveToPosition(x);
       this.currentTime += this.ticker!.elapsedMS;
@@ -176,23 +183,36 @@ export default defineComponent({
 
       this.currentTime = 0;
       if (this.ticker !== null && this.ticker.count > 0) {
-        console.log("stopped ticker");
-        //this.ticker?.remove(this.pixiLoopRecording);
-        this.ticker?.remove(this.startPlayback);
+        this.ticker?.remove(this.recording);
+        this.ticker?.remove(this.playback);
       }
 
       if (mode == InteractionMode.Recording) {
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
-        this.ticker?.add(this.pixiLoopRecording);
+        this.ticker?.add(this.recording);
         this.ticker?.start();
       } else if (mode == InteractionMode.Overdubbing) {
         if (this.tacton != null) {
           
         }
       } else if (mode == InteractionMode.Jamming) {
+        // apply last horzintalViewportOffset
+        this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
+        // reposition cursor
         this.cursor?.moveToPosition(0);
       } else if (mode == InteractionMode.Playback) {
-        this.ticker?.add(this.startPlayback);
+        // calculate if slider should follow cursor (last block is out of viewport)
+        const lastBlockXPosition = this.store.state.timeline.lastBlockPositionX;
+        const canvasWidth = this.store.state.timeline.canvasWidth;
+        const horizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+        const isLastBlockOutOfViewport = (lastBlockXPosition + horizontalViewportOffset) > canvasWidth;
+        this.isSliderFollowing = horizontalViewportOffset != 0 && isLastBlockOutOfViewport;
+        
+        // save last horizontalViewportOffset 
+        this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+        this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
+        
+        this.ticker?.add(this.playback);
         this.ticker?.start();
       } /* else {
         //Non existent editing mode
