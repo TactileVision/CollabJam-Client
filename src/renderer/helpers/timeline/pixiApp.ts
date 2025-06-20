@@ -6,6 +6,7 @@ import "pixi.js/unsafe-eval";
 let pixiApp: Application;
 let dynamicContainer: Container;
 let staticContainer: Container;
+let liveContainer: Container;
 let resizeObserver: ResizeObserver;
 let animationFrameId: number | null = null;
 
@@ -16,6 +17,7 @@ export async function createPixiApp(): Promise<void> {
   pixiApp = new Application();
   dynamicContainer = new Container();
   staticContainer = new Container();
+  liveContainer = new Container();
 
   // Init app
   await pixiApp.init({
@@ -43,6 +45,7 @@ export async function createPixiApp(): Promise<void> {
 
   pixiApp.stage.addChild(staticContainer);
   pixiApp.stage.addChild(dynamicContainer);
+  pixiApp.stage.addChild(liveContainer);
 
   resizeObserver = new ResizeObserver((): void => {
     if (pixiApp == undefined) return;
@@ -89,4 +92,8 @@ export function getDynamicContainer(): Container {
 }
 export function getStaticContainer(): Container {
   return staticContainer;
+}
+
+export function getLiveContainer(): Container {
+  return liveContainer;
 }

@@ -199,7 +199,6 @@ export class BlockManager {
     watch(
       () => this.store.state.timeline.canvasWidth,
       (): void => {
-        console.log("updating thresholds");
         this.calculateVirtualViewportLength();
         this.generateThresholds();
       },
@@ -2736,6 +2735,12 @@ export class BlockManager {
     borderData.lastStartX = groupStartX;
     borderData.lastWidth = groupWidth;
   }
+  public removeBlockFromCanvas(): void {
+    console.log("deleting blocks");
+    this.forEachBlock((block: BlockDTO): void => {
+      block.container.destroy({ children: true });
+    });
+  }
 
   //******* scroll viewport when block is at border-regions *******
   private startAutoScroll(direction: Direction): void {
@@ -3350,7 +3355,6 @@ export class BlockManager {
   }
 
   //******* event-listener *******
-
   private onCanvasMouseDown(event: MouseEvent): void {
     if (!this.store.state.timeline.isInteracting) {
       this.pasteSelection();
@@ -3364,13 +3368,11 @@ export class BlockManager {
       this.drawSelectionBox();
     }
   }
-
   private onCanvasMouseMove(event: MouseEvent): void {
     if (!this.isMouseDragging) return;
     this.selectionEnd = { x: event.clientX, y: event.clientY };
     this.drawSelectionBox();
   }
-
   private onCanvasMouseUp(event: MouseEvent): void {
     if (event.button !== 0 || !this.isMouseDragging) return;
     this.isMouseDragging = false;

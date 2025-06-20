@@ -63,7 +63,6 @@ export default defineComponent({
       clearGrid();
     });
     function renderGrid() {
-      console.log("grid rendering");
       // +1 as first trackId is 0
       const trackCount = store.state.timeline.trackCount + 1;
       gridContainer = new Container();

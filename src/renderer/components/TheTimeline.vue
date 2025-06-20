@@ -5,7 +5,7 @@ import {useStore} from "@/renderer/store/store";
 import {InstructionParser} from "@/renderer/helpers/timeline/instructionParser";
 import {BlockManager} from "@/renderer/helpers/timeline/blockManager";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
-import {clearPixiApp, createPixiApp, getDynamicContainer,} from "@/renderer/helpers/timeline/pixiApp";
+import {clearPixiApp, createPixiApp, getDynamicContainer, getLiveContainer,} from "@/renderer/helpers/timeline/pixiApp";
 import * as PIXI from "pixi.js";
 import {Container, Graphics, Text} from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
@@ -17,6 +17,7 @@ import {BlockData, Cursor, TimelineEvents} from "@/renderer/helpers/timeline/typ
 import {InteractionMode} from "@sharedTypes/roomTypes";
 import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import {WebSocketAPI} from "@/main/WebSocketManager";
+import {LiveBlockBuilder} from "@/renderer/helpers/timeline/liveBlockBuilder";
 
 export default defineComponent({
   name: "TheTimeline",
@@ -28,7 +29,6 @@ export default defineComponent({
   },
   data() {
     return {
-      blockManager: null as BlockManager | null,
       parser: new InstructionParser(),
       store: useStore(),
       trackCount: 0,
@@ -39,7 +39,8 @@ export default defineComponent({
       currentTime: 0,
       lastTactonId: null as string | null,
       lastHorizontalViewportOffset: 0,
-      isSliderFollowing: false
+      isSliderFollowing: false,
+      liveBlockBuilder: new LiveBlockBuilder()
     };
   },
   computed: {
@@ -119,9 +120,19 @@ export default defineComponent({
       this.currentTime += this.ticker!.elapsedMS;
     },
     recording() {
+      // wait for input to start live rendering
+      if (!this.liveBlockBuilder.hasReceivedInput) {
+        this.currentTime = 0;
+      }
+      
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
-      this.cursor?.moveToPosition(x);
+      this.cursor?.moveToPosition(x, true);
       this.currentTime += this.ticker!.elapsedMS;
+
+      const channels = this.store.state.tactonSettings.outputChannelState;
+      this.liveBlockBuilder.processTick(channels, this.currentTime);
+      
+      getLiveContainer().x = - (this.store.state.timeline.horizontalViewportOffset);
     }
   },
   watch: {
@@ -174,12 +185,14 @@ export default defineComponent({
           // render components
           this.mounted = true;
         }
-        // current tacton was updated        
+        // current tacton was updated     
       }
     },
     interactionMode(mode) {
       //Cleanup after ending current mode by emptying the graph
       //this.clearGraph();
+      // reset liveBLockBuilder
+      this.liveBlockBuilder.reset();
 
       this.currentTime = 0;
       if (this.ticker !== null && this.ticker.count > 0) {
@@ -188,6 +201,8 @@ export default defineComponent({
       }
 
       if (mode == InteractionMode.Recording) {
+        // remove drawn blocks from screen
+        this.store.state.timeline.blockManager?.removeBlockFromCanvas();
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
         this.ticker?.add(this.recording);
         this.ticker?.start();
@@ -205,8 +220,9 @@ export default defineComponent({
         const lastBlockXPosition = this.store.state.timeline.lastBlockPositionX;
         const canvasWidth = this.store.state.timeline.canvasWidth;
         const horizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
-        const isLastBlockOutOfViewport = (lastBlockXPosition + horizontalViewportOffset) > canvasWidth;
-        this.isSliderFollowing = horizontalViewportOffset != 0 && isLastBlockOutOfViewport;
+        const isLastBlockOutOfViewport = lastBlockXPosition > canvasWidth;
+        const isLastBlockOutOfNewViewport = (lastBlockXPosition + horizontalViewportOffset) > canvasWidth;
+        this.isSliderFollowing =  isLastBlockOutOfViewport || (horizontalViewportOffset != 0 && isLastBlockOutOfNewViewport);
         
         // save last horizontalViewportOffset 
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
@@ -257,7 +273,7 @@ export default defineComponent({
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
 
     if (this.ticker !== null && this.ticker.count > 0) {
-      //this.ticker?.remove(this.pixiLoopRecording);
+      this.ticker?.remove(this.recording);
     }
   },
 });

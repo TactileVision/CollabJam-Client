@@ -60,7 +60,6 @@ export class InstructionParser {
 
     return { blockData: blocks, duration: currentTime };
   }
-
   public parseBlocksToInstructions(): TactonInstruction[] {
     // flatten (per track) stored blocks into one sequence
     const sequence: BlockDTO[] = [];
