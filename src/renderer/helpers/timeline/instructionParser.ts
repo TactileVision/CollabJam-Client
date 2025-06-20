@@ -34,21 +34,23 @@ export class InstructionParser {
         const intensity: number = instruction.setParameter.intensity;
 
         channels.forEach((channel: number): void => {
-          if (intensity > 0) {
-            // start of block
-            activeChannels.set(channel, { startTime: currentTime, intensity });
-          } else if (intensity === 0 && activeChannels.has(channel)) {
-            // end of block
-            const channelData: { startTime: number; intensity: number } =
-              activeChannels.get(channel)!;
+          const existing = activeChannels.get(channel);
+
+          // finish construction of previous block, if existing
+          if (existing) {
             const block: BlockData = {
               trackId: channel,
-              startTime: channelData.startTime,
+              startTime: existing.startTime,
               endTime: currentTime,
-              intensity: channelData.intensity,
+              intensity: existing.intensity,
             };
             blocks.push(block);
             activeChannels.delete(channel);
+          }
+
+          if (intensity > 0) {
+            // start of block
+            activeChannels.set(channel, { startTime: currentTime, intensity });
           }
         });
       } else if (isInstructionWait(instruction)) {
