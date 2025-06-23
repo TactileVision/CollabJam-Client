@@ -406,7 +406,7 @@ export class BlockManager {
       this.calculatePosition(block);
     rect.x = position.x;
     rect.width = position.width;
-    rect.height = block.intensity * config.blockHeightScaleFactor;
+    rect.height = block.intensity * config.maxBlockHeight;
     rect.y =
       config.sliderHeight +
       config.componentPadding +
@@ -526,7 +526,7 @@ export class BlockManager {
     rect.x =
       config.leftPadding + position.x * this.store.state.timeline.zoomLevel;
     rect.width = position.width * this.store.state.timeline.zoomLevel;
-    rect.height = block.intensity * config.blockHeightScaleFactor;
+    rect.height = block.intensity * config.maxBlockHeight;
     rect.y =
       config.sliderHeight +
       config.componentPadding +
@@ -572,8 +572,7 @@ export class BlockManager {
       const startTime: number = (convertedX / timelineWidth) * totalDuration;
       const endTime: number =
         startTime + (convertedWidth / timelineWidth) * totalDuration;
-      const intensity: number =
-        block.rect.height / config.blockHeightScaleFactor;
+      const intensity: number = block.rect.height / config.maxBlockHeight;
 
       blockData.push({
         trackId: block.trackId,
@@ -1289,6 +1288,7 @@ export class BlockManager {
   private deleteBlock(): void {
     this.store.dispatch(TimelineActionTypes.DELETE_SELECTED_BLOCKS);
     this.calculateVirtualViewportLength();
+    this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private onMoveBlock(event: FederatedPointerEvent, block: BlockDTO): void {
     // if groupBorder is active, update
@@ -1931,6 +1931,7 @@ export class BlockManager {
     this.pointerMoveHandler = null;
     this.pointerUpHandler = null;
     this.currentTacton = null;
+    this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private groupSelectedBlocks(): void {
     if (this.store.state.timeline.selectedBlocks.length <= 1) return;
