@@ -147,7 +147,6 @@ export const mutations: MutationTree<State> & Mutations = {
     visibleHeight: number,
   ): void {
     state.visibleHeight = visibleHeight;
-    console.log("visibleHeight", visibleHeight);
   },
   [TimelineMutations.CALCULATE_SCROLLABLE_HEIGHT](state: State): void {
     const trackHeight: number = (state.trackCount + 1) * config.trackHeight;
@@ -155,7 +154,6 @@ export const mutations: MutationTree<State> & Mutations = {
       trackHeight > state.visibleHeight
         ? trackHeight - state.visibleHeight + config.componentPadding
         : 0;
-    console.log("scrollableHeight", state.scrollableHeight);
   },
   [TimelineMutations.INIT_TRACKS](state: State): void {
     for (let trackId = 0; trackId <= state.trackCount; trackId++) {
