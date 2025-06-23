@@ -13,136 +13,150 @@ export default defineComponent({
   name: "TheTimelineGrid",
   setup() {
     const store: Store = useStore();
-    let gridContainer: Container | null;
-    let labelContainer: Container | null;
-    let gridGraphics: Graphics | null;
-    let rerenderLabels: boolean = true;
+    let gridContainer: Container | null = new Container();
+    let labelContainer: Container | null = new Container();
     let animationFrameId: number | null = null;
 
-    renderGrid();
+    // caches
+    const gridLineCache: Record<number, Graphics> = {};
+    const labelCache: Record<number, Text> = {};
+    const activeTimes: Set<number> = new Set();
 
-    watch(
-      () => store.state.timeline.zoomLevel,
-      () => {
-        if (animationFrameId != null) return;
+    // initial Setup
+    gridContainer.zIndex = -1;
+    getDynamicContainer().addChild(gridContainer);
+    getStaticContainer().addChild(labelContainer);
+    updateGrid();
+    
+    watch(() => [store.state.timeline.zoomLevel, store.state.timeline.horizontalViewportOffset], () => {
+      if (animationFrameId != null) return;
 
-        animationFrameId = requestAnimationFrame(() => {
-          rerenderLabels = true;
-          rerenderGrid();
-          animationFrameId = null;
-        });
-      },
-    );
-    watch(
-      () => store.state.timeline.horizontalViewportOffset,
-      () => {
-        if (animationFrameId != null) return;
-        
-        animationFrameId = requestAnimationFrame(() => {
-          rerenderLabels = true;
-          rerenderGrid();
-          animationFrameId = null;
-        });
-      },
-    );
+      animationFrameId = requestAnimationFrame(() => {
+        updateGrid();
+        animationFrameId = null;
+      });
+    });
+    
     watch(
       () => store.state.timeline.trackCount,
       () => {
-        rerenderLabels = false;
-        rerenderGrid();
+        rerenderAllGridLines();
       },
     );
 
-    window.addEventListener("resize", () => {
+    // TODO if resizing is gonna be enabled, this has to be updated
+/*    window.addEventListener("resize", () => {
       rerenderLabels = true;
       rerenderGrid();
-    });
-
-    onUnmounted(() => {
-      rerenderLabels = true;
-      clearGrid();
-    });
-    function renderGrid() {
-      // +1 as first trackId is 0
+    });*/
+    
+    function updateGrid() {
       const trackCount = store.state.timeline.trackCount + 1;
-      gridContainer = new Container();
-      gridGraphics = new Graphics();
-
-      if (rerenderLabels && labelContainer == null) {
-        labelContainer = new Container();
-      }
-
-      const adjustedPixelsPerSecond =
-        config.pixelsPerSecond * store.state.timeline.zoomLevel;
-      const totalWidth = 
-        store.state.timeline.canvasWidth +
-        Math.abs(store.state.timeline.horizontalViewportOffset) -
-        config.leftPadding;
-      const gridOffset =
-        config.leftPadding - store.state.timeline.horizontalViewportOffset;
-      const gridLines: number[] = [];
-      const y =
-        trackCount * config.trackHeight +
-        config.componentPadding +
-        config.sliderHeight;
-
+      const adjustedPixelsPerSecond = config.pixelsPerSecond * store.state.timeline.zoomLevel;
+      const gridOffset = config.leftPadding - store.state.timeline.horizontalViewportOffset;
+      const totalWidth =
+          store.state.timeline.canvasWidth +
+          Math.abs(store.state.timeline.horizontalViewportOffset) -
+          config.leftPadding;
+      const y = trackCount * config.trackHeight + config.componentPadding + config.sliderHeight;
       const interval = getOptimalInterval();
+      const visibleGridLines: number[] = [];
+      activeTimes.clear();
+
       for (
-        let step = 0;
-        step * interval * adjustedPixelsPerSecond < totalWidth;
-        step++
+          let step = 0;
+          step * interval * adjustedPixelsPerSecond < totalWidth; // extra buffer
+          step++
       ) {
-        const time = step * interval;
+        const time = parseFloat((step * interval).toFixed(3)); // key for cache
         const x = time * adjustedPixelsPerSecond;
+        const screenX = x + gridOffset;
+        const inViewport = isInViewport(screenX, totalWidth);
+        activeTimes.add(time);
 
-        if (x + gridOffset > 0) {
-          gridLines.push(x + gridOffset);
-          gridGraphics.moveTo(x, config.sliderHeight + config.componentPadding);
-          gridGraphics.lineTo(x, y);
-          gridGraphics.stroke({ width: 1, color: config.colors.gridColor });
+        // create / update gridLines
+        if (!gridLineCache[time]) {
+          const line = new Graphics();
+          line.moveTo(0, config.sliderHeight + config.componentPadding);
+          line.lineTo(0, y);
+          line.stroke({ width: 1, color: config.colors.gridColor });
+          gridLineCache[time] = line;
+          gridContainer!.addChild(line);
+        }
+        const line = gridLineCache[time];
+        line.visible = inViewport;
+        if (inViewport) {
+          line.x = screenX;
+        }
 
-          if (rerenderLabels) {
-            const label = new Text();
-            label.text = parseFloat(time.toFixed(3));
-            label.style.fontSize = 12;
-            label.x = x - label.width / 2;
-            label.y =
-              config.sliderHeight +
-              (config.componentPadding / 2 - label.height / 2);
-            labelContainer!.addChild(label);
-            labelContainer!.x = gridOffset;
-            getStaticContainer().addChild(labelContainer!);
-          }
+        // create / update labels
+        if (!labelCache[time]) {
+          const label = new Text();
+          label.text = time.toString();
+          label.style.fontSize = 12;
+          label.y = config.sliderHeight + (config.componentPadding / 2 - label.height / 2);
+          labelCache[time] = label;
+          labelContainer!.addChild(label);
+        }
+        const label = labelCache[time];
+        label.visible = inViewport;
+        if (inViewport) {
+          label.x = x - label.width / 2;
+          visibleGridLines.push(screenX);
         }
       }
 
-      gridContainer.addChild(gridGraphics);
-      gridContainer.x = gridOffset;
-      gridContainer.zIndex = -1;
-      getDynamicContainer().addChild(gridContainer);
-      // TODO could only update store on pointerUp
-      store.dispatch(TimelineActionTypes.UPDATE_GRID_LINES, gridLines);
-    }
-    function rerenderGrid() {
-      clearGrid();
-      renderGrid();
-    }
-    function clearGrid() {
-      if (
-        gridContainer == null ||
-        gridGraphics == null ||
-        labelContainer == null
-      )
-        return;
+      // hide unused gridLines
+      for (const timeStr in gridLineCache) {
+        const time = parseFloat(timeStr);
+        if (!activeTimes.has(time)) {
+          gridLineCache[time].visible = false;
+        }
+      }
 
-      getDynamicContainer().removeChild(gridContainer);
-      gridContainer.destroy({ children: true });
-      gridContainer = null;
+      // hide unused labels
+      for (const timeStr in labelCache) {
+        const time = parseFloat(timeStr);
+        if (!activeTimes.has(time)) {
+          labelCache[time].visible = false;
+        }
+      }
 
-      if (rerenderLabels) {
-        getStaticContainer().removeChild(labelContainer);
-        labelContainer.destroy({ children: true });
-        labelContainer = null;
+      labelContainer!.x = gridOffset;
+      store.dispatch(TimelineActionTypes.UPDATE_GRID_LINES, visibleGridLines);
+    }
+    function isInViewport(x: number, totalWidth: number, variance: number = 100): boolean {
+      return x >= -variance && x <= totalWidth + variance;
+    }
+    function rerenderAllGridLines() {
+      if (!gridContainer) return;
+
+      const trackCount = store.state.timeline.trackCount + 1;
+      const adjustedPixelsPerSecond = config.pixelsPerSecond * store.state.timeline.zoomLevel;
+      const gridOffset = config.leftPadding - store.state.timeline.horizontalViewportOffset;
+      const totalWidth =
+          store.state.timeline.canvasWidth +
+          Math.abs(store.state.timeline.horizontalViewportOffset) -
+          config.leftPadding;
+      const y = trackCount * config.trackHeight + config.componentPadding + config.sliderHeight;
+
+      for (const timeStr in gridLineCache) {
+        const time = parseFloat(timeStr);
+        const line = gridLineCache[time];
+
+        const x = time * adjustedPixelsPerSecond;
+        const screenX = x + gridOffset;
+        const inViewport = isInViewport(screenX, totalWidth);
+
+        // Rebuild line
+        line.clear();
+        line.moveTo(0, config.sliderHeight + config.componentPadding);
+        line.lineTo(0, y);
+        line.stroke({ width: 1, color: config.colors.gridColor });
+
+        // Update position & visibility
+        line.x = screenX;
+        line.visible = inViewport;
       }
     }
     function getOptimalInterval(): number {
