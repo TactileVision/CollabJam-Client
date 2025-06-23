@@ -2138,49 +2138,35 @@ export class BlockManager {
         // disable handles
         this.updateHandleInteractivity(block, false);
 
-        // collect data
-        if (block.rect.x < groupStartX) {
-          groupStartX = block.rect.x;
+        const blockStart: number = block.rect.x;
+        const blockEnd: number = blockStart + block.rect.width;
+        const trackId: number = block.trackId;
+        const height: number = block.rect.height;
+
+        // track block range
+        if (blockStart < groupStartX) {
+          groupStartX = blockStart;
           firstBlockOfGroup = selection;
         }
-        if (block.rect.x + block.rect.width > groupEndX) {
-          groupEndX = block.rect.x + block.rect.width;
+        if (blockEnd > groupEndX) {
+          groupEndX = blockEnd;
           lastBlockOfGroup = selection;
         }
-        if (groupLowestTrack >= block.trackId) {
-          groupLowestTrack = block.trackId;
-          if (maxHeightOfLowestTrack < block.rect.height) {
-            maxHeightOfLowestTrack = block.rect.height;
-          }
-        }
 
-        if (groupHighestTrack <= block.trackId) {
-          groupHighestTrack = block.trackId;
-          if (maxHeightOfHighestTrack < block.rect.height) {
-            maxHeightOfHighestTrack = block.rect.height;
-          }
-        }
-
-        if (block.trackId < groupLowestTrack) {
-          groupLowestTrack = block.trackId;
-          maxHeightOfLowestTrack = block.rect.height;
+        // highest / lowest track logic
+        if (trackId < groupLowestTrack) {
+          groupLowestTrack = trackId;
+          maxHeightOfLowestTrack = height;
           topBlockOfGroup = selection;
-        } else if (block.trackId === groupLowestTrack) {
-          maxHeightOfLowestTrack = Math.max(
-            maxHeightOfLowestTrack,
-            block.rect.height,
-          );
-          topBlockOfGroup = selection;
+        } else if (trackId === groupLowestTrack) {
+          maxHeightOfLowestTrack = Math.max(maxHeightOfLowestTrack, height);
         }
 
-        if (block.trackId > groupHighestTrack) {
-          groupHighestTrack = block.trackId;
-          maxHeightOfHighestTrack = block.rect.height;
-        } else if (block.trackId === groupHighestTrack) {
-          maxHeightOfHighestTrack = Math.max(
-            maxHeightOfHighestTrack,
-            block.rect.height,
-          );
+        if (trackId > groupHighestTrack) {
+          groupHighestTrack = trackId;
+          maxHeightOfHighestTrack = height;
+        } else if (trackId === groupHighestTrack) {
+          maxHeightOfHighestTrack = Math.max(maxHeightOfHighestTrack, height);
         }
       },
     );
