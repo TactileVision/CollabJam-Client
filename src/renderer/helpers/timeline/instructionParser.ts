@@ -143,7 +143,11 @@ export class InstructionParser {
     });
     return instructions;
   }
-  private nearlyEqual(a: number, b: number, epsilon: number = 0.0001): boolean {
-    return Math.abs(a - b) < epsilon;
+  private nearlyEqual(
+    a: number,
+    b: number,
+    variance: number = 0.0001,
+  ): boolean {
+    return Math.abs(a - b) < variance;
   }
 }
