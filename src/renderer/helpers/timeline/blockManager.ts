@@ -2387,38 +2387,41 @@ export class BlockManager {
       // disable handles
       this.updateHandleInteractivity(block, false);
 
+      const blockStart: number = block.rect.x;
+      const blockEnd: number = blockStart + block.rect.width;
+      const trackId: number = block.trackId;
+      const height: number = block.rect.height;
+
       // collect data
-      if (block.rect.x < groupStartX) {
+      if (blockStart < groupStartX) {
         groupStartX = block.rect.x;
         firstBlockOfGroup = selection;
       }
-      if (block.rect.x + block.rect.width > groupEndX) {
-        groupEndX = block.rect.x + block.rect.width;
+      if (blockEnd > groupEndX) {
+        groupEndX = blockEnd;
         lastBlockOfGroup = selection;
       }
 
-      if (block.trackId < groupLowestTrack) {
-        groupLowestTrack = block.trackId;
-        maxHeightOfLowestTrack = block.rect.height;
+      if (trackId < groupLowestTrack) {
+        groupLowestTrack = trackId;
+        maxHeightOfLowestTrack = height;
         topBlockOfGroup = selection;
-      } else if (block.trackId === groupLowestTrack) {
-        maxHeightOfLowestTrack = Math.max(
-          maxHeightOfLowestTrack,
-          block.rect.height,
-        );
-        topBlockOfGroup = selection;
+      } else if (trackId === groupLowestTrack) {
+        if (height > maxHeightOfLowestTrack) {
+          maxHeightOfLowestTrack = height;
+          topBlockOfGroup = selection;
+        }
       }
 
-      if (block.trackId > groupHighestTrack) {
-        groupHighestTrack = block.trackId;
-        maxHeightOfHighestTrack = block.rect.height;
+      if (trackId > groupHighestTrack) {
+        groupHighestTrack = trackId;
+        maxHeightOfHighestTrack = height;
         bottomBlockOfGroup = selection;
-      } else if (block.trackId === groupHighestTrack) {
-        maxHeightOfHighestTrack = Math.max(
-          maxHeightOfHighestTrack,
-          block.rect.height,
-        );
-        bottomBlockOfGroup = selection;
+      } else if (trackId === groupHighestTrack) {
+        if (height > maxHeightOfHighestTrack) {
+          maxHeightOfHighestTrack = height;
+          bottomBlockOfGroup = selection;
+        }
       }
     });
 
