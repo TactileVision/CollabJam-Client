@@ -49,7 +49,7 @@ export class LiveBlockBuilder {
             config.leftPadding +
             timeSinceStartMs * this.pixelsPerMillisecond * zoom;
           g.width = zoom;
-          g.height = channel.intensity * config.blockHeightScaleFactor;
+          g.height = channel.intensity * config.maxBlockHeight;
           g.y =
             config.sliderHeight +
             config.componentPadding +
@@ -82,7 +82,7 @@ export class LiveBlockBuilder {
 
           g.x = config.leftPadding + startX * zoom;
           g.width = width * zoom;
-          g.height = active.intensity * config.blockHeightScaleFactor;
+          g.height = active.intensity * config.maxBlockHeight;
           g.y = y;
         }
       } else if (channel.intensity === 0 && active) {

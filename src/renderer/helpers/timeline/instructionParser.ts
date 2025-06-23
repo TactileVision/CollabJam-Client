@@ -95,7 +95,7 @@ export class InstructionParser {
       events.push({
         time: startTime,
         trackId: block.trackId,
-        intensity: block.rect.height / config.blockHeightScaleFactor,
+        intensity: block.rect.height / config.maxBlockHeight,
       });
       events.push({ time: endTime, trackId: block.trackId, intensity: 0 });
     });

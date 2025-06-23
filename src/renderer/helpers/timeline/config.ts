@@ -6,7 +6,6 @@ const config = {
   horizontalScrollThreshold: 100,
   verticalScrollSpeed: 0.1,
   verticalScrollThreshold: 100,
-  blockHeightScaleFactor: 100,
   // slider
   sliderHeight: 28,
   sliderMinWidth: 5,
@@ -20,7 +19,7 @@ const config = {
   // blocks
   minTactonWidth: 1,
   resizingHandleWidth: 20,
-  maxBlockHeight: 150,
+  maxBlockHeight: 100,
   minBlockHeight: 10,
   blockHandleIndicatorRadius: 6,
   // group
