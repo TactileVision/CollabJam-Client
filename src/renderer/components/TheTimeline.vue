@@ -139,6 +139,11 @@ export default defineComponent({
     async tacton() {
       if (this.tacton) {
         if (this.lastTactonId == null || this.lastTactonId != this.tacton.uuid) {
+          
+          // clear data of blockManager and store
+          this.store.state.timeline.groups.clear();
+          this.store.state.timeline.groups.clear();
+          
           // save uuid
           this.lastTactonId = this.tacton.uuid;
           
