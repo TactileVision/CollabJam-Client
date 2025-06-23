@@ -92,7 +92,6 @@ export class InstructionParser {
       const startTime: number = (convertedX / timelineWidth) * totalDuration;
       const endTime: number =
         startTime + (convertedWidth / timelineWidth) * totalDuration;
-
       events.push({
         time: startTime,
         trackId: block.trackId,
@@ -101,11 +100,31 @@ export class InstructionParser {
       events.push({ time: endTime, trackId: block.trackId, intensity: 0 });
     });
 
+    // cleanup
+    const cleanedEvents: BlockEvent[] = [];
+
+    for (let i = 0; i < events.length; i++) {
+      const current: BlockEvent = events[i];
+      const next: BlockEvent = events[i + 1];
+
+      // if intensity = 0 and a new start occurs immediately afterwards on the same track, skip this instruction
+      if (
+        current.intensity === 0 &&
+        next &&
+        this.nearlyEqual(current.time, next.time) &&
+        current.trackId === next.trackId &&
+        next.intensity > 0
+      ) {
+        continue;
+      }
+      cleanedEvents.push(current);
+    }
+
     // sort events
-    events.sort((a: BlockEvent, b: BlockEvent) => a.time - b.time);
+    cleanedEvents.sort((a: BlockEvent, b: BlockEvent) => a.time - b.time);
 
     // transform events into instructions
-    events.forEach((event: BlockEvent): void => {
+    cleanedEvents.forEach((event: BlockEvent): void => {
       // insert wait-instruction if needed
       if (event.time > currentTime) {
         instructions.push({
@@ -122,7 +141,9 @@ export class InstructionParser {
         },
       });
     });
-
     return instructions;
+  }
+  private nearlyEqual(a: number, b: number, epsilon: number = 0.0001): boolean {
+    return Math.abs(a - b) < epsilon;
   }
 }
