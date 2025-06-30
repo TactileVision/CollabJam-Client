@@ -43,6 +43,16 @@
     >
       {{ store.state.roomSettings.mode == 4 ? "Stop" : "Overdub" }}
     </v-btn>
+    <v-checkbox-btn 
+      style="border-radius: 4px"
+      color="secondary"
+      label="Snapping"
+      :true-icon="'mdi-grid'"
+      :false-icon="'mdi-grid-off'"
+      v-model="store.state.timeline.isSnappingActive"
+      @click="toggleSnapping"
+    >
+    </v-checkbox-btn>
     <CollaborationInteractionModeIndicator
       class="v-col"
       cols="1>"
@@ -82,6 +92,7 @@ import CollaborationInteractionModeIndicator from "@/renderer/components/Collabo
 import { changeRecordMode } from "@/renderer/helpers/recordMode";
 import { InteractionModeChange } from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
+import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
 
 export default defineComponent({
   name: "CollaborationHeader",
@@ -153,6 +164,9 @@ export default defineComponent({
     toggleOverdubbing() {
       changeRecordMode(this.store, InteractionModeChange.toggleOverdubbing);
     },
+    toggleSnapping() {
+      this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
+    }
   },
 });
 </script>
