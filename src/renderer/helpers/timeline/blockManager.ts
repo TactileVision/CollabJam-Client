@@ -2160,7 +2160,10 @@ export class BlockManager {
           maxHeightOfLowestTrack = height;
           topBlockOfGroup = selection;
         } else if (trackId === groupLowestTrack) {
-          maxHeightOfLowestTrack = Math.max(maxHeightOfLowestTrack, height);
+          if (maxHeightOfLowestTrack < height) {
+            maxHeightOfLowestTrack = height;
+            topBlockOfGroup = selection;
+          }
         }
 
         if (trackId > groupHighestTrack) {
