@@ -28,7 +28,7 @@ export default defineComponent({
     );
     
     watch(() => store.state.roomSettings.mode, (newMode) => {
-      if (newMode == InteractionMode.Recording) {
+      if (newMode == InteractionMode.Recording || newMode == InteractionMode.Overdubbing) {
         positionIndicator.visible = false;
       } else if (newMode == InteractionMode.Jamming) {
         positionIndicator.visible = true;
