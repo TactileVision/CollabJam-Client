@@ -128,7 +128,7 @@ export class BlockManager {
   private isScrolling: boolean = false;
   private currentDirection: Direction | null = null;
   private currentFactor: number = 0;
-  private currentTacton: BlockDTO | null = null;
+  private currentTacton: BlockDTO | CopiedBlockDTO | null = null;
 
   // thresholds for viewport-scrolling
   private rightThreshold: number = 0;
@@ -1142,6 +1142,7 @@ export class BlockManager {
       this.initialX = this.store.state.timeline.currentCursorPosition.x;
       this.initialY = this.store.state.timeline.currentCursorPosition.y;
       this.lastCursorX = this.initialX;
+      this.currentTacton = this.copiedBlocks[this.copiedBlocks.length - 1];
 
       this.updateCopiedBlocks();
 
