@@ -1275,7 +1275,7 @@ export class BlockManager {
     });
 
     this.copiedBlocks = [];
-    return;
+    this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private clearCopiedBlocks(): void {
     if (this.copiedBlocks.length > 0) {
@@ -1867,6 +1867,7 @@ export class BlockManager {
     this.calculateVirtualViewportLength();
     this.pointerMoveHandler = null;
     this.pointerUpHandler = null;
+    this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private onChangeAmplitude(
     event: FederatedPointerEvent,
