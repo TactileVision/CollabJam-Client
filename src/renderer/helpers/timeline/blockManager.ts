@@ -869,7 +869,6 @@ export class BlockManager {
 
   // Updates all unselected blocks of scrolling, update all blocks if moving slider
   private onHorizontalViewportChange(): void {
-    console.log(this.store.state.timeline.blocks);
     if (!this.updated) {
       if (this.isScrolling) {
         // update only blocks that are not selected
