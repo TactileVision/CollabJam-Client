@@ -1,8 +1,8 @@
 import {
+  Application,
   Container,
   FederatedPointerEvent,
   Graphics,
-  Application,
 } from "pixi.js";
 import { watch } from "vue";
 import { Store, useStore } from "@/renderer/store/store";
@@ -14,11 +14,12 @@ import {
 import config from "@/renderer/helpers/timeline/config";
 import {
   BlockChanges,
+  BlockData,
   BlockDTO,
   BlockSelection,
-  BlockData,
   TimelineEvents,
 } from "@/renderer/helpers/timeline/types";
+
 interface SelectionBorderData {
   container: Container;
   border: Graphics;
@@ -868,6 +869,7 @@ export class BlockManager {
 
   // Updates all unselected blocks of scrolling, update all blocks if moving slider
   private onHorizontalViewportChange(): void {
+    console.log(this.store.state.timeline.blocks);
     if (!this.updated) {
       if (this.isScrolling) {
         // update only blocks that are not selected
@@ -2727,12 +2729,6 @@ export class BlockManager {
 
     borderData.lastStartX = groupStartX;
     borderData.lastWidth = groupWidth;
-  }
-  public removeBlockFromCanvas(): void {
-    console.log("deleting blocks");
-    this.forEachBlock((block: BlockDTO): void => {
-      block.container.destroy({ children: true });
-    });
   }
 
   //******* scroll viewport when block is at border-regions *******

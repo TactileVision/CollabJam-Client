@@ -207,7 +207,7 @@ export default defineComponent({
 
       if (mode == InteractionMode.Recording) {
         // remove drawn blocks from screen
-        this.store.state.timeline.blockManager?.removeBlockFromCanvas();
+        this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
         this.ticker?.add(this.recording);
         this.ticker?.start();
