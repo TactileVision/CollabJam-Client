@@ -1,10 +1,11 @@
 <script lang="ts">
-import { defineComponent, watch } from "vue";
-import { Store, useStore } from "@/renderer/store/store";
+import {defineComponent, watch} from "vue";
+import {Store, useStore} from "@/renderer/store/store";
 import {getDynamicContainer, getPixiApp} from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
-import { Graphics } from "pixi.js";
-import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
+import {Graphics} from "pixi.js";
+import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
+import {InteractionMode} from "@sharedTypes/roomTypes";
 
 export default defineComponent({
   name: "TheCursorPositionIndicator",
@@ -21,9 +22,18 @@ export default defineComponent({
     watch(
       () => store.state.timeline.trackCount,
       () => {
+        if (!positionIndicator.visible) return;
         renderIndicator();
       },
     );
+    
+    watch(() => store.state.roomSettings.mode, (newMode) => {
+      if (newMode == InteractionMode.Recording) {
+        positionIndicator.visible = false;
+      } else if (newMode == InteractionMode.Jamming) {
+        positionIndicator.visible = true;
+      }
+    })
 
     getPixiApp().canvas.addEventListener("pointermove", (event: PointerEvent) => {
       if (animationFrameId != null) return;
