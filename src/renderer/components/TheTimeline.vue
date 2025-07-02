@@ -40,7 +40,10 @@ export default defineComponent({
       lastTactonId: null as string | null,
       lastHorizontalViewportOffset: 0,
       isSliderFollowing: false,
-      liveBlockBuilder: new LiveBlockBuilder()
+      liveBlockBuilder: new LiveBlockBuilder(),
+      updateLoadedTacton: false,
+      latency: 0,
+      isFirstTick: false
     };
   },
   computed: {
@@ -133,13 +136,36 @@ export default defineComponent({
       this.liveBlockBuilder.processTick(channels, this.currentTime);
       
       getLiveContainer().x = - (this.store.state.timeline.horizontalViewportOffset);
+    },
+    overdubbing() {
+      if (this.isFirstTick) {
+        const now = performance.now();
+        this.latency = now - this.latency;        
+        //this.currentTime = -this.latency;
+        console.log("latency: ",this.latency);
+        this.isFirstTick = false;
+      }
+      
+      this.currentTime += this.ticker!.elapsedMS;
+      const channels = this.store.state.tactonSettings.outputChannelState;
+      this.liveBlockBuilder.processTick(channels, this.currentTime);
+      getLiveContainer().x = - (this.store.state.timeline.horizontalViewportOffset);
+      const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
+      this.cursor?.moveToPosition(x, this.isSliderFollowing);
+    },
+    isTactonInViewport(): boolean {
+      const lastBlockXPosition = this.store.state.timeline.lastBlockPositionX;
+      const canvasWidth = this.store.state.timeline.canvasWidth;
+      const horizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+      const isLastBlockOutOfViewport = lastBlockXPosition > canvasWidth;
+      const isLastBlockOutOfNewViewport = (lastBlockXPosition + horizontalViewportOffset) > canvasWidth;
+      return isLastBlockOutOfViewport || (horizontalViewportOffset != 0 && isLastBlockOutOfNewViewport);
     }
   },
   watch: {
     async tacton() {
       if (this.tacton) {
-        if (this.lastTactonId == null || this.lastTactonId != this.tacton.uuid) {
-          
+        if (this.lastTactonId == null || this.lastTactonId != this.tacton.uuid || this.updateLoadedTacton) {
           // clear data of blockManager and store
           this.store.state.timeline.groups.clear();
           this.store.state.timeline.groups.clear();
@@ -152,10 +178,12 @@ export default defineComponent({
               this.tacton.instructions,
           );
           const blockData: BlockData[] = parsed.blockData;
-
-          // set initZoom
-          this.calculateInitialZoom(parsed.duration);
-
+          
+          if (!this.updateLoadedTacton) {
+            // set initZoom
+            this.calculateInitialZoom(parsed.duration);
+          }
+          
           // calculated trackCount
           this.trackCount = Math.max(
               ...blockData.map((block: BlockData) => block.trackId),
@@ -189,6 +217,8 @@ export default defineComponent({
 
           // render components
           this.mounted = true;
+          
+          this.updateLoadedTacton = false;
         }
         // current tacton was updated     
       }
@@ -198,38 +228,44 @@ export default defineComponent({
       //this.clearGraph();
       // reset liveBLockBuilder
       this.liveBlockBuilder.reset();
-
       this.currentTime = 0;
       if (this.ticker !== null && this.ticker.count > 0) {
         this.ticker?.remove(this.recording);
         this.ticker?.remove(this.playback);
+        this.ticker?.remove(this.overdubbing);
       }
 
       if (mode == InteractionMode.Recording) {
-        // remove drawn blocks from screen
+        // TODO set initial view for recoring (zoom = 1?, etc.)
+        // TODO reload tacton after canceling recoding
+        // TODO show all possible trackLInes when recording
+        
         this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
         this.ticker?.add(this.recording);
         this.ticker?.start();
       } else if (mode == InteractionMode.Overdubbing) {
         if (this.tacton != null) {
+          this.updateLoadedTacton = true;
+          this.isSliderFollowing = this.isTactonInViewport()
           
+          this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+          this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);          
+          this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
+          this.isFirstTick = true;
+          this.latency = performance.now();          
+          this.ticker?.add(this.overdubbing);
+          this.ticker?.start();
         }
       } else if (mode == InteractionMode.Jamming) {
-        // apply last horzintalViewportOffset
+        // apply last horizontalViewportOffset
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
         // reposition cursor
         this.cursor?.moveToPosition(0);
       } else if (mode == InteractionMode.Playback) {
-        // calculate if slider should follow cursor (last block is out of viewport)
-        const lastBlockXPosition = this.store.state.timeline.lastBlockPositionX;
-        const canvasWidth = this.store.state.timeline.canvasWidth;
-        const horizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
-        const isLastBlockOutOfViewport = lastBlockXPosition > canvasWidth;
-        const isLastBlockOutOfNewViewport = (lastBlockXPosition + horizontalViewportOffset) > canvasWidth;
-        this.isSliderFollowing =  isLastBlockOutOfViewport || (horizontalViewportOffset != 0 && isLastBlockOutOfNewViewport);
+        this.isSliderFollowing = this.isTactonInViewport();
         
-        // save last horizontalViewportOffset 
+        // save last horizontalViewportOffset
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
         

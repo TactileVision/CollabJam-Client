@@ -40,9 +40,9 @@ export class LiveBlockBuilder {
           if (active) {
             this.activeBlocks.delete(channel.channelId);
           }
-
+          console.log("start of block at ", timeSinceStartMs);
           // create new block
-          const g = new Graphics();
+          const g: Graphics = new Graphics();
           g.rect(0, 0, 1, 1);
           g.fill(blockColor);
           g.x =
