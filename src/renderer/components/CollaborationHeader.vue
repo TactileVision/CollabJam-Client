@@ -143,7 +143,7 @@ export default defineComponent({
       this.$router.push("/devices");
     },
     toggleRecording() {
-      changeRecordMode(this.store, InteractionModeChange.toggleRecording);
+      changeRecordMode(InteractionModeChange.toggleRecording);
       // if (this.store.state.roomSettings.mode == InteractionMode.Recording) {
       // 	sendSocketMessage(WS_MSG_TYPE.UPDATE_ROOM_MODE_SERV, {
       // 		roomId: this.store.state.roomSettings.id,
@@ -159,10 +159,10 @@ export default defineComponent({
       // }
     },
     togglePlayback() {
-      changeRecordMode(this.store, InteractionModeChange.togglePlayback);
+      changeRecordMode(InteractionModeChange.togglePlayback);
     },
     toggleOverdubbing() {
-      changeRecordMode(this.store, InteractionModeChange.toggleOverdubbing);
+      changeRecordMode(InteractionModeChange.toggleOverdubbing);
     },
     toggleSnapping() {
       this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);

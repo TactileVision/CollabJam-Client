@@ -37,7 +37,7 @@ const ChangeInteractionModeHandler = (): InputHandler => {
             ) {
               return;
             }
-            changeRecordMode(store, a.change);
+            changeRecordMode(a.change);
           });
         }
       }

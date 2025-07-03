@@ -1,7 +1,7 @@
 import { InteractionMode, InteractionModeChange } from "@sharedTypes/roomTypes";
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import { UpdateRoomMode } from "@sharedTypes/websocketTypes";
-import { Store } from "@/renderer/store/store";
+import { Store, useStore } from "@/renderer/store/store";
 import { TactileTask } from "@/shared/types/tactonTypes";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
 import { TactonMutations } from "../store/modules/collaboration/tactonSettings/tactonSettings";
@@ -9,12 +9,9 @@ import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tacton
 import { RoomMutations } from "../store/modules/collaboration/roomSettings/roomSettings";
 
 // export const changeRecordMode = function (roomId: string, currentMode: InteractionMode, change: InteractionModeChange) {
-export const changeRecordMode = function (
-  store: Store,
-  change: InteractionModeChange,
-) {
+export const changeRecordMode = function (change: InteractionModeChange) {
   console.log("CHANGING RECORD MODE");
-
+  const store: Store = useStore();
   const currentMode = store.state.roomSettings.mode;
   const payload: UpdateRoomMode = {
     roomId: store.state.roomSettings.id || "",

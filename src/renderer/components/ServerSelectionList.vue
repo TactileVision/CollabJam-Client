@@ -91,8 +91,7 @@ export default defineComponent({
       this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
         rooms: [],
       });
-      initWebsocket(this.store, url);
-      console.log(url);
+      initWebsocket(url);
       this.store.commit(RoomMutations.UPDATE_USER_NAME, this.username);
       this.$router.push("/roomView");
     },

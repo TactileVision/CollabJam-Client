@@ -47,7 +47,7 @@ export default defineComponent({
       this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
         rooms: [],
       });
-      initWebsocket(this.store, this.goOnline ? this.remoteUrl : this.localUrl);
+      initWebsocket(this.goOnline ? this.remoteUrl : this.localUrl);
     },
   },
 });

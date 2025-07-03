@@ -1,4 +1,4 @@
-import { Store } from "@/renderer/store/store";
+import { Store, useStore } from "@/renderer/store/store";
 import { Instruction } from "@/main/Input/InputHandling/InputHandlerManager";
 import { debouncedHandling } from "@/main/Input/InputHandling/Debouincing";
 // import { router } from "@/renderer/router";
@@ -43,7 +43,8 @@ export const bufferedSending = (
  * method to initiate the websocket connection
  * in onmessage Function all custom messages are handled
  */
-export const initWebsocket = (store: Store, url: string) => {
+export const initWebsocket = (url: string): void => {
+  const store: Store = useStore();
   if (socket !== null && currentUrl !== url) {
     console.log("Closing socket");
     socket.close();

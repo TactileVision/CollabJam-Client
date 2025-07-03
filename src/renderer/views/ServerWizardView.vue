@@ -118,7 +118,7 @@
               text="Choose Server from list"
               @click="
                 setupState = SetupState.USERNAME;
-                $refs.addServerForm.reset();
+                resetForm();
               "
             ></v-btn>
           </v-card-actions>
@@ -295,6 +295,9 @@ export default defineComponent({
     };
   },
   methods: {
+    resetForm() {
+      (this.$refs.addServerForm as { reset: () => void }).reset();
+    },
     setUsername() {
       if (this.isUsernameValid) {
         this.setupState = SetupState.USERNAME;
@@ -316,7 +319,7 @@ export default defineComponent({
         url = `${this.url}:${this.port}`;
       }
       console.log("connecting to ", url);
-      initWebsocket(this.store, url);
+      initWebsocket(url);
 
       if (socket) {
         const maxConnectionCount = 3;
@@ -455,7 +458,7 @@ export default defineComponent({
     watch(
       () => this.port,
       () => {
-        this.$refs.urlInput.validate();
+        (this.$refs.urlInput as { validate: () => boolean }).validate();
       },
     );
   },
