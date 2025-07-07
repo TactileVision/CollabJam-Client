@@ -44,7 +44,6 @@ export default defineComponent({
       lastHorizontalViewportOffset: 0,
       isSliderFollowing: false,
       liveBlockBuilder: new LiveBlockBuilder(),
-      updateLoadedTacton: false,
       latency: 0,
       isFirstTick: false
     };
@@ -171,9 +170,8 @@ export default defineComponent({
   watch: {
     async tacton() {
       if (this.tacton) {
-        if (this.lastTactonId == null || this.lastTactonId != this.tacton.uuid || this.updateLoadedTacton) {
+        if (this.lastTactonId == null || this.lastTactonId != this.tacton.uuid) {
           // clear data of blockManager and store
-          this.store.state.timeline.groups.clear();
           this.store.state.timeline.groups.clear();
           
           // save uuid
@@ -185,10 +183,8 @@ export default defineComponent({
           );
           const blockData: BlockData[] = parsed.blockData;
           
-          if (!this.updateLoadedTacton) {
-            // set initZoom
-            this.calculateInitialZoom(parsed.duration);
-          }
+          // set initZoom
+          this.calculateInitialZoom(parsed.duration);
           
           // calculated trackCount
           this.trackCount = Math.max(
@@ -223,10 +219,41 @@ export default defineComponent({
 
           // render components
           this.mounted = true;
-          
-          this.updateLoadedTacton = false;
+        } else {
+          // TODO if block was selected, this selection is lost
+          // current tacton was updated
+          // parse instructions
+          const parsed = this.parser.parseInstructionsToBlocks(
+              this.tacton.instructions,
+          );
+          const blockData: BlockData[] = parsed.blockData;
+
+          // calculated trackCount
+          this.trackCount = Math.max(
+              ...blockData.map((block: BlockData) => block.trackId),
+          );
+          this.store.dispatch(
+              TimelineActionTypes.SET_TRACK_COUNT,
+              this.trackCount,
+          );
+
+          // set visible height --> depends on trackCount
+          const visibleHeight =
+              window.innerHeight -
+              this.store.state.timeline.wrapperYOffset -
+              config.sliderHeight;
+          this.store.dispatch(
+              TimelineActionTypes.SET_VISIBLE_HEIGHT,
+              visibleHeight,
+          );
+          this.store.dispatch(TimelineActionTypes.CALCULATE_SCROLLABLE_HEIGHT);
+
+          // create blocks
+          this.store.state.timeline.blockManager?.createBlocksFromData(blockData);
+
+          // render trackLines
+          this.renderTrackLines();
         }
-        // current tacton was updated     
       }
     },
     interactionMode(mode) {
@@ -245,6 +272,7 @@ export default defineComponent({
         // TODO set initial view for recoring (zoom = 1?, etc.)
         // TODO reload tacton after canceling recoding
         // TODO show all possible trackLInes when recording
+        // TODO deselect before overdubbing
         
         this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
@@ -252,7 +280,6 @@ export default defineComponent({
         this.ticker?.start();
       } else if (mode == InteractionMode.Overdubbing) {
         if (this.tacton != null) {
-          this.updateLoadedTacton = true;
           this.isSliderFollowing = this.isTactonInViewport()
           
           this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;

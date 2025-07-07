@@ -104,6 +104,7 @@ export class BlockManager {
   private initialBlockX: number = 0;
   private resizeDirection: Direction | null = null;
   private lastValidDeltaX: number = 0;
+  private moved: boolean = false;
 
   // proportional resize
   private selectionBorder: SelectionBorderData | null = null;
@@ -1351,6 +1352,9 @@ export class BlockManager {
     this.minTrackChange = Math.min(...this.validTrackOffsets);
     this.maxTrackChange = Math.max(...this.validTrackOffsets);
 
+    // set moved --> used to differentiate between click and drag
+    this.moved = false;
+
     // init handlers
     this.pointerMoveHandler = (event: PointerEvent) => this.moveBlock(event);
     this.pointerUpHandler = () => this.onMoveBlockEnd();
@@ -1405,6 +1409,8 @@ export class BlockManager {
         this.isCollidingOnResize = false;
       }
     }
+
+    this.moved = true;
   }
   private onMoveBlockEnd(): void {
     if (this.currentTacton == null) return;
@@ -1437,16 +1443,12 @@ export class BlockManager {
       this.lastTrackOffset,
     );
 
-    this.forEachBlock((block: BlockDTO): void => {
-      this.updateHandles(block);
-      this.updateStroke(block);
-      this.updateIndicators(block);
-      this.updateBlockInitData(block);
-    });
-
     this.calculateVirtualViewportLength();
     this.currentTacton = null;
-    this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    if (this.moved) {
+      this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    }
+    this.moved = false;
   }
   private onSelectingEnd(): void {
     if (this.pointerUpHandler == null) return;
@@ -3058,7 +3060,7 @@ export class BlockManager {
             }
           }
 
-          // snapping if no collision was detected
+          // TODO add unselectedBorder for relative snapping
           if (!isSticking && this.store.state.timeline.isSnappingActive) {
             for (const lineX of this.store.state.timeline.gridLines) {
               // left
