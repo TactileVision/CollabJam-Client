@@ -33,7 +33,10 @@ export default defineComponent({
       store: useStore(),
       trackCount: 0,
       mounted: false,
-      tracks: [] as Container[],
+      tracks: [] as {
+        line: Graphics,
+        container: Container
+      }[],
       cursor: null as Cursor | null,
       ticker: null as PIXI.Ticker | null,
       currentTime: 0,
@@ -59,8 +62,8 @@ export default defineComponent({
       // clear rendered tracks
       // TODO improve, only delete those not needed 
       // (e.g. after removing one track, or loading new tacton that has less tracks)
-      for (const trackContainer of this.tracks) {
-        trackContainer.destroy({ children: true });
+      for (const track of this.tracks) {
+        track.container.destroy({ children: true });
       }      
       this.tracks = [];
       for (let i = 0; i <= this.trackCount; i++) {
@@ -76,18 +79,21 @@ export default defineComponent({
 
         const trackLine = new Graphics();
         trackLine.rect(0, config.trackHeight / 2, this.store.state.timeline.canvasWidth, 2);
-        trackLine.fill(config.colors.trackLineColor);
+        trackLine.fill(config.colors.trackLineColor); 
         trackContainer.addChild(trackLine);
 
         const trackLabel = new Text();
-        trackLabel.text = i;
+        trackLabel.text = i + 1;
         trackLabel.style.fontSize = 18;
         trackLabel.x = -(config.leftPadding / 2) - trackLabel.width / 2;
         trackLabel.y = config.trackHeight / 2 - trackLabel.height / 2;
         trackContainer.addChild(trackLabel);
 
         getDynamicContainer().addChild(trackContainer);
-        this.tracks.push(trackContainer);
+        this.tracks.push({
+          line: trackLine,
+          container: trackContainer
+        });
       }
     },
     calculateInitialZoom(duration: number) {
@@ -279,8 +285,8 @@ export default defineComponent({
   },
   async mounted() {
     watch(() => this.store.state.timeline.canvasWidth, (newWidth: number) => {
-      for (const trackLine of this.tracks) {
-        trackLine.width = newWidth;
+      for (const tracks of this.tracks) {
+        tracks.line.width = newWidth;
       }
     });
 
