@@ -25,7 +25,7 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 1600,
     height: 900,
-    resizable: false,
+    resizable: true,
     autoHideMenuBar: true,
     title: "CollabJam",
     backgroundColor: "#121212",
