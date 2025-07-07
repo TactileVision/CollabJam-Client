@@ -28,7 +28,11 @@ export default defineComponent({
     getStaticContainer().addChild(labelContainer);
     updateGrid();
     
-    watch(() => [store.state.timeline.zoomLevel, store.state.timeline.horizontalViewportOffset], () => {
+    watch(() => [
+      store.state.timeline.zoomLevel,
+      store.state.timeline.horizontalViewportOffset,
+      store.state.timeline.canvasWidth
+    ], () => {
       if (animationFrameId != null) return;
 
       animationFrameId = requestAnimationFrame(() => {
@@ -43,13 +47,6 @@ export default defineComponent({
         rerenderAllGridLines();
       },
     );
-
-    // TODO if resizing is gonna be enabled, this has to be updated
-/*    window.addEventListener("resize", () => {
-      rerenderLabels = true;
-      rerenderGrid();
-    });*/
-    
     function updateGrid() {
       const trackCount = store.state.timeline.trackCount + 1;
       const adjustedPixelsPerSecond = config.pixelsPerSecond * store.state.timeline.zoomLevel;
@@ -65,7 +62,7 @@ export default defineComponent({
 
       for (
           let step = 0;
-          step * interval * adjustedPixelsPerSecond < totalWidth; // extra buffer
+          step * interval * adjustedPixelsPerSecond < totalWidth;
           step++
       ) {
         const time = parseFloat((step * interval).toFixed(3)); // key for cache
