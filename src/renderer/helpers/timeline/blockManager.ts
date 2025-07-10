@@ -915,14 +915,15 @@ export class BlockManager {
       return;
     }
 
-    if (Array.isArray(toSelect) && toSelect.length == 0)
+    if (Array.isArray(toSelect) && toSelect.length == 0) {
       this.eventBus.dispatchEvent(
         new Event(TimelineEvents.TACTON_ALL_DESELECTED),
       );
-    else
+    } else {
       this.eventBus.dispatchEvent(
         new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
       );
+    }
 
     if (!this.store.state.timeline.isEditable) {
       /*            this.showSnackbar({

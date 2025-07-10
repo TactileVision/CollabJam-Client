@@ -355,6 +355,9 @@ export const getters: GetterTree<State, RootState> & Getters = {
     return serverItem;
   },
   canEditTacton: (state) => {
-    return state.currentlyEditingUserId == null;
+    return (
+      state.currentlyEditingUserId == null ||
+      state.currentlyEditingUserId == state.user.id
+    );
   },
 };

@@ -12,6 +12,7 @@ import {
   ChangeTactonMetadata,
   TactonDeletion,
   UpdateAvailableTags,
+  UpdateEditingUser,
   UpdateRoomMode,
   UpdateTacton,
   WS_MSG_TYPE,
@@ -198,6 +199,11 @@ export const handleMessage = (store: Store) => {
     },
   );
 
+  socket.on(WS_MSG_TYPE.UPDATE_EDITING_USER_CLI, (res: UpdateEditingUser) => {
+    store.dispatch(RoomSettingsActionTypes.updateEditingUserId, {
+      userId: res.userId,
+    });
+  });
   // const router = useRouter()
   /**
    * every message containing:
