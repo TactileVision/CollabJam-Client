@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onUnmounted, watch } from "vue";
+import { defineComponent, watch } from "vue";
 import { Container, Graphics, Text } from "pixi.js";
 import {
   getDynamicContainer,

@@ -910,6 +910,20 @@ export class BlockManager {
 
   //*************** Interactions ***************
   private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
+    console.log(toSelect);
+    if (!this.store.getters.canEditTacton) {
+      return;
+    }
+
+    if (Array.isArray(toSelect) && toSelect.length == 0)
+      this.eventBus.dispatchEvent(
+        new Event(TimelineEvents.TACTON_ALL_DESELECTED),
+      );
+    else
+      this.eventBus.dispatchEvent(
+        new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
+      );
+
     if (!this.store.state.timeline.isEditable) {
       /*            this.showSnackbar({
                 message: 'This file is currently read-only. Enable edit mode to make changes.',
