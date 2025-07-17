@@ -1,23 +1,23 @@
 <script lang="ts">
-import {defineComponent, watch} from "vue";
-import {Tacton} from "@sharedTypes/tactonTypes";
-import {useStore} from "@/renderer/store/store";
-import {InstructionParser} from "@/renderer/helpers/timeline/instructionParser";
-import {BlockManager} from "@/renderer/helpers/timeline/blockManager";
-import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
-import {clearPixiApp, createPixiApp, getDynamicContainer, getLiveContainer,} from "@/renderer/helpers/timeline/pixiApp";
+import { defineComponent, watch } from "vue";
+import { Tacton } from "@sharedTypes/tactonTypes";
+import { useStore } from "@/renderer/store/store";
+import { InstructionParser } from "@/renderer/helpers/timeline/instructionParser";
+import { BlockManager } from "@/renderer/helpers/timeline/blockManager";
+import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
+import { clearPixiApp, createPixiApp, getDynamicContainer, getLiveContainer, } from "@/renderer/helpers/timeline/pixiApp";
 import * as PIXI from "pixi.js";
-import {Container, Graphics, Text} from "pixi.js";
+import { Container, Graphics, Text } from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheTimelineSlider from "@/renderer/components/TheTimelineSlider.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import {BlockData, Cursor, TimelineEvents} from "@/renderer/helpers/timeline/types";
-import {InteractionMode} from "@sharedTypes/roomTypes";
-import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
-import {WebSocketAPI} from "@/main/WebSocketManager";
-import {LiveBlockBuilder} from "@/renderer/helpers/timeline/liveBlockBuilder";
+import { BlockData, Cursor, TimelineEvents } from "@/renderer/helpers/timeline/types";
+import { InteractionMode } from "@sharedTypes/roomTypes";
+import { TactonSettingsActionTypes } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
+import { WebSocketAPI } from "@/main/WebSocketManager";
+import { LiveBlockBuilder } from "@/renderer/helpers/timeline/liveBlockBuilder";
 
 export default defineComponent({
   name: "TheTimeline",
@@ -78,7 +78,7 @@ export default defineComponent({
 
         const trackLine = new Graphics();
         trackLine.rect(0, config.trackHeight / 2, this.store.state.timeline.canvasWidth, 2);
-        trackLine.fill(config.colors.trackLineColor); 
+        trackLine.fill(config.colors.trackLineColor);
         trackContainer.addChild(trackLine);
 
         const trackLabel = new Text();
@@ -132,25 +132,25 @@ export default defineComponent({
       if (!this.liveBlockBuilder.hasReceivedInput) {
         this.currentTime = 0;
       }
-      
+
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
       this.cursor?.moveToPosition(x, true);
       this.currentTime += this.ticker!.elapsedMS;
 
       const channels = this.store.state.tactonSettings.outputChannelState;
       this.liveBlockBuilder.processTick(channels, this.currentTime);
-      
+
       getLiveContainer().x = - (this.store.state.timeline.horizontalViewportOffset);
     },
     overdubbing() {
       if (this.isFirstTick) {
         const now = performance.now();
-        this.latency = now - this.latency;        
+        this.latency = now - this.latency;
         //this.currentTime = -this.latency;
-        console.log("latency: ",this.latency);
+        console.log("latency: ", this.latency);
         this.isFirstTick = false;
       }
-      
+
       this.currentTime += this.ticker!.elapsedMS;
       const channels = this.store.state.tactonSettings.outputChannelState;
       this.liveBlockBuilder.processTick(channels, this.currentTime);
@@ -176,10 +176,10 @@ export default defineComponent({
           
           // save uuid
           this.lastTactonId = this.tacton.uuid;
-          
+
           // parse instructions
           const parsed = this.parser.parseInstructionsToBlocks(
-              this.tacton.instructions,
+            this.tacton.instructions,
           );
           const blockData: BlockData[] = parsed.blockData;
           
@@ -188,21 +188,21 @@ export default defineComponent({
           
           // calculated trackCount
           this.trackCount = Math.max(
-              ...blockData.map((block: BlockData) => block.trackId),
+            ...blockData.map((block: BlockData) => block.trackId),
           );
           this.store.dispatch(
-              TimelineActionTypes.SET_TRACK_COUNT,
-              this.trackCount,
+            TimelineActionTypes.SET_TRACK_COUNT,
+            this.trackCount,
           );
 
           // set visible height --> depends on trackCount
           const visibleHeight =
-              window.innerHeight -
-              this.store.state.timeline.wrapperYOffset -
-              config.sliderHeight;
+            window.innerHeight -
+            this.store.state.timeline.wrapperYOffset -
+            config.sliderHeight;
           this.store.dispatch(
-              TimelineActionTypes.SET_VISIBLE_HEIGHT,
-              visibleHeight,
+            TimelineActionTypes.SET_VISIBLE_HEIGHT,
+            visibleHeight,
           );
           this.store.dispatch(TimelineActionTypes.CALCULATE_SCROLLABLE_HEIGHT);
 
@@ -272,6 +272,7 @@ export default defineComponent({
         // TODO set initial view for recoring (zoom = 1?, etc.)
         // TODO reload tacton after canceling recoding
         // TODO show all possible trackLInes when recording
+
         // TODO deselect before overdubbing
         
         this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
@@ -281,12 +282,12 @@ export default defineComponent({
       } else if (mode == InteractionMode.Overdubbing) {
         if (this.tacton != null) {
           this.isSliderFollowing = this.isTactonInViewport()
-          
+
           this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
-          this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);          
+          this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
           this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
           this.isFirstTick = true;
-          this.latency = performance.now();          
+          this.latency = performance.now();
           this.ticker?.add(this.overdubbing);
           this.ticker?.start();
         }
@@ -297,11 +298,11 @@ export default defineComponent({
         this.cursor?.moveToPosition(0);
       } else if (mode == InteractionMode.Playback) {
         this.isSliderFollowing = this.isTactonInViewport();
-        
+
         // save last horizontalViewportOffset
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
-        
+
         this.ticker?.add(this.playback);
         this.ticker?.start();
       } /* else {
@@ -318,12 +319,12 @@ export default defineComponent({
     });
 
     await createPixiApp();
-    
+
     // blockManager and cursor depend on the existence of canvas
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
     this.cursor = new Cursor(0xec660c);
     this.cursor.moveToPosition(0);
-    
+
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, () => {
       const tacton = this.tacton
       if (tacton == null) return;
@@ -337,13 +338,28 @@ export default defineComponent({
       });
     });
 
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, () => {
+      console.log("Selected");
+      if (this.store.state.roomSettings.currentlyEditingUserId == null) {
+        console.log("Claiming for me");
+        WebSocketAPI.requestEditingPrivilege(this.store.state.roomSettings.id || "", this.store.state.roomSettings.user.id)
+      }
+    })
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_ALL_DESELECTED, () => {
+      console.log("Deselected");
+      if (this.store.state.roomSettings.currentlyEditingUserId == this.store.state.roomSettings.user.id) {
+        console.log("Letting go");
+        WebSocketAPI.giveUpEditingPrivilege(this.store.state.roomSettings.id || "")
+      }
+    })
+
     this.ticker = PIXI.Ticker.shared;
     this.ticker.autoStart = false;
     this.ticker.stop();
   },
   beforeUnmount() {
     clearPixiApp();
-    this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS); 
+    this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
 
     if (this.ticker !== null && this.ticker.count > 0) {

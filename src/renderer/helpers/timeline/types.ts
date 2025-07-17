@@ -117,4 +117,6 @@ export class Cursor {
 }
 export enum TimelineEvents {
   TACTON_WAS_EDITED = "tactonWasEdited",
+  TACTON_BLOCK_SELECTED = "tactonPartWasSelected",
+  TACTON_ALL_DESELECTED = "tactonAllDeselected",
 }
