@@ -45,7 +45,8 @@ export default defineComponent({
       isSliderFollowing: false,
       liveBlockBuilder: new LiveBlockBuilder(),
       latency: 0,
-      isFirstTick: false
+      isFirstTick: false,
+      canceledRecording: false
     };
   },
   computed: {
@@ -131,6 +132,9 @@ export default defineComponent({
       // wait for input to start live rendering
       if (!this.liveBlockBuilder.hasReceivedInput) {
         this.currentTime = 0;
+        this.canceledRecording = true;
+      } else {
+        this.canceledRecording = false;
       }
 
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
@@ -254,6 +258,8 @@ export default defineComponent({
           // render trackLines
           this.renderTrackLines();
         }
+      } else {
+        this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
       }
     },
     interactionMode(mode) {
@@ -270,28 +276,31 @@ export default defineComponent({
 
       if (mode == InteractionMode.Recording) {
         // TODO set initial view for recoring (zoom = 1?, etc.)
-        // TODO reload tacton after canceling recoding
         // TODO show all possible trackLInes when recording
-
-        // TODO deselect before overdubbing
         
-        this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
+        this.store.state.timeline.blockManager?.toggleBlockVisibility(false);
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
+        this.canceledRecording = false;
         this.ticker?.add(this.recording);
         this.ticker?.start();
       } else if (mode == InteractionMode.Overdubbing) {
         if (this.tacton != null) {
           this.isSliderFollowing = this.isTactonInViewport()
-
           this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+          this.store.state.timeline.blockManager?.clearSelections();
           this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
           this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
+          
           this.isFirstTick = true;
           this.latency = performance.now();
           this.ticker?.add(this.overdubbing);
           this.ticker?.start();
         }
       } else if (mode == InteractionMode.Jamming) {
+        if (this.canceledRecording) {
+          this.store.state.timeline.blockManager?.toggleBlockVisibility(true);
+          this.canceledRecording = false;
+        }
         // apply last horizontalViewportOffset
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
         // reposition cursor
@@ -301,6 +310,7 @@ export default defineComponent({
 
         // save last horizontalViewportOffset
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+        this.store.state.timeline.blockManager?.clearSelections();
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
 
         this.ticker?.add(this.playback);

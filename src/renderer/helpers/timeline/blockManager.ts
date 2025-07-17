@@ -3385,6 +3385,8 @@ export class BlockManager {
     this.removeSelectionBox();
     this.selectRectanglesWithin();
   }
+
+  //******* public helpers *******
   public installEventListeners(): void {
     const pixiApp: Application = getPixiApp();
     // remove existing Event-Listeners
@@ -3410,5 +3412,25 @@ export class BlockManager {
       this.onCanvasMouseMove.bind(this),
     );
     pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp.bind(this));
+  }
+  public clearSelections(): void {
+    this.clearSelectionBorder();
+    this.clearGroupBorder();
+    this.forEachSelectedBlock((block: BlockDTO): void => {
+      this.updateIndicatorVisibility(block, false);
+      block.strokedRect.visible = false;
+    });
+    this.store.state.timeline.selectedBlocks = [];
+  }
+  public toggleBlockVisibility(isVisible: boolean): void {
+    this.clearSelectionBorder();
+    this.clearGroupBorder();
+    this.store.state.timeline.selectedBlocks = [];
+    this.forEachBlock((block: BlockDTO): void => {
+      // reset selected blocks
+      this.updateIndicatorVisibility(block, false);
+      block.strokedRect.visible = false;
+      block.container.visible = isVisible;
+    });
   }
 }
