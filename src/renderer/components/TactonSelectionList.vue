@@ -79,6 +79,7 @@
                 :active="tacton === selection"
                 selectable="true"
                 @click="selectTacton(tacton, groupIndex)"
+                @contextmenu.prevent="openOptionsMenu(tacton)"
               >
                 <template #prepend>
                   <v-list-item-action>
