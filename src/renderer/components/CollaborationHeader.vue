@@ -1,70 +1,110 @@
 <template>
-  <v-toolbar style="margin-top: 0">
-    <!--MARK: Recording-->
-    <!-- <v-sheet class="pa-1"> -->
-    <!-- <div class="text-overline">Create Tacton</div> -->
-    <v-btn
-      style="border-radius: 4px"
-      @click="toggleRecording"
-      :disabled="store.state.roomSettings.mode == 3"
-      color="error"
-      :prepend-icon="
-        store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
-      "
-    >
-      {{ store.state.roomSettings.mode == 2 ? "Stop" : "Record" }}
-    </v-btn>
-    <v-btn
-      style="border-radius: 4px"
-      @click="togglePlayback"
-      :disabled="
-        store.state.roomSettings.mode == 2 ||
-        store.state.tactonPlayback.currentTacton == null
-      "
-      color="primary"
-      :prepend-icon="
-        store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'
-      "
-    >
-      {{ store.state.roomSettings.mode == 3 ? "Stop" : "Play" }}
-    </v-btn>
+  <v-container fluid>
+    <v-row class="align-center w-100 ga-8">
+      <!--Interactions with tacton (e.g. recording)-->
+      <v-col style="max-width: 144px">
+        <v-row class="justify-space-between">
+          <v-btn
+              size="small"
+              style="border-radius: 4px"
+              @click="toggleRecording"
+              :disabled="store.state.roomSettings.mode == 3"
+              color="error"
+              :icon="
+                store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
+              "
+          ></v-btn>
+          <v-btn
+              size="small"
+              style="border-radius: 4px"
+              @click="togglePlayback"
+              :disabled="
+                store.state.roomSettings.mode == 2 ||
+                store.state.tactonPlayback.currentTacton == null
+              "
+              color="primary"
+              :icon="
+                store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'
+              "
+          ></v-btn>
+          <v-btn
+              size="small"
+              style="border-radius: 4px"
+              @click="toggleOverdubbing"
+              :disabled="
+                store.state.roomSettings.mode == 2 ||
+                store.state.tactonPlayback.currentTacton == null
+              "
+              color="secondary"
+              :icon="
+                store.state.roomSettings.mode == 4 ? 'mdi-stop' : 'mdi-layers-edit'
+              "
+          ></v-btn>
+        </v-row>
+        <v-row>
+          
+        </v-row>
+      </v-col>
+      <!--Interactions with timeline (e.g. snapping)-->
+      <v-col style="max-width: 144px">
+        <!--2x3 grid (2 rows, 3 columns-->
+        <v-row class="ga-2">
+          <v-btn
+              size="small"
+              style="border-radius: 4px"
+              @click="toggleSnapping"
+              :color="
+              store.state.timeline.isSnappingActive ? 'success' : ''
+            "
+              :icon="
+              store.state.timeline.isSnappingActive ? 'mdi-grid' : 'mdi-grid-off'
+            "
+              :disabled="
+              store.state.roomSettings.mode == 2 ||
+              store.state.tactonPlayback.currentTacton == null
+            "
+          ></v-btn>
+          <v-btn
+              size="small"
+              style="border-radius: 4px"
+              @click="toggleEdit"
+              :color="
+              store.state.timeline.isEditable ? 'success' : 'error'
+            "
+              :icon="
+              store.state.timeline.isEditable ? 'mdi-pencil' : 'mdi-pencil-off'
+            "
+              :disabled="
+              store.state.roomSettings.mode == 2 ||
+              store.state.tactonPlayback.currentTacton == null
+            "
+          ></v-btn>
+          <v-btn
+              size="small"
+              style="border-radius: 4px"
+              icon=""
+              :disabled="
+              store.state.roomSettings.mode == 2 ||
+              store.state.tactonPlayback.currentTacton == null
+            "
+          ></v-btn>
+        </v-row>
+      </v-col>
+      
+      <!--Display for current Interaction (e.g. recording)-->
+      <v-col>
+        <v-row class="justify-center">
+          <CollaborationInteractionModeIndicator
 
-    <v-btn
-      style="border-radius: 4px"
-      @click="toggleOverdubbing"
-      :disabled="
-        store.state.roomSettings.mode == 2 ||
-        store.state.tactonPlayback.currentTacton == null
-      "
-      color="secondary"
-      :prepend-icon="
-        store.state.roomSettings.mode == 4 ? 'mdi-stop' : 'mdi-layers-edit'
-      "
-    >
-      {{ store.state.roomSettings.mode == 4 ? "Stop" : "Overdub" }}
-    </v-btn>
-    <v-btn 
-      style="border-radius: 4px"
-      @click="toggleSnapping"
-      :color="
-        store.state.timeline.isSnappingActive ? 'secondary' : ''
-      "
-      :prepend-icon="
-        store.state.timeline.isSnappingActive ? 'mdi-grid' : 'mdi-grid-off'
-      "
-      :disabled="
-        store.state.roomSettings.mode == 2 ||
-        store.state.tactonPlayback.currentTacton == null
-      "
-    >
-      Snapping
-    </v-btn>
-    <CollaborationInteractionModeIndicator
+              :mode="store.state.roomSettings.mode"
+          ></CollaborationInteractionModeIndicator>
+        </v-row>
+      </v-col>
+      
 
-      :mode="store.state.roomSettings.mode"
-    ></CollaborationInteractionModeIndicator>
-    <DeviceConnectionModal :num-connected-devices="0"> </DeviceConnectionModal>
-  </v-toolbar>
+      <DeviceConnectionModal :num-connected-devices="0"> </DeviceConnectionModal>
+    </v-row>
+  </v-container>
 </template>
 
 <style lang="scss" scoped>
@@ -78,24 +118,18 @@
 } */
 </style>
 <script lang="ts">
-import { IPC_CHANNELS } from "@/preload/IpcChannels";
+import {IPC_CHANNELS} from "@/preload/IpcChannels";
 // import { router } from "@/renderer/router";
-import {
-  DeviceStatus,
-  GeneralSettingsActionTypes,
-} from "@/renderer/store/modules/generalSettings/generalSettings";
-import {
-  RoomMutations,
-  RoomState,
-} from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
-import { useStore } from "@/renderer/store/store";
-import { defineComponent } from "vue";
-import { WebSocketAPI } from "@/main/WebSocketManager";
+import {DeviceStatus, GeneralSettingsActionTypes,} from "@/renderer/store/modules/generalSettings/generalSettings";
+import {RoomMutations, RoomState,} from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
+import {useStore} from "@/renderer/store/store";
+import {defineComponent} from "vue";
+import {WebSocketAPI} from "@/main/WebSocketManager";
 // import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
 // import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
-import { changeRecordMode } from "@/renderer/helpers/recordMode";
-import { InteractionModeChange } from "@sharedTypes/roomTypes";
+import {changeRecordMode} from "@/renderer/helpers/recordMode";
+import {InteractionModeChange} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
 
@@ -171,6 +205,9 @@ export default defineComponent({
     },
     toggleSnapping() {
       this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
+    },
+    toggleEdit() {
+      this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE);
     }
   },
 });

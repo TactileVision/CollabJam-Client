@@ -149,7 +149,7 @@ export interface Actions {
   }: AugmentedActionContext): void;
   [TimelineActionTypes.TOGGLE_EDIT_STATE](
     { commit }: AugmentedActionContext,
-    payload: boolean,
+    payload?: boolean,
   ): void;
   [TimelineActionTypes.UPDATE_CANVAS_TOP_OFFSET](
     { commit }: AugmentedActionContext,
@@ -345,7 +345,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
   },
   [TimelineActionTypes.TOGGLE_EDIT_STATE](
     { commit }: { commit: Commit },
-    isEditable: boolean,
+    isEditable?: boolean,
   ): void {
     commit(TimelineMutations.TOGGLE_EDIT_STATE, isEditable);
   },

@@ -98,7 +98,7 @@ export type Mutations<S = State> = {
     groupData: { groupId: number; selection: BlockSelection[] },
   ): void;
   [TimelineMutations.TOGGLE_SNAPPING_STATE](state: S): void;
-  [TimelineMutations.TOGGLE_EDIT_STATE](state: S, isEditable: boolean): void;
+  [TimelineMutations.TOGGLE_EDIT_STATE](state: S, isEditable?: boolean): void;
   [TimelineMutations.SET_CANVAS_TOP_OFFSET](state: S, topOffset: number): void;
   [TimelineMutations.SET_WRAPPER_X_OFFSET](state: S, xOffset: number): void;
   [TimelineMutations.SET_WRAPPER_Y_OFFSET](state: S, yOffset: number): void;
@@ -408,9 +408,13 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [TimelineMutations.TOGGLE_EDIT_STATE](
     state: State,
-    isEditable: boolean,
+    isEditable?: boolean,
   ): void {
-    state.isEditable = isEditable;
+    if (isEditable != undefined) {
+      state.isEditable = isEditable;
+    } else {
+      state.isEditable = !state.isEditable;
+    }
   },
   [TimelineMutations.SET_CANVAS_TOP_OFFSET](
     state: State,
