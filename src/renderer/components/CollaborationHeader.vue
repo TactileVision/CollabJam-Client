@@ -43,19 +43,24 @@
     >
       {{ store.state.roomSettings.mode == 4 ? "Stop" : "Overdub" }}
     </v-btn>
-    <v-checkbox-btn 
+    <v-btn 
       style="border-radius: 4px"
-      color="secondary"
-      label="Snapping"
-      :true-icon="'mdi-grid'"
-      :false-icon="'mdi-grid-off'"
-      v-model="store.state.timeline.isSnappingActive"
       @click="toggleSnapping"
+      :color="
+        store.state.timeline.isSnappingActive ? 'secondary' : ''
+      "
+      :prepend-icon="
+        store.state.timeline.isSnappingActive ? 'mdi-grid' : 'mdi-grid-off'
+      "
+      :disabled="
+        store.state.roomSettings.mode == 2 ||
+        store.state.tactonPlayback.currentTacton == null
+      "
     >
-    </v-checkbox-btn>
+      Snapping
+    </v-btn>
     <CollaborationInteractionModeIndicator
-      class="v-col"
-      cols="1>"
+
       :mode="store.state.roomSettings.mode"
     ></CollaborationInteractionModeIndicator>
     <DeviceConnectionModal :num-connected-devices="0"> </DeviceConnectionModal>
