@@ -42,6 +42,8 @@ export default defineComponent({
       currentTime: 0,
       lastTactonId: null as string | null,
       lastHorizontalViewportOffset: 0,
+      lastZoom: 0,
+      initZoom: 0,
       isSliderFollowing: false,
       liveBlockBuilder: new LiveBlockBuilder(),
       latency: 0,
@@ -275,22 +277,34 @@ export default defineComponent({
       }
 
       if (mode == InteractionMode.Recording) {
-        // TODO set initial view for recoring (zoom = 1?, etc.)
         // TODO show all possible trackLInes when recording
-        
+
+        // store values
+        this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+        this.lastZoom = this.store.state.timeline.zoomLevel;
+
+        // prepare for recording
         this.store.state.timeline.blockManager?.toggleBlockVisibility(false);
+        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
+        this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
         this.canceledRecording = false;
+
         this.ticker?.add(this.recording);
         this.ticker?.start();
       } else if (mode == InteractionMode.Overdubbing) {
         if (this.tacton != null) {
-          this.isSliderFollowing = this.isTactonInViewport()
+          // store values
           this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+          this.lastZoom = this.store.state.timeline.zoomLevel;
+
+          // prepare for overdubbing
+          this.isSliderFollowing = this.isTactonInViewport();
           this.store.state.timeline.blockManager?.clearSelections();
-          this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
+          this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
+          this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);    
           this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
-          
+
           this.isFirstTick = true;
           this.latency = performance.now();
           this.ticker?.add(this.overdubbing);
@@ -302,14 +316,18 @@ export default defineComponent({
           this.canceledRecording = false;
         }
         // apply last horizontalViewportOffset
+        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.lastZoom);
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
+
         // reposition cursor
         this.cursor?.moveToPosition(0);
       } else if (mode == InteractionMode.Playback) {
         this.isSliderFollowing = this.isTactonInViewport();
 
-        // save last horizontalViewportOffset
+        // store values
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+
+        // prepare for playback
         this.store.state.timeline.blockManager?.clearSelections();
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
 
