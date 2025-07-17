@@ -191,6 +191,7 @@ export default defineComponent({
           
           // set initZoom
           this.calculateInitialZoom(parsed.duration);
+          this.lastZoom = this.store.state.timeline.zoomLevel;
           
           // calculated trackCount
           this.trackCount = Math.max(
@@ -315,6 +316,7 @@ export default defineComponent({
           this.store.state.timeline.blockManager?.toggleBlockVisibility(true);
           this.canceledRecording = false;
         }
+        console.log(this.lastZoom);
         // apply last horizontalViewportOffset
         this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.lastZoom);
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
