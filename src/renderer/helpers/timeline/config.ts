@@ -17,7 +17,7 @@ const config = {
   // track
   trackHeight: 150,
   // blocks
-  minTactonWidth: 1,
+  minBlockWidthMS: 20,
   resizingHandleWidth: 20,
   maxBlockHeight: 100,
   minBlockHeight: 10,
@@ -43,7 +43,5 @@ const config = {
     boundingBoxColor: "rgba(236,102,12, 0.1)",
     groupHandleColor: "rgba(236,102,12, 1)",
   },
-  // playback
-  millisecondsPerTick: 30, //quasi bpm
 };
 export default config;

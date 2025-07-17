@@ -602,9 +602,9 @@ export class BlockManager {
     this.bottomThreshold = window.innerHeight - config.verticalScrollThreshold;
   }
   private applyChanges(changes: BlockChanges): void {
+    const minBlockWidth = this.getMinBlockWidth();
     this.forEachSelectedBlock((block: BlockDTO): void => {
       let isWidthClipped: boolean = false;
-
       // apply Changes
       if (changes.height) {
         const newHeight: number = Math.min(
@@ -630,9 +630,9 @@ export class BlockManager {
       if (changes.width != null) {
         block.rect.width = Math.max(
           block.rect.width + changes.width,
-          config.minTactonWidth,
+          minBlockWidth,
         );
-        if (block.rect.width == config.minTactonWidth) {
+        if (block.rect.width == minBlockWidth) {
           isWidthClipped = true;
         }
       }
@@ -1495,6 +1495,7 @@ export class BlockManager {
       event.clientX - this.initialX - this.store.state.timeline.wrapperXOffset;
     const prevX: number = block.rect.x;
     const prevWidth: number = block.rect.width;
+    const minBlockWidth = this.getMinBlockWidth();
     let newWidth;
     let newX: number = prevX;
 
@@ -1505,13 +1506,10 @@ export class BlockManager {
 
     if (this.resizeDirection === Direction.RIGHT) {
       // calculate new tacton width
-      newWidth = Math.max(
-        this.initialBlockWidth + deltaX,
-        config.minTactonWidth,
-      );
+      newWidth = Math.max(this.initialBlockWidth + deltaX, minBlockWidth);
 
       // check for minTactonWidth
-      if (newWidth == config.minTactonWidth) return;
+      if (newWidth == minBlockWidth) return;
 
       // calculate x coordinate of right border
       const newRightX: number = this.initialBlockX + newWidth;
@@ -1543,7 +1541,7 @@ export class BlockManager {
                   this.store.state.timeline.blocks[trackId][i];
                 const newWidth: number = Math.max(
                   block.initWidth + adjustedDeltaX,
-                  config.minTactonWidth,
+                  minBlockWidth,
                 );
                 const newRightX: number = block.initX + newWidth;
 
@@ -1585,13 +1583,10 @@ export class BlockManager {
       }
     } else {
       // calculate new tacton width
-      newWidth = Math.max(
-        this.initialBlockWidth - deltaX,
-        config.minTactonWidth,
-      );
+      newWidth = Math.max(this.initialBlockWidth - deltaX, minBlockWidth);
 
       // check for minTactonWidth
-      if (newWidth == config.minTactonWidth) return;
+      if (newWidth == minBlockWidth) return;
 
       // calculate new x coordinates of tacton
       newX = this.initialBlockX + deltaX;
@@ -1623,7 +1618,7 @@ export class BlockManager {
                   this.store.state.timeline.blocks[trackId][i];
                 const newWidth: number = Math.max(
                   currentBlock.initWidth - adjustedDeltaX,
-                  config.minTactonWidth,
+                  minBlockWidth,
                 );
                 const newX: number = currentBlock.initX + adjustedDeltaX;
                 const newRightX: number = currentBlock.initX + newWidth;
@@ -2747,6 +2742,10 @@ export class BlockManager {
 
     borderData.lastStartX = groupStartX;
     borderData.lastWidth = groupWidth;
+  }
+  private getMinBlockWidth(): number {
+    const zoom: number = this.store.state.timeline.zoomLevel;
+    return (config.minBlockWidthMS / 1000) * config.pixelsPerSecond * zoom;
   }
 
   //******* scroll viewport when block is at border-regions *******
