@@ -47,9 +47,9 @@
       </v-col>
       <!--Interactions with timeline (e.g. snapping)-->
       <v-col style="max-width: 144px">
-        <!--2x3 grid (2 rows, 3 columns-->
         <v-row class="ga-2">
           <v-btn
+              variant="tonal"
               size="small"
               style="border-radius: 4px"
               @click="toggleSnapping"
@@ -65,6 +65,7 @@
             "
           ></v-btn>
           <v-btn
+              variant="tonal"
               size="small"
               style="border-radius: 4px"
               @click="toggleEdit"
@@ -80,6 +81,7 @@
             "
           ></v-btn>
           <v-btn
+              variant="tonal"
               size="small"
               style="border-radius: 4px"
               icon=""

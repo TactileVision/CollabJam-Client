@@ -4,6 +4,7 @@
     <template #activator="{ props }">
       <v-btn
         prepend-icon="mdi-vibrate"
+        variant="tonal"
         :color="numConnectedDevices == 0 ? 'error' : 'primary'"
         v-bind="props"
       >
