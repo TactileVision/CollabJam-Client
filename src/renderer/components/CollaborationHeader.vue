@@ -5,40 +5,46 @@
       <v-col style="max-width: 144px">
         <v-row class="justify-space-between">
           <v-btn
-              size="small"
-              style="border-radius: 4px"
-              @click="toggleRecording"
-              :disabled="store.state.roomSettings.mode == 3"
-              color="error"
-              :icon="
-                store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
-              "
+            size="small"
+            style="border-radius: 4px"
+            color="error"
+            @click="toggleRecording"
+            @mouseenter="showToolTip(toolTipKeys.RECORD)"
+            @mouseleave="clearToolTip"
+            :disabled="store.state.roomSettings.mode == 3"
+            :icon="
+              store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
+            "
           ></v-btn>
           <v-btn
-              size="small"
-              style="border-radius: 4px"
-              @click="togglePlayback"
-              :disabled="
-                store.state.roomSettings.mode == 2 ||
-                store.state.tactonPlayback.currentTacton == null
-              "
-              color="primary"
-              :icon="
-                store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'
-              "
+            size="small"
+            style="border-radius: 4px"
+            color="primary"
+            @click="togglePlayback"
+            @mouseenter="showToolTip(toolTipKeys.PLAYBACK)"
+            @mouseleave="clearToolTip"
+            :disabled="
+              store.state.roomSettings.mode == 2 ||
+              store.state.tactonPlayback.currentTacton == null
+            "
+            :icon="
+              store.state.roomSettings.mode == 3 ? 'mdi-stop' : 'mdi-play'
+            "
           ></v-btn>
           <v-btn
-              size="small"
-              style="border-radius: 4px"
-              @click="toggleOverdubbing"
-              :disabled="
-                store.state.roomSettings.mode == 2 ||
-                store.state.tactonPlayback.currentTacton == null
-              "
-              color="secondary"
-              :icon="
-                store.state.roomSettings.mode == 4 ? 'mdi-stop' : 'mdi-layers-edit'
-              "
+            size="small"
+            style="border-radius: 4px"
+            color="secondary"
+            @click="toggleOverdubbing"
+            @mouseenter="showToolTip(toolTipKeys.OVERDUB)"
+            @mouseleave="clearToolTip"
+            :disabled="
+              store.state.roomSettings.mode == 2 ||
+              store.state.tactonPlayback.currentTacton == null
+            "
+            :icon="
+              store.state.roomSettings.mode == 4 ? 'mdi-stop' : 'mdi-layers-edit'
+            "
           ></v-btn>
         </v-row>
         <v-row>
@@ -49,43 +55,47 @@
       <v-col style="max-width: 144px">
         <v-row class="ga-2">
           <v-btn
-              variant="tonal"
-              size="small"
-              style="border-radius: 4px"
-              @click="toggleSnapping"
-              :color="
+            variant="tonal"
+            size="small"
+            style="border-radius: 4px"
+            @click="toggleSnapping"
+            @mouseenter="showToolTip(toolTipKeys.SNAPPING)"
+            @mouseleave="clearToolTip"
+            :color="
               store.state.timeline.isSnappingActive ? 'success' : ''
             "
-              :icon="
+            :icon="
               store.state.timeline.isSnappingActive ? 'mdi-grid' : 'mdi-grid-off'
             "
-              :disabled="
+            :disabled="
               store.state.roomSettings.mode == 2 ||
               store.state.tactonPlayback.currentTacton == null
             "
           ></v-btn>
           <v-btn
-              variant="tonal"
-              size="small"
-              style="border-radius: 4px"
-              @click="toggleEdit"
-              :color="
+            variant="tonal"
+            size="small"
+            style="border-radius: 4px"
+            @click="toggleEdit"
+            @mouseenter="showToolTip(toolTipKeys.EDIT)"
+            @mouseleave="clearToolTip"
+            :color="
               store.state.timeline.isEditable ? 'success' : 'error'
             "
-              :icon="
+            :icon="
               store.state.timeline.isEditable ? 'mdi-pencil' : 'mdi-pencil-off'
             "
-              :disabled="
+            :disabled="
               store.state.roomSettings.mode == 2 ||
               store.state.tactonPlayback.currentTacton == null
             "
           ></v-btn>
           <v-btn
-              variant="tonal"
-              size="small"
-              style="border-radius: 4px"
-              icon=""
-              :disabled="
+            variant="tonal"
+            size="small"
+            style="border-radius: 4px"
+            icon=""
+            :disabled="
               store.state.roomSettings.mode == 2 ||
               store.state.tactonPlayback.currentTacton == null
             "
@@ -95,16 +105,50 @@
       
       <!--Display for current Interaction (e.g. recording)-->
       <v-col>
-        <v-row class="justify-center">
+        <v-row class="align-center ga-8 justify-start">
+          <v-card width="360" height="40" density="compact" variant="tonal">
+            <v-fade-transition name="fade-fast">
+              <v-row 
+                v-if="currentToolTip != undefined"
+                class="align-center h-100 ps-4 pe-4"
+                no-gutters
+              >
+                <!--toolTip-->
+                <v-col
+                  class="v-col-10 toolTip"
+                >
+                  {{currentToolTip.toolTip}}
+                </v-col>
+                
+                <!--ShortCut - if available-->
+                <v-col 
+                  v-if="currentToolTip.shortCut != undefined"
+                  class="v-col-2 shortCut text-end"
+                >
+                  {{currentToolTip.shortCut}}
+                </v-col>
+              </v-row>
+              <v-row
+                v-if="currentToolTip == undefined"
+                class="align-center h-100 ps-4 pe-4"
+                no-gutters
+              >
+                <!--current tacton-->
+                <v-col 
+                  class="v-col-10 toolTip text-center text-h6"
+                >
+                  {{store.state.tactonPlayback.currentTacton?.metadata.name}}
+                  {{store.state.tactonPlayback.currentTacton?.metadata.iteration}}
+                </v-col>
+              </v-row>
+            </v-fade-transition>
+          </v-card>
           <CollaborationInteractionModeIndicator
-
               :mode="store.state.roomSettings.mode"
           ></CollaborationInteractionModeIndicator>
         </v-row>
-      </v-col>
-      
-
-      <DeviceConnectionModal :num-connected-devices="0"> </DeviceConnectionModal>
+      </v-col>      
+      <DeviceConnectionModal :num-connected-devices="0"></DeviceConnectionModal>
     </v-row>
   </v-container>
 </template>
@@ -118,6 +162,25 @@
   padding: 2px 10px;
   display: block;
 } */
+
+.toolTip {
+  font-size: 14px;
+}
+
+.shortCut {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fade-fast-enter-active,
+.fade-fast-leave-active {
+  transition: opacity 100ms ease;
+}
+.fade-fast-enter-from,
+.fade-fast-leave-to {
+  opacity: 0;
+}
+
 </style>
 <script lang="ts">
 import {IPC_CHANNELS} from "@/preload/IpcChannels";
@@ -135,6 +198,37 @@ import {InteractionModeChange} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
 
+enum ToolTipKeys {
+  SNAPPING = "Snapping",
+  EDIT = "Edit",
+  RECORD = "Record",
+  OVERDUB = "Overdub",
+  PLAYBACK = "Playback"
+}
+
+type ToolTip = {
+  toolTip: string;
+  shortCut?: string;
+}
+
+const ToolTips: Record<ToolTipKeys, ToolTip> = {
+  [ToolTipKeys.SNAPPING]: {
+    toolTip: "Toggles snapping of blocks to the grid", 
+    shortCut: "CTRL + S"
+  },
+  [ToolTipKeys.EDIT]: {
+    toolTip: "Toggles document edit mode",
+  },
+  [ToolTipKeys.RECORD]: {
+    toolTip: "Records a new tacton",
+  },
+  [ToolTipKeys.OVERDUB]: {
+    toolTip: "Records new input and merges it",
+  },
+  [ToolTipKeys.PLAYBACK]: {
+    toolTip: "Starts/stops timeline playback",
+  }
+}
 export default defineComponent({
   name: "CollaborationHeader",
   components: {
@@ -145,6 +239,11 @@ export default defineComponent({
   },
   data: () => ({
     store: useStore(),
+    toolTipKeys: ToolTipKeys,
+    hoveredToolTip: undefined as ToolTip | undefined,
+    currentToolTip: undefined as ToolTip | undefined,
+    debounceTimer: undefined as ReturnType<typeof setTimeout> | undefined,
+    debounceTimeMS: 200
   }),
   computed: {
     numConnectedDevices(): number {
@@ -154,6 +253,20 @@ export default defineComponent({
     },
   },
   methods: {
+    showToolTip(toolTipKey: ToolTipKeys) {
+      if (this.debounceTimer) clearTimeout(this.debounceTimer);
+      
+      this.debounceTimer = setTimeout(() => {
+        this.currentToolTip = ToolTips[toolTipKey];
+      }, this.debounceTimeMS)      
+    },
+    clearToolTip() {
+      if (this.debounceTimer) clearTimeout(this.debounceTimer);
+
+      this.debounceTimer = setTimeout(() => {
+        this.currentToolTip = undefined;
+      }, this.debounceTimeMS)
+    },
     logOut() {
       // console.log("LOG OUT REQUESTED");
       console.log(this.store.state.roomSettings);
