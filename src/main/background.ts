@@ -21,10 +21,12 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 async function createWindow() {
+  const winDefaultWidth = 1600;
+  const winDefaultHeight = 900;
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 1600,
-    height: 900,
+    width: winDefaultWidth,
+    height: winDefaultHeight,
     resizable: true,
     autoHideMenuBar: true,
     title: "CollabJam",
@@ -77,6 +79,8 @@ async function createWindow() {
   //   // Load the index.html when not in development
   //   win.loadURL("app://./index.html");
   // }
+
+  win.setMinimumSize(winDefaultWidth, winDefaultHeight);
 }
 
 // Quit when all windows are closed.
