@@ -13,11 +13,12 @@ import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheTimelineSlider from "@/renderer/components/TheTimelineSlider.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import { BlockData, Cursor, TimelineEvents } from "@/renderer/helpers/timeline/types";
+import { BlockData, TimelineEvents } from "@/renderer/helpers/timeline/types";
 import { InteractionMode } from "@sharedTypes/roomTypes";
 import { TactonSettingsActionTypes } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import { LiveBlockBuilder } from "@/renderer/helpers/timeline/liveBlockBuilder";
+import { PlayHead } from "@/renderer/helpers/timeline/playHead";
 
 export default defineComponent({
   name: "TheTimeline",
@@ -37,7 +38,7 @@ export default defineComponent({
         line: Graphics,
         container: Container
       }[],
-      cursor: null as Cursor | null,
+      playHead: null as PlayHead | null,
       ticker: null as PIXI.Ticker | null,
       currentTime: 0,
       lastTactonId: null as string | null,
@@ -127,7 +128,7 @@ export default defineComponent({
     },
     playback() {
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
-      this.cursor?.moveToPosition(x, this.isSliderFollowing);
+      this.playHead?.moveToPosition(x, this.isSliderFollowing);
       this.currentTime += this.ticker!.elapsedMS;
     },
     recording() {
@@ -140,7 +141,7 @@ export default defineComponent({
       }
 
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
-      this.cursor?.moveToPosition(x, true);
+      this.playHead?.moveToPosition(x, true);
       this.currentTime += this.ticker!.elapsedMS;
 
       const channels = this.store.state.tactonSettings.outputChannelState;
@@ -162,7 +163,7 @@ export default defineComponent({
       this.liveBlockBuilder.processTick(channels, this.currentTime);
       getLiveContainer().x = - (this.store.state.timeline.horizontalViewportOffset);
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
-      this.cursor?.moveToPosition(x, this.isSliderFollowing);
+      this.playHead?.moveToPosition(x, this.isSliderFollowing);
     },
     isTactonInViewport(): boolean {
       const lastBlockXPosition = this.store.state.timeline.lastBlockPositionX;
@@ -222,8 +223,8 @@ export default defineComponent({
           // TODO remove - just for debugging
           this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE, true);
 
-          this.cursor?.drawCursor();
-          this.cursor?.hide();
+          this.playHead?.drawCursor();
+          this.playHead?.hide();
 
           // render components
           this.mounted = true;
@@ -323,7 +324,7 @@ export default defineComponent({
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
 
         // hide cursor
-        this.cursor?.hide();
+        this.playHead?.hide();
       } else if (mode == InteractionMode.Playback) {
         this.isSliderFollowing = this.isTactonInViewport();
 
@@ -353,8 +354,8 @@ export default defineComponent({
 
     // blockManager and cursor depend on the existence of canvas
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
-    this.cursor = new Cursor(0xec660c);
-    this.cursor.moveToPosition(0);
+    this.playHead = new PlayHead(0xec660c);
+    this.playHead.moveToPosition(0);
 
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, () => {
       const tacton = this.tacton
