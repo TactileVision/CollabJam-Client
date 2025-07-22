@@ -223,6 +223,7 @@ export default defineComponent({
           this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE, true);
 
           this.cursor?.drawCursor();
+          this.cursor?.hide();
 
           // render components
           this.mounted = true;
@@ -321,8 +322,8 @@ export default defineComponent({
         this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.lastZoom);
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
 
-        // reposition cursor
-        this.cursor?.moveToPosition(0);
+        // hide cursor
+        this.cursor?.hide();
       } else if (mode == InteractionMode.Playback) {
         this.isSliderFollowing = this.isTactonInViewport();
 

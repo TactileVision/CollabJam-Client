@@ -73,18 +73,17 @@ export interface BlockData {
   intensity: number;
 }
 export class Cursor {
-  graphic: PIXI.Graphics = new PIXI.Graphics();
-  position: number = 0;
-  hasDrawnCursor: boolean = false;
-  color: number;
-  store: Store = useStore();
+  private graphic: PIXI.Graphics = new PIXI.Graphics();
+  private readonly color: number;
+  private store: Store = useStore();
   constructor(color: number) {
     getDynamicContainer().addChild(this.graphic);
     this.color = color;
   }
+  hide(): void {
+    this.graphic.visible = false;
+  }
   drawCursor(): void {
-    this.hasDrawnCursor = true;
-
     this.graphic.clear();
     this.graphic.moveTo(
       config.leftPadding,
@@ -113,6 +112,7 @@ export class Cursor {
     } else {
       this.graphic.x = xPosition;
     }
+    this.graphic.visible = true;
   }
 }
 export enum TimelineEvents {
