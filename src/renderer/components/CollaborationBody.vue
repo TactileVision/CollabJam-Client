@@ -1,8 +1,5 @@
 <template>
-  <!--tactonList-->
-  <v-navigation-drawer width="350">
-    <TactonSelectionList></TactonSelectionList>
-  </v-navigation-drawer>
+
   <!--participantList-->
 
   <v-container class="playGroundView ma-0" ref="container" tabindex="-1">

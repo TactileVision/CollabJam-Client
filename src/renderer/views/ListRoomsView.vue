@@ -17,9 +17,20 @@
           </v-btn>
         </template>
       </v-tooltip>
+      <v-tooltip text="show roomlist" open-delay="500">
+        <template #activator="{ props }">
+          <v-btn
+              v-bind="props"
+              :color="tactonDrawer ? 'primary' : 'secondary'"
+              variant="plain"
+              :icon="tactonDrawer ? 'mdi-playlist-check' : 'mdi-playlist-remove'"
+              @click="tactonDrawer = !tactonDrawer"
+          >
+          </v-btn>
+        </template>
+      </v-tooltip>
     </div>
   </v-navigation-drawer>
-
   <!--roomList-->
   <v-navigation-drawer width="150" v-model="roomDrawer">
     <v-container>
@@ -46,6 +57,10 @@
       </v-btn>
     </v-container>
     <!-- <v-btn v-if="room != null" @click="enterRoom">ENTER</v-btn> -->
+  </v-navigation-drawer>
+  <!--tactonList-->
+  <v-navigation-drawer width="350" v-model="tactonDrawer">
+    <TactonSelectionList></TactonSelectionList>
   </v-navigation-drawer>
   <div class="roomView">
     <v-row align="center" justify="center">
@@ -82,10 +97,12 @@ import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tacton
 import SnackBar from "@/renderer/components/Snackbar.vue";
 import { writeAmplitudeOnDisplay } from "../helpers/TactileDisplayActions";
 import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
+import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
 // import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
   name: "RoomView",
   components: {
+    TactonSelectionList,
     SnackBar,
     // DeviceConnectionModal,
     RoomSelectionList,
@@ -97,8 +114,8 @@ export default defineComponent({
       room: null as null | Room,
       store: useStore(),
       servers: JSON.parse(import.meta.env.VITE_COLLABJAM_SERVERS || "[]"),
-      serverDrawer: true,
       roomDrawer: true,
+      tactonDrawer: true,
       snackbarText: "",
     };
   },
