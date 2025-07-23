@@ -164,6 +164,7 @@ export const handleMessage = (store: Store) => {
         recordingNamePrefix: room.recordingNamePrefix,
         mode: room.mode,
         currentRecordingTime: 0,
+        currentlyEditingUser: null,
       },
     });
   });

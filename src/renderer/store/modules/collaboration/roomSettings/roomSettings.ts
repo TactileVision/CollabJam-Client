@@ -244,6 +244,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
         recordingNamePrefix: props.room.recordingNamePrefix,
         mode: props.room.mode,
         currentRecordingTime: 0,
+        currentlyEditingUser: null,
       },
     });
 
@@ -266,6 +267,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
         recordingNamePrefix: props.room.recordingNamePrefix,
         mode: props.room.mode,
         currentRecordingTime: 0,
+        currentlyEditingUser: null,
       },
     });
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
