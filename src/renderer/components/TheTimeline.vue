@@ -10,7 +10,6 @@ import * as PIXI from "pixi.js";
 import { Container, Graphics, Text } from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
-import TheTimelineSlider from "@/renderer/components/TheTimelineSlider.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
 import { BlockData, TimelineEvents } from "@/renderer/helpers/timeline/types";
@@ -19,13 +18,13 @@ import { TactonSettingsActionTypes } from "@/renderer/store/modules/collaboratio
 import { WebSocketAPI } from "@/main/WebSocketManager";
 import { LiveBlockBuilder } from "@/renderer/helpers/timeline/liveBlockBuilder";
 import { PlayHead } from "@/renderer/helpers/timeline/playHead";
+import {Slider} from "@/renderer/helpers/timeline/Slider";
 
 export default defineComponent({
   name: "TheTimeline",
   components: {
     TheTimelineScrollbar,
     TheCursorPositionIndicator,
-    TheTimelineSlider,
     TheTimelineGrid,
   },
   data() {
@@ -49,7 +48,8 @@ export default defineComponent({
       liveBlockBuilder: new LiveBlockBuilder(),
       latency: 0,
       isFirstTick: false,
-      canceledRecording: false
+      canceledRecording: false,
+      slider: new Slider()
     };
   },
   computed: {
@@ -287,6 +287,7 @@ export default defineComponent({
         this.lastZoom = this.store.state.timeline.zoomLevel;
 
         // prepare for recording
+        this.slider.setInteractivity(false);
         this.store.state.timeline.blockManager?.toggleBlockVisibility(false);
         this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
@@ -302,6 +303,7 @@ export default defineComponent({
           this.lastZoom = this.store.state.timeline.zoomLevel;
 
           // prepare for overdubbing
+          this.slider.setInteractivity(false);
           this.isSliderFollowing = this.isTactonInViewport();
           this.store.state.timeline.blockManager?.clearSelections();
           this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
@@ -318,7 +320,10 @@ export default defineComponent({
           this.store.state.timeline.blockManager?.toggleBlockVisibility(true);
           this.canceledRecording = false;
         }
-        console.log(this.lastZoom);
+        
+        // prepare for jamming
+        this.slider.setInteractivity(true);
+        
         // apply last horizontalViewportOffset
         this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.lastZoom);
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
@@ -329,9 +334,11 @@ export default defineComponent({
         this.isSliderFollowing = this.isTactonInViewport();
 
         // store values
+        this.lastZoom = this.store.state.timeline.zoomLevel;
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
 
         // prepare for playback
+        this.slider.setInteractivity(false);
         this.store.state.timeline.blockManager?.clearSelections();
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
 
@@ -356,6 +363,7 @@ export default defineComponent({
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
     this.playHead = new PlayHead(0xec660c);
     this.playHead.moveToPosition(0);
+    this.slider.initSlider();
 
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, () => {
       const tacton = this.tacton
@@ -405,7 +413,6 @@ export default defineComponent({
   <div id="timelineCanvas" class="position-relative"></div>
   <template v-if="mounted">
     <TheCursorPositionIndicator></TheCursorPositionIndicator>
-    <TheTimelineSlider :is-playback-active="false"></TheTimelineSlider>
     <TheTimelineGrid></TheTimelineGrid>
     <TheTimelineScrollbar></TheTimelineScrollbar>
   </template>
