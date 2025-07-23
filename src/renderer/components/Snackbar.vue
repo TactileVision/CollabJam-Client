@@ -50,7 +50,6 @@ export default defineComponent({
         triggered it has been triggered again, so the
         text must be displayed again.
       */
-      console.log("new key", newKey);
       this.snackbar = true;
     }
   },
