@@ -40,6 +40,7 @@ export enum TimelineActionTypes {
   UPDATE_WRAPPER_X_OFFSET = "updateWrapperXOffset",
   UPDATE_WRAPPER_Y_OFFSET = "updateWrapperYOffset",
   UPDATE_CANVAS_WIDTH = "updateCanvasWidth",
+  UPDATE_SNACKBAR_TEXT = "updateSnackbarText",
 }
 
 type AugmentedActionContext = {
@@ -166,6 +167,10 @@ export interface Actions {
   [TimelineActionTypes.UPDATE_CANVAS_WIDTH](
     { commit }: AugmentedActionContext,
     payload: number,
+  ): void;
+  [TimelineActionTypes.UPDATE_SNACKBAR_TEXT](
+    { commit }: AugmentedActionContext,
+    payload: string,
   ): void;
 }
 export const actions: ActionTree<State, RootState> & Actions = {
@@ -372,5 +377,11 @@ export const actions: ActionTree<State, RootState> & Actions = {
     width: number,
   ): void {
     commit(TimelineMutations.SET_CANVAS_WIDTH, width);
+  },
+  [TimelineActionTypes.UPDATE_SNACKBAR_TEXT](
+    { commit }: { commit: Commit },
+    text: string,
+  ): void {
+    commit(TimelineMutations.SET_SNACKBAR_TEXT, text);
   },
 };

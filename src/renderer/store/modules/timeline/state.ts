@@ -27,6 +27,7 @@ export type State = {
   wrapperXOffset: number;
   wrapperYOffset: number;
   canvasWidth: number;
+  snackbarText: { text: string; key: number };
 };
 export const state: State = {
   blockManager: null,
@@ -54,4 +55,5 @@ export const state: State = {
   wrapperXOffset: 0,
   wrapperYOffset: 0,
   canvasWidth: 0,
+  snackbarText: { text: "", key: 0 },
 };

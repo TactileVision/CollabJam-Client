@@ -17,6 +17,7 @@ import {
   BlockData,
   BlockDTO,
   BlockSelection,
+  SnackbarTexts,
   TimelineEvents,
 } from "@/renderer/helpers/timeline/types";
 
@@ -911,8 +912,20 @@ export class BlockManager {
 
   //*************** Interactions ***************
   private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
-    console.log(toSelect);
-    if (!this.store.getters.canEditTacton) {
+    if (!this.store.state.timeline.isEditable) {
+      if (this.store.getters.canEditTacton) {
+        // tacton is initially loaded as not editable, must click
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+          SnackbarTexts.TACTON_IS_READONLY(),
+        );
+      } else {
+        // another user is currently editing
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+          SnackbarTexts.TACTON_IS_EDITED_BY_USER(),
+        );
+      }
       return;
     }
 
@@ -924,16 +937,6 @@ export class BlockManager {
       this.eventBus.dispatchEvent(
         new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
       );
-    }
-
-    if (!this.store.state.timeline.isEditable) {
-      /*            this.showSnackbar({
-                message: 'This file is currently read-only. Enable edit mode to make changes.',
-                color: 'warning',
-                icon: 'mdi-lead-pencil',
-                timer: 4000
-            });*/
-      return;
     }
 
     if (Array.isArray(toSelect)) {

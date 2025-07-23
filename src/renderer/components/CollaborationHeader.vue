@@ -197,6 +197,7 @@ import {changeRecordMode} from "@/renderer/helpers/recordMode";
 import {InteractionModeChange} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
+import {SnackbarTexts} from "@/renderer/helpers/timeline/types";
 
 enum ToolTipKeys {
   SNAPPING = "Snapping",
@@ -322,7 +323,14 @@ export default defineComponent({
       this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
     },
     toggleEdit() {
-      this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE);
+      if (!this.store.getters.canEditTacton) {
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT, 
+          SnackbarTexts.CANT_CHANGE_EDITMODE()
+        );
+      } else {
+        this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE);
+      }
     }
   },
 });

@@ -1,4 +1,7 @@
 import { Container, Graphics } from "pixi.js";
+import { User } from "@sharedTypes/roomTypes";
+import { Store, useStore } from "@/renderer/store/store";
+
 export class BlockChanges {
   x: number | null = null;
   width: number | null = null;
@@ -71,3 +74,32 @@ export enum TimelineEvents {
   TACTON_BLOCK_SELECTED = "tactonPartWasSelected",
   TACTON_ALL_DESELECTED = "tactonAllDeselected",
 }
+function getCurrentEditorName(): string | undefined {
+  const store: Store = useStore();
+  const editorId: string | null =
+    store.state.roomSettings.currentlyEditingUserId;
+  return store.state.roomSettings.participants.find((user: User): boolean => {
+    return user.id == editorId;
+  })?.name;
+}
+export const SnackbarTexts = {
+  TACTON_IS_READONLY: (): string =>
+    "This file is currently read-only. Enable edit-mode to make changes.",
+  TACTON_IS_EDITED_BY_USER: (): string => {
+    const editorName: string | undefined = getCurrentEditorName();
+    if (editorName) {
+      return `This file is currently edited by ${editorName}.`;
+    } else {
+      return `This file is currently edited.`;
+    }
+  },
+  TACTON_CAN_BE_EDITED: (): string => "This file can now be edited.",
+  CANT_CHANGE_EDITMODE: (): string => {
+    const editorName: string | undefined = getCurrentEditorName();
+    if (editorName) {
+      return `This file is currently edited by ${editorName}. Can't change edit-mode`;
+    } else {
+      return `This file is currently edited. Can't change edit-mode.`;
+    }
+  },
+};

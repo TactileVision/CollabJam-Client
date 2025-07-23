@@ -26,6 +26,10 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    textKey: {
+      type: Number,
+      required: false
+    }
   },
   data() {
     return {
@@ -35,9 +39,20 @@ export default defineComponent({
   watch: {
     text(newValue) {
       if (newValue) {
+        console.log("new value");
         this.snackbar = true;
       }
     },
+    textKey(newKey) {
+      /*
+        If the key changes, the text to be displayed 
+        has already been processed, but the event that
+        triggered it has been triggered again, so the
+        text must be displayed again.
+      */
+      console.log("new key", newKey);
+      this.snackbar = true;
+    }
   },
 });
 </script>

@@ -1,28 +1,36 @@
 <script lang="ts">
-import { defineComponent, watch } from "vue";
-import { Tacton } from "@sharedTypes/tactonTypes";
-import { useStore } from "@/renderer/store/store";
-import { InstructionParser } from "@/renderer/helpers/timeline/instructionParser";
-import { BlockManager } from "@/renderer/helpers/timeline/blockManager";
-import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
-import { clearPixiApp, createPixiApp, getDynamicContainer, getLiveContainer, } from "@/renderer/helpers/timeline/pixiApp";
+import {defineComponent, watch} from "vue";
+import {Tacton} from "@sharedTypes/tactonTypes";
+import {useStore} from "@/renderer/store/store";
+import {InstructionParser} from "@/renderer/helpers/timeline/instructionParser";
+import {BlockManager} from "@/renderer/helpers/timeline/blockManager";
+import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
+import {
+  clearPixiApp,
+  createPixiApp,
+  getDynamicContainer,
+  getLiveContainer,
+  toggleOverlay,
+} from "@/renderer/helpers/timeline/pixiApp";
 import * as PIXI from "pixi.js";
-import { Container, Graphics, Text } from "pixi.js";
+import {Container, Graphics, Text} from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import { BlockData, TimelineEvents } from "@/renderer/helpers/timeline/types";
-import { InteractionMode } from "@sharedTypes/roomTypes";
-import { TactonSettingsActionTypes } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
-import { WebSocketAPI } from "@/main/WebSocketManager";
-import { LiveBlockBuilder } from "@/renderer/helpers/timeline/liveBlockBuilder";
-import { PlayHead } from "@/renderer/helpers/timeline/playHead";
+import {BlockData, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
+import {InteractionMode, User} from "@sharedTypes/roomTypes";
+import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
+import {WebSocketAPI} from "@/main/WebSocketManager";
+import {LiveBlockBuilder} from "@/renderer/helpers/timeline/liveBlockBuilder";
+import {PlayHead} from "@/renderer/helpers/timeline/playHead";
 import {Slider} from "@/renderer/helpers/timeline/Slider";
+import SnackBar from "@/renderer/components/Snackbar.vue";
 
 export default defineComponent({
   name: "TheTimeline",
   components: {
+    SnackBar,
     TheTimelineScrollbar,
     TheCursorPositionIndicator,
     TheTimelineGrid,
@@ -59,6 +67,9 @@ export default defineComponent({
     interactionMode(): InteractionMode {
       return this.store.state.roomSettings.mode;
     },
+    isEditable(): boolean {
+      return this.store.state.timeline.isEditable;
+    }
   },
   methods: {
     renderTrackLines() {
@@ -348,6 +359,30 @@ export default defineComponent({
         //Non existent editing mode
         this.editingEnabled = true;
       } */
+    },
+    isEditable() {
+      if (!this.store.state.timeline.isEditable && this.store.state.tactonPlayback.currentTacton != null) {
+        if (this.store.getters.canEditTacton) {
+          // tacton is initially loaded as not editable, must click
+          this.store.dispatch(
+            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+            SnackbarTexts.TACTON_IS_READONLY()
+          );
+        } else {
+          // another user is currently editing
+          this.store.dispatch(
+            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+            SnackbarTexts.TACTON_IS_EDITED_BY_USER()
+          );
+          toggleOverlay(true);
+        }
+      } else {
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+          SnackbarTexts.TACTON_CAN_BE_EDITED()
+        );
+        toggleOverlay(false);
+      }
     }
   },
   async mounted() {
@@ -416,6 +451,10 @@ export default defineComponent({
     <TheTimelineGrid></TheTimelineGrid>
     <TheTimelineScrollbar></TheTimelineScrollbar>
   </template>
+  <SnackBar
+    :text-key="store.state.timeline.snackbarText.key"
+    :text="store.state.timeline.snackbarText.text"
+  ></SnackBar>  
 </template>
 
 <style scoped lang="scss"></style>

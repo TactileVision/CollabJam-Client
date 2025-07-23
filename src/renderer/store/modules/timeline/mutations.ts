@@ -38,6 +38,7 @@ export enum TimelineMutations {
   SET_WRAPPER_X_OFFSET = "setWrapperXOffset",
   SET_WRAPPER_Y_OFFSET = "setWrapperYOffset",
   SET_CANVAS_WIDTH = "setCanvasWidth",
+  SET_SNACKBAR_TEXT = "setSnackbarText",
 }
 
 export type Mutations<S = State> = {
@@ -103,6 +104,7 @@ export type Mutations<S = State> = {
   [TimelineMutations.SET_WRAPPER_X_OFFSET](state: S, xOffset: number): void;
   [TimelineMutations.SET_WRAPPER_Y_OFFSET](state: S, yOffset: number): void;
   [TimelineMutations.SET_CANVAS_WIDTH](state: S, width: number): void;
+  [TimelineMutations.SET_SNACKBAR_TEXT](state: S, text: string): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -436,5 +438,14 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [TimelineMutations.SET_CANVAS_WIDTH](state: State, width: number): void {
     state.canvasWidth = width;
+  },
+  [TimelineMutations.SET_SNACKBAR_TEXT](state: State, text: string): void {
+    if (state.snackbarText.text == text) {
+      state.snackbarText.key++;
+      console.log("incrementing key");
+    } else {
+      state.snackbarText.text = text;
+      state.snackbarText.key = 0;
+    }
   },
 };

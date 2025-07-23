@@ -204,6 +204,7 @@ export const handleMessage = (store: Store) => {
     store.dispatch(RoomSettingsActionTypes.updateEditingUserId, {
       userId: res.userId,
     });
+    store.state.timeline.isEditable = store.getters.canEditTacton;
   });
   // const router = useRouter()
   /**
