@@ -442,7 +442,6 @@ export const mutations: MutationTree<State> & Mutations = {
   [TimelineMutations.SET_SNACKBAR_TEXT](state: State, text: string): void {
     if (state.snackbarText.text == text) {
       state.snackbarText.key++;
-      console.log("incrementing key");
     } else {
       state.snackbarText.text = text;
       state.snackbarText.key = 0;

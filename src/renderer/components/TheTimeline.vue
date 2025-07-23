@@ -19,7 +19,7 @@ import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
 import {BlockData, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
-import {InteractionMode, User} from "@sharedTypes/roomTypes";
+import {InteractionMode} from "@sharedTypes/roomTypes";
 import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import {WebSocketAPI} from "@/main/WebSocketManager";
 import {LiveBlockBuilder} from "@/renderer/helpers/timeline/liveBlockBuilder";
@@ -279,8 +279,6 @@ export default defineComponent({
       }
     },
     interactionMode(mode) {
-      //Cleanup after ending current mode by emptying the graph
-      //this.clearGraph();
       // reset liveBLockBuilder
       this.liveBlockBuilder.reset();
       this.currentTime = 0;
@@ -316,7 +314,7 @@ export default defineComponent({
           // prepare for overdubbing
           this.slider.setInteractivity(false);
           this.isSliderFollowing = this.isTactonInViewport();
-          this.store.state.timeline.blockManager?.clearSelections();
+          this.store.state.timeline.blockManager?.blockInteraction(true);
           this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
           this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);    
           this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
@@ -333,6 +331,7 @@ export default defineComponent({
         }
         
         // prepare for jamming
+        this.store.state.timeline.blockManager?.blockInteraction(false);
         this.slider.setInteractivity(true);
         
         // apply last horizontalViewportOffset
@@ -350,7 +349,7 @@ export default defineComponent({
 
         // prepare for playback
         this.slider.setInteractivity(false);
-        this.store.state.timeline.blockManager?.clearSelections();
+        this.store.state.timeline.blockManager?.blockInteraction(true);
         this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
 
         this.ticker?.add(this.playback);
@@ -362,13 +361,7 @@ export default defineComponent({
     },
     isEditable() {
       if (!this.store.state.timeline.isEditable && this.store.state.tactonPlayback.currentTacton != null) {
-        if (this.store.getters.canEditTacton) {
-          // tacton is initially loaded as not editable, must click
-          this.store.dispatch(
-            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-            SnackbarTexts.TACTON_IS_READONLY()
-          );
-        } else {
+        if (!this.store.getters.canEditTacton) {
           // another user is currently editing
           this.store.dispatch(
             TimelineActionTypes.UPDATE_SNACKBAR_TEXT,

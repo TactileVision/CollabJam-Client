@@ -162,7 +162,8 @@ export class BlockManager {
     GroupBorderData
   >();
 
-  //private showSnackbar = inject('showSnackbar') as (data: SnackbarData) => void;
+  // interaction-mode
+  private isInteractionBlocked: boolean = false;
 
   // updateHooks
   private updated: boolean = false;
@@ -194,10 +195,6 @@ export class BlockManager {
         // update maxTrackChange
         this.maxTrackChange += oldValue + value;
       },
-    );
-    watch(
-      () => this.store.state.timeline.isEditable,
-      this.handleEditMode.bind(this),
     );
     watch(
       () => this.store.state.timeline.canvasWidth,
@@ -270,9 +267,6 @@ export class BlockManager {
     });
 
     this.installEventListeners();
-
-    // init as not editable
-    this.handleEditMode();
   }
   createBlocksFromData(blockData: BlockData[]): void {
     // clear rendered borders
@@ -912,6 +906,9 @@ export class BlockManager {
 
   //*************** Interactions ***************
   private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
+    // block interaction if not jamming
+    if (this.isInteractionBlocked) return;
+
     if (!this.store.state.timeline.isEditable) {
       if (this.store.getters.canEditTacton) {
         // tacton is initially loaded as not editable, must click
@@ -3333,36 +3330,6 @@ export class BlockManager {
     return { x, y, width, height };
   }
 
-  //******* edit-mode *******
-  private handleEditMode(): void {
-    if (!this.store.state.timeline.isEditable) {
-      // disable handles, if selected, remove selection
-      this.forEachBlock((block: BlockDTO): void => {
-        this.updateHandleInteractivity(block, false);
-        if (this.isBlockSelected(block)) {
-          this.updateIndicatorVisibility(block, false);
-          block.strokedRect.visible = false;
-        }
-        block.rect.interactive = false;
-      });
-
-      this.renderedGroupBorders.forEach(
-        (borderData: GroupBorderData, groupId: number): void => {
-          this.clearGroupBorder(groupId);
-        },
-      );
-      this.clearSelectionBorder();
-      this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-      this.strgDown = false;
-    } else {
-      // enable handles
-      this.forEachBlock((block: BlockDTO): void => {
-        this.updateHandleInteractivity(block, true);
-        block.rect.interactive = true;
-      });
-    }
-  }
-
   //******* event-listener *******
   private onCanvasMouseDown(event: MouseEvent): void {
     if (!this.store.state.timeline.isInteracting) {
@@ -3416,15 +3383,6 @@ export class BlockManager {
     );
     pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp.bind(this));
   }
-  public clearSelections(): void {
-    this.clearSelectionBorder();
-    this.clearGroupBorder();
-    this.forEachSelectedBlock((block: BlockDTO): void => {
-      this.updateIndicatorVisibility(block, false);
-      block.strokedRect.visible = false;
-    });
-    this.store.state.timeline.selectedBlocks = [];
-  }
   public toggleBlockVisibility(isVisible: boolean): void {
     this.clearSelectionBorder();
     this.clearGroupBorder();
@@ -3435,5 +3393,34 @@ export class BlockManager {
       block.strokedRect.visible = false;
       block.container.visible = isVisible;
     });
+  }
+  public blockInteraction(blockInteraction: boolean): void {
+    this.isInteractionBlocked = blockInteraction;
+
+    if (this.isInteractionBlocked) {
+      // disable handles, if selected, remove selection
+      this.forEachBlock((block: BlockDTO): void => {
+        this.updateHandleInteractivity(block, false);
+        if (this.isBlockSelected(block)) {
+          this.updateIndicatorVisibility(block, false);
+          block.strokedRect.visible = false;
+        }
+        block.rect.interactive = false;
+      });
+
+      this.renderedGroupBorders.forEach(
+        (borderData: GroupBorderData, groupId: number): void => {
+          this.clearGroupBorder(groupId);
+        },
+      );
+      this.clearSelectionBorder();
+      this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+      this.strgDown = false;
+    } else {
+      // enable handles
+      this.forEachBlock((block: BlockDTO): void => {
+        this.updateHandleInteractivity(block, false);
+      });
+    }
   }
 }
