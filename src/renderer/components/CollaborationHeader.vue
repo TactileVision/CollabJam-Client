@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="mt-4 mb-4">
     <v-row class="align-center w-100 ga-8">
       <!--Interactions with tacton (e.g. recording)-->
       <v-col style="max-width: 144px">
@@ -143,9 +143,11 @@
               </v-row>
             </v-fade-transition>
           </v-card>
-          <CollaborationInteractionModeIndicator
-              :mode="store.state.roomSettings.mode"
-          ></CollaborationInteractionModeIndicator>
+          <div class="d-none d-xl-block">
+            <CollaborationInteractionModeIndicator
+                :mode="store.state.roomSettings.mode"
+            ></CollaborationInteractionModeIndicator>
+          </div>
         </v-row>
       </v-col>      
       <DeviceConnectionModal :num-connected-devices="0"></DeviceConnectionModal>
@@ -197,8 +199,6 @@ import {changeRecordMode} from "@/renderer/helpers/recordMode";
 import {InteractionModeChange} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
-import {SnackbarTexts} from "@/renderer/helpers/timeline/types";
-
 enum ToolTipKeys {
   SNAPPING = "Snapping",
   EDIT = "Edit",
