@@ -10,36 +10,6 @@
         <!-- </v-sheet> -->
       </v-col>
     </v-row>
-    <!--inputDevices-->
-    <v-navigation-drawer
-      :width="windowHeight * 0.35"
-      floating
-      location="bottom"
-      v-model="inputDeviceDrawer"
-    >
-      <v-sheet elevation="0">
-        <v-row class="px-4">
-          <v-col cols="5" v-for="device in devices" :key="getDeviceKey(device)">
-            <CollaborationInputDeviceProfile :device="device" />
-          </v-col>
-        </v-row>
-      </v-sheet>
-    </v-navigation-drawer>
-    <v-navigation-drawer
-      floating
-      width="50"
-      location="bottom"
-      class="d-flex align-center"
-      style="background: none; border: none"
-    >
-      <v-btn
-        variant="tonal"
-        :color="inputDeviceDrawer ? 'primary' : 'secondary'"
-        @click="inputDeviceDrawer = !inputDeviceDrawer"
-        text="InputDevices"
-        :prepend-icon="'mdi-controller-classic'"
-      ></v-btn>
-    </v-navigation-drawer>
     <v-dialog
       v-model="CollaborationDialog"
       max-width="50%"

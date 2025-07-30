@@ -1,17 +1,15 @@
 <template>
   <!-- <v-row justify="center"> -->
-  <v-dialog v-model="dialog" persistent width="auto">
+  <v-dialog v-model="dialog" width="auto">
     <template #activator="{ props }">
-      <v-btn
-        prepend-icon="mdi-vibrate"
+      <v-btn 
+        size="small"
+        icon="mdi-vibrate"
         variant="tonal"
+        style="border-radius: 4px"
         :color="numConnectedDevices == 0 ? 'error' : 'primary'"
         v-bind="props"
       >
-        <template v-if="numConnectedDevices">
-          Tactile Displays ({{ numConnectedDevices }})
-        </template>
-        <template v-else> Tactile Displays </template>
       </v-btn>
     </template>
     <v-card min-width="1000px">
