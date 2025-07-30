@@ -323,14 +323,7 @@ export default defineComponent({
       this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
     },
     toggleEdit() {
-      if (!this.store.getters.canEditTacton) {
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT, 
-          SnackbarTexts.CANT_CHANGE_EDITMODE()
-        );
-      } else {
-        this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE);
-      }
+      this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE);
     }
   },
 });

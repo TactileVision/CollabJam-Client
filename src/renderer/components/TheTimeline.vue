@@ -69,6 +69,9 @@ export default defineComponent({
     },
     isEditable(): boolean {
       return this.store.state.timeline.isEditable;
+    },
+    canEdit(): boolean {
+      return this.store.getters.canEditTacton;
     }
   },
   methods: {
@@ -359,22 +362,45 @@ export default defineComponent({
         this.editingEnabled = true;
       } */
     },
-    isEditable() {
-      if (!this.store.state.timeline.isEditable && this.store.state.tactonPlayback.currentTacton != null) {
-        if (!this.store.getters.canEditTacton) {
-          // another user is currently editing
-          this.store.dispatch(
-            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-            SnackbarTexts.TACTON_IS_EDITED_BY_USER()
-          );
-          toggleOverlay(true);
-        }
+    canEdit() {
+      if (!this.store.getters.canEditTacton) {
+        // another user is currently editing
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+          SnackbarTexts.TACTON_IS_EDITED_BY_USER()
+        );
+        toggleOverlay(true);
+        this.store.state.timeline.blockManager?.blockInteraction(true);
       } else {
         this.store.dispatch(
           TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
           SnackbarTexts.TACTON_CAN_BE_EDITED()
         );
         toggleOverlay(false);
+        this.store.state.timeline.blockManager?.blockInteraction(false);
+      }
+    },
+    isEditable() {
+      if (this.store.state.timeline.isEditable) {
+        if (this.store.getters.canEditTacton) {
+          this.store.dispatch(
+            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+            SnackbarTexts.TACTON_CAN_BE_EDITED()
+          );
+          toggleOverlay(false);
+          this.store.state.timeline.blockManager?.blockInteraction(false);
+        } else {
+          this.store.dispatch(
+            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+            SnackbarTexts.TACTON_IS_EDITABLE_BUT_EDITED()
+          );
+        }
+      } else {
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+          SnackbarTexts.TACTON_IS_READONLY()
+        );
+        this.store.state.timeline.blockManager?.blockInteraction(true);
       }
     }
   },

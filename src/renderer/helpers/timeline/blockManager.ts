@@ -906,21 +906,19 @@ export class BlockManager {
 
   //*************** Interactions ***************
   private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
-    // block interaction if not jamming
-    if (this.isInteractionBlocked) return;
-
-    if (!this.store.state.timeline.isEditable) {
-      if (this.store.getters.canEditTacton) {
-        // tacton is initially loaded as not editable, must click
+    if (this.isInteractionBlocked) {
+      // notify user on click about edit-state
+      if (this.store.state.timeline.isEditable) {
+        if (!this.store.getters.canEditTacton) {
+          this.store.dispatch(
+            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+            SnackbarTexts.TACTON_IS_EDITABLE_BUT_EDITED(),
+          );
+        }
+      } else {
         this.store.dispatch(
           TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
           SnackbarTexts.TACTON_IS_READONLY(),
-        );
-      } else {
-        // another user is currently editing
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-          SnackbarTexts.TACTON_IS_EDITED_BY_USER(),
         );
       }
       return;
@@ -3419,7 +3417,8 @@ export class BlockManager {
     } else {
       // enable handles
       this.forEachBlock((block: BlockDTO): void => {
-        this.updateHandleInteractivity(block, false);
+        this.updateHandleInteractivity(block, true);
+        block.rect.interactive = true;
       });
     }
   }

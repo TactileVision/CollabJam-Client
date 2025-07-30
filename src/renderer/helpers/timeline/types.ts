@@ -94,12 +94,12 @@ export const SnackbarTexts = {
     }
   },
   TACTON_CAN_BE_EDITED: (): string => "This file can now be edited.",
-  CANT_CHANGE_EDITMODE: (): string => {
+  TACTON_IS_EDITABLE_BUT_EDITED: (): string => {
     const editorName: string | undefined = getCurrentEditorName();
     if (editorName) {
-      return `This file is currently edited by ${editorName}. Can't change edit-mode`;
+      return `This file is currently edited by ${editorName}.`;
     } else {
-      return `This file is currently edited. Can't change edit-mode.`;
+      return `This file is currently edited.`;
     }
   },
 };
