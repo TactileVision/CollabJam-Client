@@ -89,7 +89,7 @@ export default defineComponent({
         // create / update labels
         if (!labelCache[time]) {
           const label = new Text();
-          label.text = time.toString();
+          label.text = toFractionString(time);
           label.style.fontSize = 12;
           label.y = config.sliderHeight + (config.componentPadding / 2 - label.height / 2);
           labelCache[time] = label;
@@ -163,6 +163,25 @@ export default defineComponent({
         (config.minLineDistance + config.maxLineDistance) / 2;
       const idealInterval = idealPixelDistance / adjustedPixelsPerSecond;
       return Math.pow(2, Math.round(Math.log2(idealInterval)));
+    }
+    function toFractionString(value: number): string {
+      const denominator = 1 << 8;      
+      const numerator = Math.round(value * denominator);
+      const whole = Math.floor(numerator / denominator);
+      const remainder = numerator % denominator;
+
+      if (remainder === 0) {
+        return whole.toString();
+      }
+      const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+      const divisor = gcd(remainder, denominator);
+      const reducedNumerator = remainder / divisor;
+      const reducedDenominator = denominator / divisor;
+
+      if (whole === 0) {
+        return `${reducedNumerator}/${reducedDenominator}`;
+      }
+      return `${whole} ${reducedNumerator}/${reducedDenominator}`;
     }
   },
 });
