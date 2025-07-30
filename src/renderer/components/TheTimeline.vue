@@ -427,6 +427,7 @@ export default defineComponent({
   },
   beforeUnmount() {
     clearPixiApp();
+    this.slider.clearSlider();
     this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
 

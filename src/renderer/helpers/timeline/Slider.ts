@@ -8,7 +8,7 @@ import { Store, useStore } from "@/renderer/store/store";
 import config from "@/renderer/helpers/timeline/config";
 import { getStaticContainer } from "@/renderer/helpers/timeline/pixiApp";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
-import { watch } from "vue";
+import { watch, WatchStopHandle } from "vue";
 export class Slider {
   private store: Store = useStore();
 
@@ -36,6 +36,8 @@ export class Slider {
   // event throttling
   private scaleEventQueued: boolean = false;
   private lastScaleEvent: PointerEvent | null = null;
+
+  private watcher: WatchStopHandle[] = [];
   constructor() {}
 
   /*
@@ -113,41 +115,49 @@ export class Slider {
     });
 
     // install watcher
-    watch(
-      () => this.store.state.timeline.horizontalViewportOffset,
-      (): void => {
-        if (
-          this.isDraggingSlider ||
-          this.isResizingLeft ||
-          this.isResizingRight
-        )
-          return;
-        this.updateSliderToViewport();
-      },
+    this.watcher.push(
+      watch(
+        () => this.store.state.timeline.horizontalViewportOffset,
+        (): void => {
+          if (
+            this.isDraggingSlider ||
+            this.isResizingLeft ||
+            this.isResizingRight
+          )
+            return;
+          this.updateSliderToViewport();
+        },
+      ),
     );
 
-    watch(
-      () => this.store.state.timeline.currentVirtualViewportWidth,
-      (): void => {
-        this.updateSliderToViewport();
-      },
+    this.watcher.push(
+      watch(
+        () => this.store.state.timeline.currentVirtualViewportWidth,
+        (): void => {
+          this.updateSliderToViewport();
+        },
+      ),
     );
 
-    watch(
-      () => this.store.state.timeline.initialZoomLevel,
-      (): void => {
-        this.initialZoomLevel = this.store.state.timeline.initialZoomLevel;
-      },
+    this.watcher.push(
+      watch(
+        () => this.store.state.timeline.initialZoomLevel,
+        (): void => {
+          this.initialZoomLevel = this.store.state.timeline.initialZoomLevel;
+        },
+      ),
     );
 
-    watch(
-      () => this.store.state.timeline.canvasWidth,
-      (newWidth: number): void => {
-        this.sliderMaxWidth = newWidth - 2 * config.sliderHandleWidth;
-        this.viewportWidth = newWidth - config.leftPadding;
-        this.updateLastZoomLevel();
-        this.updateSliderToViewport();
-      },
+    this.watcher.push(
+      watch(
+        () => this.store.state.timeline.canvasWidth,
+        (newWidth: number): void => {
+          this.sliderMaxWidth = newWidth - 2 * config.sliderHandleWidth;
+          this.viewportWidth = newWidth - config.leftPadding;
+          this.updateLastZoomLevel();
+          this.updateSliderToViewport();
+        },
+      ),
     );
 
     // add to container
@@ -353,4 +363,10 @@ export class Slider {
     window.removeEventListener("pointerup", this.onScaleEnd);
     this.store.state.timeline.blockManager?.onSliderScaleEnd();
   };
+  public clearSlider(): void {
+    this.watcher.forEach((stopWatching: WatchStopHandle): void => {
+      stopWatching();
+    });
+    this.watcher = [];
+  }
 }
