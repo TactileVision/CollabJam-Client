@@ -17,7 +17,7 @@
           </v-btn>
         </template>
       </v-tooltip>
-      <v-tooltip text="show roomlist" open-delay="500">
+      <v-tooltip text="show tactons" open-delay="500">
         <template #activator="{ props }">
           <v-btn
               v-bind="props"
