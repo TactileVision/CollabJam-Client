@@ -49,6 +49,13 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
+            color="secondary"
+            icon="mdi-reload"
+            variant="tonal"
+            @click="checkServerStatus()"
+          >
+          </v-btn>
+          <v-btn
             color="primary"
             icon="mdi-plus"
             variant="tonal"
