@@ -6,8 +6,8 @@
     <v-list-item
       v-for="server in servers"
       :key="server.name"
-      :active="server.url == selection"
-      @click="selectServer(server.url)"
+      :active="server == selection"
+      @click="selectServer(server)"
       :disabled="!server.online"
     >
       <v-row>
@@ -74,17 +74,21 @@ export default defineComponent({
   data() {
     return {
       store: useStore(),
-      selection: null as null | string,
+      selection: null as null | Server,
     };
   },
   computed: {},
   methods: {
-    selectServer: function (url: string) {
-      if (this.selection == url) return;
-      this.selection = url;
+    selectServer: function (server: Server) {
+      if (this.selection == server) return;
+      this.selection = server;
       this.store.dispatch(RoomSettingsActionTypes.setAvailableRoomList, {
         rooms: [],
       });
+      let url = server.url;
+      if (server.port != null) {
+        url = `${server.url}:${server.port}`;
+      }
       initWebsocket(url);
       this.store.commit(RoomMutations.UPDATE_USER_NAME, this.username);
       this.$router.push("/roomView");
