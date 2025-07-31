@@ -195,10 +195,11 @@ import {
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { io, Socket } from "socket.io-client";
 
-interface Server {
+export interface Server {
   url: string;
   name: string;
   port: number | null;
+  online?: boolean;
 }
 
 enum LocalStorageKey {
@@ -225,12 +226,7 @@ export default defineComponent({
       room: null as null | Room,
       username: "",
       store: useStore(),
-      serversToDisplay: [] as {
-        url: string;
-        port: number | null;
-        name: string;
-        online: boolean | null;
-      }[],
+      serversToDisplay: [] as Server[],
       serversFromJSON: [] as Server[],
       dialog: true,
       SetupState: SetupState,
@@ -411,10 +407,14 @@ export default defineComponent({
     },
     async checkServerStatus() {
       await Promise.all(
-        this.serversToDisplay.map(async (server: any, index: number) => {
-          this.serversToDisplay[index].online = await this.isServerOnline(
-            server.url,
-          );
+        this.serversToDisplay.map(async (server: Server) => {
+          server.online = undefined;
+          
+          let url = server.url;
+          if (server.port != null) {
+            url = `${server.url}:${server.port}`;
+          }
+          server.online = await this.isServerOnline(url);
         }),
       );
     },
@@ -445,11 +445,11 @@ export default defineComponent({
     );
     const allServers = [...serverFromEnv, ...this.serversFromJSON];
 
-    this.serversToDisplay = allServers.map((server: any) => ({
+    this.serversToDisplay = allServers.map((server: Server) => ({
       url: server.url,
       port: server.port,
       name: server.name,
-      online: null,
+      online: undefined,
     }));
 
     this.checkServerStatus();

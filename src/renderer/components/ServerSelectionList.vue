@@ -53,19 +53,13 @@ import {
   RoomSettingsActionTypes,
 } from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
 import { initWebsocket } from "@/main/WebSocketManager";
+import { Server } from "@/renderer/views/ServerWizardView.vue"
 
 export default defineComponent({
   name: "ServerSelectionList",
   props: {
     servers: {
-      type: Object as PropType<
-        {
-          url: string;
-          port: number | null;
-          name: string;
-          online: boolean | null;
-        }[]
-      >,
+      type: Object as PropType<Server[]>,
       required: true,
     },
     enabled: {
@@ -95,13 +89,13 @@ export default defineComponent({
       this.store.commit(RoomMutations.UPDATE_USER_NAME, this.username);
       this.$router.push("/roomView");
     },
-    getStatusClass(isOnline: boolean | null) {
+    getStatusClass(isOnline: boolean | undefined) {
       switch (isOnline) {
         case true:
           return "dot-green";
         case false:
           return "dot-red";
-        case null:
+        case undefined:
           return "dot-grey";
       }
     },
