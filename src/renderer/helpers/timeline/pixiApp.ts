@@ -36,7 +36,7 @@ export async function createPixiApp(): Promise<void> {
   }
 
   const height: number =
-    window.innerHeight - wrapper.getBoundingClientRect().top - 50;
+    window.innerHeight - wrapper.getBoundingClientRect().top;
 
   // create canvas
   pixiApp.renderer.resize(wrapper.clientWidth, height);
