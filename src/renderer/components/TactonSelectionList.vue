@@ -91,6 +91,7 @@
                           : 'mdi-star-outline'
                       "
                       variant="plain"
+                      v-on:keyup.enter="toggleFavorite(tacton)"
                       @click="toggleFavorite(tacton)"
                     >
                     </v-btn>
@@ -123,6 +124,7 @@
                       <v-btn
                         :icon="'mdi-dots-vertical'"
                         variant="plain"
+                        v-on:keyup.enter="openOptionsMenu(tacton)"
                         @click="openOptionsMenu(tacton)"
                       >
                       </v-btn>
@@ -352,7 +354,12 @@
   user-select: none;
 }
 
-.show-buttons-on-hover:hover .show-on-hover {
+.show-buttons-on-hover:hover .show-on-hover,
+.show-buttons-on-hover:focus-within .show-on-hover {
+  opacity: 100%;
+}
+
+.show-buttons-on-hover:focus .show-on-hover {
   opacity: 100%;
 }
 
