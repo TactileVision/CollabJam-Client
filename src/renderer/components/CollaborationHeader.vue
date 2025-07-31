@@ -109,7 +109,7 @@
       
       <!--Display for current Interaction (e.g. recording)-->
       <v-col>
-        <v-card width="575" height="40" density="compact" variant="tonal">
+        <v-card width="530" height="40" density="compact" variant="tonal">
           <v-fade-transition name="fade-fast">
             <v-row no-gutters class="align-center h-100 ps-2 pe-2 ga-12">
               <v-col
@@ -152,6 +152,17 @@
       <v-col>
         <v-row class="align-center ga-2 justify-end" no-gutters>
           <v-btn
+              variant="tonal"
+              size="small"
+              style="border-radius: 4px"
+              :color="showParticipants ? 'primary' : 'secondary'"
+              :icon="'mdi-account-group'"
+              id="userListActivator"
+              @click="showParticipants = !showParticipants"
+              @mouseenter="showToolTip(toolTipKeys.PARTICIPANTS)"
+              @mouseleave="clearToolTip"
+          ></v-btn>
+          <v-btn
             variant="tonal"
             size="small"
             style="border-radius: 4px"
@@ -166,6 +177,12 @@
       </v-col>
     </v-row>
   </v-container>
+  <v-menu 
+    activator="#userListActivator" 
+    :close-on-content-click="false"
+  >
+    <ParticipantSettings></ParticipantSettings>
+  </v-menu>
   <!--inputDevices-->
   <v-navigation-drawer
       floating
@@ -219,13 +236,15 @@ import {WebSocketAPI} from "@/main/WebSocketManager";
 // import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
 import {changeRecordMode} from "@/renderer/helpers/recordMode";
-import {InteractionMode, InteractionModeChange} from "@sharedTypes/roomTypes";
+import {InteractionModeChange, User} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
 import CollaborationInputDeviceProfile from "@/renderer/components/CollaborationInputDeviceProfile.vue";
 import {InputDevice, isGamepadDevice, isKeyboardDevice} from "@/main/Input/InputDetection/InputBindings";
 import {getAllDevices} from "@/main/Input/InputDetection";
 import {Tacton} from "@sharedTypes/tactonTypes";
+import ParticipantControls from "@/renderer/components/ParticipantControls.vue";
+import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 
 enum ToolTipKeys {
   SNAPPING = "Snapping",
@@ -234,7 +253,8 @@ enum ToolTipKeys {
   OVERDUB = "Overdub",
   PLAYBACK = "Playback",
   TACTILE_DISPLAY = "TactileDisplay",
-  INPUT_DEVICES = "InputDevices"
+  INPUT_DEVICES = "InputDevices",
+  PARTICIPANTS = "Participants"
 }
 
 type ToolTip = {
@@ -264,11 +284,16 @@ const ToolTips: Record<ToolTipKeys, ToolTip> = {
   },
   [ToolTipKeys.INPUT_DEVICES]: {
     toolTip: "Show your current controls"
+  },
+  [ToolTipKeys.PARTICIPANTS]: {
+    toolTip: "Show list of participants"
   }
 }
 export default defineComponent({
   name: "CollaborationHeader",
   components: {
+    ParticipantSettings,
+    ParticipantControls,
     CollaborationInputDeviceProfile,
     DeviceConnectionModal,
     // UserMenuTooltip,
@@ -284,7 +309,8 @@ export default defineComponent({
       debounceTimer: undefined as ReturnType<typeof setTimeout> | undefined,
       debounceTimeMS: 200,
       inputDevices: [] as InputDevice[],
-      showInputDevices: false
+      showInputDevices: false,
+      showParticipants: false
     };
   },
   computed: {
@@ -295,6 +321,11 @@ export default defineComponent({
     },
     currentTacton(): Tacton | null {
       return this.store.state.tactonPlayback.currentTacton;
+    },
+    participants(): User[] {
+      return this.store.state.roomSettings.participants.filter(
+          (p) => p.id != this.store.state.roomSettings.user.id,
+      );
     }
   },
   methods: {

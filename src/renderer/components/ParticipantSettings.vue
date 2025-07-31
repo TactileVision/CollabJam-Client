@@ -1,30 +1,34 @@
 <template>
-  <v-container>
-    <h6 class="text-h6">Participants</h6>
-  </v-container>
-  <v-container style="display: flex; flex-direction: column; margin-top: 16px">
-    <v-btn
-        style="margin-bottom: 16px"
-        color="primary"
-        variant="tonal"
-        @click="muteAllParticipants"
-        text="Mute All"
-    />
-    <v-btn
-        style="margin-bottom: 16px"
-        color="primary"
-        variant="tonal"
-        @click="unmuteAllParticipants"
-        text="Unmute All"
-    />
-    <ParticipantControls
+  <v-card>
+    <v-card-title>Participants</v-card-title>
+    <v-card-item>
+      <ParticipantControls
         v-for="participant in participants"
         :key="participant.id"
         :participant="participant"
         @muted="muteParticipant"
         @unmuted="unmuteParticipant"
-    />
-  </v-container>
+      />
+    </v-card-item>
+    <v-card-actions>
+      <v-btn
+        v-if="!isAllMuted"
+        color="primary"
+        variant="tonal"
+        @click="muteAllParticipants"
+        text="Mute All"
+        width="100%"
+      />
+      <v-btn
+        v-if="isAllMuted"
+        color="primary"
+        variant="tonal"
+        @click="unmuteAllParticipants"
+        text="Unmute All"
+        width="100%"
+      />
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script lang="ts">
@@ -71,9 +75,11 @@ export default defineComponent({
     },
     muteAllParticipants() {
       this.participants.forEach(this.muteParticipant);
+      this.isAllMuted = true;
     },
     unmuteAllParticipants() {
       this.participants.forEach(this.unmuteParticipant);
+      this.isAllMuted = false;
     }
   },
 });

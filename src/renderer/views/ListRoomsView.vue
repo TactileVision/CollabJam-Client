@@ -37,8 +37,6 @@
       <h6 class="text-h6">Rooms</h6>
     </v-container>
     <RoomSelectionList v-model="room"></RoomSelectionList>
-    <ParticipantSettings></ParticipantSettings>
-
     <!-- MARK: Setup -->
 
     <!-- <UserMenuTooltip
@@ -96,7 +94,6 @@ import CollaborationView from "./CollaborationView.vue";
 import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
 import SnackBar from "@/renderer/components/Snackbar.vue";
 import { writeAmplitudeOnDisplay } from "../helpers/TactileDisplayActions";
-import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
 // import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
@@ -107,7 +104,6 @@ export default defineComponent({
     // DeviceConnectionModal,
     RoomSelectionList,
     CollaborationView,
-    ParticipantSettings,
   },
   data() {
     return {
