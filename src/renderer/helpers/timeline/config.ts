@@ -1,3 +1,9 @@
+export enum GridLabelStyle {
+  PLAIN = "plain",
+  FRACTIONS = "fractions",
+  Clock = "clock",
+}
+
 const config = {
   // general
   leftPadding: 32,
@@ -30,6 +36,7 @@ const config = {
   maxLineDistance: 500,
   moveSnappingRadius: 20,
   resizingSnappingRadius: 5,
+  gridLabelStyle: GridLabelStyle.Clock,
   //colors
   colors: {
     gridColor: "rgba(75, 75, 75, 0.2)",

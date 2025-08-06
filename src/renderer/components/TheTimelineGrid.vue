@@ -5,7 +5,7 @@ import {
   getDynamicContainer,
   getStaticContainer,
 } from "@/renderer/helpers/timeline/pixiApp";
-import config from "@/renderer/helpers/timeline/config";
+import config, {GridLabelStyle} from "@/renderer/helpers/timeline/config";
 import { useStore, Store } from "@/renderer/store/store";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 
@@ -65,8 +65,9 @@ export default defineComponent({
           step * interval * adjustedPixelsPerSecond < totalWidth;
           step++
       ) {
+        const fullFloatTime = step * interval;
         const time = parseFloat((step * interval).toFixed(3)); // key for cache
-        const x = time * adjustedPixelsPerSecond;
+        const x = fullFloatTime * adjustedPixelsPerSecond;
         const screenX = x + gridOffset;
         const inViewport = isInViewport(screenX, totalWidth);
         activeTimes.add(time);
@@ -89,7 +90,7 @@ export default defineComponent({
         // create / update labels
         if (!labelCache[time]) {
           const label = new Text();
-          label.text = toFractionString(time);
+          label.text = formatIntervalToLabel(fullFloatTime);
           label.style.fontSize = 12;
           label.y = config.sliderHeight + (config.componentPadding / 2 - label.height / 2);
           labelCache[time] = label;
@@ -164,6 +165,17 @@ export default defineComponent({
       const idealInterval = idealPixelDistance / adjustedPixelsPerSecond;
       return Math.pow(2, Math.round(Math.log2(idealInterval)));
     }
+    
+    function formatIntervalToLabel(value: number): string {
+      switch (config.gridLabelStyle) {
+        case GridLabelStyle.PLAIN: 
+          return value.toString();
+        case GridLabelStyle.FRACTIONS:
+          return toFractionString(value);
+        case GridLabelStyle.Clock:
+          return toTimecode(value);
+      }
+    }
     function toFractionString(value: number): string {
       const denominator = 1 << 8;      
       const numerator = Math.round(value * denominator);
@@ -182,6 +194,13 @@ export default defineComponent({
         return `${reducedNumerator}/${reducedDenominator}`;
       }
       return `${whole} ${reducedNumerator}/${reducedDenominator}`;
+    }
+    function toTimecode(value: number): string {      
+      const seconds = Math.floor(value);
+      const milliseconds = Math.round((value - seconds) * 1000);      
+      const secStr = seconds < 10 ? `0${seconds}` : `${seconds}`;
+      const msStr = milliseconds.toString().padStart(3, '0');
+      return `${secStr}:${msStr}`;
     }
   },
 });
