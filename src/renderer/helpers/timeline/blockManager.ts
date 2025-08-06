@@ -2591,8 +2591,16 @@ export class BlockManager {
   }
   private clearGroupBorder(groupId?: number): void {
     if (groupId != undefined) {
-      const borderData: GroupBorderData =
-        this.renderedGroupBorders.get(groupId)!;
+      const borderData: GroupBorderData | undefined =
+        this.renderedGroupBorders.get(groupId);
+
+      if (borderData == undefined) {
+        console.error(
+          `GroupId ${groupId} was not found. Currently rendered Groups: ${Array.from(this.renderedGroupBorders.entries())}`,
+        );
+        return;
+      }
+
       getDynamicContainer().removeChild(borderData.container);
       borderData.container.destroy({ children: true });
       this.renderedGroupBorders.delete(groupId);
