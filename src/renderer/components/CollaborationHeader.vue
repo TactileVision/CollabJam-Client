@@ -189,13 +189,23 @@
       location="bottom"
       v-model="showInputDevices"
   >
-    <v-sheet elevation="0">
-      <v-row class="px-4">
-        <v-col cols="5" class="pt-0 pb-0 ps-4" v-for="device in inputDevices" :key="getDeviceKey(device)">
-          <CollaborationInputDeviceProfile :device="device" />
-        </v-col>
-      </v-row>
-    </v-sheet>
+    <v-slide-group
+      show-arrows
+      class="h-100 ps-4 pe-4"
+    >
+      <template
+        #default
+      >
+        <div class="d-flex flex-row ga-4">
+          <v-slide-group-item
+              v-for="device in inputDevices"
+              :key="getDeviceKey(device)"
+          >
+            <CollaborationInputDeviceProfile :device="device" />
+          </v-slide-group-item>
+        </div>
+      </template>
+    </v-slide-group>
   </v-navigation-drawer>
 </template>
 
@@ -240,7 +250,7 @@ import {InteractionModeChange, User} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
 import CollaborationInputDeviceProfile from "@/renderer/components/CollaborationInputDeviceProfile.vue";
-import {InputDevice, isGamepadDevice, isKeyboardDevice} from "@/main/Input/InputDetection/InputBindings";
+import {DeviceType, InputDevice, isGamepadDevice, isKeyboardDevice} from "@/main/Input/InputDetection/InputBindings";
 import {getAllDevices} from "@/main/Input/InputDetection";
 import {Tacton} from "@sharedTypes/tactonTypes";
 import ParticipantControls from "@/renderer/components/ParticipantControls.vue";
