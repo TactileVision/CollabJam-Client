@@ -32,29 +32,26 @@
     </div>
   </v-navigation-drawer>
   <!--roomList-->
-  <v-navigation-drawer width="150" v-model="roomDrawer">
+  <v-navigation-drawer 
+    width="150" 
+    v-model="roomDrawer"
+    class="drawer-with-fab"
+  >
     <v-container>
       <h6 class="text-h6">Rooms</h6>
     </v-container>
     <RoomSelectionList v-model="room"></RoomSelectionList>
     <!-- MARK: Setup -->
-
-    <!-- <UserMenuTooltip
-      :users="store.state.roomSettings.participants"
-    ></UserMenuTooltip> -->
-    <!-- <UserMenu /> -->
-    <v-container style="display: flex; justify-content: center">
-      <v-btn
-        color="primary"
-        variant="tonal"
-        :disabled="store.state.roomSettings.mode != 1"
-        prepend-icon="mdi-logout"
-        @click="logOut(true)"
-        text="Log out"
-      >
-      </v-btn>
-    </v-container>
-    <!-- <v-btn v-if="room != null" @click="enterRoom">ENTER</v-btn> -->
+    <v-btn
+      color="primary"
+      variant="tonal"
+      prepend-icon="mdi-logout"
+      text="Log out"
+      class="drawer-fab"
+      :disabled="store.state.roomSettings.mode != 1"
+      @click="logOut(true)"
+    >
+    </v-btn>
   </v-navigation-drawer>
   <!--tactonList-->
   <v-navigation-drawer width="350" v-model="tactonDrawer">
@@ -76,6 +73,17 @@
   align-items: center;
   display: flex;
   height: 100%;
+}
+
+.drawer-with-fab {
+  position: relative;
+}
+
+.drawer-fab {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 </style>
 

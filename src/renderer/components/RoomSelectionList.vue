@@ -1,6 +1,6 @@
 <template>
   <!--MARK: Recording-->
-  <v-virtual-scroll :items="rooms" height="40vh">
+  <v-virtual-scroll :items="rooms">
     <template #default="{ item }">
       <v-list-item
         :disabled="!enabled"
