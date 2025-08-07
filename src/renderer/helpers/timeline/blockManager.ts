@@ -3363,6 +3363,12 @@ export class BlockManager {
   }
 
   //******* public helpers *******
+
+  public clearData(): void {
+    this.clearCopiedBlocks();
+    this.clearSelectionBorder();
+    this.clearGroupBorder();
+  }
   public installEventListeners(): void {
     const pixiApp: Application = getPixiApp();
     // remove existing Event-Listeners

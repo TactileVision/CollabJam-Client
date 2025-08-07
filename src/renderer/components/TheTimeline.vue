@@ -193,6 +193,7 @@ export default defineComponent({
       if (this.tacton) {
         if (this.lastTactonId == null || this.lastTactonId != this.tacton.uuid) {
           // clear data of blockManager and store
+          this.store.state.timeline.blockManager?.clearData();
           this.store.state.timeline.groups.clear();
           
           // save uuid
@@ -278,6 +279,8 @@ export default defineComponent({
           this.renderTrackLines();
         }
       } else {
+        this.store.state.timeline.blockManager?.clearData();
+        this.store.state.timeline.groups.clear();
         this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
       }
     },
