@@ -151,7 +151,12 @@
       
       <v-col>
         <v-row class="align-center ga-2 justify-end" no-gutters>
-          <v-btn
+          <v-badge
+            :content="participants.length"
+            location="top right"
+            color="secondary"
+          >
+            <v-btn
               variant="tonal"
               size="small"
               style="border-radius: 4px"
@@ -161,7 +166,8 @@
               @click="showParticipants = !showParticipants"
               @mouseenter="showToolTip(toolTipKeys.PARTICIPANTS)"
               @mouseleave="clearToolTip"
-          ></v-btn>
+            ></v-btn>
+          </v-badge>
           <v-btn
             variant="tonal"
             size="small"
