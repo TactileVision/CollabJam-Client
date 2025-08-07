@@ -49,9 +49,6 @@
                 "
               ></v-btn>
             </v-row>
-            <v-row>
-
-            </v-row>
           </v-col>
           <!--Interactions with timeline (e.g. snapping)-->
           <v-col cols="auto">
