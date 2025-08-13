@@ -28,7 +28,8 @@ export default defineComponent({
     },
     textKey: {
       type: Number,
-      required: false
+      required: false,
+      default: 0
     }
   },
   data() {
@@ -43,7 +44,7 @@ export default defineComponent({
         this.snackbar = true;
       }
     },
-    textKey(newKey) {
+    textKey() {
       /*
         If the key changes, the text to be displayed 
         has already been processed, but the event that

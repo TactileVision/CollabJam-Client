@@ -285,7 +285,7 @@ export default defineComponent({
         },
       ],
       portRules: [
-        (port: any) => {
+        (port: string) => {
           if (port == "") return true;
           const toNum = Number.parseInt(port);
 

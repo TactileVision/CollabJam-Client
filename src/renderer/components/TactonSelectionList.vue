@@ -91,7 +91,7 @@
                           : 'mdi-star-outline'
                       "
                       variant="plain"
-                      v-on:keyup.enter="toggleFavorite(tacton)"
+                      @keyup.enter="toggleFavorite(tacton)"
                       @click="toggleFavorite(tacton)"
                     >
                     </v-btn>
@@ -124,7 +124,7 @@
                       <v-btn
                         :icon="'mdi-dots-vertical'"
                         variant="plain"
-                        v-on:keyup.enter="openOptionsMenu(tacton)"
+                        @keyup.enter="openOptionsMenu(tacton)"
                         @click="openOptionsMenu(tacton)"
                       >
                       </v-btn>

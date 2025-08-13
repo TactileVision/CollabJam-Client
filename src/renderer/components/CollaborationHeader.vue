@@ -107,8 +107,7 @@
       <!--Display for current Interaction (e.g. recording)-->
       <v-col>
         <v-card width="530" height="40" density="compact" variant="tonal">
-          <v-fade-transition name="fade-fast">
-            <v-row no-gutters class="align-center h-100 ps-2 pe-2 ga-12">
+          <v-row no-gutters class="align-center h-100 ps-2 pe-2 ga-12">
               <v-col
                 v-if="currentTacton != null"
                 cols="auto"
@@ -142,7 +141,6 @@
                 </v-row>
               </v-col>
             </v-row>
-          </v-fade-transition>
         </v-card>
       </v-col>
       
@@ -227,15 +225,6 @@
   font-weight: 700;
 }
 
-.fade-fast-enter-active,
-.fade-fast-leave-active {
-  transition: opacity 100ms ease;
-}
-.fade-fast-enter-from,
-.fade-fast-leave-to {
-  opacity: 0;
-}
-
 </style>
 <script lang="ts">
 import {IPC_CHANNELS} from "@/preload/IpcChannels";
@@ -245,9 +234,6 @@ import {RoomMutations, RoomState,} from "@/renderer/store/modules/collaboration/
 import {useStore} from "@/renderer/store/store";
 import {defineComponent} from "vue";
 import {WebSocketAPI} from "@/main/WebSocketManager";
-// import UserMenuTooltip from "@/renderer/components/UserMenuTooltip.vue";
-// import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
-import CollaborationInteractionModeIndicator from "@/renderer/components/CollaborationInteractionModeIndicator.vue";
 import {changeRecordMode} from "@/renderer/helpers/recordMode";
 import {InteractionModeChange, User} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
@@ -256,7 +242,6 @@ import CollaborationInputDeviceProfile from "@/renderer/components/Collaboration
 import {InputDevice, isGamepadDevice, isKeyboardDevice} from "@/main/Input/InputDetection/InputBindings";
 import {getAllDevices} from "@/main/Input/InputDetection";
 import {Tacton} from "@sharedTypes/tactonTypes";
-import ParticipantControls from "@/renderer/components/ParticipantControls.vue";
 import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 
 enum ToolTipKeys {
@@ -306,12 +291,8 @@ export default defineComponent({
   name: "CollaborationHeader",
   components: {
     ParticipantSettings,
-    ParticipantControls,
     CollaborationInputDeviceProfile,
-    DeviceConnectionModal,
-    // UserMenuTooltip,
-    // DeviceConnectionModal,
-    CollaborationInteractionModeIndicator,
+    DeviceConnectionModal
   },
   data() {
     return {

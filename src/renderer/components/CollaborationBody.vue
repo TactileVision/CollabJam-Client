@@ -40,14 +40,12 @@ import { GeneralMutations } from "@/renderer/store/modules/generalSettings/gener
 import { RouterNames } from "@/renderer/router/Routernames";
 import { useStore } from "@/renderer/store/store";
 import { PlayGroundMutations } from "@/renderer/store/modules/collaboration/playGround/types";
-import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
 import TheTimeline from "@/renderer/components/TheTimeline.vue";
 
 export default defineComponent({
   name: "CollaborationBody",
   components: {
     TheTimeline,
-    TactonSelectionList,
     CollaborationDialog,
   },
   data() {
