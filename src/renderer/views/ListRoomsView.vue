@@ -88,20 +88,17 @@
 </style>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { useStore } from "@/renderer/store/store";
-import {
-  RoomMutations,
-  RoomState,
-} from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
-import { WebSocketAPI } from "@/main/WebSocketManager";
+import {defineComponent} from "vue";
+import {useStore} from "@/renderer/store/store";
+import {RoomMutations, RoomState,} from "@/renderer/store/modules/collaboration/roomSettings/roomSettings";
+import {WebSocketAPI} from "@/main/WebSocketManager";
 import RoomSelectionList from "@/renderer/components/RoomSelectionList.vue";
-import { Room } from "@/shared/types/roomTypes";
-import { IPC_CHANNELS } from "@/preload/IpcChannels";
+import {Room} from "@/shared/types/roomTypes";
+import {IPC_CHANNELS} from "@/preload/IpcChannels";
 import CollaborationView from "./CollaborationView.vue";
-import { TactonPlaybackActionTypes } from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
+import {TactonPlaybackActionTypes} from "../store/modules/collaboration/tactonPlayback/tactonPlayback";
 import SnackBar from "@/renderer/components/Snackbar.vue";
-import { writeAmplitudeOnDisplay } from "../helpers/TactileDisplayActions";
+import {writeAmplitudeOnDisplay} from "../helpers/TactileDisplayActions";
 import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
 // import SetupRoomView from "./SetupRoomView.vue";
 export default defineComponent({
@@ -172,6 +169,7 @@ export default defineComponent({
       this.store.commit(RoomMutations.UPDATE_PARTICIPANTS, []);
       if (hideGraph) {
         this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Create);
+        this.store.commit(RoomMutations.CLEAR_ROOM_DATA);
         this.room = null;
       }
 

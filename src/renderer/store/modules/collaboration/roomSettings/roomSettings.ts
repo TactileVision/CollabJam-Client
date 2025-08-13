@@ -75,6 +75,7 @@ export enum RoomMutations {
   SET_AVAILABLE_BODY_TAGS = "SET_AVAILABLE_BODY_TAGS",
   SET_AVAILABLE_PROMPT_TAGS = "SET_AVAILABLE_PROMPT_TAGS",
   UPDATE_EDITING_USER = "UPDATE_EDITING_USER",
+  CLEAR_ROOM_DATA = "CLEAR_ROOM_DATA",
 }
 
 export type Mutations<S = State> = {
@@ -99,6 +100,7 @@ export type Mutations<S = State> = {
   [RoomMutations.SET_AVAILABLE_BODY_TAGS](state: S, tags: string[]): void;
   [RoomMutations.SET_AVAILABLE_PROMPT_TAGS](state: S, tags: string[]): void;
   [RoomMutations.UPDATE_EDITING_USER](state: S, userId: string | null): void;
+  [RoomMutations.CLEAR_ROOM_DATA](state: S): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -168,6 +170,11 @@ export const mutations: MutationTree<State> & Mutations = {
   [RoomMutations.UPDATE_EDITING_USER](state, userId) {
     state.currentlyEditingUserId = userId;
   },
+  [RoomMutations.CLEAR_ROOM_DATA](state) {
+    state.id = undefined;
+    state.recordingNamePrefix = "";
+    state.roomName = "";
+  },
 };
 
 /**
@@ -182,6 +189,7 @@ export enum RoomSettingsActionTypes {
   unmuteParticipant = "unmuteParticipant",
   updateParticipantList = "updateParticipantList",
   updateEditingUserId = "updateEditingUserId",
+  clearRoomData = "clearRoomData",
 }
 
 type AugmentedActionContext = {
@@ -220,6 +228,9 @@ export interface Actions {
     { commit }: AugmentedActionContext,
     payload: { userId: string | null },
   ): void;
+  [RoomSettingsActionTypes.clearRoomData]({
+    commit,
+  }: AugmentedActionContext): void;
 }
 
 export const actions: ActionTree<State, RootState> & Actions = {
@@ -325,6 +336,9 @@ export const actions: ActionTree<State, RootState> & Actions = {
     props: { userId: string | null },
   ) {
     commit(RoomMutations.UPDATE_EDITING_USER, props.userId);
+  },
+  [RoomSettingsActionTypes.clearRoomData]({ commit }: AugmentedActionContext) {
+    commit(RoomMutations.CLEAR_ROOM_DATA, undefined);
   },
 };
 

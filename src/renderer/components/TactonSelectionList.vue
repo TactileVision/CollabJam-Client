@@ -7,6 +7,7 @@
         <strong> {{ store.state.roomSettings.recordingNamePrefix }}</strong>
       </span>
       <v-btn
+        :disabled="currentRoomId == undefined"
         variant="text"
         @click="showEditPrefix = !showEditPrefix"
         color="primary"
@@ -46,7 +47,11 @@
     ></v-switch>
   </v-sheet>
   <!-- MARK: Tacton List -->
-  <v-virtual-scroll :height="windowHeight - 196" :items="sortByPrefix()">
+  <v-virtual-scroll 
+    v-if="currentRoomId != undefined"
+    :height="windowHeight - 196" 
+    :items="sortByPrefix()"
+  >
     <template #default="{ item, index: groupIndex }">
       <v-expansion-panels :key="groupIndex">
         <v-expansion-panel :elevation="'0'">
@@ -428,6 +433,9 @@ export default defineComponent({
     };
   },
   computed: {
+    currentRoomId(): string | undefined {
+      return this.store.state.roomSettings.id;
+    },
     currentTacton(): Tacton | null {
       return this.store.state.tactonPlayback.currentTacton;
     },

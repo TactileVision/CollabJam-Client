@@ -13,7 +13,10 @@
                 @click="toggleRecording"
                 @mouseenter="showToolTip(toolTipKeys.RECORD)"
                 @mouseleave="clearToolTip"
-                :disabled="store.state.roomSettings.mode == 3"
+                :disabled="
+                  store.state.roomSettings.mode == 3 ||
+                  store.state.tactonPlayback.currentTacton == null
+                "
                 :icon="
                   store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
                 "

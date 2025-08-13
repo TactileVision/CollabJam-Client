@@ -40,7 +40,6 @@ export default defineComponent({
   watch: {
     text(newValue) {
       if (newValue) {
-        console.log("new value");
         this.snackbar = true;
       }
     },
