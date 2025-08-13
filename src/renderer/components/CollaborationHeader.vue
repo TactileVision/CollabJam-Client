@@ -204,7 +204,7 @@
               v-for="device in inputDevices"
               :key="getDeviceKey(device)"
           >
-            <CollaborationInputDeviceProfile :device="device" />
+            <CollaborationInputDeviceProfile :device="device"/>
           </v-slide-group-item>
         </div>
       </template>
@@ -253,7 +253,7 @@ import {InteractionModeChange, User} from "@sharedTypes/roomTypes";
 import DeviceConnectionModal from "@/renderer/components/DeviceConnectionModal.vue";
 import {TimelineActionTypes} from "@/renderer/store/modules/timeline/actions";
 import CollaborationInputDeviceProfile from "@/renderer/components/CollaborationInputDeviceProfile.vue";
-import {DeviceType, InputDevice, isGamepadDevice, isKeyboardDevice} from "@/main/Input/InputDetection/InputBindings";
+import {InputDevice, isGamepadDevice, isKeyboardDevice} from "@/main/Input/InputDetection/InputBindings";
 import {getAllDevices} from "@/main/Input/InputDetection";
 import {Tacton} from "@sharedTypes/tactonTypes";
 import ParticipantControls from "@/renderer/components/ParticipantControls.vue";
@@ -322,6 +322,7 @@ export default defineComponent({
       debounceTimer: undefined as ReturnType<typeof setTimeout> | undefined,
       debounceTimeMS: 200,
       inputDevices: [] as InputDevice[],
+      pollDevices: -1,
       showInputDevices: false,
       showParticipants: false
     };
@@ -420,6 +421,17 @@ export default defineComponent({
   },
   mounted() {
     this.inputDevices = getAllDevices();
+    const pollFunction = () => {
+      this.inputDevices = getAllDevices();
+      this.pollDevices = requestAnimationFrame(pollFunction);
+    };
+
+    this.pollDevices = requestAnimationFrame(pollFunction);
+  },
+  beforeUnmount() {
+    if (this.pollDevices !== -1) {
+      cancelAnimationFrame(this.pollDevices);
+    }
   }
 });
 </script>

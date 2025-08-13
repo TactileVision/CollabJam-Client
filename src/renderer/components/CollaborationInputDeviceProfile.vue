@@ -1,6 +1,6 @@
 <template>
   <div class="input-device-info">
-    <v-card>
+    <v-card width="400px">
       <v-card-title>
         {{
           name.indexOf("(") == -1 ? name : name.substring(0, name.indexOf("("))

@@ -1,13 +1,8 @@
 <template>
-
-  <!--participantList-->
-
   <v-container class="playGroundView ma-0" ref="container" tabindex="-1">
     <v-row>
       <v-col id="TactonGraphWrapperHeight" class="TactonGraphWrapperWrapper">
         <TheTimeline></TheTimeline>
-        <!-- <v-sheet id="TactonGraphWrapper" elevation="0" class="mr-2 pa-4"> -->
-        <!-- </v-sheet> -->
       </v-col>
     </v-row>
     <v-dialog
@@ -32,9 +27,6 @@
   max-width: 100%;
   padding: 0;
 }
-#TactonGraphWrapper {
-  width: 1192px;
-}
 .playGroundView:focus {
   outline: none;
 }
@@ -44,17 +36,10 @@
 import { defineComponent } from "vue";
 // import ParticipantSettings from "@/renderer/components/ParticipantSettings.vue";
 import CollaborationDialog from "./CollaborationDialog.vue";
-import CollaborationInputDeviceProfile from "./CollaborationInputDeviceProfile.vue";
 import { GeneralMutations } from "@/renderer/store/modules/generalSettings/generalSettings";
 import { RouterNames } from "@/renderer/router/Routernames";
 import { useStore } from "@/renderer/store/store";
 import { PlayGroundMutations } from "@/renderer/store/modules/collaboration/playGround/types";
-import { getAllDevices } from "@/main/Input/InputDetection";
-import {
-  InputDevice,
-  isGamepadDevice,
-  isKeyboardDevice,
-} from "@/main/Input/InputDetection/InputBindings";
 import TactonSelectionList from "@/renderer/components/TactonSelectionList.vue";
 import TheTimeline from "@/renderer/components/TheTimeline.vue";
 
@@ -62,7 +47,6 @@ export default defineComponent({
   name: "CollaborationBody",
   components: {
     TheTimeline,
-    CollaborationInputDeviceProfile,
     TactonSelectionList,
     CollaborationDialog,
   },
@@ -72,36 +56,12 @@ export default defineComponent({
       CollaborationDialog: false,
       idOfEditableButton: "",
       isMounted: false,
-      devices: [] as InputDevice[],
-      pollDevices: -1,
       toggleInputDevices: false,
-      inputDeviceDrawer: false,
-      windowHeight: window.innerHeight,
     };
   },
   mounted() {
     //set the focus to the gui, so key down and up is working
     this.store.commit(PlayGroundMutations.UPDATE_EDIT_MDOE, false);
-    this.devices = getAllDevices();
-
-    const pollFunction = () => {
-      this.devices = getAllDevices();
-      this.pollDevices = requestAnimationFrame(pollFunction);
-    };
-
-    this.pollDevices = requestAnimationFrame(pollFunction);
-
-    this.$nextTick(() => {
-      window.addEventListener("resize", this.onResize);
-    });
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.onResize);
-  },
-  unmounted() {
-    if (this.pollDevices !== -1) {
-      cancelAnimationFrame(this.pollDevices);
-    }
   },
   methods: {
     closeDialog() {
@@ -122,13 +82,6 @@ export default defineComponent({
       );
       this.idOfEditableButton = id;
       this.CollaborationDialog = true;
-    },
-    getDeviceKey(device: InputDevice) {
-      if (isKeyboardDevice(device)) return "keyboard";
-      else if (isGamepadDevice(device)) return `gamepad-${device.name}`;
-    },
-    onResize() {
-      this.windowHeight = window.innerHeight;
     },
   },
 });
