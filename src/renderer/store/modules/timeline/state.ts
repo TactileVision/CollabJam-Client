@@ -22,6 +22,7 @@ export type State = {
   isPressingShift: boolean;
   currentCursorPosition: { x: number; y: number };
   isSnappingActive: boolean;
+  isSnappingRelativeActive: boolean;
   isEditable: boolean;
   canvasTopOffset: number;
   wrapperXOffset: number;
@@ -50,6 +51,7 @@ export const state: State = {
   isPressingShift: false,
   currentCursorPosition: { x: 0, y: 0 },
   isSnappingActive: false,
+  isSnappingRelativeActive: false,
   isEditable: false,
   canvasTopOffset: 0,
   wrapperXOffset: 0,

@@ -78,15 +78,13 @@
                 variant="tonal"
                 size="small"
                 style="border-radius: 4px"
-                @click="toggleEdit"
-                @mouseenter="showToolTip(toolTipKeys.EDIT)"
+                @click="toggleRelativeSnapping"
+                @mouseenter="showToolTip(toolTipKeys.RELATIVE_SNAPPING)"
                 @mouseleave="clearToolTip"
                 :color="
-                  store.state.timeline.isEditable ? 'success' : 'error'
+                  store.state.timeline.isSnappingRelativeActive ? 'success' : ''
                 "
-                :icon="
-                  store.state.timeline.isEditable ? 'mdi-pencil' : 'mdi-pencil-off'
-                "
+                icon="mdi-align-horizontal-left"
                 :disabled="
                   store.state.roomSettings.mode == 2 ||
                   store.state.tactonPlayback.currentTacton == null
@@ -96,7 +94,15 @@
                 variant="tonal"
                 size="small"
                 style="border-radius: 4px"
-                icon=""
+                @click="toggleEdit"
+                @mouseenter="showToolTip(toolTipKeys.EDIT)"
+                @mouseleave="clearToolTip"
+                :color="
+                  store.state.timeline.isEditable ? 'success' : 'error'
+                "
+                :icon="
+                  store.state.timeline.isEditable ? 'mdi-pencil' : 'mdi-pencil-off'
+                "
                 :disabled="
                   store.state.roomSettings.mode == 2 ||
                   store.state.tactonPlayback.currentTacton == null
@@ -255,7 +261,8 @@ enum ToolTipKeys {
   PLAYBACK = "Playback",
   TACTILE_DISPLAY = "TactileDisplay",
   INPUT_DEVICES = "InputDevices",
-  PARTICIPANTS = "Participants"
+  PARTICIPANTS = "Participants",
+  RELATIVE_SNAPPING = "RelativeSnapping"
 }
 
 type ToolTip = {
@@ -288,6 +295,10 @@ const ToolTips: Record<ToolTipKeys, ToolTip> = {
   },
   [ToolTipKeys.PARTICIPANTS]: {
     toolTip: "Show list of participants"
+  },
+  [ToolTipKeys.RELATIVE_SNAPPING]: {
+    toolTip: "Toggles snapping of blocks to other blocks",
+    shortCut: "CTRL + SHIFT + S"
   }
 }
 export default defineComponent({
@@ -394,6 +405,9 @@ export default defineComponent({
     },
     toggleSnapping() {
       this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
+    },
+    toggleRelativeSnapping() {
+      this.store.dispatch(TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING);
     },
     toggleEdit() {
       this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE);

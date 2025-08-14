@@ -35,6 +35,7 @@ export enum TimelineActionTypes {
   UPDATE_CURRENT_CURSOR_POSITION = "setCurrentCursorPosition",
   ADD_GROUP = "addGroup",
   TOGGLE_SNAPPING_STATE = "toggleSnappingState",
+  TOGGLE_RELATIVE_SNAPPING = "toggleRelativeSnapping",
   TOGGLE_EDIT_STATE = "toggleEditState",
   UPDATE_CANVAS_TOP_OFFSET = "updateCanvasTopOffset",
   UPDATE_WRAPPER_X_OFFSET = "updateWrapperXOffset",
@@ -172,6 +173,9 @@ export interface Actions {
     { commit }: AugmentedActionContext,
     payload: string,
   ): void;
+  [TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING]({
+    commit,
+  }: AugmentedActionContext): void;
 }
 export const actions: ActionTree<State, RootState> & Actions = {
   [TimelineActionTypes.SET_BLOCK_MANAGER](
@@ -383,5 +387,12 @@ export const actions: ActionTree<State, RootState> & Actions = {
     text: string,
   ): void {
     commit(TimelineMutations.SET_SNACKBAR_TEXT, text);
+  },
+  [TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING]({
+    commit,
+  }: {
+    commit: Commit;
+  }): void {
+    commit(TimelineMutations.TOGGLE_RELATIVE_SNAPPING);
   },
 };

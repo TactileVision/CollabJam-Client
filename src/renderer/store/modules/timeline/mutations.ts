@@ -33,6 +33,7 @@ export enum TimelineMutations {
   UNGROUP_SELECTED_BLOCKS = "ungroupSelectedBlocks",
   ADD_GROUP = "addGroup",
   TOGGLE_SNAPPING_STATE = "toggleSnappingState",
+  TOGGLE_RELATIVE_SNAPPING = "toggleRelativeSnapping",
   TOGGLE_EDIT_STATE = "toggleEditState",
   SET_CANVAS_TOP_OFFSET = "setCanvasTopOffset",
   SET_WRAPPER_X_OFFSET = "setWrapperXOffset",
@@ -105,6 +106,7 @@ export type Mutations<S = State> = {
   [TimelineMutations.SET_WRAPPER_Y_OFFSET](state: S, yOffset: number): void;
   [TimelineMutations.SET_CANVAS_WIDTH](state: S, width: number): void;
   [TimelineMutations.SET_SNACKBAR_TEXT](state: S, text: string): void;
+  [TimelineMutations.TOGGLE_RELATIVE_SNAPPING](state: S): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -446,5 +448,8 @@ export const mutations: MutationTree<State> & Mutations = {
       state.snackbarText.text = text;
       state.snackbarText.key = 0;
     }
+  },
+  [TimelineMutations.TOGGLE_RELATIVE_SNAPPING](state: State): void {
+    state.isSnappingRelativeActive = !state.isSnappingRelativeActive;
   },
 };

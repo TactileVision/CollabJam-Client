@@ -9,6 +9,7 @@ import { Store, useStore } from "@/renderer/store/store";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 import {
   getDynamicContainer,
+  getLine,
   getPixiApp,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
@@ -120,6 +121,7 @@ export class BlockManager {
   private lastTrackOffset: number = 0;
   private lastViewportOffset: number = 0;
   private stickyOffsetsPerTrackOffset: Map<number, number[]> = new Map();
+  private unselectedBorderList: number[] = [];
 
   // validation data
   private validTrackOffsets: number[] = [];
@@ -231,9 +233,13 @@ export class BlockManager {
         event.preventDefault();
         this.groupSelectedBlocks();
       }
-      if (this.strgDown && event.code == "KeyS") {
+      if (this.strgDown && event.code == "KeyS" && !event.shiftKey) {
         event.preventDefault();
         this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
+      }
+      if (this.strgDown && event.code === "KeyS" && event.shiftKey) {
+        event.preventDefault();
+        this.store.dispatch(TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING);
       }
       if (event.code == "Escape") this.clearCopiedBlocks();
       if (event.code == "Delete") this.deleteBlock();
@@ -1341,9 +1347,10 @@ export class BlockManager {
     }
 
     // init vars
-    this.initialX = event.data.global.x;
-    this.initialY = event.data.global.y;
+    this.initialX = event.globalX;
+    this.initialY = event.globalY;
     this.initialBlockX = block.rect.x;
+    this.initialBlockWidth = block.rect.width;
     this.currentTacton = block;
     this.currentYAdjustment = 0;
     this.lastViewportOffset =
@@ -1462,6 +1469,7 @@ export class BlockManager {
       this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
     }
     this.moved = false;
+    getLine().visible = false;
   }
   private onSelectingEnd(): void {
     if (this.pointerUpHandler == null) return;
@@ -1474,7 +1482,7 @@ export class BlockManager {
     direction: Direction.LEFT | Direction.RIGHT,
   ): void {
     this.resizeDirection = direction;
-    this.initialX = event.data.global.x;
+    this.initialX = event.globalX;
     this.initialBlockWidth = block.rect.width;
     this.initialBlockX = block.rect.x;
     this.isCollidingOnResize = false;
@@ -1682,7 +1690,7 @@ export class BlockManager {
     borderData.initWidth = borderData.lastWidth;
 
     this.resizeDirection = direction;
-    this.initialX = event.data.global.x;
+    this.initialX = event.globalX;
 
     this.pointerMoveHandler = (event: PointerEvent) =>
       this.onProportionalResize(event, groupId);
@@ -1884,7 +1892,7 @@ export class BlockManager {
     block: BlockDTO,
     direction: Direction.TOP | Direction.BOTTOM,
   ): void {
-    this.initialY = event.data.global.y;
+    this.initialY = event.globalY;
     this.initialBlockHeight = block.rect.height;
     this.currentTacton = block;
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
@@ -2908,6 +2916,7 @@ export class BlockManager {
   //******* collision-detection for moving blocks *******
   private createBorders(): void {
     this.selectedTracks = [];
+    this.unselectedBorderList = [];
     // calculate border to check
     Object.keys(this.store.state.timeline.blocks).forEach(
       (trackIdAsString: string, trackId: number): void => {
@@ -2926,6 +2935,8 @@ export class BlockManager {
               this.unselectedBorders[block.trackId].push(
                 block.rect.x + block.rect.width,
               );
+              this.unselectedBorderList.push(block.rect.x);
+              this.unselectedBorderList.push(block.rect.x + block.rect.width);
             } else {
               // block is selected
               this.selectedBorders[block.trackId].push(block.rect.x);
@@ -2984,12 +2995,17 @@ export class BlockManager {
     this.calculateStickyOffsets();
   }
   private adjustOffset(offset: number, trackOffset: number): number {
-    const possibleSnaps: { x: number; dist: number }[] = [];
     const maxAttempts: number = 10;
     let attemptCount: number = 0;
     let validOffset: number = offset;
     let hasCollision: boolean = true;
     let isSticking: boolean = false;
+    let snapped: {
+      offset: number | null;
+      dist: number;
+      lineX: number;
+      snappedToEnd: boolean;
+    } = { offset: null, dist: Infinity, lineX: 0, snappedToEnd: false };
 
     // calculate offsetDifference to adjust borders
     const horizontalOffsetDifference: number =
@@ -3080,22 +3096,65 @@ export class BlockManager {
             }
           }
 
-          // TODO add unselectedBorder for relative snapping
-          if (!isSticking && this.store.state.timeline.isSnappingActive) {
-            for (const lineX of this.store.state.timeline.gridLines) {
-              // left
-              if (Math.abs(start2 - lineX) <= config.moveSnappingRadius) {
-                possibleSnaps.push({
-                  x: lineX - this.selectedBorders[trackId][i],
-                  dist: start2 - lineX,
-                });
+          if (!isSticking) {
+            if (this.store.state.timeline.isSnappingActive) {
+              for (const lineX of this.store.state.timeline.gridLines) {
+                // left
+                if (Math.abs(start2 - lineX) <= config.moveSnappingRadius) {
+                  const dist = start2 - lineX;
+                  const offset = lineX - this.selectedBorders[trackId][i];
+                  if (dist < snapped.dist) {
+                    snapped = {
+                      offset: offset,
+                      dist: dist,
+                      lineX: lineX,
+                      snappedToEnd: false,
+                    };
+                  }
+                }
+                // right
+                if (Math.abs(end2 - lineX) <= config.moveSnappingRadius) {
+                  const dist = end2 - lineX;
+                  const offset = lineX - this.selectedBorders[trackId][i + 1];
+                  if (dist < snapped.dist) {
+                    snapped = {
+                      offset: offset,
+                      dist: dist,
+                      lineX: lineX,
+                      snappedToEnd: true,
+                    };
+                  }
+                }
               }
-              // right
-              if (Math.abs(end2 - lineX) <= config.moveSnappingRadius) {
-                possibleSnaps.push({
-                  x: lineX - this.selectedBorders[trackId][i + 1],
-                  dist: end2 - lineX,
-                });
+            }
+            if (this.store.state.timeline.isSnappingRelativeActive) {
+              for (const lineX of this.unselectedBorderList) {
+                // left relative
+                if (Math.abs(start2 - lineX) <= config.moveSnappingRadius) {
+                  const dist = start2 - lineX;
+                  const offset = lineX - this.selectedBorders[trackId][i];
+                  if (dist < snapped.dist) {
+                    snapped = {
+                      offset: offset,
+                      dist: dist,
+                      lineX: lineX,
+                      snappedToEnd: false,
+                    };
+                  }
+                }
+                // right relative
+                if (Math.abs(end2 - lineX) <= config.moveSnappingRadius) {
+                  const dist = end2 - lineX;
+                  const offset = lineX - this.selectedBorders[trackId][i + 1];
+                  if (dist < snapped.dist) {
+                    snapped = {
+                      offset: offset,
+                      dist: dist,
+                      lineX: lineX,
+                      snappedToEnd: true,
+                    };
+                  }
+                }
               }
             }
           }
@@ -3103,11 +3162,18 @@ export class BlockManager {
       }
     }
 
+    const line: Graphics = getLine();
     // no collision, choose gridLine for snapping
-    if (!isSticking && possibleSnaps.length >= 1) {
-      validOffset = possibleSnaps.reduce((prev, curr) =>
-        curr.dist < prev.dist ? curr : prev,
-      ).x;
+    if (!isSticking && snapped.offset != null) {
+      validOffset = snapped.offset;
+      if (snapped.snappedToEnd) {
+        line.x = snapped.lineX;
+      } else {
+        line.x = snapped.lineX;
+      }
+      line.visible = true;
+    } else {
+      line.visible = false;
     }
 
     if (attemptCount >= maxAttempts) {

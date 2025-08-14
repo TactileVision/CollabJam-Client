@@ -2,6 +2,7 @@ import { Application, Container, Graphics } from "pixi.js";
 import { Store, useStore } from "@/renderer/store/store";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 import "pixi.js/unsafe-eval";
+import config from "@/renderer/helpers/timeline/config";
 
 let pixiApp: Application;
 let dynamicContainer: Container;
@@ -10,6 +11,7 @@ let liveContainer: Container;
 let resizeObserver: ResizeObserver;
 let overlay: Graphics;
 let animationFrameId: number | null = null;
+let line: Graphics;
 
 /**
  * Initialises the Pixi-Canvas
@@ -20,6 +22,7 @@ export async function createPixiApp(): Promise<void> {
   staticContainer = new Container();
   liveContainer = new Container();
   overlay = new Graphics();
+  line = new Graphics();
 
   // Init app
   await pixiApp.init({
@@ -49,12 +52,19 @@ export async function createPixiApp(): Promise<void> {
 
   // setup overlay-element
   overlay.rect(0, 0, wrapper.clientWidth, height);
-
   overlay.fill("rgba(0, 0, 0, 0.1)");
   overlay.interactive = false;
   overlay.visible = false;
 
+  // setup line
+  line.moveTo(0, config.sliderHeight);
+  line.lineTo(0, height);
+  line.stroke({ width: 2, color: "rgba(255,147,58,1)" });
+  line._zIndex = 0;
+  line.visible = false;
+
   // add elements to canvas
+  staticContainer.addChild(line);
   pixiApp.stage.addChild(staticContainer);
   pixiApp.stage.addChild(dynamicContainer);
   pixiApp.stage.addChild(liveContainer);
@@ -113,4 +123,7 @@ export function getLiveContainer(): Container {
 }
 export function toggleOverlay(isVisible: boolean): void {
   overlay.visible = isVisible;
+}
+export function getLine(): Graphics {
+  return line;
 }
