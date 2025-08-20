@@ -287,6 +287,7 @@ export default defineComponent({
     interactionMode(mode) {
       // reset liveBLockBuilder
       this.liveBlockBuilder.reset();
+      this.store.state.timeline.blockManager?.clearData();
       this.currentTime = 0;
       if (this.ticker !== null && this.ticker.count > 0) {
         this.ticker?.remove(this.recording);
