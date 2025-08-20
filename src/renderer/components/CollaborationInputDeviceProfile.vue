@@ -53,9 +53,7 @@
 // }
 
 .input-device-thumbnail {
-  // max-height: 25vh
-  // max-width: 90%;
-  max-height: 15vh;
+  max-height: 120px;
 }
 </style>
 <script lang="ts">
