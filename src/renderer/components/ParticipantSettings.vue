@@ -9,6 +9,7 @@
         @muted="muteParticipant"
         @unmuted="unmuteParticipant"
       />
+      <p v-if="participants.length == 0">No participants</p>
     </v-card-item>
     <v-card-actions>
       <v-btn

@@ -7,7 +7,7 @@
         icon="mdi-vibrate"
         variant="tonal"
         style="border-radius: 4px"
-        :color="numConnectedDevices == 0 ? 'error' : 'primary'"
+        :color="numConnectedDevices == 0 ? 'error' : 'secondary'"
         v-bind="props"
       >
       </v-btn>

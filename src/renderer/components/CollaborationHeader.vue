@@ -156,18 +156,17 @@
       <v-col>
         <v-row class="align-center ga-2 justify-end" no-gutters>
           <v-badge
-            :content="participants.length"
             location="top right"
-            color="secondary"
+            :content="participants.length"
+            :color="showParticipants ? 'primary' : 'secondary'"
           >
             <v-btn
               variant="tonal"
               size="small"
               style="border-radius: 4px"
+              id="userListActivator"
               :color="showParticipants ? 'primary' : 'secondary'"
               :icon="'mdi-account-group'"
-              id="userListActivator"
-              @click="showParticipants = !showParticipants"
               @mouseenter="showToolTip(toolTipKeys.PARTICIPANTS)"
               @mouseleave="clearToolTip"
             ></v-btn>
@@ -182,12 +181,13 @@
             @mouseenter="showToolTip(toolTipKeys.INPUT_DEVICES)"
             @mouseleave="clearToolTip"
           ></v-btn>
-          <DeviceConnectionModal :num-connected-devices="5"></DeviceConnectionModal>
+          <DeviceConnectionModal :num-connected-devices="numConnectedDevices"></DeviceConnectionModal>
         </v-row>
       </v-col>
     </v-row>
   </v-container>
-  <v-menu 
+  <v-menu
+    v-model="showParticipants"
     activator="#userListActivator" 
     :close-on-content-click="false"
   >
@@ -195,9 +195,9 @@
   </v-menu>
   <!--inputDevices-->
   <v-navigation-drawer
-      floating
-      location="bottom"
-      v-model="showInputDevices"
+    floating
+    location="bottom"
+    v-model="showInputDevices"
   >
     <v-slide-group
       show-arrows
@@ -208,8 +208,8 @@
       >
         <div class="d-flex flex-row ga-4">
           <v-slide-group-item
-              v-for="device in inputDevices"
-              :key="getDeviceKey(device)"
+            v-for="device in inputDevices"
+            :key="getDeviceKey(device)"
           >
             <CollaborationInputDeviceProfile :device="device"/>
           </v-slide-group-item>
@@ -319,7 +319,7 @@ export default defineComponent({
       inputDevices: [] as InputDevice[],
       pollDevices: -1,
       showInputDevices: false,
-      showParticipants: false
+      showParticipants: false,
     };
   },
   computed: {
