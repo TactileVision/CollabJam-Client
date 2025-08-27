@@ -60,6 +60,7 @@
     "pixi.js": "8.5.2",
     "rimraf": "^5.0.7",
     "socket.io-client": "^4.7.5",
+    "three": "^0.179.1",
     "uuid": "^9.0.1",
     "vue": "^3.4.21",
     "vue-inline-svg": "^3.1.2",
