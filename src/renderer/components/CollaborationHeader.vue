@@ -326,6 +326,9 @@ export default defineComponent({
       required: true
     }
   },
+  emits: [
+      'update:showDisplayConfigurator'
+  ],
   components: {
     ParticipantSettings,
     CollaborationInputDeviceProfile,

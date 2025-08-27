@@ -3,30 +3,25 @@
 <template>
     <CollaborationHeader 
       :show-display-configurator="showDisplayConfigurator"
-      @update:showDisplayConfigurator="showDisplayConfigurator = $event;"
+      @update:show-display-configurator="showDisplayConfigurator = $event;"
     />
     <TheTimeline></TheTimeline>
-    <v-navigation-drawer
+    <ConfigurationDrawer
       v-model="showDisplayConfigurator"
-      location="right"
-      width="300"
-      permanent
-    >
-      Drawer-Inhalt
-    </v-navigation-drawer>
+    />
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import CollaborationBody from "@/renderer/components/CollaborationBody.vue";
 import CollaborationHeader from "@/renderer/components/CollaborationHeader.vue";
 import { ref } from 'vue'
 import TheTimeline from "@/renderer/components/TheTimeline.vue";
+import ConfigurationDrawer from "@/displayConfigurator/components/ConfigurationDrawer.vue";
 export default defineComponent({
   name: "CollaborationView",
   components: {
+    ConfigurationDrawer,
     TheTimeline,
-    CollaborationBody,
     CollaborationHeader,
   },
   data() {
