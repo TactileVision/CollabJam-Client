@@ -1,6 +1,9 @@
 <template>
-  <v-container fluid class="ps-2 pe-2">
-    <v-row class="align-center w-100 ga-6" no-gutters>
+  <v-app-bar
+    elevation="0"
+  >
+    <v-container fluid class="ps-2 pe-2">
+      <v-row class="align-center w-100 ga-6" no-gutters>
       <v-col cols="auto">
         <v-row class="ga-6" no-gutters>
           <!--Interactions with tacton (e.g. recording)-->
@@ -10,6 +13,7 @@
                 size="small"
                 style="border-radius: 4px"
                 color="error"
+                variant="tonal"
                 @click="toggleRecording"
                 @mouseenter="showToolTip(toolTipKeys.RECORD)"
                 @mouseleave="clearToolTip"
@@ -25,6 +29,7 @@
                 size="small"
                 style="border-radius: 4px"
                 color="primary"
+                variant="tonal"
                 @click="togglePlayback"
                 @mouseenter="showToolTip(toolTipKeys.PLAYBACK)"
                 @mouseleave="clearToolTip"
@@ -40,6 +45,7 @@
                 size="small"
                 style="border-radius: 4px"
                 color="secondary"
+                variant="tonal"
                 @click="toggleOverdubbing"
                 @mouseenter="showToolTip(toolTipKeys.OVERDUB)"
                 @mouseleave="clearToolTip"
@@ -115,41 +121,41 @@
       
       <!--Display for current Interaction (e.g. recording)-->
       <v-col>
-        <v-card width="530" height="40" density="compact" variant="tonal">
+        <v-card width="480" height="40" density="compact" variant="tonal">
           <v-row no-gutters class="align-center h-100 ps-2 pe-2 ga-12">
-              <v-col
-                v-if="currentTacton != null"
-                cols="auto"
-              >
-                <div class="text-h6">
-                  {{store.state.tactonPlayback.currentTacton?.metadata.name}}
-                  {{store.state.tactonPlayback.currentTacton?.metadata.iteration}}
-                </div>
-              </v-col>
-              <v-col
-                cols="auto"
-                v-if="currentToolTip != undefined"
-              >
-                <v-row no-gutters class="align-center ga-4">
-                  <!--toolTip-->
-                  <v-col
-                    cols="auto"
-                    class=" text-caption"
-                  >
-                    {{currentToolTip.toolTip}}
-                  </v-col>
+            <v-col
+              v-if="currentTacton != null"
+              cols="auto"
+            >
+              <div class="text-h6">
+                {{store.state.tactonPlayback.currentTacton?.metadata.name}}
+                {{store.state.tactonPlayback.currentTacton?.metadata.iteration}}
+              </div>
+            </v-col>
+            <v-col
+              cols="auto"
+              v-if="currentToolTip != undefined"
+            >
+              <v-row no-gutters class="align-center ga-4">
+                <!--toolTip-->
+                <v-col
+                  cols="auto"
+                  class=" text-caption"
+                >
+                  {{currentToolTip.toolTip}}
+                </v-col>
 
-                  <!--ShortCut - if available-->
-                  <v-col
-                    cols="auto"
-                    v-if="currentToolTip.shortCut != undefined"
-                    class="shortCut text-end"
-                  >
-                    {{currentToolTip.shortCut}}
-                  </v-col>
-                </v-row>
-              </v-col>
-            </v-row>
+                <!--ShortCut - if available-->
+                <v-col
+                  cols="auto"
+                  v-if="currentToolTip.shortCut != undefined"
+                  class="shortCut text-end"
+                >
+                  {{currentToolTip.shortCut}}
+                </v-col>
+              </v-row>
+            </v-col>
+          </v-row>
         </v-card>
       </v-col>
       
@@ -182,10 +188,21 @@
             @mouseleave="clearToolTip"
           ></v-btn>
           <DeviceConnectionModal :num-connected-devices="numConnectedDevices"></DeviceConnectionModal>
+          <v-btn
+            variant="tonal"
+            size="small"
+            style="border-radius: 4px"
+            :color="showDisplayConfigurator ? 'primary' : 'secondary'"
+            :icon="showDisplayConfigurator ? 'mdi-close' : 'mdi-human-edit'"
+            @click="$emit('update:showDisplayConfigurator', !showDisplayConfigurator)"
+            @mouseenter="showToolTip(toolTipKeys.INPUT_DEVICES)"
+            @mouseleave="clearToolTip"
+          ></v-btn>
         </v-row>
       </v-col>
     </v-row>
-  </v-container>
+    </v-container>
+  </v-app-bar>
   <v-menu
     v-model="showParticipants"
     activator="#userListActivator" 
@@ -303,6 +320,12 @@ const ToolTips: Record<ToolTipKeys, ToolTip> = {
 }
 export default defineComponent({
   name: "CollaborationHeader",
+  props: {
+    showDisplayConfigurator: {
+      type: Boolean,
+      required: true
+    }
+  },
   components: {
     ParticipantSettings,
     CollaborationInputDeviceProfile,
@@ -319,7 +342,7 @@ export default defineComponent({
       inputDevices: [] as InputDevice[],
       pollDevices: -1,
       showInputDevices: false,
-      showParticipants: false,
+      showParticipants: false
     };
   },
   computed: {

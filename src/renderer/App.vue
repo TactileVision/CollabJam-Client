@@ -6,7 +6,7 @@
         <!-- <the-sidebar /> -->
         <!-- <the-app-bar /> -->
         <v-main>
-          <v-container fluid class="ma-0">
+          <v-container fluid class="ma-0 ps-3 pe-3 pt-0 pb-0">
             <router-view />
           </v-container>
         </v-main>
