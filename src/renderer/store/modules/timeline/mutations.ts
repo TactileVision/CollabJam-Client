@@ -94,10 +94,13 @@ export type Mutations<S = State> = {
     state: S,
     newPosition: { x: number; y: number },
   ): void;
-  [TimelineMutations.UNGROUP_SELECTED_BLOCKS](state: S, groupId: number): void;
+  [TimelineMutations.UNGROUP_SELECTED_BLOCKS](
+    state: S,
+    groupUuid: string,
+  ): void;
   [TimelineMutations.ADD_GROUP](
     state: S,
-    groupData: { groupId: number; selection: BlockSelection[] },
+    groupData: { groupUuid: string; selection: BlockSelection[] },
   ): void;
   [TimelineMutations.TOGGLE_SNAPPING_STATE](state: S): void;
   [TimelineMutations.TOGGLE_EDIT_STATE](state: S, isEditable?: boolean): void;
@@ -202,10 +205,10 @@ export const mutations: MutationTree<State> & Mutations = {
     state.selectedBlocks.forEach((selection: BlockSelection): void => {
       const block: BlockDTO | undefined =
         sortedBlocks[selection.trackId][selection.index];
-      if (block == undefined || block.rect.uid != selection.uid) {
+      if (block == undefined || block.uuid != selection.uuid) {
         selection.index = sortedBlocks[selection.trackId].findIndex(
           (b: BlockDTO): boolean => {
-            return b.rect.uid == selection.uid;
+            return b.uuid == selection.uuid;
           },
         );
       }
@@ -216,10 +219,10 @@ export const mutations: MutationTree<State> & Mutations = {
       group.forEach((selection: BlockSelection): void => {
         const block: BlockDTO | undefined =
           sortedBlocks[selection.trackId][selection.index];
-        if (block == undefined || block.rect.uid != selection.uid) {
+        if (block == undefined || block.uuid != selection.uuid) {
           selection.index = sortedBlocks[selection.trackId].findIndex(
             (b: BlockDTO): boolean => {
-              return b.rect.uid == selection.uid;
+              return b.uuid == selection.uuid;
             },
           );
         }
@@ -270,7 +273,8 @@ export const mutations: MutationTree<State> & Mutations = {
     // remove from selection
     for (let i: number = state.selectedBlocks.length - 1; i >= 0; i--) {
       if (state.selectedBlocks[i].trackId == trackId) {
-        state.selectedBlocks.splice(i, 1);
+        // TODO enable
+        //state.selectedBlocks.splice(i, 1);
       }
     }
   },
@@ -345,7 +349,7 @@ export const mutations: MutationTree<State> & Mutations = {
     // update selectionData
     const selectionIndex: number = state.selectedBlocks.findIndex(
       (selection: BlockSelection): boolean => {
-        return selection.uid == block.rect.uid;
+        return selection.uuid == block.uuid;
       },
     );
     state.selectedBlocks[selectionIndex].trackId = targetTrack;
@@ -397,15 +401,15 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [TimelineMutations.UNGROUP_SELECTED_BLOCKS](
     state: State,
-    groupId: number,
+    groupUuid: string,
   ): void {
-    state.groups.delete(groupId);
+    state.groups.delete(groupUuid);
   },
   [TimelineMutations.ADD_GROUP](
     state: State,
-    groupData: { groupId: number; selection: BlockSelection[] },
+    groupData: { groupUuid: string; selection: BlockSelection[] },
   ) {
-    state.groups.set(groupData.groupId, groupData.selection);
+    state.groups.set(groupData.groupUuid, groupData.selection);
   },
   [TimelineMutations.TOGGLE_SNAPPING_STATE](state: State): void {
     state.isSnappingActive = !state.isSnappingActive;

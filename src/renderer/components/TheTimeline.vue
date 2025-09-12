@@ -195,6 +195,8 @@ export default defineComponent({
           // clear data of blockManager and store
           this.store.state.timeline.blockManager?.clearData();
           this.store.state.timeline.groups.clear();
+          this.store.state.timeline.selectedBlocks = [];
+          this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
           
           // save uuid
           this.lastTactonId = this.tacton.uuid;
@@ -244,7 +246,6 @@ export default defineComponent({
           // render components
           this.mounted = true;
         } else {
-          // TODO if block was selected, this selection is lost
           // current tacton was updated
           // parse instructions
           const parsed = this.parser.parseInstructionsToBlocks(

@@ -11,6 +11,8 @@ interface BlockEvent {
   time: number;
   trackId: number;
   intensity: number;
+  uuid: string;
+  groupUuid: string | null;
 }
 export class InstructionParser {
   private store: Store;
@@ -32,8 +34,10 @@ export class InstructionParser {
       if (isInstructionSetParameter(instruction)) {
         const channels: number[] = instruction.setParameter.channels;
         const intensity: number = instruction.setParameter.intensity;
-
-        channels.forEach((channel: number): void => {
+        const uuids: string[] = instruction.setParameter.uuids;
+        const groupUuid: (string | null)[] =
+          instruction.setParameter.groupUuids;
+        channels.forEach((channel: number, index: number): void => {
           const existing = activeChannels.get(channel);
 
           // finish construction of previous block, if existing
@@ -43,6 +47,8 @@ export class InstructionParser {
               startTime: existing.startTime,
               endTime: currentTime,
               intensity: existing.intensity,
+              uuid: uuids[index],
+              groupUuid: groupUuid[index],
             };
             blocks.push(block);
             activeChannels.delete(channel);
@@ -96,13 +102,20 @@ export class InstructionParser {
         time: startTime,
         trackId: block.trackId,
         intensity: block.rect.height / config.maxBlockHeight,
+        uuid: block.uuid,
+        groupUuid: block.groupUuid,
       });
-      events.push({ time: endTime, trackId: block.trackId, intensity: 0 });
+      events.push({
+        time: endTime,
+        trackId: block.trackId,
+        intensity: 0,
+        uuid: block.uuid,
+        groupUuid: block.groupUuid,
+      });
     });
 
     // cleanup
     const cleanedEvents: BlockEvent[] = [];
-
     for (let i = 0; i < events.length; i++) {
       const current: BlockEvent = events[i];
       const next: BlockEvent = events[i + 1];
@@ -123,24 +136,51 @@ export class InstructionParser {
     // sort events
     cleanedEvents.sort((a: BlockEvent, b: BlockEvent) => a.time - b.time);
 
-    // transform events into instructions
-    cleanedEvents.forEach((event: BlockEvent): void => {
-      // insert wait-instruction if needed
-      if (event.time > currentTime) {
-        instructions.push({
-          wait: { miliseconds: event.time - currentTime },
-        });
-        currentTime = event.time;
+    const eventsByTime: Map<number, BlockEvent[]> = new Map();
+    cleanedEvents.forEach((ev) => {
+      const key = Number(ev.time.toFixed(3)); // Float-Toleranz
+      if (!eventsByTime.has(key)) eventsByTime.set(key, []);
+      eventsByTime.get(key)!.push(ev);
+    });
+
+    const sortedTimes = Array.from(eventsByTime.keys()).sort((a, b) => a - b);
+
+    sortedTimes.forEach((time) => {
+      const eventsAtTime = eventsByTime.get(time)!;
+
+      // wait-instruction, falls nötig
+      if (time > currentTime) {
+        instructions.push({ wait: { miliseconds: time - currentTime } });
+        currentTime = time;
       }
 
-      // insert set-Parameter instruction
+      // Kanäle, UUIDs und groupUuids zusammenführen
+      const channels: number[] = [];
+      const uuids: string[] = [];
+      const groupUuids: (string | null)[] = [];
+
+      eventsAtTime.forEach((ev) => {
+        channels.push(ev.trackId);
+        uuids.push(ev.uuid);
+        groupUuids.push(ev.groupUuid);
+      });
+
+      console.log(groupUuids);
+
+      // setParameter-Instruktion erzeugen
       instructions.push({
         setParameter: {
-          intensity: event.intensity,
-          channels: [event.trackId],
+          intensity: eventsAtTime[0].intensity,
+          channels,
+          uuids,
+          groupUuids: groupUuids,
         },
       });
     });
+    console.log(
+      "instruction parser - block to instruction output ",
+      instructions,
+    );
     return instructions;
   }
   private nearlyEqual(

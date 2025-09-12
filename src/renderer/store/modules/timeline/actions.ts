@@ -144,7 +144,7 @@ export interface Actions {
   ): void;
   [TimelineActionTypes.ADD_GROUP](
     { commit }: AugmentedActionContext,
-    payload: { groupId: number; selection: BlockSelection[] },
+    payload: { groupUuid: string; selection: BlockSelection[] },
   ): void;
   [TimelineActionTypes.TOGGLE_SNAPPING_STATE]({
     commit,
@@ -341,7 +341,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
   },
   [TimelineActionTypes.ADD_GROUP](
     { commit }: { commit: Commit },
-    groupData: { groupId: number; selection: BlockSelection[] },
+    groupData: { groupUuid: string; selection: BlockSelection[] },
   ): void {
     commit(TimelineMutations.ADD_GROUP, groupData);
   },

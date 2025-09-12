@@ -9,6 +9,7 @@ export class BlockChanges {
   track: number | null = null;
 }
 export class BlockDTO {
+  uuid: string;
   rect: Graphics;
   strokedRect: Graphics;
   initX: number;
@@ -25,8 +26,9 @@ export class BlockDTO {
   container: Container;
   trackId: number;
   initTrackId: number;
-  groupId?: number;
+  groupUuid: string | null;
   constructor(
+    uuid: string,
     rect: Graphics,
     strokedRect: Graphics,
     leftHandle: Graphics,
@@ -40,6 +42,7 @@ export class BlockDTO {
     container: Container,
     trackId: number,
   ) {
+    this.uuid = uuid;
     this.rect = rect;
     this.strokedRect = strokedRect;
     this.initWidth = rect.width;
@@ -56,18 +59,21 @@ export class BlockDTO {
     this.container = container;
     this.trackId = trackId;
     this.initTrackId = trackId;
+    this.groupUuid = null;
   }
 }
 export interface BlockSelection {
   trackId: number;
   index: number;
-  uid: number;
+  uuid: string;
 }
 export interface BlockData {
   trackId: number;
   startTime: number;
   endTime: number;
   intensity: number;
+  uuid: string;
+  groupUuid: string | null;
 }
 export enum TimelineEvents {
   TACTON_WAS_EDITED = "tactonWasEdited",

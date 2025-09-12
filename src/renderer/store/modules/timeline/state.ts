@@ -13,7 +13,7 @@ export type State = {
   visibleHeight: number;
   sorted: Record<number, boolean>;
   blocks: Record<number, BlockDTO[]>;
-  groups: Map<number, BlockSelection[]>;
+  groups: Map<string, BlockSelection[]>;
   lastBlockPositionX: number;
   selectedBlocks: BlockSelection[];
   initialVirtualViewportWidth: number;
