@@ -1,9 +1,6 @@
 import { Store } from "@/renderer/store/store";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
-import {
-  /* WebSocketAPI, */ WebSocketAPI,
-  socket,
-} from "@/main/WebSocketManager/index";
+import { socket, WebSocketAPI } from "@/main/WebSocketManager/index";
 // import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { TactonSettingsActionTypes } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import { InteractionMode, Room, User } from "@sharedTypes/roomTypes";
@@ -13,6 +10,7 @@ import {
   TactonDeletion,
   UpdateAvailableTags,
   UpdateEditingUser,
+  UpdateEditingUserUUIDS,
   UpdateRoomMode,
   UpdateTacton,
   WS_MSG_TYPE,
@@ -27,6 +25,8 @@ import { Instruction } from "../Input/InputHandling/InputHandlerManager";
 import { debouncedHandling } from "../Input/InputHandling/Debouincing";
 import { toRaw } from "vue";
 import { updateInteractionMode } from "@/renderer/helpers/recordMode";
+import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
+import { TimelineEvents } from "@/renderer/helpers/timeline/types";
 
 export const handleMessage = (store: Store) => {
   console.log("Regstering message handler");
@@ -205,6 +205,22 @@ export const handleMessage = (store: Store) => {
       userId: res.userId,
     });
   });
+
+  socket.on(
+    WS_MSG_TYPE.UPDATE_EDITING_USER_UUIDS_CLI,
+    (res: UpdateEditingUserUUIDS): void => {
+      // update locks
+      store.dispatch(TimelineActionTypes.UPDATE_USER_LOCKS, {
+        userId: res.userId,
+        uuids: res.uuids,
+      });
+
+      // visualise
+      store.state.timeline.blockManager?.eventBus.dispatchEvent(
+        new Event(TimelineEvents.UPADTED_USER_LOCKS),
+      );
+    },
+  );
   // const router = useRouter()
   /**
    * every message containing:

@@ -8,6 +8,7 @@ let pixiApp: Application;
 let dynamicContainer: Container;
 let staticContainer: Container;
 let liveContainer: Container;
+let lockContainer: Container;
 let resizeObserver: ResizeObserver;
 let overlay: Graphics;
 let animationFrameId: number | null = null;
@@ -21,6 +22,7 @@ export async function createPixiApp(): Promise<void> {
   dynamicContainer = new Container();
   staticContainer = new Container();
   liveContainer = new Container();
+  lockContainer = new Container();
   overlay = new Graphics();
   line = new Graphics();
 
@@ -68,6 +70,7 @@ export async function createPixiApp(): Promise<void> {
   pixiApp.stage.addChild(staticContainer);
   pixiApp.stage.addChild(dynamicContainer);
   pixiApp.stage.addChild(liveContainer);
+  pixiApp.stage.addChild(lockContainer);
   pixiApp.stage.addChild(overlay);
 
   // TODO if only the height is changed, this observer will not fire, as the wrapper_element hast zero height
@@ -120,6 +123,9 @@ export function getStaticContainer(): Container {
 }
 export function getLiveContainer(): Container {
   return liveContainer;
+}
+export function getLockContainer(): Container {
+  return lockContainer;
 }
 export function toggleOverlay(isVisible: boolean): void {
   overlay.visible = isVisible;

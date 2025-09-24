@@ -148,13 +148,22 @@ export class InstructionParser {
     sortedTimes.forEach((time) => {
       const eventsAtTime = eventsByTime.get(time)!;
 
-      // wait-instruction, falls nötig
+      // push wait-instruction, if needed
       if (time > currentTime) {
         instructions.push({ wait: { miliseconds: time - currentTime } });
         currentTime = time;
       }
 
-      // Kanäle, UUIDs und groupUuids zusammenführen
+      // group by intensity
+      const eventsByIntensity: Map<number, BlockEvent[]> = new Map();
+      eventsAtTime.forEach((ev) => {
+        if (!eventsByIntensity.has(ev.intensity)) {
+          eventsByIntensity.set(ev.intensity, []);
+        }
+        eventsByIntensity.get(ev.intensity)!.push(ev);
+      });
+
+      // combine data if events happen at the same time
       const channels: number[] = [];
       const uuids: string[] = [];
       const groupUuids: (string | null)[] = [];
@@ -165,9 +174,7 @@ export class InstructionParser {
         groupUuids.push(ev.groupUuid);
       });
 
-      console.log(groupUuids);
-
-      // setParameter-Instruktion erzeugen
+      // push setParameter-instruction
       instructions.push({
         setParameter: {
           intensity: eventsAtTime[0].intensity,
@@ -177,10 +184,6 @@ export class InstructionParser {
         },
       });
     });
-    console.log(
-      "instruction parser - block to instruction output ",
-      instructions,
-    );
     return instructions;
   }
   private nearlyEqual(

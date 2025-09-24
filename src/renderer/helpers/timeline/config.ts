@@ -37,6 +37,8 @@ const config = {
   moveSnappingRadius: 20,
   resizingSnappingRadius: 5,
   gridLabelStyle: GridLabelStyle.Clock,
+  // lock
+  lockBorderWidth: 6,
   //colors
   colors: {
     gridColor: "rgba(75, 75, 75, 0.2)",
@@ -49,6 +51,7 @@ const config = {
     boundingBoxBorderColor: "rgba(236,102,12, 1)",
     boundingBoxColor: "rgba(236,102,12, 0.1)",
     groupHandleColor: "rgba(236,102,12, 1)",
+    lockColor: "rgb(255,0,0)",
   },
 };
 export default config;

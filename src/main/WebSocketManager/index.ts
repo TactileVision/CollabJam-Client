@@ -130,4 +130,15 @@ export const WebSocketAPI = {
       userId: null,
     });
   },
+  requestEditingForUuids: (
+    roomId: string,
+    userId: string,
+    uuids: string[],
+  ): void => {
+    socket?.emit(WS_MSG_TYPE.UPDATE_EDITING_USER_UUIDS_SERV, {
+      roomId: roomId,
+      userId: userId,
+      uuids: uuids,
+    });
+  },
 };

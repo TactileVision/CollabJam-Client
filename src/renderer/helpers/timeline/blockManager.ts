@@ -10,6 +10,7 @@ import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 import {
   getDynamicContainer,
   getLine,
+  getLockContainer,
   getPixiApp,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
@@ -22,6 +23,7 @@ import {
   TimelineEvents,
 } from "@/renderer/helpers/timeline/types";
 import { DUMMY_GROUP_UUID, DUMMY_UUID } from "@sharedTypes/tactonTypes";
+import { User } from "@sharedTypes/roomTypes";
 
 interface SelectionBorderData {
   container: Container;
@@ -81,6 +83,15 @@ class CopiedBlockDTO {
     this.initTrackId = trackId;
     this.groupUuid = groupUuid;
   }
+}
+interface GroupBounds {
+  startX: number;
+  endX: number;
+  lowestTrack: number;
+  highestTrack: number;
+  maxHeightLowest: number;
+  maxHeightHighest: number;
+  y: number;
 }
 export class BlockManager {
   // store
@@ -744,6 +755,37 @@ export class BlockManager {
     block.topIndicator.visible = isVisible;
     block.bottomIndicator.visible = isVisible;
   }
+  private updateLocks(): void {
+    // clear all borders
+    getLockContainer().removeChildren();
+
+    for (const userId of Object.keys(this.store.state.timeline.userLocks)) {
+      // skip own selection
+      if (userId == this.store.state.roomSettings.user.id) {
+        continue;
+      }
+
+      // skip if no selection
+      const uuids: string[] = this.store.state.timeline.userLocks[userId] ?? [];
+      if (uuids.length == 0) {
+        return;
+      }
+
+      // visualize
+      let color: string | undefined =
+        this.store.state.roomSettings.participants.find(
+          (user) => user.id == userId,
+        )?.color;
+      if (color == undefined) {
+        color = config.colors.lockColor;
+      }
+      const blocks: BlockDTO[] = this.findBlocksByUuids(uuids);
+      const bounds: GroupBounds = this.computeGroupBounds(blocks);
+      getLockContainer().addChild(
+        this.createBoundingRectangle(bounds, config.lockBorderWidth, color),
+      );
+    }
+  }
 
   //*************** Update-Hooks ***************
 
@@ -853,6 +895,59 @@ export class BlockManager {
 
   //*************** Interactions ***************
   private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
+    // notify user on click about edit-state
+    if (this.isInteractionBlocked) {
+      this.store.dispatch(
+        TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+        SnackbarTexts.TACTON_IS_READONLY(),
+      );
+      return;
+    }
+
+    // check uuid of selection
+    const uuids: string[] = [];
+    if (Array.isArray(toSelect)) {
+      // check if selection is empty
+      const userId: string = this.store.state.roomSettings.user.id;
+      if (
+        toSelect.length == 0 &&
+        (this.store.state.timeline.userLocks[userId] ?? []).length == 0
+      ) {
+        return;
+      }
+
+      toSelect.forEach((selection: BlockSelection) => {
+        uuids.push(selection.uuid);
+      });
+    } else {
+      uuids.push(toSelect.uuid);
+      // what if this is a group
+      // then toSelect.groupUuid must be check / all grouped  blocks
+    }
+
+    // check, if uuid is already blocked
+    let canEdit: boolean = true;
+    for (const uuid of uuids) {
+      if (this.store.state.timeline.lockedBlocks.has(uuid)) {
+        const editorId: string | undefined =
+          this.store.state.timeline.lockedBlocks.get(uuid);
+        const editor: User | undefined =
+          this.store.state.roomSettings.participants.find(
+            (user) => user.id == editorId,
+          );
+        console.log("currently edited by ", editor);
+        if (editorId != this.store.state.roomSettings.user.id) {
+          canEdit = false;
+          break;
+        }
+      }
+    }
+
+    if (!canEdit) {
+      return;
+    }
+
+    /*    // TODO old logic for per tacton blocking
     if (this.isInteractionBlocked) {
       // notify user on click about edit-state
       if (this.store.state.timeline.isEditable) {
@@ -869,17 +964,7 @@ export class BlockManager {
         );
       }
       return;
-    }
-
-    if (Array.isArray(toSelect) && toSelect.length == 0) {
-      this.eventBus.dispatchEvent(
-        new Event(TimelineEvents.TACTON_ALL_DESELECTED),
-      );
-    } else {
-      this.eventBus.dispatchEvent(
-        new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
-      );
-    }
+    }*/
 
     if (Array.isArray(toSelect)) {
       if (!this.store.state.timeline.isPressingShift) {
@@ -1022,6 +1107,11 @@ export class BlockManager {
         }
       }
     }
+
+    // dispatch event
+    this.eventBus.dispatchEvent(
+      new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
+    );
   }
   private copySelection(): void {
     this.clearCopiedBlocks();
@@ -1446,7 +1536,7 @@ export class BlockManager {
     let newX: number = prevX;
 
     // exit, if user is pressing strg (proportional-resizing is active)
-    if (this.strgDown) {
+    if (this.strgDown && this.store.state.timeline.selectedBlocks.length > 1) {
       return;
     }
 
@@ -1624,7 +1714,6 @@ export class BlockManager {
     if (borderData == null) {
       return;
     }
-
     // need to update initData of groupBorder
     borderData.initStartX = borderData.lastStartX;
     borderData.initWidth = borderData.lastWidth;
@@ -1787,6 +1876,7 @@ export class BlockManager {
       // update groups
       this.renderedGroupBorders.forEach(
         (borderData: GroupBorderData, groupId: string): void => {
+          // TODO always true?
           this.updateGroup(groupId, !this.strgDown);
         },
       );
@@ -1979,6 +2069,90 @@ export class BlockManager {
   }
 
   //*************** Helper ***************
+  private createBoundingRectangle(
+    bounds: GroupBounds,
+    width: number,
+    color: string,
+  ): Graphics {
+    console.log(color);
+    const groupWidth = bounds.endX - bounds.startX;
+    const groupHeight =
+      (bounds.highestTrack - bounds.lowestTrack) * config.trackHeight +
+      Math.min(bounds.maxHeightLowest, bounds.maxHeightHighest) +
+      Math.abs(bounds.maxHeightLowest - bounds.maxHeightHighest) / 2;
+
+    const rect = new Graphics();
+    rect.rect(bounds.startX, bounds.y, groupWidth, groupHeight);
+    rect.fill("rgb(0, 0, 0, 0)");
+    rect.stroke({ width: width, color: color });
+
+    return rect;
+  }
+  private computeGroupBounds(blocks: BlockDTO[]): GroupBounds {
+    let startX: number = Infinity;
+    let endX: number = -Infinity;
+    let lowestTrack: number = Infinity;
+    let highestTrack: number = 0;
+    let maxHeightLowest: number = config.minBlockHeight;
+    let maxHeightHighest: number = config.minBlockHeight;
+    let y: number = 0;
+
+    for (const block of blocks) {
+      const blockStart: number = block.rect.x;
+      const blockEnd: number = blockStart + block.rect.width;
+      const trackId: number = block.trackId;
+      const height: number = block.rect.height;
+
+      if (blockStart < startX) {
+        startX = blockStart;
+      }
+      if (blockEnd > endX) {
+        endX = blockEnd;
+      }
+
+      if (
+        trackId < lowestTrack ||
+        (trackId === lowestTrack && height > maxHeightLowest)
+      ) {
+        lowestTrack = trackId;
+        maxHeightLowest = height;
+        y = block.rect.y;
+      }
+
+      if (trackId > highestTrack) {
+        highestTrack = trackId;
+        maxHeightHighest = height;
+      } else if (trackId === highestTrack) {
+        maxHeightHighest = Math.max(maxHeightHighest, height);
+      }
+    }
+
+    return {
+      startX,
+      endX,
+      lowestTrack,
+      highestTrack,
+      maxHeightLowest,
+      maxHeightHighest,
+      y,
+    };
+  }
+
+  private findBlocksByUuids(uuids: string[]): BlockDTO[] {
+    const result: BlockDTO[] = [];
+    for (const uuid of uuids) {
+      for (const trackBlocks of Object.values(
+        this.store.state.timeline.blocks,
+      )) {
+        const found = trackBlocks.find((b) => b.uuid === uuid);
+        if (found) {
+          result.push(found);
+          break;
+        }
+      }
+    }
+    return result;
+  }
   private onGroupResize(
     event: FederatedPointerEvent,
     direction: Direction.LEFT | Direction.RIGHT,
@@ -2004,8 +2178,6 @@ export class BlockManager {
       );
     }
   }
-
-  // TODO maybe enhance by aslo checking cross reference by groupuuid
   private isBlockSelected(block: BlockDTO): boolean {
     return this.store.state.timeline.selectedBlocks.some(
       (selection: BlockSelection): boolean => selection.uuid == block.uuid,
@@ -3236,18 +3408,20 @@ export class BlockManager {
             );
           }
           // loop over every unselected border block in this track
-          for (let k = 0; k < this.unselectedBorders[track].length; k += 2) {
-            const start2: number = this.unselectedBorders[track][k];
-            const end2: number = this.unselectedBorders[track][k + 1];
+          if (this.unselectedBorders[track].length != 1) {
+            for (let k = 0; k < this.unselectedBorders[track].length; k += 2) {
+              const start2: number = this.unselectedBorders[track][k];
+              const end2: number = this.unselectedBorders[track][k + 1];
 
-            // calculate possible offsets
-            const offsetToStart: number =
-              end2 - this.selectedBorders[trackId][i];
-            const offsetToEnd: number =
-              start2 - this.selectedBorders[trackId][i + 1];
+              // calculate possible offsets
+              const offsetToStart: number =
+                end2 - this.selectedBorders[trackId][i];
+              const offsetToEnd: number =
+                start2 - this.selectedBorders[trackId][i + 1];
 
-            possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
-            possibleOffsetPerTrackOffset[trackOffset].push(offsetToEnd);
+              possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
+              possibleOffsetPerTrackOffset[trackOffset].push(offsetToEnd);
+            }
           }
         });
       }
@@ -3374,11 +3548,11 @@ export class BlockManager {
   }
 
   //******* public helpers *******
-
   public clearData(): void {
     this.clearCopiedBlocks();
     this.clearGroupBorder();
     this.clearSelectionBorder();
+    getLockContainer().removeChildren();
   }
   public installEventListeners(): void {
     const pixiApp: Application = getPixiApp();
@@ -3405,6 +3579,11 @@ export class BlockManager {
       this.onCanvasMouseMove.bind(this),
     );
     pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp.bind(this));
+
+    this.eventBus.addEventListener(
+      TimelineEvents.UPADTED_USER_LOCKS,
+      this.updateLocks.bind(this),
+    );
   }
   public toggleBlockVisibility(isVisible: boolean): void {
     this.clearSelectionBorder();

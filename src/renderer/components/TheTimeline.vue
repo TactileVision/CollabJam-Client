@@ -18,7 +18,7 @@ import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import {BlockData, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
+import {BlockData, BlockSelection, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
 import {InteractionMode} from "@sharedTypes/roomTypes";
 import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import {WebSocketAPI} from "@/main/WebSocketManager";
@@ -438,17 +438,23 @@ export default defineComponent({
     });
 
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, () => {
-      console.log("Selected");
-      if (this.store.state.roomSettings.currentlyEditingUserId == null) {
-        console.log("Claiming for me");
-        WebSocketAPI.requestEditingPrivilege(this.store.state.roomSettings.id || "", this.store.state.roomSettings.user.id)
-      }
+      // add BlockUuids
+      const selectedUuids: string[] = this.store.state.timeline.selectedBlocks.map((selection: BlockSelection) => {
+        return selection.uuid;
+      });
+      
+      //WebSocketAPI.requestEditingPrivilege(this.store.state.roomSettings.id || "", this.store.state.roomSettings.user.id)
+      WebSocketAPI.requestEditingForUuids(
+        this.store.state.roomSettings.id || "",
+        this.store.state.roomSettings.user.id,
+        selectedUuids
+      );      
     })
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_ALL_DESELECTED, () => {
       console.log("Deselected");
       if (this.store.state.roomSettings.currentlyEditingUserId == this.store.state.roomSettings.user.id) {
         console.log("Letting go");
-        WebSocketAPI.giveUpEditingPrivilege(this.store.state.roomSettings.id || "")
+        //WebSocketAPI.giveUpEditingPrivilege(this.store.state.roomSettings.id || "")
       }
     })
 

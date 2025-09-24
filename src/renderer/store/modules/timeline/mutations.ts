@@ -40,6 +40,7 @@ export enum TimelineMutations {
   SET_WRAPPER_Y_OFFSET = "setWrapperYOffset",
   SET_CANVAS_WIDTH = "setCanvasWidth",
   SET_SNACKBAR_TEXT = "setSnackbarText",
+  UPDATE_USER_LOCKS = "updateUserLocks",
 }
 
 export type Mutations<S = State> = {
@@ -110,6 +111,10 @@ export type Mutations<S = State> = {
   [TimelineMutations.SET_CANVAS_WIDTH](state: S, width: number): void;
   [TimelineMutations.SET_SNACKBAR_TEXT](state: S, text: string): void;
   [TimelineMutations.TOGGLE_RELATIVE_SNAPPING](state: S): void;
+  [TimelineMutations.UPDATE_USER_LOCKS](
+    state: S,
+    props: { userId: string; uuids: string[] },
+  ): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -455,5 +460,21 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [TimelineMutations.TOGGLE_RELATIVE_SNAPPING](state: State): void {
     state.isSnappingRelativeActive = !state.isSnappingRelativeActive;
+  },
+  [TimelineMutations.UPDATE_USER_LOCKS](
+    state: State,
+    props: { userId: string; uuids: string[] },
+  ): void {
+    console.log("updating locks ", props);
+
+    // 1. Alte Locks für diesen User entfernen
+    const oldLocks: string[] = state.userLocks[props.userId] ?? [];
+    oldLocks.forEach((blockUuid) => state.lockedBlocks.delete(blockUuid));
+
+    // 2. Neue Locks setzen
+    props.uuids.forEach((uuid) => state.lockedBlocks.set(uuid, props.userId));
+
+    // 3. User-Locks updaten
+    state.userLocks[props.userId] = props.uuids;
   },
 };

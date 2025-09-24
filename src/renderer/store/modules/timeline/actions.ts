@@ -42,6 +42,7 @@ export enum TimelineActionTypes {
   UPDATE_WRAPPER_Y_OFFSET = "updateWrapperYOffset",
   UPDATE_CANVAS_WIDTH = "updateCanvasWidth",
   UPDATE_SNACKBAR_TEXT = "updateSnackbarText",
+  UPDATE_USER_LOCKS = "updateUserLocks",
 }
 
 type AugmentedActionContext = {
@@ -176,6 +177,10 @@ export interface Actions {
   [TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING]({
     commit,
   }: AugmentedActionContext): void;
+  [TimelineActionTypes.UPDATE_USER_LOCKS](
+    { commit }: AugmentedActionContext,
+    payload: { userId: string | null; uuids: string[] },
+  ): void;
 }
 export const actions: ActionTree<State, RootState> & Actions = {
   [TimelineActionTypes.SET_BLOCK_MANAGER](
@@ -394,5 +399,14 @@ export const actions: ActionTree<State, RootState> & Actions = {
     commit: Commit;
   }): void {
     commit(TimelineMutations.TOGGLE_RELATIVE_SNAPPING);
+  },
+  [TimelineActionTypes.UPDATE_USER_LOCKS](
+    { commit }: AugmentedActionContext,
+    props: {
+      userId: string;
+      uuids: string[];
+    },
+  ) {
+    commit(TimelineMutations.UPDATE_USER_LOCKS, props);
   },
 };
