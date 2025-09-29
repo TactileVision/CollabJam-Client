@@ -27,6 +27,12 @@ import {PlayHead} from "@/renderer/helpers/timeline/playHead";
 import {Slider} from "@/renderer/helpers/timeline/Slider";
 import SnackBar from "@/renderer/components/Snackbar.vue";
 
+/*
+* For the upcoming demo, the reactive behaviour to the number of tracks
+* used will be replaced by a fixed number (4). All lines of code that 
+* have been commented out or changed in this context are marked with 
+* ‘FTC’ (Fixed Track Count).
+* */
 export default defineComponent({
   name: "TheTimeline",
   components: {
@@ -39,7 +45,7 @@ export default defineComponent({
     return {
       parser: new InstructionParser(),
       store: useStore(),
-      trackCount: 0,
+      trackCount: 3,
       mounted: false,
       tracks: [] as {
         line: Graphics,
@@ -210,15 +216,16 @@ export default defineComponent({
           // set initZoom
           this.calculateInitialZoom(parsed.duration);
           this.lastZoom = this.store.state.timeline.zoomLevel;
-          
+
+          // FTC
           // calculated trackCount
-          this.trackCount = Math.max(
+/*          this.trackCount = Math.max(
             ...blockData.map((block: BlockData) => block.trackId),
           );
           this.store.dispatch(
             TimelineActionTypes.SET_TRACK_COUNT,
             this.trackCount,
-          );
+          );*/
 
           // set visible height --> depends on trackCount
           const visibleHeight =
@@ -234,8 +241,9 @@ export default defineComponent({
           // create blocks
           this.store.state.timeline.blockManager?.createBlocksFromData(blockData);
 
+          // FTC
           // render trackLines
-          this.renderTrackLines();
+          //this.renderTrackLines();
 
           // TODO remove - just for debugging
           this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE, true);
@@ -252,15 +260,16 @@ export default defineComponent({
               this.tacton.instructions,
           );
           const blockData: BlockData[] = parsed.blockData;
-
+          
+          // FTC
           // calculated trackCount
-          this.trackCount = Math.max(
+/*          this.trackCount = Math.max(
               ...blockData.map((block: BlockData) => block.trackId),
           );
           this.store.dispatch(
               TimelineActionTypes.SET_TRACK_COUNT,
               this.trackCount,
-          );
+          );*/
 
           // set visible height --> depends on trackCount
           const visibleHeight =
@@ -276,8 +285,9 @@ export default defineComponent({
           // create blocks
           this.store.state.timeline.blockManager?.createBlocksFromData(blockData);
 
+          // FTC
           // render trackLines
-          this.renderTrackLines();
+          //this.renderTrackLines();
         }
       } else {
         this.store.state.timeline.blockManager?.clearData();
@@ -298,7 +308,6 @@ export default defineComponent({
 
       if (mode == InteractionMode.Recording) {
         // TODO show all possible trackLInes when recording
-
         // store values
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
         this.lastZoom = this.store.state.timeline.zoomLevel;
@@ -422,7 +431,17 @@ export default defineComponent({
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
     this.playHead = new PlayHead(0xec660c);
     this.playHead.moveToPosition(0);
+    this.playHead.drawCursor();
     this.slider.initSlider();
+
+    // FTC
+    // show all tracklines
+    this.trackCount = 3;
+    this.store.dispatch(
+        TimelineActionTypes.SET_TRACK_COUNT,
+        this.trackCount,
+    );
+    this.renderTrackLines();
 
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, () => {
       const tacton = this.tacton
@@ -463,14 +482,22 @@ export default defineComponent({
     this.ticker.stop();
   },
   beforeUnmount() {
-    clearPixiApp();
-    this.slider.clearSlider();
-    this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
-    this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
+    console.log(this.store.state.roomSettings.id ,  this.store.state.roomSettings.user.id);
+    WebSocketAPI.requestEditingForUuids(
+        this.store.state.roomSettings.id || "",
+        this.store.state.roomSettings.user.id,
+        []
+    );
 
     if (this.ticker !== null && this.ticker.count > 0) {
       this.ticker?.remove(this.recording);
     }
+    
+    this.store.state.timeline.blockManager?.destroy();    
+    clearPixiApp();
+    this.slider.clearSlider();
+    this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
+    this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
   },
 });
 </script>
