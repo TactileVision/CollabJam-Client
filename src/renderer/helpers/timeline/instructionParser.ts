@@ -67,26 +67,17 @@ export class InstructionParser {
     return { blockData: blocks, duration: currentTime };
   }
   public parseBlocksToInstructions(): TactonInstruction[] {
-    // flatten (per track) stored blocks into one sequence
     const sequence: BlockDTO[] = [];
-    Object.keys(this.store.state.timeline.blocks).forEach(
-      (trackIdAsString: string, trackId: number): void => {
-        this.store.state.timeline.blocks[trackId].forEach(
-          (block: BlockDTO): void => {
-            sequence.push(block);
-          },
-        );
-      },
+    Object.values(this.store.state.timeline.blocks).forEach(
+      (blocks: BlockDTO[]) =>
+        blocks.forEach((block: BlockDTO) => sequence.push(block)),
     );
 
-    const events: BlockEvent[] = [];
-    const instructions: TactonInstruction[] = [];
     const timelineWidth: number = this.store.state.timeline.canvasWidth;
     const totalDuration: number =
       (timelineWidth / config.pixelsPerSecond) * 1000;
-    let currentTime: number = 0;
 
-    // transform sequence into events
+    const events: BlockEvent[] = [];
     sequence.forEach((block: BlockDTO): void => {
       const convertedX: number =
         (block.rect.x -
@@ -98,10 +89,12 @@ export class InstructionParser {
       const startTime: number = (convertedX / timelineWidth) * totalDuration;
       const endTime: number =
         startTime + (convertedWidth / timelineWidth) * totalDuration;
+
+      const intensity: number = block.rect.height / config.maxBlockHeight;
       events.push({
         time: startTime,
         trackId: block.trackId,
-        intensity: block.rect.height / config.maxBlockHeight,
+        intensity,
         uuid: block.uuid,
         groupUuid: block.groupUuid,
       });
@@ -114,76 +107,70 @@ export class InstructionParser {
       });
     });
 
-    // cleanup
-    const cleanedEvents: BlockEvent[] = [];
-    for (let i = 0; i < events.length; i++) {
-      const current: BlockEvent = events[i];
-      const next: BlockEvent = events[i + 1];
+    // sort once
+    events.sort(
+      (a: BlockEvent, b: BlockEvent) =>
+        a.time - b.time || a.intensity - b.intensity || a.trackId - b.trackId,
+    );
 
-      // if intensity = 0 and a new start occurs immediately afterwards on the same track, skip this instruction
-      if (
-        current.intensity === 0 &&
-        next &&
-        this.nearlyEqual(current.time, next.time) &&
-        current.trackId === next.trackId &&
-        next.intensity > 0
-      ) {
-        continue;
-      }
-      cleanedEvents.push(current);
-    }
+    const instructions: TactonInstruction[] = [];
+    let currentTime: number = 0;
+    let i: number = 0;
 
-    // sort events
-    cleanedEvents.sort((a: BlockEvent, b: BlockEvent) => a.time - b.time);
-
-    const eventsByTime: Map<number, BlockEvent[]> = new Map();
-    cleanedEvents.forEach((ev) => {
-      const key = Number(ev.time.toFixed(3)); // Float-Toleranz
-      if (!eventsByTime.has(key)) eventsByTime.set(key, []);
-      eventsByTime.get(key)!.push(ev);
-    });
-
-    const sortedTimes = Array.from(eventsByTime.keys()).sort((a, b) => a - b);
-
-    sortedTimes.forEach((time) => {
-      const eventsAtTime = eventsByTime.get(time)!;
-
-      // push wait-instruction, if needed
+    while (i < events.length) {
+      const time: number = events[i].time;
       if (time > currentTime) {
         instructions.push({ wait: { miliseconds: time - currentTime } });
         currentTime = time;
       }
 
-      // group by intensity
-      const eventsByIntensity: Map<number, BlockEvent[]> = new Map();
-      eventsAtTime.forEach((ev) => {
-        if (!eventsByIntensity.has(ev.intensity)) {
-          eventsByIntensity.set(ev.intensity, []);
-        }
-        eventsByIntensity.get(ev.intensity)!.push(ev);
-      });
+      // gather instructions with equal timing
+      let j: number = i;
+      while (j < events.length && this.nearlyEqual(events[j].time, time)) j++;
+      const group: BlockEvent[] = events.slice(i, j);
 
-      // combine data if events happen at the same time
-      const channels: number[] = [];
-      const uuids: string[] = [];
-      const groupUuids: (string | null)[] = [];
+      // end-instructions (intensity === 0)
+      const ends: BlockEvent[] = group.filter(
+        (ev: BlockEvent): boolean => ev.intensity === 0,
+      );
+      if (ends.length) {
+        instructions.push({
+          setParameter: {
+            intensity: 0,
+            channels: ends.map((e: BlockEvent) => e.trackId),
+            uuids: ends.map((e: BlockEvent) => e.uuid),
+            groupUuids: ends.map((e: BlockEvent) => e.groupUuid),
+          },
+        });
+      }
 
-      eventsAtTime.forEach((ev) => {
-        channels.push(ev.trackId);
-        uuids.push(ev.uuid);
-        groupUuids.push(ev.groupUuid);
-      });
+      // start-instructions, grouped by intensity
+      const starts: BlockEvent[] = group.filter((ev) => ev.intensity > 0);
+      if (starts.length) {
+        starts
+          .sort((a: BlockEvent, b: BlockEvent) => a.intensity - b.intensity)
+          .reduce((map: Map<number, BlockEvent[]>, ev: BlockEvent) => {
+            if (!map.has(ev.intensity)) {
+              map.set(ev.intensity, []);
+            }
+            map.get(ev.intensity)!.push(ev);
+            return map;
+          }, new Map<number, BlockEvent[]>())
+          .forEach((evs: BlockEvent[], intensity: number): void => {
+            instructions.push({
+              setParameter: {
+                intensity,
+                channels: evs.map((e: BlockEvent) => e.trackId),
+                uuids: evs.map((e: BlockEvent) => e.uuid),
+                groupUuids: evs.map((e: BlockEvent) => e.groupUuid),
+              },
+            });
+          });
+      }
 
-      // push setParameter-instruction
-      instructions.push({
-        setParameter: {
-          intensity: eventsAtTime[0].intensity,
-          channels,
-          uuids,
-          groupUuids: groupUuids,
-        },
-      });
-    });
+      i = j;
+    }
+
     return instructions;
   }
   private nearlyEqual(
