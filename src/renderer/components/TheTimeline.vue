@@ -431,7 +431,6 @@ export default defineComponent({
     this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, new BlockManager());
     this.playHead = new PlayHead(0xec660c);
     this.playHead.moveToPosition(0);
-    this.playHead.drawCursor();
     this.slider.initSlider();
 
     // FTC
@@ -442,6 +441,7 @@ export default defineComponent({
         this.trackCount,
     );
     this.renderTrackLines();
+    this.playHead.drawCursor();
 
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, () => {
       const tacton = this.tacton
