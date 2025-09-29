@@ -465,16 +465,14 @@ export const mutations: MutationTree<State> & Mutations = {
     state: State,
     props: { userId: string; uuids: string[] },
   ): void {
-    console.log("updating locks ", props);
-
-    // 1. Alte Locks für diesen User entfernen
+    // remove old locks of user
     const oldLocks: string[] = state.userLocks[props.userId] ?? [];
     oldLocks.forEach((blockUuid) => state.lockedBlocks.delete(blockUuid));
 
-    // 2. Neue Locks setzen
+    // set new locks
     props.uuids.forEach((uuid) => state.lockedBlocks.set(uuid, props.userId));
 
-    // 3. User-Locks updaten
+    // update user-locks
     state.userLocks[props.userId] = props.uuids;
   },
 };

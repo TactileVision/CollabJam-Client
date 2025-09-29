@@ -209,6 +209,11 @@ export const handleMessage = (store: Store) => {
   socket.on(
     WS_MSG_TYPE.UPDATE_EDITING_USER_UUIDS_CLI,
     (res: UpdateEditingUserUUIDS): void => {
+      // create deep copy
+      const oldLocks = JSON.parse(
+        JSON.stringify(store.state.timeline.userLocks),
+      );
+
       // update locks
       store.dispatch(TimelineActionTypes.UPDATE_USER_LOCKS, {
         userId: res.userId,
@@ -217,7 +222,9 @@ export const handleMessage = (store: Store) => {
 
       // visualise
       store.state.timeline.blockManager?.eventBus.dispatchEvent(
-        new Event(TimelineEvents.UPADTED_USER_LOCKS),
+        new CustomEvent(TimelineEvents.UPADTED_USER_LOCKS, {
+          detail: { oldLocks: oldLocks },
+        }),
       );
     },
   );

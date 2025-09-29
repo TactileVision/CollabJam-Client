@@ -219,74 +219,6 @@ export class BlockManager {
     );
 
     this.generateThresholds();
-
-    // detect strg
-    document.addEventListener("keydown", (event: KeyboardEvent): void => {
-      if (!this.store.state.timeline.isEditable) return;
-      // detect STRG or Meta
-      if (event.code == "ControlLeft" && !this.isMacOS) {
-        if (!this.strgDown) {
-          this.drawSelectionBorder();
-          this.strgDown = true;
-        }
-      } else if (event.code == "MetaLeft") {
-        if (!this.strgDown) {
-          this.drawSelectionBorder();
-          this.strgDown = true;
-          if (!this.isMacOS) {
-            this.isMacOS = true;
-          }
-        }
-      }
-
-      if (this.strgDown && event.code == "KeyC") this.copySelection();
-      if (this.strgDown && event.code == "KeyV") this.pasteSelection();
-      if (this.strgDown && event.code == "KeyG") {
-        event.preventDefault();
-        this.groupSelectedBlocks();
-        this.eventBus.dispatchEvent(
-          new Event(TimelineEvents.TACTON_WAS_EDITED),
-        );
-      }
-      if (this.strgDown && event.code == "KeyS" && !event.shiftKey) {
-        event.preventDefault();
-        this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
-      }
-      if (this.strgDown && event.code === "KeyS" && event.shiftKey) {
-        event.preventDefault();
-        this.store.dispatch(TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING);
-      }
-      if (event.code == "Escape") this.clearCopiedBlocks();
-      if (event.code == "Delete") this.deleteBlock();
-
-      // detect shift
-      if (event.key == "Shift" && !this.store.state.timeline.isPressingShift) {
-        this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
-      }
-    });
-
-    document.addEventListener("keyup", (event: KeyboardEvent): void => {
-      if (!this.store.state.timeline.isEditable) return;
-      if (
-        (event.code == "ControlLeft" && !this.isMacOS) ||
-        event.code == "MetaLeft"
-      ) {
-        this.strgDown = false;
-        this.clearSelectionBorder();
-        this.forEachSelectedBlock((block: BlockDTO): void => {
-          if (block.groupUuid != null) return;
-          this.updateHandles(block);
-          this.updateIndicators(block);
-          this.updateIndicatorVisibility(block, true);
-          this.updateHandleInteractivity(block, true);
-        });
-      }
-
-      if (event.key == "Shift" && this.store.state.timeline.isPressingShift) {
-        this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
-      }
-    });
-
     this.installEventListeners();
   }
   createBlocksFromData(blockData: BlockData[]): void {
@@ -317,11 +249,17 @@ export class BlockManager {
     // detect groups and blocks with dist == 0 and create group
     const groups: Map<string, BlockSelection[]> = new Map();
 
+    // store correct selectionData, in case of mismatch
+    const correctSelectionData: Map<
+      string,
+      { trackId: number; index: number }
+    > = new Map<string, { trackId: number; index: number }>();
+
     Object.keys(this.store.state.timeline.blocks).forEach(
       (trackIdAsString: string, trackId: number): void => {
-        // detect groups
         this.store.state.timeline.blocks[trackId].forEach(
           (block: BlockDTO, index: number): void => {
+            // check for groups
             if (block.groupUuid) {
               if (!groups.has(block.groupUuid)) {
                 groups.set(block.groupUuid, []);
@@ -332,6 +270,12 @@ export class BlockManager {
                 uuid: block.uuid,
               });
             }
+
+            // save selectionData
+            correctSelectionData.set(block.uuid, {
+              trackId: block.trackId,
+              index: index,
+            });
           },
         );
       },
@@ -344,6 +288,21 @@ export class BlockManager {
     });
 
     this.store.dispatch(TimelineActionTypes.GET_LAST_BLOCK_POSITION);
+
+    // update selectionData
+    for (const selection of this.store.state.timeline.selectedBlocks) {
+      const block: BlockDTO =
+        this.store.state.timeline.blocks[selection.trackId][selection.index];
+      if (block == undefined || block.uuid != selection.uuid) {
+        // mismatch
+        const correctData = correctSelectionData.get(selection.uuid);
+        if (correctData != undefined) {
+          selection.trackId = correctData.trackId;
+          selection.index = correctData.index;
+        }
+      }
+    }
+
     this.handleSelection(this.store.state.timeline.selectedBlocks);
   }
   private createBlock(block: BlockData): BlockDTO {
@@ -755,11 +714,26 @@ export class BlockManager {
     block.topIndicator.visible = isVisible;
     block.bottomIndicator.visible = isVisible;
   }
-  private updateLocks(): void {
+  private updateLocks(oldLocks: Record<string, string[]>): void {
     // clear all borders
     getLockContainer().removeChildren();
+    const newLocks = this.store.state.timeline.userLocks;
+    for (const userId of Object.keys(oldLocks)) {
+      if (userId === this.store.state.roomSettings.user.id) continue;
 
-    for (const userId of Object.keys(this.store.state.timeline.userLocks)) {
+      const oldUuids = oldLocks[userId] ?? [];
+      const newUuids = newLocks[userId] ?? [];
+
+      const releasedUuids = oldUuids.filter((uuid) => !newUuids.includes(uuid));
+      const releasedBlocks = this.findBlocksByUuids(releasedUuids);
+
+      releasedBlocks.forEach((block): void => {
+        this.updateHandleInteractivity(block, true);
+        block.rect.interactive = true;
+      });
+    }
+
+    for (const userId of Object.keys(newLocks)) {
       // skip own selection
       if (userId == this.store.state.roomSettings.user.id) {
         continue;
@@ -768,7 +742,7 @@ export class BlockManager {
       // skip if no selection
       const uuids: string[] = this.store.state.timeline.userLocks[userId] ?? [];
       if (uuids.length == 0) {
-        return;
+        continue;
       }
 
       // visualize
@@ -779,7 +753,14 @@ export class BlockManager {
       if (color == undefined) {
         color = config.colors.lockColor;
       }
+      // disable interactivity
       const blocks: BlockDTO[] = this.findBlocksByUuids(uuids);
+      blocks.forEach((block: BlockDTO): void => {
+        this.updateHandleInteractivity(block, false);
+        block.rect.interactive = false;
+      });
+
+      // draw lock-border
       const bounds: GroupBounds = this.computeGroupBounds(blocks);
       getLockContainer().addChild(
         this.createBoundingRectangle(bounds, config.lockBorderWidth, color),
@@ -935,8 +916,8 @@ export class BlockManager {
           this.store.state.roomSettings.participants.find(
             (user) => user.id == editorId,
           );
-        console.log("currently edited by ", editor);
         if (editorId != this.store.state.roomSettings.user.id) {
+          console.log("currently edited by ", editor);
           canEdit = false;
           break;
         }
@@ -965,7 +946,6 @@ export class BlockManager {
       }
       return;
     }*/
-
     if (Array.isArray(toSelect)) {
       if (!this.store.state.timeline.isPressingShift) {
         this.forEachSelectedBlock((block: BlockDTO): void => {
@@ -1366,6 +1346,7 @@ export class BlockManager {
     } else {
       // select block
       this.handleSelection(block);
+      this.updateHandleInteractivity(block, false);
     }
 
     // early exit if user is pressing shift --> multi-selection
@@ -1484,6 +1465,7 @@ export class BlockManager {
       borderData.lastY = borderData.initY;
     }
 
+    this.updateHandleInteractivity(this.currentTacton as BlockDTO, true);
     this.pointerMoveHandler = null;
     this.pointerUpHandler = null;
     this.lastVerticalOffset = this.store.state.timeline.verticalViewportOffset;
@@ -1539,7 +1521,6 @@ export class BlockManager {
     if (this.strgDown && this.store.state.timeline.selectedBlocks.length > 1) {
       return;
     }
-
     if (this.resizeDirection === Direction.RIGHT) {
       // calculate new tacton width
       newWidth = Math.max(this.initialBlockWidth + deltaX, minBlockWidth);
@@ -2074,7 +2055,6 @@ export class BlockManager {
     width: number,
     color: string,
   ): Graphics {
-    console.log(color);
     const groupWidth = bounds.endX - bounds.startX;
     const groupHeight =
       (bounds.highestTrack - bounds.lowestTrack) * config.trackHeight +
@@ -3408,19 +3388,25 @@ export class BlockManager {
             );
           }
           // loop over every unselected border block in this track
-          if (this.unselectedBorders[track].length != 1) {
-            for (let k = 0; k < this.unselectedBorders[track].length; k += 2) {
-              const start2: number = this.unselectedBorders[track][k];
-              const end2: number = this.unselectedBorders[track][k + 1];
+          if (this.unselectedBorders[track] != undefined) {
+            if (this.unselectedBorders[track].length != 1) {
+              for (
+                let k = 0;
+                k < this.unselectedBorders[track].length;
+                k += 2
+              ) {
+                const start2: number = this.unselectedBorders[track][k];
+                const end2: number = this.unselectedBorders[track][k + 1];
 
-              // calculate possible offsets
-              const offsetToStart: number =
-                end2 - this.selectedBorders[trackId][i];
-              const offsetToEnd: number =
-                start2 - this.selectedBorders[trackId][i + 1];
+                // calculate possible offsets
+                const offsetToStart: number =
+                  end2 - this.selectedBorders[trackId][i];
+                const offsetToEnd: number =
+                  start2 - this.selectedBorders[trackId][i + 1];
 
-              possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
-              possibleOffsetPerTrackOffset[trackOffset].push(offsetToEnd);
+                possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
+                possibleOffsetPerTrackOffset[trackOffset].push(offsetToEnd);
+              }
             }
           }
         });
@@ -3554,22 +3540,70 @@ export class BlockManager {
     this.clearSelectionBorder();
     getLockContainer().removeChildren();
   }
-  public installEventListeners(): void {
-    const pixiApp: Application = getPixiApp();
-    // remove existing Event-Listeners
-    pixiApp.canvas.removeEventListener(
-      "mousedown",
-      this.onCanvasMouseDown.bind(this),
-    );
-    pixiApp.canvas.removeEventListener(
-      "mousemove",
-      this.onCanvasMouseMove.bind(this),
-    );
-    pixiApp.canvas.removeEventListener(
-      "mouseup",
-      this.onCanvasMouseUp.bind(this),
-    );
+  private handleKeyDown = (event: KeyboardEvent) => {
+    if (!this.store.state.timeline.isEditable) return;
+    // detect STRG or Meta
+    if (event.code == "ControlLeft" && !this.isMacOS) {
+      if (!this.strgDown) {
+        this.drawSelectionBorder();
+        this.strgDown = true;
+      }
+    } else if (event.code == "MetaLeft") {
+      if (!this.strgDown) {
+        this.drawSelectionBorder();
+        this.strgDown = true;
+        if (!this.isMacOS) {
+          this.isMacOS = true;
+        }
+      }
+    }
 
+    if (this.strgDown && event.code == "KeyC") this.copySelection();
+    if (this.strgDown && event.code == "KeyV") this.pasteSelection();
+    if (this.strgDown && event.code == "KeyG") {
+      event.preventDefault();
+      this.groupSelectedBlocks();
+      this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    }
+    if (this.strgDown && event.code == "KeyS" && !event.shiftKey) {
+      event.preventDefault();
+      this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
+    }
+    if (this.strgDown && event.code === "KeyS" && event.shiftKey) {
+      event.preventDefault();
+      this.store.dispatch(TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING);
+    }
+    if (event.code == "Escape") this.clearCopiedBlocks();
+    if (event.code == "Delete") this.deleteBlock();
+
+    // detect shift
+    if (event.key == "Shift" && !this.store.state.timeline.isPressingShift) {
+      this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
+    }
+  };
+  private handleKeyUp = (event: KeyboardEvent) => {
+    if (!this.store.state.timeline.isEditable) return;
+    if (
+      (event.code == "ControlLeft" && !this.isMacOS) ||
+      event.code == "MetaLeft"
+    ) {
+      this.strgDown = false;
+      this.clearSelectionBorder();
+      this.forEachSelectedBlock((block: BlockDTO): void => {
+        if (block.groupUuid != null) return;
+        this.updateHandles(block);
+        this.updateIndicators(block);
+        this.updateIndicatorVisibility(block, true);
+        this.updateHandleInteractivity(block, true);
+      });
+    }
+
+    if (event.key == "Shift" && this.store.state.timeline.isPressingShift) {
+      this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
+    }
+  };
+  private installEventListeners(): void {
+    const pixiApp: Application = getPixiApp();
     pixiApp.canvas.addEventListener(
       "mousedown",
       this.onCanvasMouseDown.bind(this),
@@ -3580,9 +3614,16 @@ export class BlockManager {
     );
     pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp.bind(this));
 
+    document.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("keyup", this.handleKeyUp);
+
+    // TODO add to garbage collection
     this.eventBus.addEventListener(
       TimelineEvents.UPADTED_USER_LOCKS,
-      this.updateLocks.bind(this),
+      (e: Event) => {
+        const custom = e as CustomEvent<{ oldLocks: Record<string, string[]> }>;
+        this.updateLocks(custom.detail.oldLocks);
+      },
     );
   }
   public toggleBlockVisibility(isVisible: boolean): void {
@@ -3625,5 +3666,31 @@ export class BlockManager {
         block.rect.interactive = true;
       });
     }
+  }
+  destroy(): void {
+    this.clearCopiedBlocks();
+    this.clearGroupBorder();
+    this.clearSelectionBorder();
+    this.store.state.timeline.selectedBlocks = [];
+    this.store.state.timeline.userLocks = {};
+    this.store.state.timeline.lockedBlocks.clear();
+
+    const pixiApp: Application = getPixiApp();
+    // remove existing Event-Listeners
+    pixiApp.canvas.removeEventListener(
+      "mousedown",
+      this.onCanvasMouseDown.bind(this),
+    );
+    pixiApp.canvas.removeEventListener(
+      "mousemove",
+      this.onCanvasMouseMove.bind(this),
+    );
+    pixiApp.canvas.removeEventListener(
+      "mouseup",
+      this.onCanvasMouseUp.bind(this),
+    );
+
+    document.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("keyup", this.handleKeyUp);
   }
 }
