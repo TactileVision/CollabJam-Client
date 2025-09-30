@@ -26,17 +26,20 @@ export class InstructionParser {
     const blocks: BlockData[] = [];
     const activeChannels: Map<
       number,
-      { startTime: number; intensity: number }
-    > = new Map<number, { startTime: number; intensity: number }>();
-    let currentTime: number = 0;
+      {
+        startTime: number;
+        intensity: number;
+        uuid: string;
+        groupUuid: string | null;
+      }
+    > = new Map();
+    let currentTime = 0;
 
     instructions.forEach((instruction: TactonInstruction): void => {
       if (isInstructionSetParameter(instruction)) {
-        const channels: number[] = instruction.setParameter.channels;
-        const intensity: number = instruction.setParameter.intensity;
-        const uuids: string[] = instruction.setParameter.uuids;
-        const groupUuid: (string | null)[] =
-          instruction.setParameter.groupUuids;
+        const { channels, intensity, uuids, groupUuids } =
+          instruction.setParameter;
+
         channels.forEach((channel: number, index: number): void => {
           const existing = activeChannels.get(channel);
 
@@ -47,8 +50,8 @@ export class InstructionParser {
               startTime: existing.startTime,
               endTime: currentTime,
               intensity: existing.intensity,
-              uuid: uuids[index],
-              groupUuid: groupUuid[index],
+              uuid: existing.uuid,
+              groupUuid: existing.groupUuid,
             };
             blocks.push(block);
             activeChannels.delete(channel);
@@ -56,12 +59,29 @@ export class InstructionParser {
 
           if (intensity > 0) {
             // start of block
-            activeChannels.set(channel, { startTime: currentTime, intensity });
+            activeChannels.set(channel, {
+              startTime: currentTime,
+              intensity,
+              uuid: uuids[index],
+              groupUuid: groupUuids[index],
+            });
           }
         });
       } else if (isInstructionWait(instruction)) {
         currentTime += instruction.wait.miliseconds;
       }
+    });
+
+    // close all active blocks
+    activeChannels.forEach((data, channel) => {
+      blocks.push({
+        trackId: channel,
+        startTime: data.startTime,
+        endTime: currentTime,
+        intensity: data.intensity,
+        uuid: data.uuid,
+        groupUuid: data.groupUuid,
+      });
     });
 
     return { blockData: blocks, duration: currentTime };
@@ -133,19 +153,29 @@ export class InstructionParser {
       const ends: BlockEvent[] = group.filter(
         (ev: BlockEvent): boolean => ev.intensity === 0,
       );
-      if (ends.length) {
+
+      // only accept end instructions if there is no simultaneous start on the same channel
+      const realEnds: BlockEvent[] = ends.filter((end) => {
+        return !group.some(
+          (ev) => ev.trackId === end.trackId && ev.intensity > 0,
+        );
+      });
+
+      if (realEnds.length) {
         instructions.push({
           setParameter: {
             intensity: 0,
-            channels: ends.map((e: BlockEvent) => e.trackId),
-            uuids: ends.map((e: BlockEvent) => e.uuid),
-            groupUuids: ends.map((e: BlockEvent) => e.groupUuid),
+            channels: realEnds.map((e: BlockEvent) => e.trackId),
+            uuids: realEnds.map((e: BlockEvent) => e.uuid),
+            groupUuids: realEnds.map((e: BlockEvent) => e.groupUuid),
           },
         });
       }
 
       // start-instructions, grouped by intensity
-      const starts: BlockEvent[] = group.filter((ev) => ev.intensity > 0);
+      const starts: BlockEvent[] = group.filter(
+        (ev: BlockEvent): boolean => ev.intensity > 0,
+      );
       if (starts.length) {
         starts
           .sort((a: BlockEvent, b: BlockEvent) => a.intensity - b.intensity)
