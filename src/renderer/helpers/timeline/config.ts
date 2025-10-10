@@ -39,6 +39,7 @@ const config = {
   gridLabelStyle: GridLabelStyle.Clock,
   // lock
   lockBorderWidth: 6,
+  maxLockTimeMs: 20000,
   //colors
   colors: {
     gridColor: "rgba(75, 75, 75, 0.2)",

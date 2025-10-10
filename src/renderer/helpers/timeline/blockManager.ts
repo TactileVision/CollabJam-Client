@@ -303,7 +303,8 @@ export class BlockManager {
       }
     }
 
-    this.handleSelection(this.store.state.timeline.selectedBlocks);
+    this.handleSelection(this.store.state.timeline.selectedBlocks, true);
+    this.updateLocks();
   }
   private createBlock(block: BlockData): BlockDTO {
     const rect: Graphics = new Graphics();
@@ -714,23 +715,29 @@ export class BlockManager {
     block.topIndicator.visible = isVisible;
     block.bottomIndicator.visible = isVisible;
   }
-  private updateLocks(oldLocks: Record<string, string[]>): void {
+  private updateLocks(oldLocks?: Record<string, string[]>): void {
     // clear all borders
     getLockContainer().removeChildren();
-    const newLocks = this.store.state.timeline.userLocks;
-    for (const userId of Object.keys(oldLocks)) {
-      if (userId === this.store.state.roomSettings.user.id) continue;
+    const newLocks: Record<string, string[]> =
+      this.store.state.timeline.userLocks;
+    if (oldLocks) {
+      for (const userId of Object.keys(oldLocks)) {
+        if (userId === this.store.state.roomSettings.user.id) continue;
 
-      const oldUuids = oldLocks[userId] ?? [];
-      const newUuids = newLocks[userId] ?? [];
+        const oldUuids: string[] = oldLocks[userId] ?? [];
+        const newUuids: string[] = newLocks[userId] ?? [];
 
-      const releasedUuids = oldUuids.filter((uuid) => !newUuids.includes(uuid));
-      const releasedBlocks = this.findBlocksByUuids(releasedUuids);
+        const releasedUuids: string[] = oldUuids.filter(
+          (uuid) => !newUuids.includes(uuid),
+        );
+        const releasedBlocks: BlockDTO[] =
+          this.findBlocksByUuids(releasedUuids);
 
-      releasedBlocks.forEach((block): void => {
-        this.updateHandleInteractivity(block, true);
-        block.rect.interactive = true;
-      });
+        releasedBlocks.forEach((block: BlockDTO): void => {
+          this.updateHandleInteractivity(block, true);
+          block.rect.interactive = true;
+        });
+      }
     }
 
     for (const userId of Object.keys(newLocks)) {
@@ -748,7 +755,7 @@ export class BlockManager {
       // visualize
       let color: string | undefined =
         this.store.state.roomSettings.participants.find(
-          (user) => user.id == userId,
+          (user: User): boolean => user.id == userId,
         )?.color;
       if (color == undefined) {
         color = config.colors.lockColor;
@@ -875,7 +882,10 @@ export class BlockManager {
   }
 
   //*************** Interactions ***************
-  private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
+  private handleSelection(
+    toSelect: BlockDTO | BlockSelection[],
+    isReselecting: boolean = false,
+  ): void {
     // notify user on click about edit-state
     if (this.isInteractionBlocked) {
       this.store.dispatch(
@@ -914,7 +924,7 @@ export class BlockManager {
           this.store.state.timeline.lockedBlocks.get(uuid);
         const editor: User | undefined =
           this.store.state.roomSettings.participants.find(
-            (user) => user.id == editorId,
+            (user: User): boolean => user.id == editorId,
           );
         if (editorId != this.store.state.roomSettings.user.id) {
           console.log("currently edited by ", editor);
@@ -1089,9 +1099,11 @@ export class BlockManager {
     }
 
     // dispatch event
-    this.eventBus.dispatchEvent(
-      new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
-    );
+    if (!isReselecting) {
+      this.eventBus.dispatchEvent(
+        new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
+      );
+    }
   }
   private copySelection(): void {
     this.clearCopiedBlocks();

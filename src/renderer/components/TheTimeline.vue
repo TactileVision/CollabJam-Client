@@ -63,7 +63,8 @@ export default defineComponent({
       latency: 0,
       isFirstTick: false,
       canceledRecording: false,
-      slider: new Slider()
+      slider: new Slider(),
+      lockUpdateTimer:  null as number | null,
     };
   },
   computed: {
@@ -81,6 +82,20 @@ export default defineComponent({
     }
   },
   methods: {
+    resetTimer(): void {
+      if (this.lockUpdateTimer !== null) {
+        clearTimeout(this.lockUpdateTimer);
+      }
+      this.lockUpdateTimer = window.setTimeout(this.onLocksExpired, config.maxLockTimeMs);
+    },
+    onLocksExpired(): void {
+      WebSocketAPI.requestEditingForUuids(
+        this.store.state.roomSettings.id || "",
+        this.store.state.roomSettings.user.id,
+        []
+      );
+      this.lockUpdateTimer = null;
+    },
     renderTrackLines() {
       // clear rendered tracks
       // TODO improve, only delete those not needed 
@@ -467,7 +482,16 @@ export default defineComponent({
         this.store.state.roomSettings.id || "",
         this.store.state.roomSettings.user.id,
         selectedUuids
-      );      
+      );
+      
+      if (selectedUuids.length !== 0) {
+        // reset Timer
+        this.resetTimer();
+      } else {
+        if (this.lockUpdateTimer !== null) {
+          clearTimeout(this.lockUpdateTimer);
+        }
+      }
     })
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_ALL_DESELECTED, () => {
       console.log("Deselected");
