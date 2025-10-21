@@ -222,7 +222,7 @@ export const handleMessage = (store: Store) => {
 
       // visualise
       store.state.timeline.blockManager?.eventBus.dispatchEvent(
-        new CustomEvent(TimelineEvents.UPADTED_USER_LOCKS, {
+        new CustomEvent(TimelineEvents.UPDATED_USER_LOCKS, {
           detail: { oldLocks: oldLocks },
         }),
       );

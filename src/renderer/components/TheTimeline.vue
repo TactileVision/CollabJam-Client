@@ -207,6 +207,39 @@ export default defineComponent({
       const isLastBlockOutOfViewport = lastBlockXPosition > canvasWidth;
       const isLastBlockOutOfNewViewport = (lastBlockXPosition + horizontalViewportOffset) > canvasWidth;
       return isLastBlockOutOfViewport || (horizontalViewportOffset != 0 && isLastBlockOutOfNewViewport);
+    },
+    handleTactonWasEdited(): void {
+      const tacton = this.tacton
+      if (tacton == null) return;
+
+      const instructions = this.parser.parseBlocksToInstructions();
+
+      WebSocketAPI.updateTacton({
+        roomId: this.store.state.roomSettings.id || "",
+        tactonId: tacton.uuid,
+        tacton: { ...tacton, instructions },
+      });
+    },
+    handleSelection() {
+      // add BlockUuids
+      const selectedUuids: string[] = this.store.state.timeline.selectedBlocks.map((selection: BlockSelection) => {
+        return selection.uuid;
+      });
+
+      WebSocketAPI.requestEditingForUuids(
+          this.store.state.roomSettings.id || "",
+          this.store.state.roomSettings.user.id,
+          selectedUuids
+      );
+
+      if (selectedUuids.length !== 0) {
+        // reset Timer
+        this.resetTimer();
+      } else {
+        if (this.lockUpdateTimer !== null) {
+          clearTimeout(this.lockUpdateTimer);
+        }
+      }
     }
   },
   watch: {
@@ -458,48 +491,8 @@ export default defineComponent({
     this.renderTrackLines();
     this.playHead.drawCursor();
 
-    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, () => {
-      const tacton = this.tacton
-      if (tacton == null) return;
-
-      const instructions = this.parser.parseBlocksToInstructions();
-
-      WebSocketAPI.updateTacton({
-        roomId: this.store.state.roomSettings.id || "",
-        tactonId: tacton.uuid,
-        tacton: { ...tacton, instructions },
-      });
-    });
-
-    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, () => {
-      // add BlockUuids
-      const selectedUuids: string[] = this.store.state.timeline.selectedBlocks.map((selection: BlockSelection) => {
-        return selection.uuid;
-      });
-      
-      //WebSocketAPI.requestEditingPrivilege(this.store.state.roomSettings.id || "", this.store.state.roomSettings.user.id)
-      WebSocketAPI.requestEditingForUuids(
-        this.store.state.roomSettings.id || "",
-        this.store.state.roomSettings.user.id,
-        selectedUuids
-      );
-      
-      if (selectedUuids.length !== 0) {
-        // reset Timer
-        this.resetTimer();
-      } else {
-        if (this.lockUpdateTimer !== null) {
-          clearTimeout(this.lockUpdateTimer);
-        }
-      }
-    })
-    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_ALL_DESELECTED, () => {
-      console.log("Deselected");
-      if (this.store.state.roomSettings.currentlyEditingUserId == this.store.state.roomSettings.user.id) {
-        console.log("Letting go");
-        //WebSocketAPI.giveUpEditingPrivilege(this.store.state.roomSettings.id || "")
-      }
-    })
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, this.handleTactonWasEdited);
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, this.handleSelection)
 
     this.ticker = PIXI.Ticker.shared;
     this.ticker.autoStart = false;
@@ -516,8 +509,11 @@ export default defineComponent({
     if (this.ticker !== null && this.ticker.count > 0) {
       this.ticker?.remove(this.recording);
     }
+
+    this.store.state.timeline.blockManager?.eventBus.removeEventListener(TimelineEvents.TACTON_WAS_EDITED, this.handleTactonWasEdited);
+    this.store.state.timeline.blockManager?.eventBus.removeEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, this.handleSelection)
     
-    this.store.state.timeline.blockManager?.destroy();    
+    this.store.state.timeline.blockManager?.destroy();
     clearPixiApp();
     this.slider.clearSlider();
     this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);

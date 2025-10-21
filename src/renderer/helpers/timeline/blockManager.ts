@@ -3629,15 +3629,15 @@ export class BlockManager {
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
 
-    // TODO add to garbage collection
     this.eventBus.addEventListener(
-      TimelineEvents.UPADTED_USER_LOCKS,
-      (e: Event) => {
-        const custom = e as CustomEvent<{ oldLocks: Record<string, string[]> }>;
-        this.updateLocks(custom.detail.oldLocks);
-      },
+      TimelineEvents.UPDATED_USER_LOCKS,
+      this.handleUpdatedUserLocks,
     );
   }
+  private handleUpdatedUserLocks = (e: Event): void => {
+    const eventData = e as CustomEvent<{ oldLocks: Record<string, string[]> }>;
+    this.updateLocks(eventData.detail.oldLocks);
+  };
   public toggleBlockVisibility(isVisible: boolean): void {
     this.clearSelectionBorder();
     this.clearGroupBorder();
@@ -3700,6 +3700,11 @@ export class BlockManager {
     pixiApp.canvas.removeEventListener(
       "mouseup",
       this.onCanvasMouseUp.bind(this),
+    );
+
+    this.eventBus.removeEventListener(
+      TimelineEvents.UPDATED_USER_LOCKS,
+      this.handleUpdatedUserLocks,
     );
 
     document.removeEventListener("keydown", this.handleKeyDown);

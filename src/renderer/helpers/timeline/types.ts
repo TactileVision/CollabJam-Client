@@ -78,8 +78,7 @@ export interface BlockData {
 export enum TimelineEvents {
   TACTON_WAS_EDITED = "tactonWasEdited",
   TACTON_BLOCK_SELECTED = "tactonPartWasSelected",
-  TACTON_ALL_DESELECTED = "tactonAllDeselected",
-  UPADTED_USER_LOCKS = "updatedUserLocks",
+  UPDATED_USER_LOCKS = "updatedUserLocks",
 }
 function getCurrentEditorName(): string | undefined {
   const store: Store = useStore();
