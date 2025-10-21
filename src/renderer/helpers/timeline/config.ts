@@ -6,7 +6,7 @@ export enum GridLabelStyle {
 
 const config = {
   // general
-  leftPadding: 32,
+  leftPadding: 40,
   componentPadding: 32,
   horizontalScrollSpeed: 25,
   horizontalScrollThreshold: 100,

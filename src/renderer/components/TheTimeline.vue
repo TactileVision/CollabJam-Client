@@ -20,7 +20,10 @@ import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionI
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
 import {BlockData, BlockSelection, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
 import {InteractionMode} from "@sharedTypes/roomTypes";
-import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
+import {
+  OutputChannelState,
+  TactonSettingsActionTypes
+} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import {WebSocketAPI} from "@/main/WebSocketManager";
 import {LiveBlockBuilder} from "@/renderer/helpers/timeline/liveBlockBuilder";
 import {PlayHead} from "@/renderer/helpers/timeline/playHead";
@@ -79,7 +82,10 @@ export default defineComponent({
     },
     canEdit(): boolean {
       return this.store.getters.canEditTacton;
-    }
+    },
+    channelStates(): OutputChannelState[] {
+      return [...this.store.state.tactonSettings.outputChannelState];
+    },
   },
   methods: {
     resetTimer(): void {
@@ -119,13 +125,20 @@ export default defineComponent({
         trackLine.rect(0, config.trackHeight / 2, this.store.state.timeline.canvasWidth, 2);
         trackLine.fill(config.colors.trackLineColor);
         trackContainer.addChild(trackLine);
+        
+        const trackIndicator = new Graphics();
+        trackIndicator.circle(-(config.leftPadding / 2), config.trackHeight / 2, 12);
+        trackIndicator.fill(config.colors.trackLineColor);
+        trackIndicator.label = `trackIndicator${i}`;
+        trackContainer.addChild(trackIndicator);
 
         const trackLabel = new Text();
         trackLabel.text = i + 1;
         trackLabel.style.fontSize = 18;
-        trackLabel.x = -(config.leftPadding / 2) - trackLabel.width / 2;
+        trackLabel.style.fontWeight = "bold"
+        trackLabel.style.fill = "#ffffff"
+        trackLabel.x = -(config.leftPadding / 2) - trackLabel.width/2;
         trackLabel.y = config.trackHeight / 2 - trackLabel.height / 2;
-        trackContainer.addChild(trackLabel);
 
         getDynamicContainer().addChild(trackContainer);
         this.tracks.push({
@@ -464,7 +477,16 @@ export default defineComponent({
         );
         this.store.state.timeline.blockManager?.blockInteraction(true);
       }
-    }
+    },
+    channelStates() {
+      this.channelStates.forEach((state) => {
+        console.log(state.channelId);
+        const trackLabel: Graphics | null = this.tracks[state.channelId].container.getChildByLabel(`trackIndicator${state.channelId}`) as Graphics | null;
+        if (trackLabel) {
+          trackLabel.tint = state.intensity > 0 ? state.author?.color || config.colors.selectedBlockColor : "0xFFFFFF"
+        }
+      });
+    },
   },
   async mounted() {
     watch(() => this.store.state.timeline.canvasWidth, (newWidth: number) => {
@@ -497,6 +519,9 @@ export default defineComponent({
     this.ticker = PIXI.Ticker.shared;
     this.ticker.autoStart = false;
     this.ticker.stop();
+    
+    // instantiateArray to initialize computed-value channelStates
+    this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
   },
   beforeUnmount() {
     console.log(this.store.state.roomSettings.id ,  this.store.state.roomSettings.user.id);
