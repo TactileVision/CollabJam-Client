@@ -480,7 +480,6 @@ export default defineComponent({
     },
     channelStates() {
       this.channelStates.forEach((state) => {
-        console.log(state.channelId);
         const trackLabel: Graphics | null = this.tracks[state.channelId].container.getChildByLabel(`trackIndicator${state.channelId}`) as Graphics | null;
         if (trackLabel) {
           trackLabel.tint = state.intensity > 0 ? state.author?.color || config.colors.selectedBlockColor : "0xFFFFFF"

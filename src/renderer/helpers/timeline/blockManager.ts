@@ -304,6 +304,9 @@ export class BlockManager {
     }
 
     this.handleSelection(this.store.state.timeline.selectedBlocks, true);
+    if (this.strgDown) {
+      this.drawSelectionBorder();
+    }
     this.updateLocks();
   }
   private createBlock(block: BlockData): BlockDTO {
@@ -1543,7 +1546,6 @@ export class BlockManager {
       // calculate x coordinate of right border
       const newRightX: number = this.initialBlockX + newWidth;
 
-      this.isCollidingOnResize = false;
       if (!this.isCollidingOnResize || deltaX < this.lastValidDeltaX) {
         this.isCollidingOnResize = false;
         const selectedTracks: number[] =
