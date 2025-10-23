@@ -766,8 +766,13 @@ export class BlockManager {
       // disable interactivity
       const blocks: BlockDTO[] = this.findBlocksByUuids(uuids);
       blocks.forEach((block: BlockDTO): void => {
+        if (block.groupUuid) {
+          this.clearGroupBorder(block.groupUuid);
+        }
         this.updateHandleInteractivity(block, false);
+        this.updateIndicatorVisibility(block, false);
         block.rect.interactive = false;
+        block.strokedRect.visible = false;
       });
 
       // draw lock-border
@@ -776,6 +781,31 @@ export class BlockManager {
         this.createBoundingRectangle(bounds, config.lockBorderWidth, color),
       );
     }
+
+    // some blocks are now selected again (e.g. lock expired)
+    this.forEachSelectedBlock((block: BlockDTO): void => {
+      if (this.store.state.timeline.lockedBlocks.has(block.uuid)) return;
+      block.strokedRect.visible = true;
+
+      if (block.groupUuid != null) {
+        // already rendered
+        if (this.renderedGroupBorders.has(block.groupUuid)) return;
+
+        const groupData: BlockSelection[] | undefined =
+          this.store.state.timeline.groups.get(block.groupUuid);
+        if (groupData == undefined) {
+          console.error(`No Groupdata found for groupUuid: ${block.groupUuid}`);
+          return;
+        }
+        this.createGroupBorder(block.groupUuid, groupData);
+      } else {
+        // check for groups
+        this.updateHandleInteractivity(block, true);
+        this.updateIndicatorVisibility(block, true);
+        block.rect.interactive = true;
+        block.strokedRect.visible = true;
+      }
+    });
   }
 
   //*************** Update-Hooks ***************
@@ -898,27 +928,10 @@ export class BlockManager {
       return;
     }
 
-    // check uuid of selection
-    const uuids: string[] = [];
-    if (Array.isArray(toSelect)) {
-      // check if selection is empty
-      const userId: string = this.store.state.roomSettings.user.id;
-      if (
-        toSelect.length == 0 &&
-        (this.store.state.timeline.userLocks[userId] ?? []).length == 0
-      ) {
-        return;
-      }
-
-      toSelect.forEach((selection: BlockSelection) => {
-        uuids.push(selection.uuid);
-      });
-    } else {
-      uuids.push(toSelect.uuid);
-      // what if this is a group
-      // then toSelect.groupUuid must be check / all grouped  blocks
-    }
-
+    // get uuids
+    const uuids = Array.isArray(toSelect)
+      ? toSelect.map((s: BlockSelection) => s.uuid) // array (multi-selection)
+      : [toSelect.uuid]; // one element only
     // check, if uuid is already blocked
     let canEdit: boolean = true;
     for (const uuid of uuids) {
