@@ -264,6 +264,7 @@ export default defineComponent({
           this.store.state.timeline.groups.clear();
           this.store.state.timeline.selectedBlocks = [];
           this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
+          this.onLocksExpired();
           
           // save uuid
           this.lastTactonId = this.tacton.uuid;
