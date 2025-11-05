@@ -266,9 +266,7 @@ export const mutations: MutationTree<State> & Mutations = {
     if (state.blocks[trackId] == undefined) return;
     state.blocks[trackId].forEach((block: BlockDTO): void => {
       getDynamicContainer().removeChild(block.container);
-      block.container.children.forEach((child: ContainerChild): void => {
-        child.removeAllListeners();
-      });
+      block.removeListeners();
       block.container.removeAllListeners();
       block.container.destroy({ children: true });
     });

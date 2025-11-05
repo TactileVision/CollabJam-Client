@@ -19,12 +19,12 @@ import {
   BlockData,
   BlockDTO,
   BlockSelection,
+  Direction,
   SnackbarTexts,
   TimelineEvents,
 } from "@/renderer/helpers/timeline/types";
 import { DUMMY_GROUP_UUID, DUMMY_UUID } from "@sharedTypes/tactonTypes";
 import { User } from "@sharedTypes/roomTypes";
-
 interface BorderData {
   container: Container;
   border: Graphics;
@@ -48,11 +48,14 @@ interface BorderData {
   topBlockOfGroup: BlockSelection;
   bottomBlockOfGroup: BlockSelection;
 }
-enum Direction {
-  LEFT = "left",
-  RIGHT = "right",
-  TOP = "top",
-  BOTTOM = "bottom",
+interface GroupBounds {
+  startX: number;
+  endX: number;
+  lowestTrack: number;
+  highestTrack: number;
+  maxHeightLowest: number;
+  maxHeightHighest: number;
+  y: number;
 }
 class CopiedBlockDTO {
   rect: Graphics;
@@ -78,15 +81,6 @@ class CopiedBlockDTO {
     this.initTrackId = trackId;
     this.groupUuid = groupUuid;
   }
-}
-interface GroupBounds {
-  startX: number;
-  endX: number;
-  lowestTrack: number;
-  highestTrack: number;
-  maxHeightLowest: number;
-  maxHeightHighest: number;
-  y: number;
 }
 export class BlockManager {
   // store
@@ -116,7 +110,7 @@ export class BlockManager {
   private moved: boolean = false;
 
   // proportional resize
-  private selectionBorder: BorderData | null = null;
+  private selectionBorder: BorderData | undefined = undefined;
   private lastUuidsCollisionLeft: string[] = [];
   private lastUuidsCollisionRight: string[] = [];
 
@@ -171,6 +165,12 @@ export class BlockManager {
     BorderData
   >();
 
+  // member editing
+  private editedGroupMemberUuid: string | null = null;
+  private editedGroupUuid: string | null = null;
+  private isDoubleClick: boolean = false;
+  private doubleTimeout: ReturnType<typeof setTimeout> | undefined;
+
   // interaction-mode
   private isInteractionBlocked: boolean = false;
 
@@ -217,14 +217,6 @@ export class BlockManager {
     this.installEventListeners();
   }
   createBlocksFromData(blockData: BlockData[]): void {
-    // clear rendered borders
-    this.renderedGroupBorders.forEach(
-      (borderData: BorderData, groupId: string): void => {
-        this.clearGroupBorder(groupId);
-      },
-    );
-    this.clearSelectionBorder();
-
     // clear stored blocks
     this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
 
@@ -284,6 +276,7 @@ export class BlockManager {
 
     this.store.dispatch(TimelineActionTypes.GET_LAST_BLOCK_POSITION);
 
+    let toHighlight: BlockDTO | null = null;
     // update selectionData
     for (const selection of this.store.state.timeline.selectedBlocks) {
       const block: BlockDTO =
@@ -296,13 +289,18 @@ export class BlockManager {
           selection.index = correctData.index;
         }
       }
+      if (block.uuid === this.editedGroupMemberUuid) {
+        toHighlight = block;
+      }
     }
 
-    this.renderSelection();
-
-    if (this.strgDown) {
-      //this.drawSelectionBorder();
+    // TODO if editing group, need to render here
+    if (toHighlight) {
+      this.highlightCurrentMember(toHighlight);
+    } else {
+      this.renderSelection();
     }
+
     this.updateLocks();
   }
   private createBlock(block: BlockData): BlockDTO {
@@ -407,36 +405,17 @@ export class BlockManager {
     );
 
     dto.groupUuid = block.groupUuid;
-
-    if (dto.groupUuid != null) {
-      leftHandle.on("pointerdown", (e) =>
-        this.onGroupResize(e, Direction.LEFT, dto.groupUuid!),
-      );
-      rightHandle.on("pointerdown", (e) =>
-        this.onGroupResize(e, Direction.RIGHT, dto.groupUuid!),
-      );
-    } else {
-      leftHandle.on("pointerdown", (event) =>
-        this.onAbsoluteResizeStart(event, dto, Direction.LEFT),
-      );
-      rightHandle.on("pointerdown", (event) =>
-        this.onAbsoluteResizeStart(event, dto, Direction.RIGHT),
-      );
-    }
-    topHandle.on("pointerdown", (event) =>
-      this.onChangeAmplitude(event, dto, Direction.TOP),
-    );
-    bottomHandle.on("pointerdown", (event) =>
-      this.onChangeAmplitude(event, dto, Direction.BOTTOM),
-    );
-
-    rect.on("pointerdown", (event) => this.onMoveBlock(event, dto));
+    dto.addListeners({
+      onResize: this.onResize.bind(this),
+      onChangeAmplitude: this.onChangeAmplitude.bind(this),
+      onMoveBlock: this.onMoveBlock.bind(this),
+    });
 
     this.store.dispatch(TimelineActionTypes.ADD_BLOCK, {
       trackId: block.trackId,
       block: dto,
     });
-    getDynamicContainer().addChild(blockContainer);
+    getDynamicContainer().addChildAt(blockContainer, 0);
     return dto;
   }
   private createCopiedBLock(block: BlockData): CopiedBlockDTO {
@@ -979,6 +958,8 @@ export class BlockManager {
 
     this.updateSelection(toSelect);
     this.renderSelection();
+    this.editedGroupMemberUuid = null;
+    this.editedGroupUuid = null;
 
     // dispatch event
     this.eventBus.dispatchEvent(
@@ -1210,7 +1191,31 @@ export class BlockManager {
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private onMoveBlock(event: FederatedPointerEvent, block: BlockDTO): void {
-    this.handleSelection(block);
+    const isSelected = this.isBlockSelected(block);
+
+    if (block.groupUuid && isSelected && this.isDoubleClick) {
+      this.toggleMemberEdit(block);
+    } else {
+      if (this.editedGroupMemberUuid == null) {
+        this.handleSelection(block);
+      } else {
+        // block is not from this group -> normal selection
+        const isDifferentGroup: boolean =
+          this.editedGroupUuid !== block.groupUuid;
+        if (isDifferentGroup) {
+          this.editedGroupMemberUuid = null;
+          this.editedGroupUuid = null;
+          this.handleSelection(block);
+        } else {
+          // switching group-member
+          if (this.editedGroupMemberUuid !== block.uuid) {
+            this.switchMember(block);
+          }
+        }
+      }
+    }
+    this.isDoubleClick = false;
+    clearTimeout(this.doubleTimeout);
 
     // early exit if user is pressing shift --> multi-selection
     if (this.store.state.timeline.isPressingShift) {
@@ -1233,11 +1238,6 @@ export class BlockManager {
 
     // set interactionState to block multiSelection
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
-
-    // return if nothing is selected (e.g. by using multi-selection via shift
-    if (this.store.state.timeline.selectedBlocks.length == 0) {
-      return;
-    }
 
     // calculate and init borders for collision detection
     this.createBorders();
@@ -1315,15 +1315,15 @@ export class BlockManager {
     window.removeEventListener("pointermove", this.pointerMoveHandler);
     window.removeEventListener("pointerup", this.pointerUpHandler);
 
-    let borderData: BorderData | null = this.selectionBorder;
+    let borderData: BorderData | undefined = this.selectionBorder;
 
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
 
     // TODO maybe dont need this anymore
-    if (borderData == null && this.currentTacton.groupUuid != null) {
+    if (borderData == undefined && this.currentTacton.groupUuid != null) {
       borderData = this.renderedGroupBorders.get(this.currentTacton.groupUuid)!;
     }
-    if (borderData != null) {
+    if (borderData != undefined) {
       borderData.lastY = borderData.initY;
     }
 
@@ -1344,6 +1344,11 @@ export class BlockManager {
     }
     this.moved = false;
     getLine().visible = false;
+
+    this.isDoubleClick = true;
+    this.doubleTimeout = setTimeout(() => {
+      this.isDoubleClick = false;
+    }, 200);
   }
   private onSelectingEnd(): void {
     if (this.pointerUpHandler == null) return;
@@ -1353,7 +1358,7 @@ export class BlockManager {
   private onAbsoluteResizeStart(
     event: FederatedPointerEvent,
     block: BlockDTO,
-    direction: Direction.LEFT | Direction.RIGHT,
+    direction: Direction,
   ): void {
     this.resizeDirection = direction;
     this.initialX = event.globalX;
@@ -1362,7 +1367,9 @@ export class BlockManager {
     this.isCollidingOnResize = false;
 
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
-    this.handleSelection(block);
+    if (this.editedGroupMemberUuid == null) {
+      this.handleSelection(block);
+    }
 
     this.pointerMoveHandler = (event: PointerEvent) =>
       this.onAbsoluteResize(event, block);
@@ -1379,6 +1386,7 @@ export class BlockManager {
     let newWidth;
     let newX: number = prevX;
 
+    // TODO kann vermutlich weg
     // exit, if user is pressing strg (proportional-resizing is active)
     if (this.strgDown && this.store.state.timeline.selectedBlocks.length > 1) {
       return;
@@ -1546,14 +1554,14 @@ export class BlockManager {
   }
   private onProportionalResizeStart(
     event: FederatedPointerEvent,
-    direction: Direction.LEFT | Direction.RIGHT,
+    direction: Direction,
     groupId?: string,
   ): void {
-    let borderData: BorderData | null = this.selectionBorder;
-    if (borderData == null && groupId != null) {
+    let borderData: BorderData | undefined = this.selectionBorder;
+    if (borderData == undefined && groupId != null) {
       borderData = this.renderedGroupBorders.get(groupId)!;
     }
-    if (borderData == null) {
+    if (borderData == undefined) {
       return;
     }
 
@@ -1572,11 +1580,11 @@ export class BlockManager {
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
   }
   private onProportionalResize(event: PointerEvent, groupId?: string): void {
-    let borderData: BorderData | null = this.selectionBorder;
-    if (borderData == null && groupId != null) {
-      borderData = this.renderedGroupBorders.get(groupId)!;
+    let borderData: BorderData | undefined = this.selectionBorder;
+    if (borderData == undefined && groupId != null) {
+      borderData = this.renderedGroupBorders.get(groupId);
     }
-    if (borderData == null) {
+    if (borderData == undefined) {
       return;
     }
 
@@ -1714,6 +1722,8 @@ export class BlockManager {
 
         block.strokedRect.x = newX;
         block.strokedRect.width = newWidth;
+
+        this.store.state.timeline.sorted[block.trackId] = false;
       });
 
       // update groups
@@ -1725,11 +1735,9 @@ export class BlockManager {
       );
       this.updateBorder(undefined, true);
 
-      if (groupId == undefined) {
-        this.lastValidDeltaX = deltaX;
-        this.lastUuidsCollisionRight = uuidsCollisionRight;
-        this.lastUuidsCollisionLeft = uuidsCollisionLeft;
-      }
+      this.lastValidDeltaX = deltaX;
+      this.lastUuidsCollisionRight = uuidsCollisionRight;
+      this.lastUuidsCollisionLeft = uuidsCollisionLeft;
     }
   }
   private onResizeEnd(): void {
@@ -1740,7 +1748,7 @@ export class BlockManager {
     window.removeEventListener("pointerup", this.pointerUpHandler);
 
     // only set InteractionState if groupBorder is not active
-    if (this.selectionBorder == null) {
+    if (this.selectionBorder == undefined) {
       this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     }
 
@@ -1763,12 +1771,14 @@ export class BlockManager {
   private onChangeAmplitude(
     event: FederatedPointerEvent,
     block: BlockDTO,
-    direction: Direction.TOP | Direction.BOTTOM,
+    direction: Direction,
   ): void {
     this.initialY = event.globalY;
     this.initialBlockHeight = block.rect.height;
     this.currentTacton = block;
-    this.handleSelection(block);
+    if (this.editedGroupMemberUuid == null) {
+      this.handleSelection(block);
+    }
     this.pointerMoveHandler = (event: PointerEvent) =>
       this.changeAmplitude(event, block, direction);
     this.pointerUpHandler = () => this.onChangeAmplitudeEnd();
@@ -1781,6 +1791,7 @@ export class BlockManager {
     block: BlockDTO,
     direction: Direction,
   ): void {
+    // TODO kann vbermutlich weg
     // exit, if user is pressing strg (proportional-resizing is active)
     if (this.strgDown) {
       return;
@@ -1811,8 +1822,9 @@ export class BlockManager {
     window.removeEventListener("pointermove", this.pointerMoveHandler);
     window.removeEventListener("pointerup", this.pointerUpHandler);
 
+    // Need to update borderData?
     // only set InteractionState if groupBorder is not active
-    if (this.selectionBorder == null) {
+    if (this.selectionBorder == undefined) {
       this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     }
 
@@ -1911,6 +1923,118 @@ export class BlockManager {
   }
 
   //*************** Helper ***************
+  private toggleMemberEdit(block: BlockDTO) {
+    const isSameMember: boolean = this.editedGroupMemberUuid === block.uuid;
+    const enteringEditMode: boolean = !isSameMember;
+    if (enteringEditMode) {
+      this.editedGroupMemberUuid = block.uuid;
+      this.editedGroupUuid = block.groupUuid;
+    } else {
+      this.editedGroupMemberUuid = null;
+      this.editedGroupUuid = null;
+    }
+
+    if (enteringEditMode) {
+      this.enterMemberEdit(block);
+    } else {
+      this.leaveMemberEdit(block);
+    }
+  }
+  private highlightCurrentMember(block: BlockDTO): void {
+    this.forEachBlock((block: BlockDTO): void => {
+      const isActive = block.uuid === this.editedGroupMemberUuid;
+      block.strokedRect.visible = isActive;
+      this.updateHandleInteractivity(block, isActive);
+      this.updateIndicatorVisibility(block, isActive);
+
+      if (block.groupUuid !== this.editedGroupUuid) {
+        block.rect.alpha = 0.5;
+      }
+    });
+
+    if (block.groupUuid == null) return;
+
+    const groupSize: number =
+      this.store.state.timeline.groups.get(block.groupUuid)?.length ?? 0;
+    const selectionSize: number =
+      this.store.state.timeline.selectedBlocks.length;
+
+    this.toggleBorderHandles(
+      groupSize === selectionSize ? block.groupUuid : undefined,
+      false,
+    );
+  }
+
+  private stashedSelection: Map<string, BlockSelection> = new Map();
+  private enterMemberEdit(block: BlockDTO): void {
+    this.highlightCurrentMember(block);
+    this.store.state.timeline.selectedBlocks.forEach((sel) =>
+      this.stashedSelection.set(sel.uuid, sel),
+    );
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.store.dispatch(
+      TimelineActionTypes.SELECT_BLOCK,
+      this.stashedSelection.get(block.uuid),
+    );
+    console.log(this.store.state.timeline.selectedBlocks);
+  }
+  private switchMember(block: BlockDTO): void {
+    this.editedGroupMemberUuid = block.uuid;
+    this.highlightCurrentMember(block);
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.store.dispatch(
+      TimelineActionTypes.SELECT_BLOCK,
+      this.stashedSelection.get(block.uuid),
+    );
+  }
+  private leaveMemberEdit(block: BlockDTO): void {
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.stashedSelection.forEach((sel) =>
+      this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, sel),
+    );
+    this.stashedSelection.clear();
+
+    this.forEachUnselectedBlock((b): void => {
+      b.rect.alpha = 1;
+    });
+
+    this.forEachSelectedBlock((b): void => {
+      b.strokedRect.visible = true;
+      this.updateHandleInteractivity(b, false);
+      this.updateIndicatorVisibility(b, false);
+    });
+
+    if (block.groupUuid != null) {
+      const groupSize =
+        this.store.state.timeline.groups.get(block.groupUuid)?.length ?? 0;
+      const selectionSize = this.store.state.timeline.selectedBlocks.length;
+      this.toggleBorderHandles(
+        groupSize === selectionSize ? block.groupUuid : undefined,
+        true,
+      );
+    }
+  }
+  private toggleBorderHandles(
+    groupId: string | undefined,
+    isVisible: boolean,
+  ): void {
+    let border: BorderData | undefined;
+    if (groupId) {
+      border = this.renderedGroupBorders.get(groupId);
+    } else {
+      border = this.selectionBorder;
+    }
+    if (border == undefined) return;
+    this.updateBorder(groupId, isVisible);
+    border.rightHandle.visible = isVisible;
+    border.rightIndicator.visible = isVisible;
+    border.leftHandle.visible = isVisible;
+    border.leftIndicator.visible = isVisible;
+    border.topHandle.visible = isVisible;
+    border.topIndicator.visible = isVisible;
+    border.bottomHandle.visible = isVisible;
+    border.bottomIndicator.visible = isVisible;
+  }
   private updateSelection(toSelect: BlockSelection[] | BlockDTO): void {
     if (Array.isArray(toSelect)) {
       if (!this.store.state.timeline.isPressingShift) {
@@ -2015,6 +2139,7 @@ export class BlockManager {
   private renderSelection(): void {
     this.forEachUnselectedBlock((block) => {
       block.strokedRect.visible = false;
+      block.rect.alpha = 1;
       this.updateIndicatorVisibility(block, false);
       this.updateHandleInteractivity(block, true);
       if (block.groupUuid) {
@@ -2028,6 +2153,7 @@ export class BlockManager {
       // single blocks
       this.forEachSelectedBlock((block: BlockDTO): void => {
         block.strokedRect.visible = true;
+        block.rect.alpha = 1;
         this.updateHandleInteractivity(block, false);
         if (block.groupUuid) {
           if (!groups.some((uuid) => uuid == block.groupUuid)) {
@@ -2051,6 +2177,7 @@ export class BlockManager {
       this.clearSelectionBorder();
       this.forEachSelectedBlock((block: BlockDTO): void => {
         block.strokedRect.visible = true;
+        block.rect.alpha = 1;
         this.updateIndicatorVisibility(block, true);
         this.updateHandleInteractivity(block, true);
       });
@@ -2138,15 +2265,28 @@ export class BlockManager {
     }
     return result;
   }
+  private onResize(
+    event: FederatedPointerEvent,
+    direction: Direction,
+    block: BlockDTO,
+  ): void {
+    if (this.editedGroupMemberUuid == null && block.groupUuid != null) {
+      this.onGroupResize(event, direction, block.groupUuid);
+    } else {
+      this.onAbsoluteResizeStart(event, block, direction);
+    }
+  }
   private onGroupResize(
     event: FederatedPointerEvent,
-    direction: Direction.LEFT | Direction.RIGHT,
+    direction: Direction,
     groupId: string,
   ): void {
     const members: BlockSelection[] | undefined =
       this.store.state.timeline.groups.get(groupId);
     if (members == undefined) return;
-    this.handleSelection(members);
+    if (this.editedGroupMemberUuid == null) {
+      this.handleSelection(members);
+    }
     this.onProportionalResizeStart(event, direction, groupId);
   }
   private isBlockSelected(block: BlockDTO): boolean {
@@ -2170,13 +2310,13 @@ export class BlockManager {
     newGroupStartX: number,
     scale: number,
   ): { x: number; width: number } {
-    let borderData: BorderData | null = this.selectionBorder;
+    let borderData: BorderData | undefined = this.selectionBorder;
 
-    if (borderData == null && block.groupUuid != null) {
-      borderData = this.renderedGroupBorders.get(block.groupUuid)!;
+    if (borderData == undefined && block.groupUuid != null) {
+      borderData = this.renderedGroupBorders.get(block.groupUuid);
     }
 
-    if (borderData == null) {
+    if (borderData == undefined) {
       return { x: NaN, width: NaN };
     }
 
@@ -2339,6 +2479,7 @@ export class BlockManager {
       this.store.state.timeline.blocks[firstBlockOfGroup.trackId][
         firstBlockOfGroup.index
       ];
+
     if (groupId) {
       leftHandle.on("pointerdown", (e) =>
         this.onGroupResize(e, Direction.LEFT, groupId!),
@@ -2354,7 +2495,7 @@ export class BlockManager {
         this.onProportionalResizeStart(e, Direction.RIGHT),
       );
     }
-
+    // TODO ist ohnehin inkonsisten, da so firstBLock immer als untere Grenze fungiert
     topHandle.on("pointerdown", (e) =>
       this.onChangeAmplitude(e, firstBlock, Direction.TOP),
     );
@@ -2427,16 +2568,9 @@ export class BlockManager {
       }
     }
 
-    this.renderedGroupBorders.forEach((borderData: BorderData): void => {
-      borderData.rightHandle.visible = false;
-      borderData.rightIndicator.visible = false;
-      borderData.leftHandle.visible = false;
-      borderData.leftIndicator.visible = false;
-      borderData.topHandle!.visible = false;
-      borderData.topIndicator!.visible = false;
-      borderData.bottomHandle!.visible = false;
-      borderData.bottomIndicator!.visible = false;
-    });
+    this.renderedGroupBorders.forEach((borderData, groupId) =>
+      this.toggleBorderHandles(groupId, false),
+    );
     this.forEachSelectedBlock((block) => {
       this.updateHandleInteractivity(block, false);
     });
@@ -2446,21 +2580,15 @@ export class BlockManager {
   }
   private clearSelectionBorder(): void {
     if (this.selectionBorder != null) {
+      // TODO ?
+      this.selectionBorder.container.children.forEach((chil) =>
+        chil.removeAllListeners(),
+      );
       getDynamicContainer().removeChild(this.selectionBorder.container);
       this.selectionBorder.container.destroy({ children: true });
-      this.selectionBorder = null;
-      this.renderedGroupBorders.forEach(
-        (borderData: BorderData, groupId: string): void => {
-          this.updateBorder(groupId, true);
-          borderData.rightHandle.visible = true;
-          borderData.rightIndicator.visible = true;
-          borderData.leftHandle.visible = true;
-          borderData.leftIndicator.visible = true;
-          borderData.topHandle!.visible = true;
-          borderData.topIndicator!.visible = true;
-          borderData.bottomHandle!.visible = true;
-          borderData.bottomIndicator!.visible = true;
-        },
+      this.selectionBorder = undefined;
+      this.renderedGroupBorders.forEach((borderData, groupId) =>
+        this.toggleBorderHandles(groupId, true),
       );
       this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     }
@@ -2521,7 +2649,7 @@ export class BlockManager {
     if (groupId) {
       borderData = this.renderedGroupBorders.get(groupId)!;
     } else {
-      if (this.selectionBorder == null) return;
+      if (this.selectionBorder == undefined) return;
       borderData = this.selectionBorder;
     }
 
@@ -2635,6 +2763,7 @@ export class BlockManager {
     borderData.lastStartX = groupStartX;
     borderData.lastWidth = groupWidth;
   }
+
   private getMinBlockWidth(): number {
     const zoom: number = this.store.state.timeline.zoomLevel;
     return (config.minBlockWidthMS / 1000) * config.pixelsPerSecond * zoom;
@@ -3289,11 +3418,10 @@ export class BlockManager {
   }
 
   //******* event-listener *******
-  private onCanvasMouseDown(event: MouseEvent): void {
+  private onCanvasMouseDown = (event: MouseEvent): void => {
     if (!this.store.state.timeline.isInteracting) {
       this.pasteSelection();
     }
-
     if (this.isSelecting) return;
     if (event.button === 0 && !this.store.state.timeline.isInteracting) {
       this.isMouseDragging = true;
@@ -3301,18 +3429,18 @@ export class BlockManager {
       this.selectionEnd = { ...this.selectionStart };
       this.drawSelectionBox();
     }
-  }
-  private onCanvasMouseMove(event: MouseEvent): void {
+  };
+  private onCanvasMouseMove = (event: MouseEvent): void => {
     if (!this.isMouseDragging) return;
     this.selectionEnd = { x: event.clientX, y: event.clientY };
     this.drawSelectionBox();
-  }
-  private onCanvasMouseUp(event: MouseEvent): void {
+  };
+  private onCanvasMouseUp = (event: MouseEvent): void => {
     if (event.button !== 0 || !this.isMouseDragging) return;
     this.isMouseDragging = false;
     this.removeSelectionBox();
     this.selectRectanglesWithin();
-  }
+  };
 
   //******* public helpers *******
   public clearData(): void {
@@ -3326,12 +3454,10 @@ export class BlockManager {
     // detect STRG or Meta
     if (event.code == "ControlLeft" && !this.isMacOS) {
       if (!this.strgDown) {
-        this.drawSelectionBorder();
         this.strgDown = true;
       }
     } else if (event.code == "MetaLeft") {
       if (!this.strgDown) {
-        this.drawSelectionBorder();
         this.strgDown = true;
         if (!this.isMacOS) {
           this.isMacOS = true;
@@ -3369,14 +3495,6 @@ export class BlockManager {
       event.code == "MetaLeft"
     ) {
       this.strgDown = false;
-      this.clearSelectionBorder();
-      this.forEachSelectedBlock((block: BlockDTO): void => {
-        if (block.groupUuid != null) return;
-        this.updateHandles(block);
-        this.updateIndicators(block);
-        this.updateIndicatorVisibility(block, true);
-        this.updateHandleInteractivity(block, true);
-      });
     }
 
     if (event.key == "Shift" && this.store.state.timeline.isPressingShift) {
@@ -3385,15 +3503,9 @@ export class BlockManager {
   };
   private installEventListeners(): void {
     const pixiApp: Application = getPixiApp();
-    pixiApp.canvas.addEventListener(
-      "mousedown",
-      this.onCanvasMouseDown.bind(this),
-    );
-    pixiApp.canvas.addEventListener(
-      "mousemove",
-      this.onCanvasMouseMove.bind(this),
-    );
-    pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp.bind(this));
+    pixiApp.canvas.addEventListener("mousedown", this.onCanvasMouseDown);
+    pixiApp.canvas.addEventListener("mousemove", this.onCanvasMouseMove);
+    pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp);
 
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
@@ -3458,18 +3570,9 @@ export class BlockManager {
 
     const pixiApp: Application = getPixiApp();
     // remove existing Event-Listeners
-    pixiApp.canvas.removeEventListener(
-      "mousedown",
-      this.onCanvasMouseDown.bind(this),
-    );
-    pixiApp.canvas.removeEventListener(
-      "mousemove",
-      this.onCanvasMouseMove.bind(this),
-    );
-    pixiApp.canvas.removeEventListener(
-      "mouseup",
-      this.onCanvasMouseUp.bind(this),
-    );
+    pixiApp.canvas.removeEventListener("mousedown", this.onCanvasMouseDown);
+    pixiApp.canvas.removeEventListener("mousemove", this.onCanvasMouseMove);
+    pixiApp.canvas.removeEventListener("mouseup", this.onCanvasMouseUp);
 
     this.eventBus.removeEventListener(
       TimelineEvents.UPDATED_USER_LOCKS,
