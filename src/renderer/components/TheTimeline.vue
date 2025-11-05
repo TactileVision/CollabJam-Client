@@ -104,8 +104,6 @@ export default defineComponent({
     },
     renderTrackLines() {
       // clear rendered tracks
-      // TODO improve, only delete those not needed 
-      // (e.g. after removing one track, or loading new tacton that has less tracks)
       for (const track of this.tracks) {
         track.container.destroy({ children: true });
       }      
