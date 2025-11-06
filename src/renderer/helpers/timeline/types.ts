@@ -9,7 +9,7 @@ export class BlockChanges {
   track: number | null = null;
 }
 
-type EventHandler = (event: FederatedPointerEvent) => void;
+export type EventHandler = (event: FederatedPointerEvent) => void;
 export class BlockDTO {
   uuid: string;
   rect: Graphics;
@@ -71,22 +71,27 @@ export class BlockDTO {
     this.initTrackId = trackId;
     this.groupUuid = null;
   }
-
   addListeners(context: {
-    onResize: (e: FederatedPointerEvent, dir: Direction, dto: BlockDTO) => void;
+    onHorizontalResize: (
+      e: FederatedPointerEvent,
+      dir: Direction,
+      dto: BlockDTO,
+    ) => void;
     onChangeAmplitude: (
       e: FederatedPointerEvent,
-      dto: BlockDTO,
       dir: Direction,
+      dto: BlockDTO,
     ) => void;
     onMoveBlock: (e: FederatedPointerEvent, dto: BlockDTO) => void;
-  }) {
-    this.listeners.left = (e) => context.onResize(e, Direction.LEFT, this);
-    this.listeners.right = (e) => context.onResize(e, Direction.RIGHT, this);
+  }): void {
+    this.listeners.left = (e) =>
+      context.onHorizontalResize(e, Direction.LEFT, this);
+    this.listeners.right = (e) =>
+      context.onHorizontalResize(e, Direction.RIGHT, this);
     this.listeners.top = (e) =>
-      context.onChangeAmplitude(e, this, Direction.TOP);
+      context.onChangeAmplitude(e, Direction.TOP, this);
     this.listeners.bottom = (e) =>
-      context.onChangeAmplitude(e, this, Direction.BOTTOM);
+      context.onChangeAmplitude(e, Direction.BOTTOM, this);
     this.listeners.rect = (e) => context.onMoveBlock(e, this);
 
     this.leftHandle.on("pointerdown", this.listeners.left);
@@ -95,7 +100,7 @@ export class BlockDTO {
     this.bottomHandle.on("pointerdown", this.listeners.bottom);
     this.rect.on("pointerdown", this.listeners.rect);
   }
-  removeListeners() {
+  removeListeners(): void {
     if (this.listeners.left)
       this.leftHandle.off("pointerdown", this.listeners.left);
     if (this.listeners.right)
