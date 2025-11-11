@@ -456,12 +456,16 @@ export class BlockManager {
         startTime + (convertedWidth / timelineWidth) * totalDuration;
       const intensity: number = block.rect.height / config.maxBlockHeight;
 
+      // if copying groupMember, reject groupUuid -> only one block ist copied
+      const groupUuid: string | null =
+        this.editedGroupMemberUuid == null ? block.groupUuid : null;
+
       blockData.push({
         trackId: block.trackId,
         startTime: startTime,
         endTime: endTime,
         intensity: intensity,
-        groupUuid: block.groupUuid,
+        groupUuid: groupUuid,
         uuid: DUMMY_UUID,
       });
     });
