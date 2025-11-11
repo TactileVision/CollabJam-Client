@@ -2055,8 +2055,8 @@ export class BlockManager {
       this.updateIndicatorVisibility(b, false);
     });
 
-    if (this.editedGroupMemberUuid != null) {
-      this.toggleBorderHandles(this.editedGroupMemberUuid, true);
+    if (this.editedGroupUuid != null) {
+      this.toggleBorderHandles(this.editedGroupUuid, true);
     }
 
     this.editedGroupMemberUuid = null;
