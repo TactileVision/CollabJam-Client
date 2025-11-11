@@ -742,32 +742,6 @@ export class BlockManager {
         this.createBoundingRectangle(bounds, config.lockBorderWidth, color),
       );
     }
-
-    // TODO needs to be changed, after recent implementations
-    // some blocks are now selected again (e.g. lock expired)
-    this.forEachSelectedBlock((block: BlockDTO): void => {
-      if (this.store.state.timeline.lockedBlocks.has(block.uuid)) return;
-      block.strokedRect.visible = true;
-
-      if (block.groupUuid != null) {
-        // already rendered
-        if (this.renderedGroupBorders.has(block.groupUuid)) return;
-
-        const groupData: BlockSelection[] | undefined =
-          this.store.state.timeline.groups.get(block.groupUuid);
-        if (groupData == undefined) {
-          console.error(`No Groupdata found for groupUuid: ${block.groupUuid}`);
-          return;
-        }
-        this.createGroupBorder(block.groupUuid, groupData);
-      } else {
-        // check for groups
-        this.updateHandleInteractivity(block, true);
-        this.updateIndicatorVisibility(block, true);
-        block.rect.interactive = true;
-        block.strokedRect.visible = true;
-      }
-    });
   }
 
   //*************** Update-Hooks ***************
@@ -2193,53 +2167,6 @@ export class BlockManager {
       }
     }
   }
-  private renderSelection(): void {
-    this.forEachUnselectedBlock((block) => {
-      block.strokedRect.visible = false;
-      block.rect.alpha = 1;
-      this.updateIndicatorVisibility(block, false);
-      this.updateHandleInteractivity(block, true);
-      if (block.groupUuid) {
-        this.clearGroupBorder(block.groupUuid);
-      }
-    });
-
-    if (this.store.state.timeline.selectedBlocks.length > 1) {
-      const groups: string[] = [];
-
-      // single blocks
-      this.forEachSelectedBlock((block: BlockDTO): void => {
-        block.strokedRect.visible = true;
-        block.rect.alpha = 1;
-        this.updateHandleInteractivity(block, false);
-        if (block.groupUuid) {
-          if (!groups.some((uuid) => uuid == block.groupUuid)) {
-            groups.push(block.groupUuid);
-          }
-        }
-      });
-
-      // groups
-      groups.forEach((uuid) => {
-        const members: BlockSelection[] | undefined =
-          this.store.state.timeline.groups.get(uuid);
-        if (members) {
-          if (!this.renderedGroupBorders.has(uuid)) {
-            this.createGroupBorder(uuid, members);
-          }
-        }
-      });
-      this.drawSelectionBorder();
-    } else {
-      this.clearSelectionBorder();
-      this.forEachSelectedBlock((block: BlockDTO): void => {
-        block.strokedRect.visible = true;
-        block.rect.alpha = 1;
-        this.updateIndicatorVisibility(block, true);
-        this.updateHandleInteractivity(block, true);
-      });
-    }
-  }
   private createBoundingRectangle(
     bounds: GroupBounds,
     width: number,
@@ -3509,6 +3436,54 @@ export class BlockManager {
   };
 
   //******* public helpers *******
+  public renderSelection(): void {
+    this.forEachUnselectedBlock((block) => {
+      block.strokedRect.visible = false;
+      block.rect.alpha = 1;
+      this.updateIndicatorVisibility(block, false);
+      this.updateHandleInteractivity(block, true);
+      if (block.groupUuid) {
+        this.clearGroupBorder(block.groupUuid);
+      }
+    });
+
+    if (this.store.state.timeline.selectedBlocks.length > 1) {
+      const groups: string[] = [];
+
+      // single blocks
+      this.forEachSelectedBlock((block: BlockDTO): void => {
+        block.strokedRect.visible = true;
+        block.rect.alpha = 1;
+        this.updateHandleInteractivity(block, false);
+        if (block.groupUuid) {
+          if (!groups.some((uuid) => uuid == block.groupUuid)) {
+            groups.push(block.groupUuid);
+          }
+        }
+      });
+
+      // groups
+      groups.forEach((uuid) => {
+        const members: BlockSelection[] | undefined =
+          this.store.state.timeline.groups.get(uuid);
+        if (members) {
+          if (!this.renderedGroupBorders.has(uuid)) {
+            this.createGroupBorder(uuid, members);
+          }
+        }
+      });
+      this.drawSelectionBorder();
+    } else {
+      this.clearSelectionBorder();
+      this.forEachSelectedBlock((block: BlockDTO): void => {
+        block.strokedRect.visible = true;
+        block.rect.alpha = 1;
+        this.updateIndicatorVisibility(block, true);
+        this.updateHandleInteractivity(block, true);
+      });
+    }
+  }
+
   public clearData(): void {
     this.clearCopiedBlocks();
     this.clearGroupBorder();

@@ -101,6 +101,8 @@ export default defineComponent({
         []
       );
       this.lockUpdateTimer = null;
+      this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+      this.store.state.timeline.blockManager?.renderSelection();
     },
     renderTrackLines() {
       // clear rendered tracks
