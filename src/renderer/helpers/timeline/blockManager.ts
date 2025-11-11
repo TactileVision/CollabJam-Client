@@ -1177,8 +1177,6 @@ export class BlockManager {
         const isDifferentGroup: boolean =
           this.editedGroupUuid !== block.groupUuid;
         if (isDifferentGroup) {
-          this.editedGroupMemberUuid = null;
-          this.editedGroupUuid = null;
           this.handleSelection(block);
         } else {
           // switching group-member
@@ -2029,7 +2027,6 @@ export class BlockManager {
   }
   private switchMember(block: BlockDTO): void {
     this.editedGroupMemberUuid = block.uuid;
-    console.log("switching member ", block.uuid);
     this.highlightCurrentMember(block);
     this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
     this.store.dispatch(
@@ -2084,7 +2081,10 @@ export class BlockManager {
   }
   private updateSelection(toSelect: BlockSelection[] | BlockDTO): void {
     if (Array.isArray(toSelect)) {
-      if (!this.store.state.timeline.isPressingShift) {
+      if (
+        !this.store.state.timeline.isPressingShift ||
+        this.editedGroupMemberUuid != null
+      ) {
         this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
       }
 
@@ -2136,11 +2136,11 @@ export class BlockManager {
           if (!this.store.state.timeline.isPressingShift) {
             // clear selection
             this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-          } else {
-            if (this.editedGroupMemberUuid) {
-              // TODO leave MemberEdit and reselct stashed blocks
-              //this.leaveMemberEdit();
-            }
+          }
+
+          if (this.editedGroupUuid != null) {
+            this.clearGroupBorder(this.editedGroupUuid);
+            this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
           }
 
           // check for group
@@ -2431,7 +2431,6 @@ export class BlockManager {
     blocks: BlockSelection[],
     groupId?: string,
   ): Border {
-    console.log("create border");
     // calculate bounds
     const {
       startX,

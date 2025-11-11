@@ -155,12 +155,6 @@ export function getBoundingData(
     const height: number = block.rect.height;
 
     if (block.uuid === currentMemberUuid && lastTrackOffset != undefined) {
-      console.log(
-        "updating trackId. Original ",
-        trackId,
-        " offset: ",
-        lastTrackOffset,
-      );
       trackId += lastTrackOffset;
     }
 
