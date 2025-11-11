@@ -1162,8 +1162,8 @@ export class BlockManager {
     }
   }
   private deleteBlock(): void {
-    this.clearSelectionBorder();
-    this.clearGroupBorder();
+    this.editedGroupMemberUuid = null;
+    this.editedGroupUuid = null;
     this.store.dispatch(TimelineActionTypes.DELETE_SELECTED_BLOCKS);
     this.calculateVirtualViewportLength();
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));

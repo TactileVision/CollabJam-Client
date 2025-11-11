@@ -59,13 +59,13 @@ export class Border {
     lastBlock: BlockSelection,
     topBlock: BlockSelection,
     bottomBlock: BlockSelection,
-    initStartX = 0,
-    lastStartX = 0,
-    initWidth = 0,
-    lastWidth = 0,
-    initY = 0,
-    lastY = 0,
-    initHeight = 0,
+    initStartX: number = 0,
+    lastStartX: number = 0,
+    initWidth: number = 0,
+    lastWidth: number = 0,
+    initY: number = 0,
+    lastY: number = 0,
+    initHeight: number = 0,
   ) {
     this.container = container;
     this.border = border;

@@ -1,7 +1,7 @@
 import { MutationTree } from "vuex";
 import { BlockManager } from "@/renderer/helpers/timeline/blockManager";
 import { BlockDTO, BlockSelection } from "@/renderer/helpers/timeline/types";
-import { ContainerChild, Graphics } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { getDynamicContainer } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { State } from "./state";
@@ -248,10 +248,7 @@ export const mutations: MutationTree<State> & Mutations = {
     state.selectedBlocks.forEach((blockSelection: BlockSelection) => {
       const block = state.blocks[blockSelection.trackId][blockSelection.index];
       getDynamicContainer().removeChild(block.container);
-      block.container.children.forEach((child: ContainerChild): void => {
-        child.removeAllListeners();
-      });
-      block.container.removeAllListeners();
+      block.removeListeners();
       block.container.destroy({ children: true });
 
       state.blocks[blockSelection.trackId].splice(blockSelection.index, 1);
@@ -272,14 +269,6 @@ export const mutations: MutationTree<State> & Mutations = {
     });
 
     delete state.blocks[trackId];
-
-    // remove from selection
-    for (let i: number = state.selectedBlocks.length - 1; i >= 0; i--) {
-      if (state.selectedBlocks[i].trackId == trackId) {
-        // TODO enable
-        //state.selectedBlocks.splice(i, 1);
-      }
-    }
   },
   [TimelineMutations.SELECT_BLOCK](state: State, block: BlockSelection): void {
     state.selectedBlocks.push(block);
