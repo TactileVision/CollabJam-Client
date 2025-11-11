@@ -247,6 +247,17 @@ export const mutations: MutationTree<State> & Mutations = {
 
     state.selectedBlocks.forEach((blockSelection: BlockSelection) => {
       const block = state.blocks[blockSelection.trackId][blockSelection.index];
+
+      if (block.groupUuid) {
+        const members = state.groups.get(block.groupUuid);
+        if (members?.length == 2) {
+          state.groups.delete(block.groupUuid);
+          members.forEach((sel: BlockSelection) => {
+            state.blocks[sel.trackId][sel.index].groupUuid = null;
+          });
+        }
+      }
+
       getDynamicContainer().removeChild(block.container);
       block.removeListeners();
       block.container.destroy({ children: true });
