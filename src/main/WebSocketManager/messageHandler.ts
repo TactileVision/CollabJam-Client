@@ -7,6 +7,7 @@ import { InteractionMode, Room, User } from "@sharedTypes/roomTypes";
 import { InstructionToClient, Tacton } from "@sharedTypes/tactonTypes";
 import {
   ChangeTactonMetadata,
+  ResponseEnteredRoom,
   TactonDeletion,
   UpdateAvailableTags,
   UpdateEditingUser,
@@ -33,11 +34,12 @@ export const handleMessage = (store: Store) => {
   console.log("on connect");
   if (socket == null) return;
 
-  socket.on(WS_MSG_TYPE.ENTER_ROOM_CLI, (res) => {
+  socket.on(WS_MSG_TYPE.ENTER_ROOM_CLI, (res: ResponseEnteredRoom) => {
     console.log("ENTER_ROOM_CLI");
     console.log(res);
     store.dispatch(RoomSettingsActionTypes.enterRoom, res);
     store.dispatch(TactonPlaybackActionTypes.setTactonList, res.recordings);
+    store.dispatch(TimelineActionTypes.SET_USER_LOCKS, res.userLocks);
     if (store.state.roomSettings.id != undefined) {
       //MARK: Start the debouncing of inputs
       setInterval(() => {

@@ -41,6 +41,7 @@ export enum TimelineMutations {
   SET_CANVAS_WIDTH = "setCanvasWidth",
   SET_SNACKBAR_TEXT = "setSnackbarText",
   UPDATE_USER_LOCKS = "updateUserLocks",
+  SET_USER_LOCKS = "setUserLocks",
 }
 
 export type Mutations<S = State> = {
@@ -114,6 +115,10 @@ export type Mutations<S = State> = {
   [TimelineMutations.UPDATE_USER_LOCKS](
     state: S,
     props: { userId: string; uuids: string[] },
+  ): void;
+  [TimelineMutations.SET_USER_LOCKS](
+    state: S,
+    locks: Record<string, string[]>,
   ): void;
 };
 
@@ -472,5 +477,13 @@ export const mutations: MutationTree<State> & Mutations = {
 
     // update user-locks
     state.userLocks[props.userId] = props.uuids;
+  },
+  [TimelineMutations.SET_USER_LOCKS](
+    state: State,
+    locks: Record<string, string[]>,
+  ): void {
+    console.log("setting userLocks ", locks);
+    state.lockedBlocks.clear();
+    state.userLocks = locks;
   },
 };

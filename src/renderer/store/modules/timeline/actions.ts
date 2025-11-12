@@ -43,6 +43,7 @@ export enum TimelineActionTypes {
   UPDATE_CANVAS_WIDTH = "updateCanvasWidth",
   UPDATE_SNACKBAR_TEXT = "updateSnackbarText",
   UPDATE_USER_LOCKS = "updateUserLocks",
+  SET_USER_LOCKS = "setUserLocks",
 }
 
 type AugmentedActionContext = {
@@ -180,6 +181,10 @@ export interface Actions {
   [TimelineActionTypes.UPDATE_USER_LOCKS](
     { commit }: AugmentedActionContext,
     payload: { userId: string | null; uuids: string[] },
+  ): void;
+  [TimelineActionTypes.SET_USER_LOCKS](
+    { commit }: AugmentedActionContext,
+    payload: Record<string, string[]>,
   ): void;
 }
 export const actions: ActionTree<State, RootState> & Actions = {
@@ -406,7 +411,13 @@ export const actions: ActionTree<State, RootState> & Actions = {
       userId: string;
       uuids: string[];
     },
-  ) {
+  ): void {
     commit(TimelineMutations.UPDATE_USER_LOCKS, props);
+  },
+  [TimelineActionTypes.SET_USER_LOCKS](
+    { commit }: AugmentedActionContext,
+    locks: Record<string, string[]>,
+  ): void {
+    commit(TimelineMutations.SET_USER_LOCKS, locks);
   },
 };
