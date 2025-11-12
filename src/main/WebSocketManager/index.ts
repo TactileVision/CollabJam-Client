@@ -141,4 +141,16 @@ export const WebSocketAPI = {
       uuids: uuids,
     });
   },
+  undoAction: (roomId: string, tactonId: string) => {
+    socket?.emit(WS_MSG_TYPE.UNDO_ACTION_SERV, {
+      roomId: roomId,
+      tactonId: tactonId,
+    });
+  },
+  redoAction: (roomId: string, tactonId: string) => {
+    socket?.emit(WS_MSG_TYPE.REDO_ACTION_SERV, {
+      roomId: roomId,
+      tactonId: tactonId,
+    });
+  },
 };

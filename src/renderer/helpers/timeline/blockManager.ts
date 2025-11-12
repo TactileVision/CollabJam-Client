@@ -30,6 +30,7 @@ import {
   BoundingData,
   getBoundingData,
 } from "@/renderer/helpers/timeline/borderManager";
+import { WebSocketAPI } from "@/main/WebSocketManager";
 
 interface GroupBounds {
   startX: number;
@@ -3523,6 +3524,24 @@ export class BlockManager {
     }
     if (event.code == "Escape") this.clearCopiedBlocks();
     if (event.code == "Delete") this.deleteBlock();
+    if (this.strgDown && event.key.toLowerCase() == "z") {
+      if (this.store.state.roomSettings.id == undefined) return;
+      if (this.store.state.tactonPlayback.currentTacton == undefined) return;
+
+      WebSocketAPI.undoAction(
+        this.store.state.roomSettings.id,
+        this.store.state.tactonPlayback.currentTacton.uuid,
+      );
+    }
+    if (this.strgDown && event.key.toLowerCase() == "y") {
+      if (this.store.state.roomSettings.id == undefined) return;
+      if (this.store.state.tactonPlayback.currentTacton == undefined) return;
+
+      WebSocketAPI.redoAction(
+        this.store.state.roomSettings.id,
+        this.store.state.tactonPlayback.currentTacton.uuid,
+      );
+    }
 
     // detect shift
     if (event.key == "Shift" && !this.store.state.timeline.isPressingShift) {
