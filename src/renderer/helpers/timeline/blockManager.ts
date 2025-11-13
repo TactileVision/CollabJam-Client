@@ -261,7 +261,7 @@ export class BlockManager {
     let toHighlight: BlockDTO | null = null;
     // update selectionData
     for (const selection of this.store.state.timeline.selectedBlocks) {
-      const block: BlockDTO =
+      let block: BlockDTO =
         this.store.state.timeline.blocks[selection.trackId][selection.index];
       if (block == undefined || block.uuid != selection.uuid) {
         // mismatch
@@ -269,6 +269,12 @@ export class BlockManager {
         if (correctData != undefined) {
           selection.trackId = correctData.trackId;
           selection.index = correctData.index;
+          if (block == undefined) {
+            block =
+              this.store.state.timeline.blocks[selection.trackId][
+                selection.index
+              ];
+          }
         }
       }
       if (block.uuid === this.editedGroupMemberUuid) {
