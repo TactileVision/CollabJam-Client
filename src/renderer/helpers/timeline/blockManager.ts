@@ -3292,8 +3292,6 @@ export class BlockManager {
       );
     });
   }
-
-  // TODO bei multiSelection geht hier manchmal was schief
   private calculateStickyOffsets(startOfWholeSelection: number): void {
     const trackOffsets: number[] = this.getValidTrackOffsets();
     const possibleOffsetPerTrackOffset: number[][] = [];
