@@ -883,7 +883,10 @@ export class BlockManager {
             (user: User): boolean => user.id == editorId,
           );
         if (editorId != this.store.state.roomSettings.user.id) {
-          console.log("currently edited by ", editor);
+          this.store.dispatch(
+            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+            SnackbarTexts.BLOCKS_ARE_EDITED_BY_USER(editor?.name),
+          );
           canEdit = false;
           break;
         }
@@ -893,25 +896,6 @@ export class BlockManager {
     if (!canEdit) {
       return;
     }
-
-    /*    // TODO old logic for per tacton blocking
-    if (this.isInteractionBlocked) {
-      // notify user on click about edit-state
-      if (this.store.state.timeline.isEditable) {
-        if (!this.store.getters.canEditTacton) {
-          this.store.dispatch(
-            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-            SnackbarTexts.TACTON_IS_EDITABLE_BUT_EDITED(),
-          );
-        }
-      } else {
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-          SnackbarTexts.TACTON_IS_READONLY(),
-        );
-      }
-      return;
-    }*/
 
     this.updateSelection(toSelect);
     this.renderSelection();

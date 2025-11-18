@@ -1,7 +1,4 @@
 import { Container, FederatedPointerEvent, Graphics } from "pixi.js";
-import { User } from "@sharedTypes/roomTypes";
-import { Store, useStore } from "@/renderer/store/store";
-
 export class BlockChanges {
   x: number | null = null;
   width: number | null = null;
@@ -138,32 +135,15 @@ export enum TimelineEvents {
   TACTON_BLOCK_SELECTED = "tactonPartWasSelected",
   UPDATED_USER_LOCKS = "updatedUserLocks",
 }
-function getCurrentEditorName(): string | undefined {
-  const store: Store = useStore();
-  const editorId: string | null =
-    store.state.roomSettings.currentlyEditingUserId;
-  return store.state.roomSettings.participants.find((user: User): boolean => {
-    return user.id == editorId;
-  })?.name;
-}
 export const SnackbarTexts = {
   TACTON_IS_READONLY: (): string =>
     "This file is currently read-only. Enable edit-mode to make changes.",
-  TACTON_IS_EDITED_BY_USER: (): string => {
-    const editorName: string | undefined = getCurrentEditorName();
-    if (editorName) {
-      return `This file is currently edited by ${editorName}.`;
-    } else {
-      return `This file is currently edited.`;
-    }
-  },
   TACTON_CAN_BE_EDITED: (): string => "This file can now be edited.",
-  TACTON_IS_EDITABLE_BUT_EDITED: (): string => {
-    const editorName: string | undefined = getCurrentEditorName();
+  BLOCKS_ARE_EDITED_BY_USER: (editorName?: string): string => {
     if (editorName) {
-      return `This file is currently edited by ${editorName}.`;
+      return `The selected Blocks are currently edited by ${editorName}.`;
     } else {
-      return `This file is currently edited.`;
+      return `The selected Blocks are currently edited.`;
     }
   },
 };
