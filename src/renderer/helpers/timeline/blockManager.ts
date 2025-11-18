@@ -2924,6 +2924,7 @@ export class BlockManager {
   private createBorders(): void {
     this.selectedTracks = [];
     this.unselectedBorderList = [];
+    let startOfWholeSelection: number = Infinity;
     // calculate border to check
     Object.keys(this.store.state.timeline.blocks).forEach(
       (trackIdAsString: string, trackId: number): void => {
@@ -2951,6 +2952,13 @@ export class BlockManager {
                 block.rect.x + block.rect.width,
               );
 
+              if (startOfWholeSelection === undefined) {
+                startOfWholeSelection = block.rect.x;
+              }
+              if (block.rect.x < startOfWholeSelection) {
+                startOfWholeSelection = block.rect.x;
+              }
+
               const isAdded: boolean = this.selectedTracks.some(
                 (track: number): boolean => {
                   return track == block.trackId;
@@ -2964,10 +2972,11 @@ export class BlockManager {
       },
     );
 
-    this.calculateStickyOffsets();
+    this.calculateStickyOffsets(startOfWholeSelection);
   }
   private createBordersForCopies(): void {
     this.selectedTracks = [];
+    let startOfWholeSelection: number = Infinity;
     // calculate border to check
     Object.keys(this.store.state.timeline.blocks).forEach(
       (trackIdAsString: string, trackId: number): void => {
@@ -2990,6 +2999,13 @@ export class BlockManager {
       this.selectedBorders[block.trackId].push(block.rect.x);
       this.selectedBorders[block.trackId].push(block.rect.x + block.rect.width);
 
+      if (startOfWholeSelection === undefined) {
+        startOfWholeSelection = block.rect.x;
+      }
+      if (block.rect.x < startOfWholeSelection) {
+        startOfWholeSelection = block.rect.x;
+      }
+
       const isAdded: boolean = this.selectedTracks.some(
         (track: number): boolean => {
           return track == block.trackId;
@@ -2999,7 +3015,7 @@ export class BlockManager {
       if (!isAdded) this.selectedTracks.push(block.trackId);
     });
 
-    this.calculateStickyOffsets();
+    this.calculateStickyOffsets(startOfWholeSelection);
   }
   private adjustOffset(offset: number, trackOffset: number): number {
     const maxAttempts: number = 10;
@@ -3063,6 +3079,7 @@ export class BlockManager {
               horizontalOffsetDifference,
             );
             isSticking = true;
+            hasCollision = true;
             break;
           }
 
@@ -3233,7 +3250,6 @@ export class BlockManager {
           const selectedBorders: number[] = this.selectedBorders[trackId];
           const unselectedBorders: number[] =
             this.unselectedBorders[trackId + trackOffset];
-
           // skip empty tracks
           if (!selectedBorders || selectedBorders.length === 0) continue;
           if (!unselectedBorders) continue;
@@ -3270,16 +3286,26 @@ export class BlockManager {
           validOffsetsPerTrackOffset.push(possibleOffset);
         }
       }
-
       this.stickyOffsetsPerTrackOffset.set(
         trackOffset,
         validOffsetsPerTrackOffset,
       );
     });
   }
-  private calculateStickyOffsets(): void {
+
+  // TODO bei multiSelection geht hier manchmal was schief
+  private calculateStickyOffsets(startOfWholeSelection: number): void {
     const trackOffsets: number[] = this.getValidTrackOffsets();
     const possibleOffsetPerTrackOffset: number[][] = [];
+
+    // add start of timeline as border for all tracks
+    trackOffsets.forEach((trackOffset: number): void => {
+      possibleOffsetPerTrackOffset[trackOffset] = [];
+      possibleOffsetPerTrackOffset[trackOffset].push(
+        config.leftPadding - startOfWholeSelection,
+      );
+    });
+
     for (
       let trackId = 0;
       trackId <
@@ -3291,12 +3317,6 @@ export class BlockManager {
         // loop over unselected border tracks
         trackOffsets.forEach((trackOffset: number) => {
           const track = trackId + trackOffset;
-          if (possibleOffsetPerTrackOffset[trackOffset] == undefined) {
-            possibleOffsetPerTrackOffset[trackOffset] = [];
-            possibleOffsetPerTrackOffset[trackOffset].push(
-              config.leftPadding - this.selectedBorders[trackId][0],
-            );
-          }
           // loop over every unselected border block in this track
           if (this.unselectedBorders[track] != undefined) {
             if (this.unselectedBorders[track].length != 1) {
@@ -3333,7 +3353,7 @@ export class BlockManager {
       this.stickyOffsetsPerTrackOffset.get(trackOffset) || [];
     let bestOffset: number = offset;
     let minDistance: number = Infinity;
-
+    console.log(possibleOffsets);
     for (const fallbackOffset of possibleOffsets) {
       const adjustedFallbackOffset: number =
         fallbackOffset - horizontalOffsetDifference;
