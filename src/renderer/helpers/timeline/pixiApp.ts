@@ -67,8 +67,21 @@ export async function createPixiApp(): Promise<void> {
 
   // add elements to canvas
   staticContainer.addChild(line);
-  pixiApp.stage.addChild(staticContainer);
+
+  // setup backdrop
+  // TODO load trackCount dynamically
+  const backdrop: Graphics = new Graphics();
+  backdrop.rect(
+    0,
+    config.sliderHeight + config.componentPadding,
+    config.leftPadding,
+    config.trackHeight * 4,
+  );
+  backdrop.fill("#ffffff");
+
   pixiApp.stage.addChild(dynamicContainer);
+  pixiApp.stage.addChild(backdrop);
+  pixiApp.stage.addChild(staticContainer);
   pixiApp.stage.addChild(liveContainer);
   pixiApp.stage.addChild(lockContainer);
   pixiApp.stage.addChild(overlay);

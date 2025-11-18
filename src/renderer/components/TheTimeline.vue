@@ -10,10 +10,11 @@ import {
   createPixiApp,
   getDynamicContainer,
   getLiveContainer,
+  getStaticContainer,
   toggleOverlay,
 } from "@/renderer/helpers/timeline/pixiApp";
 import * as PIXI from "pixi.js";
-import {Container, Graphics, Text} from "pixi.js";
+import {Graphics} from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
@@ -52,7 +53,7 @@ export default defineComponent({
       mounted: false,
       tracks: [] as {
         line: Graphics,
-        container: Container
+        indicator: Graphics
       }[],
       playHead: null as PlayHead | null,
       ticker: null as PIXI.Ticker | null,
@@ -105,45 +106,23 @@ export default defineComponent({
       this.store.state.timeline.blockManager?.renderSelection();
     },
     renderTrackLines() {
-      // clear rendered tracks
-      for (const track of this.tracks) {
-        track.container.destroy({ children: true });
-      }      
       this.tracks = [];
       for (let i = 0; i <= this.trackCount; i++) {
-        const trackContainer: Container = new Container();
-        trackContainer.height = config.trackHeight;
-        trackContainer.width = this.store.state.timeline.canvasWidth;
-        trackContainer.y =
-          config.sliderHeight +
+        const y = config.sliderHeight +
           config.componentPadding +
-          i * config.trackHeight;
-        trackContainer.x = config.leftPadding;
-        trackContainer.zIndex = -1;
-
+          i * config.trackHeight + config.trackHeight / 2
         const trackLine = new Graphics();
-        trackLine.rect(0, config.trackHeight / 2, this.store.state.timeline.canvasWidth, 2);
+        trackLine.rect(0, y, this.store.state.timeline.canvasWidth, 2);
         trackLine.fill(config.colors.trackLineColor);
-        trackContainer.addChild(trackLine);
+        trackLine._zIndex = -1;
         
         const trackIndicator = new Graphics();
-        trackIndicator.circle(-(config.leftPadding / 2), config.trackHeight / 2, 12);
+        trackIndicator.circle((config.leftPadding / 2), y, 12);
         trackIndicator.fill(config.colors.trackLineColor);
-        trackIndicator.label = `trackIndicator${i}`;
-        trackContainer.addChild(trackIndicator);
-
-        const trackLabel = new Text();
-        trackLabel.text = i + 1;
-        trackLabel.style.fontSize = 18;
-        trackLabel.style.fontWeight = "bold"
-        trackLabel.style.fill = "#ffffff"
-        trackLabel.x = -(config.leftPadding / 2) - trackLabel.width/2;
-        trackLabel.y = config.trackHeight / 2 - trackLabel.height / 2;
-
-        getDynamicContainer().addChild(trackContainer);
+        
         this.tracks.push({
-          line: trackLine,
-          container: trackContainer
+          line: getDynamicContainer().addChild(trackLine),
+          indicator: getStaticContainer().addChild(trackIndicator)
         });
       }
     },
@@ -481,10 +460,8 @@ export default defineComponent({
     },
     channelStates() {
       this.channelStates.forEach((state) => {
-        const trackLabel: Graphics | null = this.tracks[state.channelId].container.getChildByLabel(`trackIndicator${state.channelId}`) as Graphics | null;
-        if (trackLabel) {
-          trackLabel.tint = state.intensity > 0 ? state.author?.color || config.colors.selectedBlockColor : "0xFFFFFF"
-        }
+        const color = state.intensity > 0 ? state.author?.color || config.colors.selectedBlockColor : "0xFFFFFF";
+        this.tracks[state.channelId].indicator.tint = color as unknown as number;
       });
     },
   },

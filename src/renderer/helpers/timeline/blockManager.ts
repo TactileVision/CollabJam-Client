@@ -3351,7 +3351,6 @@ export class BlockManager {
       this.stickyOffsetsPerTrackOffset.get(trackOffset) || [];
     let bestOffset: number = offset;
     let minDistance: number = Infinity;
-    console.log(possibleOffsets);
     for (const fallbackOffset of possibleOffsets) {
       const adjustedFallbackOffset: number =
         fallbackOffset - horizontalOffsetDifference;
