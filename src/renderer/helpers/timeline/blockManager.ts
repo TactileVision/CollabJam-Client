@@ -1303,9 +1303,6 @@ export class BlockManager {
     this.lastTrackOffset = 0;
 
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
-    if (this.editedGroupMemberUuid == null) {
-      this.handleSelection(block);
-    }
 
     this.pointerMoveHandler = (event: PointerEvent) =>
       this.onAbsoluteResize(event, block);
@@ -1496,7 +1493,7 @@ export class BlockManager {
   private onProportionalResizeStart(
     event: FederatedPointerEvent,
     direction: Direction,
-    groupId?: string,
+    groupId?: string | null,
   ): void {
     let borderData: Border | undefined = this.selectionBorder;
     if (borderData == undefined && groupId != null) {
@@ -1514,21 +1511,13 @@ export class BlockManager {
     this.initialX = event.globalX;
 
     this.pointerMoveHandler = (event: PointerEvent) =>
-      this.onProportionalResize(event, groupId);
+      this.onProportionalResize(event, borderData);
     this.pointerUpHandler = () => this.onResizeEnd();
     window.addEventListener("pointermove", this.pointerMoveHandler);
     window.addEventListener("pointerup", this.pointerUpHandler);
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
   }
-  private onProportionalResize(event: PointerEvent, groupId?: string): void {
-    let borderData: Border | undefined = this.selectionBorder;
-    if (borderData == undefined && groupId != null) {
-      borderData = this.renderedGroupBorders.get(groupId);
-    }
-    if (borderData == undefined) {
-      return;
-    }
-
+  private onProportionalResize(event: PointerEvent, borderData: Border): void {
     const deltaX: number =
       event.clientX - this.initialX - this.store.state.timeline.wrapperXOffset;
     const initWidth: number = borderData.initWidth;
@@ -1803,9 +1792,6 @@ export class BlockManager {
     this.currentTacton = block;
     this.lastTrackOffset = 0;
 
-    if (this.editedGroupMemberUuid == null) {
-      this.handleSelection(block);
-    }
     this.pointerMoveHandler = (event: PointerEvent) =>
       this.changeAmplitude(event, block, direction);
     this.pointerUpHandler = () => this.onChangeAmplitudeEnd();
@@ -1860,6 +1846,7 @@ export class BlockManager {
       this.updateBlockInitData(block);
     });
     this.currentTacton = null;
+    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private groupSelectedBlocks(): void {
@@ -2248,8 +2235,25 @@ export class BlockManager {
     direction: Direction,
     block: BlockDTO,
   ): void {
-    if (this.editedGroupMemberUuid == null && block.groupUuid != null) {
-      this.onHorizontalGroupResize(event, direction, block.groupUuid);
+    const isSelected: boolean = this.isBlockSelected(block);
+    if (!isSelected) {
+      if (block.groupUuid) {
+        const members: BlockSelection[] | undefined =
+          this.store.state.timeline.groups.get(block.groupUuid);
+        if (members == undefined) return;
+        this.handleSelection(members);
+      } else {
+        this.handleSelection(block);
+      }
+    }
+
+    const isMultiSelection: boolean =
+      this.store.state.timeline.selectedBlocks.length > 1;
+    if (
+      (this.editedGroupMemberUuid == null && block.groupUuid != null) ||
+      isMultiSelection
+    ) {
+      this.onProportionalResizeStart(event, direction, block.groupUuid);
     } else {
       this.onAbsoluteResizeStart(event, block, direction);
     }
@@ -2262,29 +2266,33 @@ export class BlockManager {
     direction: Direction,
     block: BlockDTO,
   ): void {
-    if (this.editedGroupMemberUuid == null && block.groupUuid != null) {
+    const isSelected: boolean = this.isBlockSelected(block);
+    if (!isSelected) {
+      if (block.groupUuid) {
+        const members: BlockSelection[] | undefined =
+          this.store.state.timeline.groups.get(block.groupUuid);
+        if (members == undefined) return;
+        this.handleSelection(members);
+      } else {
+        this.handleSelection(block);
+      }
+    }
+
+    const isMultiSelection: boolean =
+      this.store.state.timeline.selectedBlocks.length > 1;
+    if (
+      (this.editedGroupMemberUuid == null && block.groupUuid != null) ||
+      isMultiSelection
+    ) {
       this.onVerticalGroupResize(event, direction, block.groupUuid);
     } else {
       this.onChangeAmplitude(event, block, direction);
     }
   }
-  private onHorizontalGroupResize(
-    event: FederatedPointerEvent,
-    direction: Direction,
-    groupUuid?: string,
-  ): void {
-    if (this.editedGroupMemberUuid == null && groupUuid) {
-      const members: BlockSelection[] | undefined =
-        this.store.state.timeline.groups.get(groupUuid);
-      if (members == undefined) return;
-      this.handleSelection(members);
-    }
-    this.onProportionalResizeStart(event, direction, groupUuid);
-  }
   private onVerticalGroupResize(
     event: FederatedPointerEvent,
     direction: Direction,
-    groupUuid?: string,
+    groupUuid?: string | null,
   ): void {
     let border: Border | undefined;
     let members: BlockSelection[] | undefined;
@@ -2293,19 +2301,16 @@ export class BlockManager {
       border = this.renderedGroupBorders.get(groupUuid);
       members = this.store.state.timeline.groups.get(groupUuid);
     }
+    const selectionIsOnlyGroup: boolean =
+      this.store.state.timeline.selectedBlocks.length === members?.length;
     // get multiselection
-    if (border == undefined) {
+    if (border == undefined || !selectionIsOnlyGroup) {
       border = this.selectionBorder;
       members = this.store.state.timeline.selectedBlocks;
     }
     // exit
     if (border == undefined || members == undefined) {
       return;
-    }
-
-    // select first -> user clicked on handle, without selecting first
-    if (this.editedGroupMemberUuid == null && groupUuid) {
-      this.handleSelection(members);
     }
     this.onChangeGroupAmplitude(event, direction, members, border);
   }
@@ -2475,7 +2480,7 @@ export class BlockManager {
     newBorderData.groupUuid = groupId;
 
     newBorderData.addListeners({
-      onHorizontalResize: this.onHorizontalGroupResize.bind(this),
+      onHorizontalResize: this.onProportionalResizeStart.bind(this),
       onVerticalResize: this.onVerticalGroupResize.bind(this),
     });
 
