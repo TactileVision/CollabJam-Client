@@ -93,13 +93,11 @@ export const handleMessage = (store: Store) => {
 
   socket.on(WS_MSG_TYPE.SEND_INSTRUCTION_CLI, (res: InstructionToClient[]) => {
     const instructions = res as InstructionToClient[];
+    store.dispatch(
+      TactonSettingsActionTypes.modifySpecificChannel,
+      instructions,
+    );
 
-    if (store.state.roomSettings.mode != InteractionMode.Playback) {
-      store.dispatch(
-        TactonSettingsActionTypes.modifySpecificChannel,
-        instructions,
-      );
-    }
     const mutedParticipants = store.state.roomSettings.mutedParticipants;
     // For playback we want to play all instructions because the "author" is always the user that started the playback
     // which makes muting pretty unintuitive
