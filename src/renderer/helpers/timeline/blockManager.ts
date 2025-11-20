@@ -3482,6 +3482,8 @@ export class BlockManager {
         if (members) {
           if (!this.renderedGroupBorders.has(uuid)) {
             this.createGroupBorder(uuid, members);
+          } else {
+            this.updateBorder(uuid, true);
           }
         }
       });
