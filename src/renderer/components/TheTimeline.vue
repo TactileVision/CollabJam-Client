@@ -11,7 +11,6 @@ import {
   getDynamicContainer,
   getLiveContainer,
   getStaticContainer,
-  toggleOverlay,
 } from "@/renderer/helpers/timeline/pixiApp";
 import * as PIXI from "pixi.js";
 import {Graphics} from "pixi.js";
@@ -80,9 +79,6 @@ export default defineComponent({
     },
     isEditable(): boolean {
       return this.store.state.timeline.isEditable;
-    },
-    canEdit(): boolean {
-      return this.store.getters.canEditTacton;
     },
     channelStates(): OutputChannelState[] {
       return [...this.store.state.tactonSettings.outputChannelState];
@@ -417,39 +413,13 @@ export default defineComponent({
         this.editingEnabled = true;
       } */
     },
-    canEdit() {
-      if (!this.store.getters.canEditTacton) {
-        // another user is currently editing
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-          SnackbarTexts.TACTON_IS_EDITED_BY_USER()
-        );
-        toggleOverlay(true);
-        this.store.state.timeline.blockManager?.blockInteraction(true);
-      } else {
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-          SnackbarTexts.TACTON_CAN_BE_EDITED()
-        );
-        toggleOverlay(false);
-        this.store.state.timeline.blockManager?.blockInteraction(false);
-      }
-    },
     isEditable() {
       if (this.store.state.timeline.isEditable) {
-        if (this.store.getters.canEditTacton) {
-          this.store.dispatch(
+        this.store.dispatch(
             TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
             SnackbarTexts.TACTON_CAN_BE_EDITED()
-          );
-          toggleOverlay(false);
-          this.store.state.timeline.blockManager?.blockInteraction(false);
-        } else {
-          this.store.dispatch(
-            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-            SnackbarTexts.TACTON_IS_EDITABLE_BUT_EDITED()
-          );
-        }
+        );
+        this.store.state.timeline.blockManager?.blockInteraction(false);
       } else {
         this.store.dispatch(
           TimelineActionTypes.UPDATE_SNACKBAR_TEXT,

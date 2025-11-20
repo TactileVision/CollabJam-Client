@@ -118,18 +118,6 @@ export const WebSocketAPI = {
       newRoomId: newRoomId,
     });
   },
-  requestEditingPrivilege: (roomId: string, userId: string) => {
-    socket?.emit(WS_MSG_TYPE.UPDATE_EDITING_USER_SERV, {
-      roomId: roomId,
-      userId: userId,
-    });
-  },
-  giveUpEditingPrivilege: (roomId: string) => {
-    socket?.emit(WS_MSG_TYPE.UPDATE_EDITING_USER_SERV, {
-      roomId: roomId,
-      userId: null,
-    });
-  },
   requestEditingForUuids: (
     roomId: string,
     userId: string,

@@ -35,7 +35,6 @@ export type State = {
   availableCustomTags: string[];
   availableBodyTags: string[];
   availablePromptTags: string[];
-  currentlyEditingUserId: string | null;
 };
 
 export const state: State = {
@@ -53,7 +52,6 @@ export const state: State = {
   availableCustomTags: [],
   availableBodyTags: [],
   availablePromptTags: [],
-  currentlyEditingUserId: null,
 };
 /**
  * mutations
@@ -74,7 +72,6 @@ export enum RoomMutations {
   SET_AVAILABLE_CUSTOM_TAGS = "SET_AVAILABLE_CUSTOM_TAGS",
   SET_AVAILABLE_BODY_TAGS = "SET_AVAILABLE_BODY_TAGS",
   SET_AVAILABLE_PROMPT_TAGS = "SET_AVAILABLE_PROMPT_TAGS",
-  UPDATE_EDITING_USER = "UPDATE_EDITING_USER",
   CLEAR_ROOM_DATA = "CLEAR_ROOM_DATA",
 }
 
@@ -99,7 +96,6 @@ export type Mutations<S = State> = {
   [RoomMutations.SET_AVAILABLE_CUSTOM_TAGS](state: S, tags: string[]): void;
   [RoomMutations.SET_AVAILABLE_BODY_TAGS](state: S, tags: string[]): void;
   [RoomMutations.SET_AVAILABLE_PROMPT_TAGS](state: S, tags: string[]): void;
-  [RoomMutations.UPDATE_EDITING_USER](state: S, userId: string | null): void;
   [RoomMutations.CLEAR_ROOM_DATA](state: S): void;
 };
 
@@ -167,9 +163,6 @@ export const mutations: MutationTree<State> & Mutations = {
   [RoomMutations.SET_AVAILABLE_PROMPT_TAGS](state, tags) {
     state.availablePromptTags = tags;
   },
-  [RoomMutations.UPDATE_EDITING_USER](state, userId) {
-    state.currentlyEditingUserId = userId;
-  },
   [RoomMutations.CLEAR_ROOM_DATA](state) {
     state.id = undefined;
     state.recordingNamePrefix = "";
@@ -188,7 +181,6 @@ export enum RoomSettingsActionTypes {
   muteParticipant = "muteParticipant",
   unmuteParticipant = "unmuteParticipant",
   updateParticipantList = "updateParticipantList",
-  updateEditingUserId = "updateEditingUserId",
   clearRoomData = "clearRoomData",
 }
 
@@ -224,10 +216,6 @@ export interface Actions {
     { commit }: AugmentedActionContext,
     payload: { participants: User[] },
   ): void;
-  [RoomSettingsActionTypes.updateEditingUserId](
-    { commit }: AugmentedActionContext,
-    payload: { userId: string | null },
-  ): void;
   [RoomSettingsActionTypes.clearRoomData]({
     commit,
   }: AugmentedActionContext): void;
@@ -255,7 +243,6 @@ export const actions: ActionTree<State, RootState> & Actions = {
         recordingNamePrefix: props.room.recordingNamePrefix,
         mode: props.room.mode,
         currentRecordingTime: 0,
-        currentlyEditingUser: null,
       },
     });
 
@@ -278,7 +265,6 @@ export const actions: ActionTree<State, RootState> & Actions = {
         recordingNamePrefix: props.room.recordingNamePrefix,
         mode: props.room.mode,
         currentRecordingTime: 0,
-        currentlyEditingUser: null,
       },
     });
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
@@ -331,12 +317,6 @@ export const actions: ActionTree<State, RootState> & Actions = {
   ) {
     commit(RoomMutations.UPDATE_PARTICIPANTS, props.participants);
   },
-  [RoomSettingsActionTypes.updateEditingUserId](
-    { commit },
-    props: { userId: string | null },
-  ) {
-    commit(RoomMutations.UPDATE_EDITING_USER, props.userId);
-  },
   [RoomSettingsActionTypes.clearRoomData]({ commit }: AugmentedActionContext) {
     commit(RoomMutations.CLEAR_ROOM_DATA, undefined);
   },
@@ -349,7 +329,6 @@ export type Getters = {
   roomTitle(state: State): string;
   userNameUpdated(state: State): boolean;
   userNameFromServer(state: State): User;
-  canEditTacton(state: State): boolean;
 };
 
 export const getters: GetterTree<State, RootState> & Getters = {
@@ -369,11 +348,5 @@ export const getters: GetterTree<State, RootState> & Getters = {
     if (serverItem == undefined) return state.user;
 
     return serverItem;
-  },
-  canEditTacton: (state) => {
-    return (
-      state.currentlyEditingUserId == null ||
-      state.currentlyEditingUserId == state.user.id
-    );
   },
 };

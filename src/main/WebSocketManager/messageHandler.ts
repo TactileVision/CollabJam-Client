@@ -10,7 +10,6 @@ import {
   ResponseEnteredRoom,
   TactonDeletion,
   UpdateAvailableTags,
-  UpdateEditingUser,
   UpdateEditingUserUUIDS,
   UpdateRoomMode,
   UpdateTacton,
@@ -164,7 +163,6 @@ export const handleMessage = (store: Store) => {
         recordingNamePrefix: room.recordingNamePrefix,
         mode: room.mode,
         currentRecordingTime: 0,
-        currentlyEditingUser: null,
       },
     });
   });
@@ -199,12 +197,6 @@ export const handleMessage = (store: Store) => {
       }
     },
   );
-
-  socket.on(WS_MSG_TYPE.UPDATE_EDITING_USER_CLI, (res: UpdateEditingUser) => {
-    store.dispatch(RoomSettingsActionTypes.updateEditingUserId, {
-      userId: res.userId,
-    });
-  });
 
   socket.on(
     WS_MSG_TYPE.UPDATE_EDITING_USER_UUIDS_CLI,
