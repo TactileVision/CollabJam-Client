@@ -853,15 +853,6 @@ export class BlockManager {
 
   //*************** Interactions ***************
   private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
-    // notify user on click about edit-state
-    if (this.isInteractionBlocked) {
-      this.store.dispatch(
-        TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-        SnackbarTexts.TACTON_IS_READONLY(),
-      );
-      return;
-    }
-
     // get uuids
     const uuids = Array.isArray(toSelect)
       ? toSelect.map((s: BlockSelection) => s.uuid) // array (multi-selection)
@@ -1129,6 +1120,7 @@ export class BlockManager {
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private onMoveBlock(event: FederatedPointerEvent, block: BlockDTO): void {
+    if (!this.canSelect()) return;
     const isSelected = this.isBlockSelected(block);
 
     if (block.groupUuid && isSelected && this.isDoubleClick) {
@@ -1928,6 +1920,20 @@ export class BlockManager {
   }
 
   //*************** Helper ***************
+
+  private canSelect(displaySnackbar: boolean = true): boolean {
+    // notify user on click about edit-state
+    if (this.isInteractionBlocked) {
+      if (displaySnackbar) {
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+          SnackbarTexts.TACTON_IS_READONLY(),
+        );
+      }
+      return false;
+    }
+    return true;
+  }
   private toggleMemberEdit(block: BlockDTO) {
     if (!(this.editedGroupMemberUuid === block.uuid)) {
       this.enterMemberEdit(block);
@@ -2229,6 +2235,7 @@ export class BlockManager {
     direction: Direction,
     block: BlockDTO,
   ): void {
+    if (!this.canSelect()) return;
     const isSelected: boolean = this.isBlockSelected(block);
     if (!isSelected) {
       if (block.groupUuid) {
@@ -2260,6 +2267,7 @@ export class BlockManager {
     direction: Direction,
     block: BlockDTO,
   ): void {
+    if (!this.canSelect()) return;
     const isSelected: boolean = this.isBlockSelected(block);
     if (!isSelected) {
       if (block.groupUuid) {
@@ -3423,6 +3431,7 @@ export class BlockManager {
       this.pasteSelection();
     }
     if (this.isSelecting) return;
+    if (!this.canSelect(false)) return;
     if (event.button === 0 && !this.store.state.timeline.isInteracting) {
       this.isMouseDragging = true;
       this.selectionStart = { x: event.clientX, y: event.clientY };
