@@ -350,7 +350,10 @@ export default defineComponent({
         this.ticker?.remove(this.playback);
         this.ticker?.remove(this.overdubbing);
       }
-
+      
+      // clear channel state
+      this.store.dispatch(TactonSettingsActionTypes.clearChannelState,);
+    
       if (mode == InteractionMode.Recording) {
         // TODO show all possible trackLInes when recording
         // store values
