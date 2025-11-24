@@ -207,6 +207,8 @@ export default defineComponent({
         tactonId: tacton.uuid,
         tacton: { ...tacton, instructions },
       });
+      
+      this.resetTimer();     
     },
     handleSelection() {
       // add BlockUuids
