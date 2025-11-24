@@ -1,9 +1,4 @@
-import {
-  Application,
-  Container,
-  FederatedPointerEvent,
-  Graphics,
-} from "pixi.js";
+import { Container, FederatedPointerEvent, Graphics } from "pixi.js";
 import { watch } from "vue";
 import { Store, useStore } from "@/renderer/store/store";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
@@ -11,7 +6,6 @@ import {
   getDynamicContainer,
   getLine,
   getLockContainer,
-  getPixiApp,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import {
@@ -3576,11 +3570,9 @@ export class BlockManager {
     }
   };
   private installEventListeners(): void {
-    const pixiApp: Application = getPixiApp();
-    pixiApp.canvas.addEventListener("mousedown", this.onCanvasMouseDown);
-    pixiApp.canvas.addEventListener("mousemove", this.onCanvasMouseMove);
-    pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp);
-
+    document.addEventListener("mousedown", this.onCanvasMouseDown);
+    document.addEventListener("mousemove", this.onCanvasMouseMove);
+    document.addEventListener("mouseup", this.onCanvasMouseUp);
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
 
@@ -3642,18 +3634,16 @@ export class BlockManager {
     this.store.state.timeline.userLocks = {};
     this.store.state.timeline.lockedBlocks.clear();
 
-    const pixiApp: Application = getPixiApp();
     // remove existing Event-Listeners
-    pixiApp.canvas.removeEventListener("mousedown", this.onCanvasMouseDown);
-    pixiApp.canvas.removeEventListener("mousemove", this.onCanvasMouseMove);
-    pixiApp.canvas.removeEventListener("mouseup", this.onCanvasMouseUp);
+    document.removeEventListener("mousedown", this.onCanvasMouseDown);
+    document.removeEventListener("mousemove", this.onCanvasMouseMove);
+    document.removeEventListener("mouseup", this.onCanvasMouseUp);
+    document.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("keyup", this.handleKeyUp);
 
     this.eventBus.removeEventListener(
       TimelineEvents.UPDATED_USER_LOCKS,
       this.handleUpdatedUserLocks,
     );
-
-    document.removeEventListener("keydown", this.handleKeyDown);
-    document.removeEventListener("keyup", this.handleKeyUp);
   }
 }
