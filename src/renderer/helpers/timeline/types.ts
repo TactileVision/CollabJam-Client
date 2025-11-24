@@ -146,4 +146,6 @@ export const SnackbarTexts = {
       return `The selected Blocks are currently edited.`;
     }
   },
+  SELECTION_EXPIRED: (): string =>
+    "Your block selection expired due to inactivity and is now available for others to edit.",
 };

@@ -89,9 +89,9 @@ export default defineComponent({
       if (this.lockUpdateTimer !== null) {
         clearTimeout(this.lockUpdateTimer);
       }
-      this.lockUpdateTimer = window.setTimeout(this.onLocksExpired, config.maxLockTimeMs);
+      this.lockUpdateTimer = window.setTimeout(() => this.onLocksExpired(true), config.maxLockTimeMs);
     },
-    onLocksExpired(): void {
+    onLocksExpired(displaySnackbar: boolean = false): void {
       WebSocketAPI.requestEditingForUuids(
         this.store.state.roomSettings.id || "",
         this.store.state.roomSettings.user.id,
@@ -100,6 +100,12 @@ export default defineComponent({
       this.lockUpdateTimer = null;
       this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
       this.store.state.timeline.blockManager?.renderSelection();
+      if (displaySnackbar) {
+        this.store.dispatch(
+            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+            SnackbarTexts.SELECTION_EXPIRED(),
+        );
+      }
     },
     renderTrackLines() {
       this.tracks = [];
