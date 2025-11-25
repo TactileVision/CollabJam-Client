@@ -124,8 +124,6 @@ export class BlockManager {
   private lastVerticalOffset: number = 0;
 
   // copy & paste
-  private isMacOS: boolean = false;
-  private strgDown: boolean = false;
   private selectedBlockUuids: string[] = [];
   private copiedBlocks: CopiedBlockDTO[] = [];
   private lastCursorX: number = 0;
@@ -3506,40 +3504,29 @@ export class BlockManager {
     this.clearSelectionBorder();
     getLockContainer().removeChildren();
   }
-  private handleKeyDown = (event: KeyboardEvent) => {
+  private handleKeyDown = (event: KeyboardEvent): void => {
     if (!this.store.state.timeline.isEditable) return;
-    // detect STRG or Meta
-    if (event.code == "ControlLeft" && !this.isMacOS) {
-      if (!this.strgDown) {
-        this.strgDown = true;
-      }
-    } else if (event.code == "MetaLeft") {
-      if (!this.strgDown) {
-        this.strgDown = true;
-        if (!this.isMacOS) {
-          this.isMacOS = true;
-        }
-      }
-    }
+    const isCtrlLike: boolean =
+      event.getModifierState("Control") || event.getModifierState("Meta");
 
-    if (this.strgDown && event.code == "KeyC") this.copySelection();
-    if (this.strgDown && event.code == "KeyV") this.pasteSelection();
-    if (this.strgDown && event.code == "KeyG") {
+    if (isCtrlLike && event.code == "KeyC") this.copySelection();
+    if (isCtrlLike && event.code == "KeyV") this.pasteSelection();
+    if (isCtrlLike && event.code == "KeyG") {
       event.preventDefault();
       this.groupSelectedBlocks();
       this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
     }
-    if (this.strgDown && event.code == "KeyS" && !event.shiftKey) {
+    if (isCtrlLike && event.code == "KeyS" && !event.shiftKey) {
       event.preventDefault();
       this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
     }
-    if (this.strgDown && event.code === "KeyS" && event.shiftKey) {
+    if (isCtrlLike && event.code === "KeyS" && event.shiftKey) {
       event.preventDefault();
       this.store.dispatch(TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING);
     }
     if (event.code == "Escape") this.clearCopiedBlocks();
     if (event.code == "Delete") this.deleteBlock();
-    if (this.strgDown && event.key.toLowerCase() == "z") {
+    if (isCtrlLike && event.key.toLowerCase() == "z") {
       if (this.store.state.roomSettings.id == undefined) return;
       if (this.store.state.tactonPlayback.currentTacton == undefined) return;
 
@@ -3548,7 +3535,7 @@ export class BlockManager {
         this.store.state.tactonPlayback.currentTacton.uuid,
       );
     }
-    if (this.strgDown && event.key.toLowerCase() == "y") {
+    if (isCtrlLike && event.key.toLowerCase() == "y") {
       if (this.store.state.roomSettings.id == undefined) return;
       if (this.store.state.tactonPlayback.currentTacton == undefined) return;
 
@@ -3563,15 +3550,8 @@ export class BlockManager {
       this.isPressingShift = !this.isPressingShift;
     }
   };
-  private handleKeyUp = (event: KeyboardEvent) => {
+  private handleKeyUp = (event: KeyboardEvent): void => {
     if (!this.store.state.timeline.isEditable) return;
-    if (
-      (event.code == "ControlLeft" && !this.isMacOS) ||
-      event.code == "MetaLeft"
-    ) {
-      this.strgDown = false;
-    }
-
     if (event.key == "Shift" && this.isPressingShift) {
       this.isPressingShift = !this.isPressingShift;
     }
@@ -3624,7 +3604,6 @@ export class BlockManager {
       );
       this.clearSelectionBorder();
       this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-      this.strgDown = false;
     } else {
       // enable handles
       this.forEachBlock((block: BlockDTO): void => {
