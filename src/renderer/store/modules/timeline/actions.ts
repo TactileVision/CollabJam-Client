@@ -25,13 +25,13 @@ export enum TimelineActionTypes {
   DELETE_SELECTED_BLOCKS = "deleteSelectedBlocks",
   UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH = "setInitialVirtualViewportWidth",
   UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH = "setCurrentVirtualViewportWidth",
+  // TODO rename to BlockMultiSelection -> thats what it does
   SET_INTERACTION_STATE = "setInteractionState",
   SELECT_BLOCK = "selectBlock",
   UNSELECT_BLOCK = "unselectBlock",
   CLEAR_SELECTION = "clearSelection",
   CHANGE_BLOCK_TRACK = "changeBlockTrack",
   GET_LAST_BLOCK_POSITION = "calculateLastBlockPosition",
-  TOGGLE_SHIFT_VALUE = "toggleShiftValue",
   UPDATE_CURRENT_CURSOR_POSITION = "setCurrentCursorPosition",
   ADD_GROUP = "addGroup",
   TOGGLE_SNAPPING_STATE = "toggleSnappingState",
@@ -137,9 +137,6 @@ export interface Actions {
     state,
     commit,
   }: AugmentedActionContext): number;
-  [TimelineActionTypes.TOGGLE_SHIFT_VALUE]({
-    commit,
-  }: AugmentedActionContext): void;
   [TimelineActionTypes.UPDATE_CURRENT_CURSOR_POSITION](
     { commit }: AugmentedActionContext,
     payload: { x: number; y: number },
@@ -335,13 +332,6 @@ export const actions: ActionTree<State, RootState> & Actions = {
   }) {
     commit(TimelineMutations.CALCULATE_LAST_BLOCK_POSITION);
     return state.lastBlockPositionX;
-  },
-  [TimelineActionTypes.TOGGLE_SHIFT_VALUE]({
-    commit,
-  }: {
-    commit: Commit;
-  }): void {
-    commit(TimelineMutations.TOGGLE_SHIFT_VALUE);
   },
   [TimelineActionTypes.UPDATE_CURRENT_CURSOR_POSITION](
     { commit }: { commit: Commit },

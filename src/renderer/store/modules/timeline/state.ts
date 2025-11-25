@@ -19,7 +19,6 @@ export type State = {
   initialVirtualViewportWidth: number;
   currentVirtualViewportWidth: number;
   isInteracting: boolean;
-  isPressingShift: boolean;
   currentCursorPosition: { x: number; y: number };
   isSnappingActive: boolean;
   isSnappingRelativeActive: boolean;
@@ -50,7 +49,6 @@ export const state: State = {
   initialVirtualViewportWidth: 0,
   currentVirtualViewportWidth: 0,
   isInteracting: false,
-  isPressingShift: false,
   currentCursorPosition: { x: 0, y: 0 },
   isSnappingActive: false,
   isSnappingRelativeActive: false,

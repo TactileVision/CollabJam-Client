@@ -136,6 +136,7 @@ export class BlockManager {
   private isMouseDragging: boolean = false;
   private selectionStart = { x: 0, y: 0 };
   private selectionEnd = { x: 0, y: 0 };
+  private isPressingShift: boolean = false;
 
   // groups
   private renderedGroupBorders: Map<string, Border> = new Map<string, Border>();
@@ -1146,7 +1147,7 @@ export class BlockManager {
     clearTimeout(this.doubleTimeout);
 
     // early exit if user is pressing shift --> multi-selection
-    if (this.store.state.timeline.isPressingShift) {
+    if (this.isPressingShift) {
       this.isSelecting = true;
       this.pointerUpHandler = () => this.onSelectingEnd();
       window.addEventListener("pointerup", this.pointerUpHandler);
@@ -2038,10 +2039,7 @@ export class BlockManager {
   }
   private updateSelection(toSelect: BlockSelection[] | BlockDTO): void {
     if (Array.isArray(toSelect)) {
-      if (
-        !this.store.state.timeline.isPressingShift ||
-        this.editedGroupMemberUuid != null
-      ) {
+      if (!this.isPressingShift || this.editedGroupMemberUuid != null) {
         this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
       }
 
@@ -2090,7 +2088,7 @@ export class BlockManager {
         };
         if (selectionIndex == -1) {
           // block is not selected
-          if (!this.store.state.timeline.isPressingShift) {
+          if (!this.isPressingShift) {
             // clear selection
             this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
           }
@@ -2115,7 +2113,7 @@ export class BlockManager {
           }
         } else {
           // block already selected
-          if (this.store.state.timeline.isPressingShift) {
+          if (this.isPressingShift) {
             if (toSelect.groupUuid != null) {
               // remove from store
               this.store.state.timeline.groups
@@ -3561,8 +3559,8 @@ export class BlockManager {
     }
 
     // detect shift
-    if (event.key == "Shift" && !this.store.state.timeline.isPressingShift) {
-      this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
+    if (event.key == "Shift" && !this.isPressingShift) {
+      this.isPressingShift = !this.isPressingShift;
     }
   };
   private handleKeyUp = (event: KeyboardEvent) => {
@@ -3574,8 +3572,8 @@ export class BlockManager {
       this.strgDown = false;
     }
 
-    if (event.key == "Shift" && this.store.state.timeline.isPressingShift) {
-      this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
+    if (event.key == "Shift" && this.isPressingShift) {
+      this.isPressingShift = !this.isPressingShift;
     }
   };
   private installEventListeners(): void {

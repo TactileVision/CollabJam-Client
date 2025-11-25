@@ -28,7 +28,6 @@ export enum TimelineMutations {
   SET_INTERACTION_STATE = "setInteractionState",
   CHANGE_BLOCK_TRACK = "changeBlockTrack",
   CALCULATE_LAST_BLOCK_POSITION = "calculateLastBlockPosition",
-  TOGGLE_SHIFT_VALUE = "toggleShiftValue",
   UPDATE_CURRENT_CURSOR_POSITION = "updateCurrentCursorPosition",
   UNGROUP_SELECTED_BLOCKS = "ungroupSelectedBlocks",
   ADD_GROUP = "addGroup",
@@ -91,7 +90,6 @@ export type Mutations<S = State> = {
     payload: { sourceTrack: number; targetTrack: number; blockIndex: number },
   ): void;
   [TimelineMutations.CALCULATE_LAST_BLOCK_POSITION](state: S): void;
-  [TimelineMutations.TOGGLE_SHIFT_VALUE](state: S): void;
   [TimelineMutations.UPDATE_CURRENT_CURSOR_POSITION](
     state: S,
     newPosition: { x: number; y: number },
@@ -397,9 +395,6 @@ export const mutations: MutationTree<State> & Mutations = {
     });
 
     state.lastBlockPositionX = maxPosition;
-  },
-  [TimelineMutations.TOGGLE_SHIFT_VALUE](state: State): void {
-    state.isPressingShift = !state.isPressingShift;
   },
   [TimelineMutations.UPDATE_CURRENT_CURSOR_POSITION](
     state: State,
