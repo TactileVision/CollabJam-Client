@@ -6,6 +6,7 @@ import {
   getDynamicContainer,
   getLine,
   getLockContainer,
+  getPixiApp,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import {
@@ -3557,7 +3558,7 @@ export class BlockManager {
     }
   };
   private installEventListeners(): void {
-    document.addEventListener("mousedown", this.onCanvasMouseDown);
+    getPixiApp().canvas.addEventListener("mousedown", this.onCanvasMouseDown);
     document.addEventListener("mousemove", this.onCanvasMouseMove);
     document.addEventListener("mouseup", this.onCanvasMouseUp);
     document.addEventListener("keydown", this.handleKeyDown);
@@ -3621,7 +3622,10 @@ export class BlockManager {
     this.store.state.timeline.lockedBlocks.clear();
 
     // remove existing Event-Listeners
-    document.removeEventListener("mousedown", this.onCanvasMouseDown);
+    getPixiApp().canvas.removeEventListener(
+      "mousedown",
+      this.onCanvasMouseDown,
+    );
     document.removeEventListener("mousemove", this.onCanvasMouseMove);
     document.removeEventListener("mouseup", this.onCanvasMouseUp);
     document.removeEventListener("keydown", this.handleKeyDown);
