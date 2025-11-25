@@ -15,6 +15,7 @@ const createDetection = (
   const keyDownHandler = (e: KeyboardEvent) => {
     if (e.repeat) return;
     if (e.getModifierState("Meta")) return;
+    if (e.ctrlKey) return;
     if (document.activeElement?.tagName === "INPUT") return;
 
     const input: KeyInput = {
