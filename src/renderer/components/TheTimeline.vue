@@ -345,14 +345,21 @@ export default defineComponent({
       this.liveBlockBuilder.reset();
       this.store.state.timeline.blockManager?.clearData();
       this.currentTime = 0;
+      
+      // clear timeout of changing mode -> selection is cleared anyways
+      if (this.lockUpdateTimer !== null) {
+        clearTimeout(this.lockUpdateTimer);
+      }
+      
       if (this.ticker !== null && this.ticker.count > 0) {
         this.ticker?.remove(this.recording);
         this.ticker?.remove(this.playback);
         this.ticker?.remove(this.overdubbing);
       }
       
-      // clear channel state
-      this.store.dispatch(TactonSettingsActionTypes.clearChannelState,);
+      // clear channel state and locks
+      this.store.dispatch(TactonSettingsActionTypes.clearChannelState);
+      this.store.dispatch(TimelineActionTypes.CLEAR_LOCKS);
     
       if (mode == InteractionMode.Recording) {
         // TODO show all possible trackLInes when recording
@@ -482,7 +489,6 @@ export default defineComponent({
     this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
   },
   beforeUnmount() {
-    console.log(this.store.state.roomSettings.id ,  this.store.state.roomSettings.user.id);
     WebSocketAPI.requestEditingForUuids(
         this.store.state.roomSettings.id || "",
         this.store.state.roomSettings.user.id,

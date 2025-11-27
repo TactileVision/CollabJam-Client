@@ -41,6 +41,7 @@ export enum TimelineMutations {
   SET_SNACKBAR_TEXT = "setSnackbarText",
   UPDATE_USER_LOCKS = "updateUserLocks",
   SET_USER_LOCKS = "setUserLocks",
+  CLEAR_LOCKS = "clearLocks",
 }
 
 export type Mutations<S = State> = {
@@ -118,6 +119,7 @@ export type Mutations<S = State> = {
     state: S,
     locks: Record<string, string[]>,
   ): void;
+  [TimelineMutations.CLEAR_LOCKS](state: S): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -477,8 +479,13 @@ export const mutations: MutationTree<State> & Mutations = {
     state: State,
     locks: Record<string, string[]>,
   ): void {
-    console.log("setting userLocks ", locks);
     state.lockedBlocks.clear();
     state.userLocks = locks;
+  },
+  [TimelineMutations.CLEAR_LOCKS](state: State): void {
+    state.lockedBlocks.clear();
+    Object.keys(state.userLocks).forEach((userId: string): void => {
+      delete state.userLocks[userId];
+    });
   },
 };

@@ -44,6 +44,7 @@ export enum TimelineActionTypes {
   UPDATE_SNACKBAR_TEXT = "updateSnackbarText",
   UPDATE_USER_LOCKS = "updateUserLocks",
   SET_USER_LOCKS = "setUserLocks",
+  CLEAR_LOCKS = "clearLocks",
 }
 
 type AugmentedActionContext = {
@@ -183,6 +184,7 @@ export interface Actions {
     { commit }: AugmentedActionContext,
     payload: Record<string, string[]>,
   ): void;
+  [TimelineActionTypes.CLEAR_LOCKS]({ commit }: AugmentedActionContext): void;
 }
 export const actions: ActionTree<State, RootState> & Actions = {
   [TimelineActionTypes.SET_BLOCK_MANAGER](
@@ -396,7 +398,7 @@ export const actions: ActionTree<State, RootState> & Actions = {
     commit(TimelineMutations.TOGGLE_RELATIVE_SNAPPING);
   },
   [TimelineActionTypes.UPDATE_USER_LOCKS](
-    { commit }: AugmentedActionContext,
+    { commit }: { commit: Commit },
     props: {
       userId: string;
       uuids: string[];
@@ -405,9 +407,12 @@ export const actions: ActionTree<State, RootState> & Actions = {
     commit(TimelineMutations.UPDATE_USER_LOCKS, props);
   },
   [TimelineActionTypes.SET_USER_LOCKS](
-    { commit }: AugmentedActionContext,
+    { commit }: { commit: Commit },
     locks: Record<string, string[]>,
   ): void {
     commit(TimelineMutations.SET_USER_LOCKS, locks);
+  },
+  [TimelineActionTypes.CLEAR_LOCKS]({ commit }: { commit: Commit }): void {
+    commit(TimelineMutations.CLEAR_LOCKS);
   },
 };
