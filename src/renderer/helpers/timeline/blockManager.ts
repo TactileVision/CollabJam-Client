@@ -983,6 +983,11 @@ export class BlockManager {
       this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
       this.clearSelectionBorder();
       this.clearGroupBorder();
+      this.eventBus.dispatchEvent(
+        new CustomEvent(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, {
+          detail: false,
+        }),
+      );
     }
   }
   private pasteSelection(): void {
@@ -1100,6 +1105,11 @@ export class BlockManager {
 
     this.copiedBlocks = [];
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    this.eventBus.dispatchEvent(
+      new CustomEvent(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, {
+        detail: true,
+      }),
+    );
   }
   private clearCopiedBlocks(): void {
     if (this.copiedBlocks.length > 0) {
@@ -1108,7 +1118,11 @@ export class BlockManager {
       });
 
       this.copiedBlocks = [];
-      return;
+      this.eventBus.dispatchEvent(
+        new CustomEvent(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, {
+          detail: true,
+        }),
+      );
     }
   }
   private deleteBlock(): void {

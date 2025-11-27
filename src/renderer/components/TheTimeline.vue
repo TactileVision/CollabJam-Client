@@ -236,6 +236,10 @@ export default defineComponent({
           clearTimeout(this.lockUpdateTimer);
         }
       }
+    },
+    handleSliderInteractivityChange(e: Event) {
+      const event = e as CustomEvent<boolean>;
+      this.slider.setInteractivity(event.detail);
     }
   },
   watch: {
@@ -479,7 +483,8 @@ export default defineComponent({
     this.playHead.drawCursor();
 
     this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, this.handleTactonWasEdited);
-    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, this.handleSelection)
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, this.handleSelection);
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, this.handleSliderInteractivityChange)
 
     this.ticker = PIXI.Ticker.shared;
     this.ticker.autoStart = false;

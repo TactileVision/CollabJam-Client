@@ -134,6 +134,7 @@ export enum TimelineEvents {
   TACTON_WAS_EDITED = "tactonWasEdited",
   TACTON_BLOCK_SELECTED = "tactonPartWasSelected",
   UPDATED_USER_LOCKS = "updatedUserLocks",
+  CHANGE_SLIDER_INTERACTIVITY = "changeSliderInteractivity",
 }
 export const SnackbarTexts = {
   TACTON_IS_READONLY: (): string =>

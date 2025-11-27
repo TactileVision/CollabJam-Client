@@ -44,7 +44,6 @@ export class Slider {
    * Initialises the timeline-slider.
    * */
   public initSlider(): void {
-    console.log("initSlider");
     // set vars
     this.viewportWidth =
       this.store.state.timeline.canvasWidth - config.leftPadding;
@@ -330,12 +329,11 @@ export class Slider {
         this.sliderWidth);
     return newOffset * this.initialZoomLevel;
   }
-
-  // TODO visualize interactivity
   public setInteractivity(isInteractive: boolean): void {
     this.sliderContainer.children.forEach((child: ContainerChild): void => {
       child.interactive = isInteractive;
     });
+    this.sliderContainer.alpha = isInteractive ? 1 : 0.5;
   }
   private queueScaleEvent = (event: PointerEvent): void => {
     this.lastScaleEvent = event;
