@@ -1,5 +1,5 @@
 import { Container, FederatedPointerEvent, Graphics } from "pixi.js";
-import { watch } from "vue";
+import { watch, WatchStopHandle } from "vue";
 import { Store, useStore } from "@/renderer/store/store";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 import {
@@ -128,7 +128,9 @@ export class BlockManager {
   private selectedBlockUuids: string[] = [];
   private copiedBlocks: CopiedBlockDTO[] = [];
   private lastCursorX: number = 0;
-  private initYTrackId: number = 0;
+  private lastCursorY: number = 0;
+  private currentCursorX: number = 0;
+  private currentCursorY: number = 0;
 
   // multi selection
   private isSelecting: boolean = false;
@@ -152,41 +154,33 @@ export class BlockManager {
 
   // updateHooks
   private updated: boolean = false;
+
+  private unwatchHandler: WatchStopHandle[] = [];
   constructor() {
     this.store = useStore();
-
-    watch(
-      () => this.store.state.timeline.zoomLevel,
-      this.onZoomLevelChange.bind(this),
-    );
-    watch(
-      () => this.store.state.timeline.horizontalViewportOffset,
-      this.onHorizontalViewportChange.bind(this),
-    );
-    watch(
-      () => this.store.state.timeline.currentCursorPosition,
-      ({ x, y }): void => {
-        if (this.copiedBlocks.length > 0) {
-          // follow cursor
-          this.scrollViewportHorizontal(x);
-          this.scrollViewportVertical(y);
-          this.updateCopiedBlocks();
-        }
-      },
-    );
-    watch(
-      () => this.store.state.timeline.trackCount,
-      (value, oldValue): void => {
-        // update maxTrackChange
-        this.maxTrackChange += oldValue + value;
-      },
-    );
-    watch(
-      () => this.store.state.timeline.canvasWidth,
-      (): void => {
-        this.calculateVirtualViewportLength();
-        this.generateThresholds();
-      },
+    this.unwatchHandler.push(
+      watch(
+        () => this.store.state.timeline.zoomLevel,
+        this.onZoomLevelChange.bind(this),
+      ),
+      watch(
+        () => this.store.state.timeline.horizontalViewportOffset,
+        this.onHorizontalViewportChange.bind(this),
+      ),
+      watch(
+        () => this.store.state.timeline.trackCount,
+        (value, oldValue): void => {
+          // update maxTrackChange
+          this.maxTrackChange += oldValue + value;
+        },
+      ),
+      watch(
+        () => this.store.state.timeline.canvasWidth,
+        (): void => {
+          this.calculateVirtualViewportLength();
+          this.generateThresholds();
+        },
+      ),
     );
 
     this.generateThresholds();
@@ -399,33 +393,6 @@ export class BlockManager {
     getDynamicContainer().addChildAt(blockContainer, 0);
     return dto;
   }
-  private createCopiedBLock(block: BlockData): CopiedBlockDTO {
-    const rect: Graphics = new Graphics();
-    rect.rect(0, 0, 1, 1);
-    rect.fill(config.colors.copyColor);
-
-    const position: { x: number; width: number } =
-      this.calculatePosition(block);
-    rect.x =
-      config.leftPadding + position.x * this.store.state.timeline.zoomLevel;
-    rect.width = position.width * this.store.state.timeline.zoomLevel;
-    rect.height = block.intensity * config.maxBlockHeight;
-    rect.y =
-      config.sliderHeight +
-      config.componentPadding +
-      block.trackId * config.trackHeight +
-      (config.trackHeight / 2 - rect.height / 2);
-
-    const blockContainer: Container = new Container();
-    blockContainer.addChild(rect);
-
-    return new CopiedBlockDTO(
-      rect,
-      blockContainer,
-      block.trackId,
-      block.groupUuid,
-    );
-  }
   private calculatePosition(tacton: BlockData): { x: number; width: number } {
     const timelineWidth: number = this.store.state.timeline.canvasWidth;
     const totalDuration: number =
@@ -462,7 +429,7 @@ export class BlockManager {
         this.editedGroupMemberUuid == null ? block.groupUuid : null;
 
       blockData.push({
-        trackId: block.trackId,
+        trackId: block.trackId + this.lastTrackOffset,
         startTime: startTime,
         endTime: endTime,
         intensity: intensity,
@@ -507,10 +474,7 @@ export class BlockManager {
       }
 
       if (changes.track != null) {
-        const trackContainerY: number = block.trackId * config.trackHeight;
-        const newTrackContainerY: number =
-          (block.trackId + changes.track) * config.trackHeight;
-        block.rect.y = newTrackContainerY - trackContainerY + block.initY;
+        block.rect.y = block.initY + (changes.track ?? 0) * config.trackHeight;
       }
 
       if (changes.width != null) {
@@ -544,35 +508,6 @@ export class BlockManager {
       config.leftPadding +
       block.initX * this.store.state.timeline.zoomLevel -
       this.store.state.timeline.horizontalViewportOffset;
-  }
-  private updateCopiedBlocks(): void {
-    // detect switching tracks
-    const currentYTrackId: number = Math.floor(
-      Math.max(
-        0,
-        this.store.state.timeline.currentCursorPosition.y -
-          getDynamicContainer().y -
-          config.sliderHeight -
-          config.componentPadding,
-      ) / config.trackHeight,
-    );
-    const trackChange: number = Math.max(
-      this.minTrackChange,
-      Math.min(currentYTrackId - this.initYTrackId, this.maxTrackChange),
-    );
-
-    let diff: number =
-      this.store.state.timeline.currentCursorPosition.x - this.lastCursorX;
-    diff = this.adjustOffset(diff, trackChange);
-    this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
-      block.rect.x = block.initX + diff;
-
-      const trackContainerY: number = block.trackId * config.trackHeight;
-      const newTrackContainerY: number =
-        (block.trackId + trackChange) * config.trackHeight;
-      block.rect.y = newTrackContainerY - trackContainerY + block.initY;
-      block.trackId = trackChange + block.initTrackId;
-    });
   }
   private updateBlockInitData(block: BlockDTO): void {
     // update data
@@ -896,67 +831,46 @@ export class BlockManager {
     this.clearCopiedBlocks();
     const selectedBlocks: BlockDTO[] = [];
 
+    // get selected blocks, and deselect
     this.store.state.timeline.selectedBlocks.forEach(
       (selection: BlockSelection): void => {
-        selectedBlocks.push(
-          this.store.state.timeline.blocks[selection.trackId][selection.index],
-        );
-        this.selectedBlockUuids.push(selection.uuid);
+        const block: BlockDTO =
+          this.store.state.timeline.blocks[selection.trackId][selection.index];
+        selectedBlocks.push(block);
+        this.selectedBlockUuids.push(block.uuid);
+        this.updateIndicatorVisibility(block, false);
+        block.strokedRect.visible = false;
       },
     );
 
-    let maxTrackId: number = -Infinity;
-    let minTrackId: number = Infinity;
     // copy blocks
     if (selectedBlocks.length > 0) {
-      const copiedBlockData: BlockData[] =
-        this.createBlockDataFromBlocks(selectedBlocks);
-      let lowestXofCopies: number = Infinity;
-      copiedBlockData.forEach((blockData: BlockData): void => {
-        const block: CopiedBlockDTO = this.createCopiedBLock(blockData);
-        if (block.rect.x < lowestXofCopies) lowestXofCopies = block.rect.x;
-        this.copiedBlocks.push(block);
-        getDynamicContainer().addChild(block.container);
+      selectedBlocks.forEach((originalBlock: BlockDTO): void => {
+        const rect: Graphics = new Graphics();
+        rect.rect(0, 0, 1, 1);
+        rect.fill(config.colors.copyColor);
+        rect.x = originalBlock.rect.x;
+        rect.width = originalBlock.rect.width;
+        rect.height = originalBlock.rect.height;
+        rect.y = originalBlock.rect.y;
 
-        if (block.trackId > maxTrackId) maxTrackId = block.trackId;
-        if (block.trackId < minTrackId) minTrackId = block.trackId;
-      });
+        const blockContainer: Container = new Container();
+        blockContainer.addChild(rect);
 
-      const offset: number =
-        this.store.state.timeline.currentCursorPosition.x - lowestXofCopies;
+        const copiedBlock: CopiedBlockDTO = new CopiedBlockDTO(
+          rect,
+          blockContainer,
+          originalBlock.trackId,
+          originalBlock.groupUuid,
+        );
 
-      this.initYTrackId = Math.floor(
-        Math.max(
-          0,
-          this.store.state.timeline.currentCursorPosition.y -
-            getDynamicContainer().y -
-            config.sliderHeight -
-            config.componentPadding,
-        ) / config.trackHeight,
-      );
-      this.initYTrackId = Math.max(
-        0,
-        Math.min(this.initYTrackId, this.store.state.timeline.trackCount),
-      );
-      let trackChange: number = this.initYTrackId - minTrackId;
+        copiedBlock.initY = originalBlock.initY;
+        copiedBlock.initX = originalBlock.initX;
+        copiedBlock.initWidth = originalBlock.initWidth;
+        copiedBlock.initTrackId = originalBlock.initTrackId;
 
-      if (maxTrackId + trackChange > this.store.state.timeline.trackCount) {
-        trackChange = this.store.state.timeline.trackCount - maxTrackId;
-      }
-
-      this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
-        block.rect.x = block.rect.x + offset;
-        block.initX = block.rect.x;
-
-        const newTrackId: number = block.trackId + trackChange;
-        block.rect.y =
-          config.sliderHeight +
-          config.componentPadding +
-          newTrackId * config.trackHeight +
-          (config.trackHeight / 2 - block.rect.height / 2);
-        block.initY = block.rect.y;
-        block.trackId = newTrackId;
-        block.initTrackId = newTrackId;
+        this.copiedBlocks.push(copiedBlock);
+        getDynamicContainer().addChild(copiedBlock.container);
       });
 
       // calculate and init borders for collision detection
@@ -966,19 +880,29 @@ export class BlockManager {
       this.minTrackChange = Math.min(...this.validTrackOffsets);
       this.maxTrackChange = Math.max(...this.validTrackOffsets);
 
-      // set vars for collisionDetection
-      this.initialX = this.store.state.timeline.currentCursorPosition.x;
-      this.initialY = this.store.state.timeline.currentCursorPosition.y;
+      this.initialX = this.currentCursorX;
+      this.initialY = this.currentCursorY;
       this.lastCursorX = this.initialX;
-      this.currentTacton = this.copiedBlocks[this.copiedBlocks.length - 1];
 
-      this.updateCopiedBlocks();
+      this.currentTacton = this.copiedBlocks[0];
+      this.initialBlockX = this.currentTacton.rect.x;
+      this.initialBlockWidth = this.currentTacton.rect.width;
+      this.currentYAdjustment = 0;
+      this.lastViewportOffset =
+        this.store.state.timeline.horizontalViewportOffset;
+      this.lastTrackOffset = 0;
 
-      // unselect copied blocks
-      this.forEachSelectedBlock((block: BlockDTO): void => {
-        this.updateIndicatorVisibility(block, false);
-        block.strokedRect.visible = false;
-      });
+      // remove old handlers, if active
+      if (this.pointerMoveHandler != null) {
+        window.removeEventListener("pointermove", this.pointerMoveHandler);
+      }
+
+      if (this.pointerUpHandler != null) {
+        window.removeEventListener("pointerup", this.pointerUpHandler);
+      }
+
+      // init new handlers
+      this.pointerMoveHandler = (event: PointerEvent) => this.moveBlock(event);
 
       this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
       this.clearSelectionBorder();
@@ -988,6 +912,9 @@ export class BlockManager {
           detail: false,
         }),
       );
+
+      // add EventListeners
+      window.addEventListener("pointermove", this.pointerMoveHandler);
     }
   }
   private pasteSelection(): void {
@@ -1081,12 +1008,8 @@ export class BlockManager {
       },
     );
 
+    this.clearCopiedBlocks();
     this.calculateVirtualViewportLength();
-
-    // remove copies and clear arrays
-    this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
-      block.container.destroy({ children: true });
-    });
 
     // enable handles of previously selected blocks
     this.forEachBlock((block: BlockDTO): void => {
@@ -1103,13 +1026,7 @@ export class BlockManager {
       }
     });
 
-    this.copiedBlocks = [];
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
-    this.eventBus.dispatchEvent(
-      new CustomEvent(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, {
-        detail: true,
-      }),
-    );
   }
   private clearCopiedBlocks(): void {
     if (this.copiedBlocks.length > 0) {
@@ -1123,6 +1040,9 @@ export class BlockManager {
           detail: true,
         }),
       );
+      if (this.pointerMoveHandler != null) {
+        window.removeEventListener("pointermove", this.pointerMoveHandler);
+      }
     }
   }
   private deleteBlock(): void {
@@ -1200,12 +1120,25 @@ export class BlockManager {
     window.addEventListener("pointerup", this.pointerUpHandler);
   }
   private moveBlock(event: PointerEvent): void {
+    const x: number = event.clientX - this.store.state.timeline.wrapperXOffset;
+    const y: number = event.clientY;
+
+    this.scrollViewportHorizontal(x);
+    this.scrollViewportVertical(y);
+    this.updateBlockPositionFromCursor(x, y);
+
+    this.lastCursorX = x;
+    this.lastCursorY = y;
+
+    this.moved = true;
+  }
+  private updateBlockPositionFromCursor(x: number, y: number): void {
     if (this.currentTacton == null) return;
     const changes: BlockChanges = new BlockChanges();
+    changes.x = 0;
     changes.track = 0;
-    const deltaX: number =
-      event.clientX - this.initialX - this.store.state.timeline.wrapperXOffset;
-    const deltaY: number = event.clientY - this.initialY;
+    const deltaX: number = x - this.initialX;
+    const deltaY: number = y - this.initialY;
 
     // detect switching tracks
     let currentYTrackId: number =
@@ -1223,33 +1156,31 @@ export class BlockManager {
       ),
     );
 
-    // scroll viewport if needed
-    // TODO maybe improve this by using lowest start and highest end position of the whole selection
-    this.scrollViewportHorizontal(
-      event.clientX - this.store.state.timeline.wrapperXOffset,
-    );
-    this.scrollViewportVertical(event.clientY);
+    const adjustedDeltaX: number = this.adjustOffset(deltaX, changes.track);
+    changes.x = this.initialBlockX + adjustedDeltaX - this.currentTacton.rect.x;
+    this.applyChanges(changes);
 
-    if (!this.isScrolling) {
-      const adjustedDeltaX: number = this.adjustOffset(deltaX, changes.track);
-      changes.x =
-        this.initialBlockX + adjustedDeltaX - this.currentTacton.rect.x;
-      this.applyChanges(changes);
-
-      if (this.selectionBorder != null) {
-        // update selectionBorder
-        this.selectionBorder.lastStartX += changes.x;
-        this.updateBorder(undefined, true);
+    this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
+      if (changes.x != null) {
+        block.rect.x += changes.x;
       }
 
-      this.renderedGroupBorders.forEach(
-        (borderData: Border, groupId: string): void => {
-          this.updateBorder(groupId, true);
-        },
-      );
+      if (changes.track != null) {
+        block.rect.y = block.initY + (changes.track ?? 0) * config.trackHeight;
+      }
+    });
+
+    if (this.selectionBorder != null) {
+      // update selectionBorder
+      this.selectionBorder.lastStartX += changes.x;
+      this.updateBorder(undefined, true);
     }
 
-    this.moved = true;
+    this.renderedGroupBorders.forEach(
+      (borderData: Border, groupId: string): void => {
+        this.updateBorder(groupId, true);
+      },
+    );
   }
   private onMoveBlockEnd(): void {
     if (this.currentTacton == null) return;
@@ -2835,28 +2766,7 @@ export class BlockManager {
         );
       }
     }
-
-    if (
-      this.currentDirection == Direction.LEFT ||
-      this.currentDirection == Direction.RIGHT
-    ) {
-      const changes: BlockChanges = new BlockChanges();
-      const adjustedDeltaX: number = this.adjustOffset(
-        this.lastValidOffset,
-        this.lastTrackOffset,
-      );
-      changes.x =
-        this.initialBlockX + adjustedDeltaX - this.currentTacton!.rect.x;
-      this.applyChanges(changes);
-
-      this.renderedGroupBorders.forEach(
-        (borderData: Border, groupId: string): void => {
-          this.updateBorder(groupId, true);
-        },
-      );
-      this.updateBorder(undefined, true);
-    }
-
+    this.updateBlockPositionFromCursor(this.lastCursorX, this.lastCursorY);
     requestAnimationFrame(() => this.autoScroll());
   }
   private scrollViewportHorizontal(cursorX: number): void {
@@ -2973,8 +2883,7 @@ export class BlockManager {
         );
       },
     );
-
-    this.calculateStickyOffsets(startOfWholeSelection);
+    this.calculateStickyOffsets();
   }
   private createBordersForCopies(): void {
     this.selectedTracks = [];
@@ -3017,7 +2926,7 @@ export class BlockManager {
       if (!isAdded) this.selectedTracks.push(block.trackId);
     });
 
-    this.calculateStickyOffsets(startOfWholeSelection);
+    this.calculateStickyOffsets();
   }
   private adjustOffset(offset: number, trackOffset: number): number {
     const maxAttempts: number = 10;
@@ -3036,7 +2945,6 @@ export class BlockManager {
     const horizontalOffsetDifference: number =
       this.store.state.timeline.horizontalViewportOffset -
       this.lastViewportOffset;
-
     // if track was changes lastValidOffset is invalid -> needs to be updated
     if (this.lastTrackOffset != trackOffset) {
       this.lastValidOffset = this.getValidStickyOffset(
@@ -3209,7 +3117,6 @@ export class BlockManager {
         horizontalOffsetDifference,
       );
     }
-
     this.lastValidOffset = validOffset;
     this.lastTrackOffset = trackOffset;
     return validOffset;
@@ -3252,9 +3159,10 @@ export class BlockManager {
           const selectedBorders: number[] = this.selectedBorders[trackId];
           const unselectedBorders: number[] =
             this.unselectedBorders[trackId + trackOffset];
+
           // skip empty tracks
           if (!selectedBorders || selectedBorders.length === 0) continue;
-          if (!unselectedBorders) continue;
+          if (!unselectedBorders || unselectedBorders.length === 0) continue;
 
           // add offset to border
           // check if any of unselectedBorders is overlapping with adjusted border
@@ -3262,7 +3170,11 @@ export class BlockManager {
             const start2: number = selectedBorders[i] + possibleOffset;
             const end2: number = selectedBorders[i + 1] + possibleOffset;
 
-            if (start2 < config.leftPadding) {
+            if (
+              start2 <
+              config.leftPadding -
+                this.store.state.timeline.horizontalViewportOffset
+            ) {
               isValid = false;
               break;
             }
@@ -3294,17 +3206,35 @@ export class BlockManager {
       );
     });
   }
-  private calculateStickyOffsets(startOfWholeSelection: number): void {
+  private calculateStickyOffsets(): void {
     const trackOffsets: number[] = this.getValidTrackOffsets();
     const possibleOffsetPerTrackOffset: number[][] = [];
-
-    // add start of timeline as border for all tracks
     trackOffsets.forEach((trackOffset: number): void => {
       possibleOffsetPerTrackOffset[trackOffset] = [];
-      possibleOffsetPerTrackOffset[trackOffset].push(
-        config.leftPadding - startOfWholeSelection,
-      );
     });
+
+    // first, check startOfTimeline
+    for (
+      let trackId = 0;
+      trackId <
+      Math.min(this.unselectedBorders.length, this.selectedBorders.length);
+      trackId++
+    ) {
+      // loop over selectedBorders
+      for (let i = 0; i < this.selectedBorders[trackId].length; i += 2) {
+        // loop over unselected border tracks
+        trackOffsets.forEach((trackOffset: number) => {
+          const startOfTimeline: number =
+            config.leftPadding -
+            this.store.state.timeline.horizontalViewportOffset;
+
+          // calculate possible offsets
+          const offsetToStart: number =
+            startOfTimeline - this.selectedBorders[trackId][i];
+          possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
+        });
+      }
+    }
 
     for (
       let trackId = 0;
@@ -3451,6 +3381,10 @@ export class BlockManager {
     }
   };
   private onCanvasMouseMove = (event: MouseEvent): void => {
+    this.currentCursorX =
+      event.clientX - this.store.state.timeline.wrapperXOffset;
+    this.currentCursorY =
+      event.clientY - this.store.state.timeline.wrapperYOffset;
     if (!this.isMouseDragging) return;
     this.selectionEnd = { x: event.clientX, y: event.clientY };
     this.drawSelectionBox();
@@ -3512,7 +3446,6 @@ export class BlockManager {
       });
     }
   }
-
   public clearData(): void {
     this.clearCopiedBlocks();
     this.clearGroupBorder();
@@ -3649,5 +3582,7 @@ export class BlockManager {
       TimelineEvents.UPDATED_USER_LOCKS,
       this.handleUpdatedUserLocks,
     );
+
+    this.unwatchHandler.forEach((unwatch) => unwatch());
   }
 }

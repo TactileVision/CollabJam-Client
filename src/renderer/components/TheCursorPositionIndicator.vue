@@ -57,13 +57,8 @@ export default defineComponent({
       if (!newY) {
         newY = lastY;
       } else {
-        lastY = newY;
+        lastY = newY; 
       }
-
-      store.dispatch(TimelineActionTypes.UPDATE_CURRENT_CURSOR_POSITION, {
-        x: newX,
-        y: newY,
-      });
 
       positionIndicator.clear();
       if (showIndicator) {

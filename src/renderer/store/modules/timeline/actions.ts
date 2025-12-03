@@ -32,7 +32,6 @@ export enum TimelineActionTypes {
   CLEAR_SELECTION = "clearSelection",
   CHANGE_BLOCK_TRACK = "changeBlockTrack",
   GET_LAST_BLOCK_POSITION = "calculateLastBlockPosition",
-  UPDATE_CURRENT_CURSOR_POSITION = "setCurrentCursorPosition",
   ADD_GROUP = "addGroup",
   TOGGLE_SNAPPING_STATE = "toggleSnappingState",
   TOGGLE_RELATIVE_SNAPPING = "toggleRelativeSnapping",
@@ -138,10 +137,6 @@ export interface Actions {
     state,
     commit,
   }: AugmentedActionContext): number;
-  [TimelineActionTypes.UPDATE_CURRENT_CURSOR_POSITION](
-    { commit }: AugmentedActionContext,
-    payload: { x: number; y: number },
-  ): void;
   [TimelineActionTypes.ADD_GROUP](
     { commit }: AugmentedActionContext,
     payload: { groupUuid: string; selection: BlockSelection[] },
@@ -334,12 +329,6 @@ export const actions: ActionTree<State, RootState> & Actions = {
   }) {
     commit(TimelineMutations.CALCULATE_LAST_BLOCK_POSITION);
     return state.lastBlockPositionX;
-  },
-  [TimelineActionTypes.UPDATE_CURRENT_CURSOR_POSITION](
-    { commit }: { commit: Commit },
-    newPosition: { x: number; y: number },
-  ): void {
-    commit(TimelineMutations.UPDATE_CURRENT_CURSOR_POSITION, newPosition);
   },
   [TimelineActionTypes.ADD_GROUP](
     { commit }: { commit: Commit },

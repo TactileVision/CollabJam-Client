@@ -345,7 +345,6 @@ export class Slider {
     requestAnimationFrame(() => {
       this.scaleEventQueued = false;
       if (this.lastScaleEvent) {
-        //console.log("A");
         this.onScale(this.lastScaleEvent);
         this.lastScaleEvent = null;
       }
