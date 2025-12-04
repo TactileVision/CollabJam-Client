@@ -29,6 +29,7 @@ import {LiveBlockBuilder} from "@/renderer/helpers/timeline/liveBlockBuilder";
 import {PlayHead} from "@/renderer/helpers/timeline/playHead";
 import {Slider} from "@/renderer/helpers/timeline/Slider";
 import SnackBar from "@/renderer/components/Snackbar.vue";
+import {resetLockTimer, clearLocks, stopLockTimer} from "@/renderer/helpers/timeline/lockManager";
 
 /*
 * For the upcoming demo, the reactive behaviour to the number of tracks
@@ -67,7 +68,6 @@ export default defineComponent({
       isFirstTick: false,
       canceledRecording: false,
       slider: new Slider(),
-      lockUpdateTimer:  null as number | null,
     };
   },
   computed: {
@@ -85,28 +85,6 @@ export default defineComponent({
     },
   },
   methods: {
-    resetTimer(): void {
-      if (this.lockUpdateTimer !== null) {
-        clearTimeout(this.lockUpdateTimer);
-      }
-      this.lockUpdateTimer = window.setTimeout(() => this.onLocksExpired(true), config.maxLockTimeMs);
-    },
-    onLocksExpired(displaySnackbar: boolean = false): void {
-      WebSocketAPI.requestEditingForUuids(
-        this.store.state.roomSettings.id || "",
-        this.store.state.roomSettings.user.id,
-        []
-      );
-      this.lockUpdateTimer = null;
-      this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-      this.store.state.timeline.blockManager?.renderSelection();
-      if (displaySnackbar) {
-        this.store.dispatch(
-            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-            SnackbarTexts.SELECTION_EXPIRED(),
-        );
-      }
-    },
     renderTrackLines() {
       this.tracks = [];
       for (let i = 0; i <= this.trackCount; i++) {
@@ -213,8 +191,8 @@ export default defineComponent({
         tactonId: tacton.uuid,
         tacton: { ...tacton, instructions },
       });
-      
-      this.resetTimer();     
+
+      resetLockTimer();
     },
     handleSelection() {
       // add BlockUuids
@@ -227,15 +205,6 @@ export default defineComponent({
           this.store.state.roomSettings.user.id,
           selectedUuids
       );
-
-      if (selectedUuids.length !== 0) {
-        // reset Timer
-        this.resetTimer();
-      } else {
-        if (this.lockUpdateTimer !== null) {
-          clearTimeout(this.lockUpdateTimer);
-        }
-      }
     },
     handleSliderInteractivityChange(e: Event) {
       const event = e as CustomEvent<boolean>;
@@ -251,7 +220,7 @@ export default defineComponent({
           this.store.state.timeline.groups.clear();
           this.store.state.timeline.selectedBlocks = [];
           this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
-          this.onLocksExpired();
+          clearLocks()
           
           // save uuid
           this.lastTactonId = this.tacton.uuid;
@@ -351,9 +320,7 @@ export default defineComponent({
       this.currentTime = 0;
       
       // clear timeout of changing mode -> selection is cleared anyways
-      if (this.lockUpdateTimer !== null) {
-        clearTimeout(this.lockUpdateTimer);
-      }
+      stopLockTimer();
       
       if (this.ticker !== null && this.ticker.count > 0) {
         this.ticker?.remove(this.recording);

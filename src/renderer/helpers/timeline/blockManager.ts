@@ -26,6 +26,11 @@ import {
   getBoundingData,
 } from "@/renderer/helpers/timeline/borderManager";
 import { WebSocketAPI } from "@/main/WebSocketManager";
+import {
+  clearLocks,
+  resetLockTimer,
+  stopLockTimer,
+} from "@/renderer/helpers/timeline/lockManager";
 
 interface GroupBounds {
   startX: number;
@@ -905,6 +910,8 @@ export class BlockManager {
       this.pointerMoveHandler = (event: PointerEvent) => this.moveBlock(event);
 
       this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+      clearLocks(false, false);
+
       this.clearSelectionBorder();
       this.clearGroupBorder();
       this.eventBus.dispatchEvent(
@@ -1052,6 +1059,7 @@ export class BlockManager {
     this.store.dispatch(TimelineActionTypes.DELETE_SELECTED_BLOCKS);
     this.calculateVirtualViewportLength();
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    stopLockTimer();
   }
   private onMoveBlock(event: FederatedPointerEvent, block: BlockDTO): void {
     if (!this.canSelect()) return;
@@ -1118,6 +1126,9 @@ export class BlockManager {
     // add EventListeners
     window.addEventListener("pointermove", this.pointerMoveHandler);
     window.addEventListener("pointerup", this.pointerUpHandler);
+
+    // reset timer
+    stopLockTimer();
   }
   private moveBlock(event: PointerEvent): void {
     const x: number = event.clientX - this.store.state.timeline.wrapperXOffset;
@@ -1205,10 +1216,12 @@ export class BlockManager {
 
     this.calculateVirtualViewportLength();
     this.currentTacton = null;
+
     if (this.moved) {
       this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    } else {
+      resetLockTimer();
     }
-    this.moved = false;
     getLine().visible = false;
 
     this.isDoubleClick = true;
@@ -1220,6 +1233,7 @@ export class BlockManager {
     if (this.pointerUpHandler == null) return;
     this.isSelecting = false;
     window.removeEventListener("pointerup", this.pointerUpHandler);
+    this.handleLocking();
   }
   private onAbsoluteResizeStart(
     event: FederatedPointerEvent,
@@ -1660,6 +1674,8 @@ export class BlockManager {
     window.addEventListener("pointermove", this.pointerMoveHandler);
     window.addEventListener("pointerup", this.pointerUpHandler);
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
+    // reset timer
+    stopLockTimer();
   }
   private changeGroupAmplitude(
     event: PointerEvent,
@@ -1729,6 +1745,8 @@ export class BlockManager {
     window.addEventListener("pointermove", this.pointerMoveHandler);
     window.addEventListener("pointerup", this.pointerUpHandler);
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
+    // reset timer
+    stopLockTimer();
   }
   private changeAmplitude(
     event: PointerEvent,
@@ -1865,6 +1883,12 @@ export class BlockManager {
   }
 
   //*************** Helper ***************
+
+  private handleLocking(): void {
+    this.store.state.timeline.selectedBlocks.length === 0
+      ? stopLockTimer()
+      : resetLockTimer();
+  }
 
   private canSelect(displaySnackbar: boolean = true): boolean {
     // notify user on click about edit-state
@@ -3357,6 +3381,7 @@ export class BlockManager {
       });
     }
     this.handleSelection(selectedBlocks);
+    this.handleLocking();
   }
   private getBoundingBox() {
     const x = Math.min(this.selectionStart.x, this.selectionEnd.x);
@@ -3397,6 +3422,13 @@ export class BlockManager {
   };
 
   //******* public helpers *******
+
+  public clearMemberEditing(): void {
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.stashedSelection.clear();
+    this.editedGroupMemberUuid = null;
+    this.editedGroupUuid = null;
+  }
   public renderSelection(): void {
     this.forEachUnselectedBlock((block) => {
       block.strokedRect.visible = false;
