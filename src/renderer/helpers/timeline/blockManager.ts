@@ -1050,6 +1050,17 @@ export class BlockManager {
       if (this.pointerMoveHandler != null) {
         window.removeEventListener("pointermove", this.pointerMoveHandler);
       }
+
+      const viewport: number =
+        (this.store.state.timeline.canvasWidth -
+          config.leftPadding +
+          this.store.state.timeline.horizontalViewportOffset) /
+        this.store.state.timeline.zoomLevel;
+
+      this.store.dispatch(
+        TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
+        viewport,
+      );
     }
   }
   private deleteBlock(): void {
