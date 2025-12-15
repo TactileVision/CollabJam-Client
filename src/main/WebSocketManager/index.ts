@@ -118,16 +118,27 @@ export const WebSocketAPI = {
       newRoomId: newRoomId,
     });
   },
-  requestEditingPrivilege: (roomId: string, userId: string) => {
-    socket?.emit(WS_MSG_TYPE.UPDATE_EDITING_USER_SERV, {
+  requestEditingForUuids: (
+    roomId: string,
+    userId: string,
+    uuids: string[],
+  ): void => {
+    socket?.emit(WS_MSG_TYPE.UPDATE_EDITING_USER_UUIDS_SERV, {
       roomId: roomId,
       userId: userId,
+      uuids: uuids,
     });
   },
-  giveUpEditingPrivilege: (roomId: string) => {
-    socket?.emit(WS_MSG_TYPE.UPDATE_EDITING_USER_SERV, {
+  undoAction: (roomId: string, tactonId: string) => {
+    socket?.emit(WS_MSG_TYPE.UNDO_ACTION_SERV, {
       roomId: roomId,
-      userId: null,
+      tactonId: tactonId,
+    });
+  },
+  redoAction: (roomId: string, tactonId: string) => {
+    socket?.emit(WS_MSG_TYPE.REDO_ACTION_SERV, {
+      roomId: roomId,
+      tactonId: tactonId,
     });
   },
 };

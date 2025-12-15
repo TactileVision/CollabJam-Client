@@ -11,6 +11,8 @@ interface BlockEvent {
   time: number;
   trackId: number;
   intensity: number;
+  uuid: string;
+  groupUuid: string | null;
 }
 export class InstructionParser {
   private store: Store;
@@ -24,16 +26,21 @@ export class InstructionParser {
     const blocks: BlockData[] = [];
     const activeChannels: Map<
       number,
-      { startTime: number; intensity: number }
-    > = new Map<number, { startTime: number; intensity: number }>();
-    let currentTime: number = 0;
+      {
+        startTime: number;
+        intensity: number;
+        uuid: string;
+        groupUuid: string | null;
+      }
+    > = new Map();
+    let currentTime = 0;
 
     instructions.forEach((instruction: TactonInstruction): void => {
       if (isInstructionSetParameter(instruction)) {
-        const channels: number[] = instruction.setParameter.channels;
-        const intensity: number = instruction.setParameter.intensity;
+        const { channels, intensity, uuids, groupUuids } =
+          instruction.setParameter;
 
-        channels.forEach((channel: number): void => {
+        channels.forEach((channel: number, index: number): void => {
           const existing = activeChannels.get(channel);
 
           // finish construction of previous block, if existing
@@ -43,6 +50,8 @@ export class InstructionParser {
               startTime: existing.startTime,
               endTime: currentTime,
               intensity: existing.intensity,
+              uuid: existing.uuid,
+              groupUuid: existing.groupUuid,
             };
             blocks.push(block);
             activeChannels.delete(channel);
@@ -50,7 +59,12 @@ export class InstructionParser {
 
           if (intensity > 0) {
             // start of block
-            activeChannels.set(channel, { startTime: currentTime, intensity });
+            activeChannels.set(channel, {
+              startTime: currentTime,
+              intensity,
+              uuid: uuids[index],
+              groupUuid: groupUuids[index],
+            });
           }
         });
       } else if (isInstructionWait(instruction)) {
@@ -58,29 +72,32 @@ export class InstructionParser {
       }
     });
 
+    // close all active blocks
+    activeChannels.forEach((data, channel) => {
+      blocks.push({
+        trackId: channel,
+        startTime: data.startTime,
+        endTime: currentTime,
+        intensity: data.intensity,
+        uuid: data.uuid,
+        groupUuid: data.groupUuid,
+      });
+    });
+
     return { blockData: blocks, duration: currentTime };
   }
   public parseBlocksToInstructions(): TactonInstruction[] {
-    // flatten (per track) stored blocks into one sequence
     const sequence: BlockDTO[] = [];
-    Object.keys(this.store.state.timeline.blocks).forEach(
-      (trackIdAsString: string, trackId: number): void => {
-        this.store.state.timeline.blocks[trackId].forEach(
-          (block: BlockDTO): void => {
-            sequence.push(block);
-          },
-        );
-      },
+    Object.values(this.store.state.timeline.blocks).forEach(
+      (blocks: BlockDTO[]) =>
+        blocks.forEach((block: BlockDTO) => sequence.push(block)),
     );
 
-    const events: BlockEvent[] = [];
-    const instructions: TactonInstruction[] = [];
     const timelineWidth: number = this.store.state.timeline.canvasWidth;
     const totalDuration: number =
       (timelineWidth / config.pixelsPerSecond) * 1000;
-    let currentTime: number = 0;
 
-    // transform sequence into events
+    const events: BlockEvent[] = [];
     sequence.forEach((block: BlockDTO): void => {
       const convertedX: number =
         (block.rect.x -
@@ -92,55 +109,98 @@ export class InstructionParser {
       const startTime: number = (convertedX / timelineWidth) * totalDuration;
       const endTime: number =
         startTime + (convertedWidth / timelineWidth) * totalDuration;
+
+      const intensity: number = block.rect.height / config.maxBlockHeight;
       events.push({
         time: startTime,
         trackId: block.trackId,
-        intensity: block.rect.height / config.maxBlockHeight,
+        intensity,
+        uuid: block.uuid,
+        groupUuid: block.groupUuid,
       });
-      events.push({ time: endTime, trackId: block.trackId, intensity: 0 });
+      events.push({
+        time: endTime,
+        trackId: block.trackId,
+        intensity: 0,
+        uuid: block.uuid,
+        groupUuid: block.groupUuid,
+      });
     });
 
-    // cleanup
-    const cleanedEvents: BlockEvent[] = [];
+    // sort once
+    events.sort(
+      (a: BlockEvent, b: BlockEvent) =>
+        a.time - b.time || a.intensity - b.intensity || a.trackId - b.trackId,
+    );
 
-    for (let i = 0; i < events.length; i++) {
-      const current: BlockEvent = events[i];
-      const next: BlockEvent = events[i + 1];
+    const instructions: TactonInstruction[] = [];
+    let currentTime: number = 0;
+    let i: number = 0;
 
-      // if intensity = 0 and a new start occurs immediately afterwards on the same track, skip this instruction
-      if (
-        current.intensity === 0 &&
-        next &&
-        this.nearlyEqual(current.time, next.time) &&
-        current.trackId === next.trackId &&
-        next.intensity > 0
-      ) {
-        continue;
+    while (i < events.length) {
+      const time: number = events[i].time;
+      if (time > currentTime) {
+        instructions.push({ wait: { miliseconds: time - currentTime } });
+        currentTime = time;
       }
-      cleanedEvents.push(current);
+
+      // gather instructions with equal timing
+      let j: number = i;
+      while (j < events.length && this.nearlyEqual(events[j].time, time)) j++;
+      const group: BlockEvent[] = events.slice(i, j);
+
+      // end-instructions (intensity === 0)
+      const ends: BlockEvent[] = group.filter(
+        (ev: BlockEvent): boolean => ev.intensity === 0,
+      );
+
+      // only accept end instructions if there is no simultaneous start on the same channel
+      const realEnds: BlockEvent[] = ends.filter((end) => {
+        return !group.some(
+          (ev) => ev.trackId === end.trackId && ev.intensity > 0,
+        );
+      });
+
+      if (realEnds.length) {
+        instructions.push({
+          setParameter: {
+            intensity: 0,
+            channels: realEnds.map((e: BlockEvent) => e.trackId),
+            uuids: realEnds.map((e: BlockEvent) => e.uuid),
+            groupUuids: realEnds.map((e: BlockEvent) => e.groupUuid),
+          },
+        });
+      }
+
+      // start-instructions, grouped by intensity
+      const starts: BlockEvent[] = group.filter(
+        (ev: BlockEvent): boolean => ev.intensity > 0,
+      );
+      if (starts.length) {
+        starts
+          .sort((a: BlockEvent, b: BlockEvent) => a.intensity - b.intensity)
+          .reduce((map: Map<number, BlockEvent[]>, ev: BlockEvent) => {
+            if (!map.has(ev.intensity)) {
+              map.set(ev.intensity, []);
+            }
+            map.get(ev.intensity)!.push(ev);
+            return map;
+          }, new Map<number, BlockEvent[]>())
+          .forEach((evs: BlockEvent[], intensity: number): void => {
+            instructions.push({
+              setParameter: {
+                intensity,
+                channels: evs.map((e: BlockEvent) => e.trackId),
+                uuids: evs.map((e: BlockEvent) => e.uuid),
+                groupUuids: evs.map((e: BlockEvent) => e.groupUuid),
+              },
+            });
+          });
+      }
+
+      i = j;
     }
 
-    // sort events
-    cleanedEvents.sort((a: BlockEvent, b: BlockEvent) => a.time - b.time);
-
-    // transform events into instructions
-    cleanedEvents.forEach((event: BlockEvent): void => {
-      // insert wait-instruction if needed
-      if (event.time > currentTime) {
-        instructions.push({
-          wait: { miliseconds: event.time - currentTime },
-        });
-        currentTime = event.time;
-      }
-
-      // insert set-Parameter instruction
-      instructions.push({
-        setParameter: {
-          intensity: event.intensity,
-          channels: [event.trackId],
-        },
-      });
-    });
     return instructions;
   }
   private nearlyEqual(

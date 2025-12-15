@@ -1,15 +1,11 @@
-import {
-  Application,
-  Container,
-  FederatedPointerEvent,
-  Graphics,
-} from "pixi.js";
-import { watch } from "vue";
+import { Container, FederatedPointerEvent, Graphics } from "pixi.js";
+import { watch, WatchStopHandle } from "vue";
 import { Store, useStore } from "@/renderer/store/store";
 import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
 import {
   getDynamicContainer,
   getLine,
+  getLockContainer,
   getPixiApp,
 } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
@@ -18,43 +14,32 @@ import {
   BlockData,
   BlockDTO,
   BlockSelection,
+  Direction,
   SnackbarTexts,
   TimelineEvents,
 } from "@/renderer/helpers/timeline/types";
+import { DUMMY_GROUP_UUID, DUMMY_UUID } from "@sharedTypes/tactonTypes";
+import { User } from "@sharedTypes/roomTypes";
+import {
+  Border,
+  BoundingData,
+  getBoundingData,
+} from "@/renderer/helpers/timeline/borderManager";
+import { WebSocketAPI } from "@/main/WebSocketManager";
+import {
+  clearLocks,
+  resetLockTimer,
+  stopLockTimer,
+} from "@/renderer/helpers/timeline/lockManager";
 
-interface SelectionBorderData {
-  container: Container;
-  border: Graphics;
-  leftHandle: Graphics;
-  leftIndicator: Graphics;
-  rightHandle: Graphics;
-  rightIndicator: Graphics;
-  initStartX: number;
-  lastStartX: number;
-  initWidth: number;
-  lastWidth: number;
-  initY: number;
-  lastY: number;
-  initHeight: number;
-  firstBlockOfGroup: BlockSelection;
-  lastBlockOfGroup: BlockSelection;
-}
-interface GroupBorderData extends SelectionBorderData {
-  topHandle: Graphics;
-  topIndicator: Graphics;
-  bottomHandle: Graphics;
-  bottomIndicator: Graphics;
-  topBlockOfGroup: BlockSelection;
-  bottomBlockOfGroup: BlockSelection;
-}
-interface CopiedBlockData extends BlockData {
-  groupId?: number;
-}
-enum Direction {
-  LEFT = "left",
-  RIGHT = "right",
-  TOP = "top",
-  BOTTOM = "bottom",
+interface GroupBounds {
+  startX: number;
+  endX: number;
+  lowestTrack: number;
+  highestTrack: number;
+  maxHeightLowest: number;
+  maxHeightHighest: number;
+  y: number;
 }
 class CopiedBlockDTO {
   rect: Graphics;
@@ -64,12 +49,12 @@ class CopiedBlockDTO {
   container: Container;
   trackId: number;
   initTrackId: number;
-  groupId?: number;
+  groupUuid: string | null;
   constructor(
     rect: Graphics,
     container: Container,
     trackId: number,
-    groupId?: number,
+    groupUuid: string | null,
   ) {
     this.rect = rect;
     this.initX = rect.x;
@@ -78,7 +63,7 @@ class CopiedBlockDTO {
     this.container = container;
     this.trackId = trackId;
     this.initTrackId = trackId;
-    this.groupId = groupId;
+    this.groupUuid = groupUuid;
   }
 }
 export class BlockManager {
@@ -109,9 +94,9 @@ export class BlockManager {
   private moved: boolean = false;
 
   // proportional resize
-  private selectionBorder: SelectionBorderData | null = null;
-  private lastUidsCollisionLeft: number[] = [];
-  private lastUidsCollisionRight: number[] = [];
+  private selectionBorder: Border | undefined = undefined;
+  private lastUuidsCollisionLeft: string[] = [];
+  private lastUuidsCollisionRight: string[] = [];
 
   // collision-detection vars
   private unselectedBorders: number[][] = [];
@@ -145,144 +130,68 @@ export class BlockManager {
   private lastVerticalOffset: number = 0;
 
   // copy & paste
-  private isMacOS: boolean = false;
-  private strgDown: boolean = false;
-  private selectedBlockUids: number[] = [];
+  private selectedBlockUuids: string[] = [];
   private copiedBlocks: CopiedBlockDTO[] = [];
   private lastCursorX: number = 0;
-  private initYTrackId: number = 0;
+  private lastCursorY: number = 0;
+  private currentCursorX: number = 0;
+  private currentCursorY: number = 0;
 
   // multi selection
   private isSelecting: boolean = false;
   private isMouseDragging: boolean = false;
   private selectionStart = { x: 0, y: 0 };
   private selectionEnd = { x: 0, y: 0 };
+  private isPressingShift: boolean = false;
 
   // groups
-  private renderedGroupBorders: Map<number, GroupBorderData> = new Map<
-    number,
-    GroupBorderData
-  >();
+  private renderedGroupBorders: Map<string, Border> = new Map<string, Border>();
+
+  // member editing
+  private editedGroupMemberUuid: string | null = null;
+  private editedGroupUuid: string | null = null;
+  private isDoubleClick: boolean = false;
+  private doubleTimeout: ReturnType<typeof setTimeout> | undefined;
+  private stashedSelection: Map<string, BlockSelection> = new Map();
 
   // interaction-mode
   private isInteractionBlocked: boolean = false;
 
   // updateHooks
   private updated: boolean = false;
+
+  private unwatchHandler: WatchStopHandle[] = [];
   constructor() {
     this.store = useStore();
-
-    watch(
-      () => this.store.state.timeline.zoomLevel,
-      this.onZoomLevelChange.bind(this),
-    );
-    watch(
-      () => this.store.state.timeline.horizontalViewportOffset,
-      this.onHorizontalViewportChange.bind(this),
-    );
-    watch(
-      () => this.store.state.timeline.currentCursorPosition,
-      ({ x, y }): void => {
-        if (this.copiedBlocks.length > 0) {
-          // follow cursor
-          this.scrollViewportHorizontal(x);
-          this.scrollViewportVertical(y);
-          this.updateCopiedBlocks();
-        }
-      },
-    );
-    watch(
-      () => this.store.state.timeline.trackCount,
-      (value, oldValue): void => {
-        // update maxTrackChange
-        this.maxTrackChange += oldValue + value;
-      },
-    );
-    watch(
-      () => this.store.state.timeline.canvasWidth,
-      (): void => {
-        this.calculateVirtualViewportLength();
-        this.generateThresholds();
-      },
+    this.unwatchHandler.push(
+      watch(
+        () => this.store.state.timeline.zoomLevel,
+        this.onZoomLevelChange.bind(this),
+      ),
+      watch(
+        () => this.store.state.timeline.horizontalViewportOffset,
+        this.onHorizontalViewportChange.bind(this),
+      ),
+      watch(
+        () => this.store.state.timeline.trackCount,
+        (value, oldValue): void => {
+          // update maxTrackChange
+          this.maxTrackChange += oldValue + value;
+        },
+      ),
+      watch(
+        () => this.store.state.timeline.canvasWidth,
+        (): void => {
+          this.calculateVirtualViewportLength();
+          this.generateThresholds();
+        },
+      ),
     );
 
     this.generateThresholds();
-
-    // detect strg
-    document.addEventListener("keydown", (event: KeyboardEvent): void => {
-      if (!this.store.state.timeline.isEditable) return;
-      // detect STRG or Meta
-      if (event.code == "ControlLeft" && !this.isMacOS) {
-        if (!this.strgDown) {
-          this.drawSelectionBorder();
-          this.strgDown = true;
-        }
-      } else if (event.code == "MetaLeft") {
-        if (!this.strgDown) {
-          this.drawSelectionBorder();
-          this.strgDown = true;
-          if (!this.isMacOS) {
-            this.isMacOS = true;
-          }
-        }
-      }
-
-      if (this.strgDown && event.code == "KeyC") this.copySelection();
-      if (this.strgDown && event.code == "KeyV") this.pasteSelection();
-      if (this.strgDown && event.code == "KeyG") {
-        event.preventDefault();
-        this.groupSelectedBlocks();
-      }
-      if (this.strgDown && event.code == "KeyS" && !event.shiftKey) {
-        event.preventDefault();
-        this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
-      }
-      if (this.strgDown && event.code === "KeyS" && event.shiftKey) {
-        event.preventDefault();
-        this.store.dispatch(TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING);
-      }
-      if (event.code == "Escape") this.clearCopiedBlocks();
-      if (event.code == "Delete") this.deleteBlock();
-
-      // detect shift
-      if (event.key == "Shift" && !this.store.state.timeline.isPressingShift) {
-        this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
-      }
-    });
-
-    document.addEventListener("keyup", (event: KeyboardEvent): void => {
-      if (!this.store.state.timeline.isEditable) return;
-      if (
-        (event.code == "ControlLeft" && !this.isMacOS) ||
-        event.code == "MetaLeft"
-      ) {
-        this.strgDown = false;
-        this.clearSelectionBorder();
-        this.forEachSelectedBlock((block: BlockDTO): void => {
-          if (block.groupId != null) return;
-          this.updateHandles(block);
-          this.updateIndicators(block);
-          this.updateIndicatorVisibility(block, true);
-          this.updateHandleInteractivity(block, true);
-        });
-      }
-
-      if (event.key == "Shift" && this.store.state.timeline.isPressingShift) {
-        this.store.dispatch(TimelineActionTypes.TOGGLE_SHIFT_VALUE);
-      }
-    });
-
     this.installEventListeners();
   }
   createBlocksFromData(blockData: BlockData[]): void {
-    // clear rendered borders
-    this.renderedGroupBorders.forEach(
-      (borderData: GroupBorderData, groupId: number): void => {
-        this.clearGroupBorder(groupId);
-      },
-    );
-    this.clearSelectionBorder();
-
     // clear stored blocks
     this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
 
@@ -290,113 +199,89 @@ export class BlockManager {
     this.store.dispatch(TimelineActionTypes.INIT_TRACKS);
 
     // create, render and save block in store
-    blockData.forEach((block: BlockData): void => {
-      this.createBlock(block);
-    });
-
-    // detect blocks with dist == 0 and create group
-    const variance: number = 0.05;
-    // iterate over tracks
-    Object.keys(this.store.state.timeline.blocks).forEach(
-      (trackIdAsString: string, trackId: number): void => {
-        // iterate over blocks per track
-        let before: BlockDTO | null = null;
-        let currentDetectedGroup: {
-          groupId: number;
-          selection: BlockSelection[];
-        } | null = null;
-        const detectedGroups: {
-          groupId: number;
-          selection: BlockSelection[];
-        }[] = [];
-        this.store.state.timeline.blocks[trackId].forEach(
-          (block: BlockDTO, index: number): void => {
-            if (before == null) {
-              // first block of track
-              before = block;
-            } else {
-              const endOfBefore: number = before.rect.x + before.rect.width;
-              if (block.rect.x - endOfBefore <= variance) {
-                // group detected
-                if (currentDetectedGroup == null) {
-                  // first of group
-
-                  // create group
-                  currentDetectedGroup = {
-                    groupId: before.rect.uid,
-                    selection: [],
-                  };
-
-                  // add before and current block
-                  currentDetectedGroup.selection.push({
-                    trackId: trackId,
-                    index: index - 1,
-                    uid: before.rect.uid,
-                  });
-                  currentDetectedGroup.selection.push({
-                    trackId: trackId,
-                    index: index,
-                    uid: block.rect.uid,
-                  });
-
-                  // add groupId to blocks
-                  this.store.state.timeline.blocks[trackId][index - 1].groupId =
-                    currentDetectedGroup.groupId;
-                  this.store.state.timeline.blocks[trackId][index].groupId =
-                    currentDetectedGroup.groupId;
-                } else {
-                  // add to current group
-                  currentDetectedGroup.selection.push({
-                    trackId: trackId,
-                    index: index,
-                    uid: block.rect.uid,
-                  });
-
-                  // add groupId to block
-                  this.store.state.timeline.blocks[trackId][index].groupId =
-                    currentDetectedGroup.groupId;
-                }
-              } else {
-                if (currentDetectedGroup != null) {
-                  // end of current group - push groupData
-                  detectedGroups.push(currentDetectedGroup);
-                  currentDetectedGroup = null;
-                }
-              }
-
-              // last block of track - push detected groups
-              if (
-                this.store.state.timeline.blocks[trackId][index + 1] ==
-                undefined
-              ) {
-                if (currentDetectedGroup != null) {
-                  detectedGroups.push(currentDetectedGroup);
-                }
-              }
-              before = block;
-            }
-          },
-        );
-
-        if (detectedGroups.length > 0) {
-          detectedGroups.forEach(
-            (groupData: { groupId: number; selection: BlockSelection[] }) => {
-              this.store.dispatch(TimelineActionTypes.ADD_GROUP, groupData);
-            },
-          );
-        }
-      },
-    );
-
-    // update blocks, handles and strokes
-    this.forEachBlock((block: BlockDTO): void => {
+    blockData.forEach((blockData: BlockData): void => {
+      const block: BlockDTO = this.createBlock(blockData);
+      // update blocks, handles and strokes
       this.updateBlock(block);
       this.updateHandles(block);
       this.updateStroke(block);
       this.updateIndicators(block);
     });
 
+    // detect groups and blocks with dist == 0 and create group
+    const groups: Map<string, BlockSelection[]> = new Map();
+
+    // store correct selectionData, in case of mismatch
+    const correctSelectionData: Map<
+      string,
+      { trackId: number; index: number }
+    > = new Map<string, { trackId: number; index: number }>();
+
+    Object.keys(this.store.state.timeline.blocks).forEach(
+      (trackIdAsString: string, trackId: number): void => {
+        this.store.state.timeline.blocks[trackId].forEach(
+          (block: BlockDTO, index: number): void => {
+            // check for groups
+            if (block.groupUuid) {
+              if (!groups.has(block.groupUuid)) {
+                groups.set(block.groupUuid, []);
+              }
+              groups.get(block.groupUuid)!.push({
+                trackId: block.trackId,
+                index: index,
+                uuid: block.uuid,
+              });
+            }
+
+            // save selectionData
+            correctSelectionData.set(block.uuid, {
+              trackId: block.trackId,
+              index: index,
+            });
+          },
+        );
+      },
+    );
+    groups.forEach((selection: BlockSelection[], groupUuid: string) => {
+      this.store.dispatch(TimelineActionTypes.ADD_GROUP, {
+        groupUuid: groupUuid,
+        selection: selection,
+      });
+    });
+
     this.store.dispatch(TimelineActionTypes.GET_LAST_BLOCK_POSITION);
+
+    let toHighlight: BlockDTO | null = null;
+    // update selectionData
+    for (const selection of this.store.state.timeline.selectedBlocks) {
+      let block: BlockDTO =
+        this.store.state.timeline.blocks[selection.trackId][selection.index];
+      if (block == undefined || block.uuid != selection.uuid) {
+        // mismatch
+        const correctData = correctSelectionData.get(selection.uuid);
+        if (correctData != undefined) {
+          selection.trackId = correctData.trackId;
+          selection.index = correctData.index;
+          if (block == undefined) {
+            block =
+              this.store.state.timeline.blocks[selection.trackId][
+                selection.index
+              ];
+          }
+        }
+      }
+      if (block.uuid === this.editedGroupMemberUuid) {
+        toHighlight = block;
+      }
+    }
+
+    if (toHighlight) {
+      this.highlightCurrentMember(toHighlight);
+    } else {
+      this.renderSelection();
+    }
+
+    this.updateLocks();
   }
   private createBlock(block: BlockData): BlockDTO {
     const rect: Graphics = new Graphics();
@@ -484,6 +369,7 @@ export class BlockManager {
 
     // assign methods
     const dto: BlockDTO = new BlockDTO(
+      block.uuid,
       rect,
       strokedRect,
       leftHandle,
@@ -498,53 +384,19 @@ export class BlockManager {
       block.trackId,
     );
 
-    leftHandle.on("pointerdown", (event) =>
-      this.onAbsoluteResizeStart(event, dto, Direction.LEFT),
-    );
-    rightHandle.on("pointerdown", (event) =>
-      this.onAbsoluteResizeStart(event, dto, Direction.RIGHT),
-    );
-    topHandle.on("pointerdown", (event) =>
-      this.onChangeAmplitude(event, dto, Direction.TOP),
-    );
-    bottomHandle.on("pointerdown", (event) =>
-      this.onChangeAmplitude(event, dto, Direction.BOTTOM),
-    );
-    rect.on("pointerdown", (event) => this.onMoveBlock(event, dto));
+    dto.groupUuid = block.groupUuid;
+    dto.addListeners({
+      onHorizontalResize: this.onHorizontalResize.bind(this),
+      onChangeAmplitude: this.onVerticalResize.bind(this),
+      onMoveBlock: this.onMoveBlock.bind(this),
+    });
 
     this.store.dispatch(TimelineActionTypes.ADD_BLOCK, {
       trackId: block.trackId,
       block: dto,
     });
-    getDynamicContainer().addChild(blockContainer);
+    getDynamicContainer().addChildAt(blockContainer, 0);
     return dto;
-  }
-  private createCopiedBLock(block: CopiedBlockData): CopiedBlockDTO {
-    const rect: Graphics = new Graphics();
-    rect.rect(0, 0, 1, 1);
-    rect.fill(config.colors.copyColor);
-
-    const position: { x: number; width: number } =
-      this.calculatePosition(block);
-    rect.x =
-      config.leftPadding + position.x * this.store.state.timeline.zoomLevel;
-    rect.width = position.width * this.store.state.timeline.zoomLevel;
-    rect.height = block.intensity * config.maxBlockHeight;
-    rect.y =
-      config.sliderHeight +
-      config.componentPadding +
-      block.trackId * config.trackHeight +
-      (config.trackHeight / 2 - rect.height / 2);
-
-    const blockContainer: Container = new Container();
-    blockContainer.addChild(rect);
-
-    return new CopiedBlockDTO(
-      rect,
-      blockContainer,
-      block.trackId,
-      block.groupId,
-    );
   }
   private calculatePosition(tacton: BlockData): { x: number; width: number } {
     const timelineWidth: number = this.store.state.timeline.canvasWidth;
@@ -558,8 +410,8 @@ export class BlockManager {
   }
   private createBlockDataFromBlocks(
     blocks: BlockDTO[] | CopiedBlockDTO[],
-  ): CopiedBlockData[] {
-    const blockData: CopiedBlockData[] = [];
+  ): BlockData[] {
+    const blockData: BlockData[] = [];
     const timelineWidth: number = this.store.state.timeline.canvasWidth;
     const totalDuration: number =
       (timelineWidth / config.pixelsPerSecond) * 1000;
@@ -577,12 +429,17 @@ export class BlockManager {
         startTime + (convertedWidth / timelineWidth) * totalDuration;
       const intensity: number = block.rect.height / config.maxBlockHeight;
 
+      // if copying groupMember, reject groupUuid -> only one block ist copied
+      const groupUuid: string | null =
+        this.editedGroupMemberUuid == null ? block.groupUuid : null;
+
       blockData.push({
-        trackId: block.trackId,
+        trackId: block.trackId + this.lastTrackOffset,
         startTime: startTime,
         endTime: endTime,
         intensity: intensity,
-        groupId: block.groupId,
+        groupUuid: groupUuid,
+        uuid: DUMMY_UUID,
       });
     });
 
@@ -622,10 +479,7 @@ export class BlockManager {
       }
 
       if (changes.track != null) {
-        const trackContainerY: number = block.trackId * config.trackHeight;
-        const newTrackContainerY: number =
-          (block.trackId + changes.track) * config.trackHeight;
-        block.rect.y = newTrackContainerY - trackContainerY + block.initY;
+        block.rect.y = block.initY + (changes.track ?? 0) * config.trackHeight;
       }
 
       if (changes.width != null) {
@@ -649,53 +503,16 @@ export class BlockManager {
       this.updateStroke(block);
       this.updateIndicators(block);
     });
-
-    this.renderedGroupBorders.forEach(
-      (borderData: GroupBorderData, groupId: number): void => {
-        this.updateGroup(groupId, true);
-      },
-    );
   }
 
   //*************** Update-Methods ***************
 
-  // maybe improve performance by not storing strokes and handles and keeping them updated
-  // rather create, render and update them, only if they are needed
   private updateBlock(block: BlockDTO): void {
     block.rect.width = block.initWidth * this.store.state.timeline.zoomLevel;
     block.rect.x =
       config.leftPadding +
       block.initX * this.store.state.timeline.zoomLevel -
       this.store.state.timeline.horizontalViewportOffset;
-  }
-  private updateCopiedBlocks(): void {
-    // detect switching tracks
-    const currentYTrackId: number = Math.floor(
-      Math.max(
-        0,
-        this.store.state.timeline.currentCursorPosition.y -
-          getDynamicContainer().y -
-          config.sliderHeight -
-          config.componentPadding,
-      ) / config.trackHeight,
-    );
-    const trackChange: number = Math.max(
-      this.minTrackChange,
-      Math.min(currentYTrackId - this.initYTrackId, this.maxTrackChange),
-    );
-
-    let diff: number =
-      this.store.state.timeline.currentCursorPosition.x - this.lastCursorX;
-    diff = this.adjustOffset(diff, trackChange);
-    this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
-      block.rect.x = block.initX + diff;
-
-      const trackContainerY: number = block.trackId * config.trackHeight;
-      const newTrackContainerY: number =
-        (block.trackId + trackChange) * config.trackHeight;
-      block.rect.y = newTrackContainerY - trackContainerY + block.initY;
-      block.trackId = trackChange + block.initTrackId;
-    });
   }
   private updateBlockInitData(block: BlockDTO): void {
     // update data
@@ -803,6 +620,70 @@ export class BlockManager {
     block.topIndicator.visible = isVisible;
     block.bottomIndicator.visible = isVisible;
   }
+  private updateLocks(oldLocks?: Record<string, string[]>): void {
+    // clear all borders
+    getLockContainer().removeChildren();
+    const newLocks: Record<string, string[]> =
+      this.store.state.timeline.userLocks;
+    if (oldLocks) {
+      for (const userId of Object.keys(oldLocks)) {
+        if (userId === this.store.state.roomSettings.user.id) continue;
+
+        const oldUuids: string[] = oldLocks[userId] ?? [];
+        const newUuids: string[] = newLocks[userId] ?? [];
+
+        const releasedUuids: string[] = oldUuids.filter(
+          (uuid) => !newUuids.includes(uuid),
+        );
+        const releasedBlocks: BlockDTO[] =
+          this.findBlocksByUuids(releasedUuids);
+
+        releasedBlocks.forEach((block: BlockDTO): void => {
+          this.updateHandleInteractivity(block, true);
+          block.rect.interactive = true;
+        });
+      }
+    }
+
+    for (const userId of Object.keys(newLocks)) {
+      // skip own selection
+      if (userId == this.store.state.roomSettings.user.id) {
+        continue;
+      }
+
+      // skip if no selection
+      const uuids: string[] = this.store.state.timeline.userLocks[userId] ?? [];
+      if (uuids.length == 0) {
+        continue;
+      }
+
+      // visualize
+      let color: string | undefined =
+        this.store.state.roomSettings.participants.find(
+          (user: User): boolean => user.id == userId,
+        )?.color;
+      if (color == undefined) {
+        color = config.colors.lockColor;
+      }
+      // disable interactivity
+      const blocks: BlockDTO[] = this.findBlocksByUuids(uuids);
+      blocks.forEach((block: BlockDTO): void => {
+        if (block.groupUuid) {
+          this.clearGroupBorder(block.groupUuid);
+        }
+        this.updateHandleInteractivity(block, false);
+        this.updateIndicatorVisibility(block, false);
+        block.rect.interactive = false;
+        block.strokedRect.visible = false;
+      });
+
+      // draw lock-border
+      const bounds: GroupBounds = this.computeGroupBounds(blocks);
+      getLockContainer().addChild(
+        this.createBoundingRectangle(bounds, config.lockBorderWidth, color),
+      );
+    }
+  }
 
   //*************** Update-Hooks ***************
 
@@ -839,7 +720,7 @@ export class BlockManager {
             const isSelected: boolean =
               this.store.state.timeline.selectedBlocks.some(
                 (selection: BlockSelection): boolean =>
-                  selection.uid == block.rect.uid,
+                  selection.uuid == block.uuid,
               );
             if (!isSelected) {
               callback(block);
@@ -860,10 +741,10 @@ export class BlockManager {
       }
     });
     this.generateThresholds();
-    this.updateSelectionBorder();
+    this.updateBorder(undefined, true);
     this.renderedGroupBorders.forEach(
-      (groupBorder: GroupBorderData, groupId: number): void => {
-        this.updateGroup(groupId, true);
+      (groupBorder: Border, groupId: string): void => {
+        this.updateBorder(groupId, true);
       },
     );
     this.updated = true;
@@ -887,10 +768,10 @@ export class BlockManager {
           }
         });
       }
-      this.updateSelectionBorder();
+      this.updateBorder(undefined, true);
       this.renderedGroupBorders.forEach(
-        (groupBorder: GroupBorderData, groupId: number): void => {
-          this.updateGroup(groupId, true);
+        (groupBorder: Border, groupId: string): void => {
+          this.updateBorder(groupId, true);
         },
       );
     }
@@ -912,243 +793,89 @@ export class BlockManager {
 
   //*************** Interactions ***************
   private handleSelection(toSelect: BlockDTO | BlockSelection[]): void {
-    if (this.isInteractionBlocked) {
-      // notify user on click about edit-state
-      if (this.store.state.timeline.isEditable) {
-        if (!this.store.getters.canEditTacton) {
+    // get uuids
+    const uuids = Array.isArray(toSelect)
+      ? toSelect.map((s: BlockSelection) => s.uuid) // array (multi-selection)
+      : [toSelect.uuid]; // one element only
+    // check, if uuid is already blocked
+    let canEdit: boolean = true;
+    for (const uuid of uuids) {
+      if (this.store.state.timeline.lockedBlocks.has(uuid)) {
+        const editorId: string | undefined =
+          this.store.state.timeline.lockedBlocks.get(uuid);
+        const editor: User | undefined =
+          this.store.state.roomSettings.participants.find(
+            (user: User): boolean => user.id == editorId,
+          );
+        if (editorId != this.store.state.roomSettings.user.id) {
           this.store.dispatch(
             TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-            SnackbarTexts.TACTON_IS_EDITABLE_BUT_EDITED(),
+            SnackbarTexts.BLOCKS_ARE_EDITED_BY_USER(editor?.name),
           );
+          canEdit = false;
+          break;
         }
-      } else {
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-          SnackbarTexts.TACTON_IS_READONLY(),
-        );
       }
+    }
+
+    if (!canEdit) {
       return;
     }
 
-    if (Array.isArray(toSelect) && toSelect.length == 0) {
-      this.eventBus.dispatchEvent(
-        new Event(TimelineEvents.TACTON_ALL_DESELECTED),
-      );
-    } else {
-      this.eventBus.dispatchEvent(
-        new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
-      );
-    }
+    this.updateSelection(toSelect);
+    this.renderSelection();
+    this.editedGroupMemberUuid = null;
+    this.editedGroupUuid = null;
 
-    if (Array.isArray(toSelect)) {
-      if (!this.store.state.timeline.isPressingShift) {
-        this.forEachSelectedBlock((block: BlockDTO): void => {
-          block.strokedRect.visible = false;
-          this.updateIndicatorVisibility(block, false);
-        });
-        this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-        this.clearGroupBorder();
-      }
-
-      // detect groups
-      const foundGroupIds: number[] = [];
-      toSelect.forEach((selection: BlockSelection): void => {
-        const block: BlockDTO =
-          this.store.state.timeline.blocks[selection.trackId][selection.index];
-        if (block.groupId) {
-          // save groupId
-          if (
-            !foundGroupIds.some(
-              (groupId: number): boolean => groupId == block.groupId,
-            )
-          ) {
-            foundGroupIds.push(block.groupId);
-          }
-        } else {
-          // select, if not grouped
-          block.strokedRect.visible = true;
-          this.updateIndicatorVisibility(block, true);
-          this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, selection);
-        }
-      });
-
-      foundGroupIds.forEach((groupId: number): void => {
-        this.createGroupBorder(
-          groupId,
-          this.store.state.timeline.groups.get(groupId)!,
-        );
-        this.store.state.timeline.groups
-          .get(groupId)!
-          .forEach((selection: BlockSelection): void => {
-            const block =
-              this.store.state.timeline.blocks[selection.trackId][
-                selection.index
-              ];
-            block.strokedRect.visible = true;
-            this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, selection);
-          });
-      });
-    } else {
-      // check if selected or not
-      const index: number = this.store.state.timeline.blocks[
-        toSelect.trackId
-      ].findIndex(
-        (other: BlockDTO): boolean => other.rect.uid === toSelect.rect.uid,
-      );
-      if (index !== -1) {
-        const selectionIndex: number =
-          this.store.state.timeline.selectedBlocks.findIndex(
-            (selection: BlockSelection): boolean =>
-              selection.uid === toSelect.rect.uid,
-          );
-        const selection: BlockSelection = {
-          trackId: toSelect.trackId,
-          index: index,
-          uid: toSelect.rect.uid,
-        };
-        if (selectionIndex == -1) {
-          // block is not selected
-          if (!this.store.state.timeline.isPressingShift) {
-            // clear selection
-            this.forEachSelectedBlock((block: BlockDTO): void => {
-              block.strokedRect.visible = false;
-              this.updateIndicatorVisibility(block, false);
-            });
-            this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-            this.clearGroupBorder();
-          }
-
-          // check for group
-          if (toSelect.groupId == null) {
-            // add block to selection
-            this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, selection);
-
-            toSelect.strokedRect.visible = true;
-            this.updateIndicatorVisibility(toSelect, true);
-          } else {
-            this.createGroupBorder(
-              toSelect.groupId,
-              this.store.state.timeline.groups.get(toSelect.groupId)!,
-            );
-            this.store.state.timeline.groups
-              .get(toSelect.groupId)!
-              .forEach((selection: BlockSelection): void => {
-                const block =
-                  this.store.state.timeline.blocks[selection.trackId][
-                    selection.index
-                  ];
-                block.strokedRect.visible = true;
-                this.store.dispatch(
-                  TimelineActionTypes.SELECT_BLOCK,
-                  selection,
-                );
-              });
-          }
-        } else {
-          // block already selected
-          if (this.store.state.timeline.isPressingShift) {
-            if (toSelect.groupId != null) {
-              // remove from store
-              this.store.state.timeline.groups
-                .get(toSelect.groupId)!
-                .forEach((selection: BlockSelection): void => {
-                  const block: BlockDTO =
-                    this.store.state.timeline.blocks[selection.trackId][
-                      selection.index
-                    ];
-                  const selectionIndex: number =
-                    this.store.state.timeline.selectedBlocks.findIndex(
-                      (other: BlockSelection): boolean =>
-                        other.uid === selection.uid,
-                    );
-                  this.store.dispatch(
-                    TimelineActionTypes.UNSELECT_BLOCK,
-                    selectionIndex,
-                  );
-                  block.strokedRect.visible = false;
-                });
-
-              // remove groupBorder
-              this.clearGroupBorder(toSelect.groupId);
-            } else {
-              // remove block from selection
-              this.store.dispatch(
-                TimelineActionTypes.UNSELECT_BLOCK,
-                selectionIndex,
-              );
-              toSelect.strokedRect.visible = false;
-              this.updateIndicatorVisibility(toSelect, false);
-            }
-          }
-        }
-      }
-    }
+    // dispatch event
+    this.eventBus.dispatchEvent(
+      new Event(TimelineEvents.TACTON_BLOCK_SELECTED),
+    );
   }
   private copySelection(): void {
     this.clearCopiedBlocks();
     const selectedBlocks: BlockDTO[] = [];
 
+    // get selected blocks, and deselect
     this.store.state.timeline.selectedBlocks.forEach(
       (selection: BlockSelection): void => {
-        selectedBlocks.push(
-          this.store.state.timeline.blocks[selection.trackId][selection.index],
-        );
-        this.selectedBlockUids.push(selection.uid);
+        const block: BlockDTO =
+          this.store.state.timeline.blocks[selection.trackId][selection.index];
+        selectedBlocks.push(block);
+        this.selectedBlockUuids.push(block.uuid);
+        this.updateIndicatorVisibility(block, false);
+        block.strokedRect.visible = false;
       },
     );
 
-    let maxTrackId: number = -Infinity;
-    let minTrackId: number = Infinity;
     // copy blocks
     if (selectedBlocks.length > 0) {
-      const copiedBlockData: CopiedBlockData[] =
-        this.createBlockDataFromBlocks(selectedBlocks);
-      let lowestXofCopies: number = Infinity;
-      copiedBlockData.forEach((blockData: BlockData): void => {
-        const block: CopiedBlockDTO = this.createCopiedBLock(blockData);
-        if (block.rect.x < lowestXofCopies) lowestXofCopies = block.rect.x;
-        this.copiedBlocks.push(block);
-        getDynamicContainer().addChild(block.container);
+      selectedBlocks.forEach((originalBlock: BlockDTO): void => {
+        const rect: Graphics = new Graphics();
+        rect.rect(0, 0, 1, 1);
+        rect.fill(config.colors.copyColor);
+        rect.x = originalBlock.rect.x;
+        rect.width = originalBlock.rect.width;
+        rect.height = originalBlock.rect.height;
+        rect.y = originalBlock.rect.y;
 
-        if (block.trackId > maxTrackId) maxTrackId = block.trackId;
-        if (block.trackId < minTrackId) minTrackId = block.trackId;
-      });
+        const blockContainer: Container = new Container();
+        blockContainer.addChild(rect);
 
-      const offset: number =
-        this.store.state.timeline.currentCursorPosition.x - lowestXofCopies;
+        const copiedBlock: CopiedBlockDTO = new CopiedBlockDTO(
+          rect,
+          blockContainer,
+          originalBlock.trackId,
+          originalBlock.groupUuid,
+        );
 
-      this.initYTrackId = Math.floor(
-        Math.max(
-          0,
-          this.store.state.timeline.currentCursorPosition.y -
-            getDynamicContainer().y -
-            config.sliderHeight -
-            config.componentPadding,
-        ) / config.trackHeight,
-      );
-      this.initYTrackId = Math.max(
-        0,
-        Math.min(this.initYTrackId, this.store.state.timeline.trackCount),
-      );
-      let trackChange: number = this.initYTrackId - minTrackId;
+        copiedBlock.initY = originalBlock.initY;
+        copiedBlock.initX = originalBlock.initX;
+        copiedBlock.initWidth = originalBlock.initWidth;
+        copiedBlock.initTrackId = originalBlock.initTrackId;
 
-      if (maxTrackId + trackChange > this.store.state.timeline.trackCount) {
-        trackChange = this.store.state.timeline.trackCount - maxTrackId;
-      }
-
-      this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
-        block.rect.x = block.rect.x + offset;
-        block.initX = block.rect.x;
-
-        const newTrackId: number = block.trackId + trackChange;
-        block.rect.y =
-          config.sliderHeight +
-          config.componentPadding +
-          newTrackId * config.trackHeight +
-          (config.trackHeight / 2 - block.rect.height / 2);
-        block.initY = block.rect.y;
-        block.trackId = newTrackId;
-        block.initTrackId = newTrackId;
+        this.copiedBlocks.push(copiedBlock);
+        getDynamicContainer().addChild(copiedBlock.container);
       });
 
       // calculate and init borders for collision detection
@@ -1158,46 +885,62 @@ export class BlockManager {
       this.minTrackChange = Math.min(...this.validTrackOffsets);
       this.maxTrackChange = Math.max(...this.validTrackOffsets);
 
-      // set vars for collisionDetection
-      this.initialX = this.store.state.timeline.currentCursorPosition.x;
-      this.initialY = this.store.state.timeline.currentCursorPosition.y;
+      this.initialX = this.currentCursorX;
+      this.initialY = this.currentCursorY;
       this.lastCursorX = this.initialX;
-      this.currentTacton = this.copiedBlocks[this.copiedBlocks.length - 1];
 
-      this.updateCopiedBlocks();
+      this.currentTacton = this.copiedBlocks[0];
+      this.initialBlockX = this.currentTacton.rect.x;
+      this.initialBlockWidth = this.currentTacton.rect.width;
+      this.currentYAdjustment = 0;
+      this.lastViewportOffset =
+        this.store.state.timeline.horizontalViewportOffset;
+      this.lastTrackOffset = 0;
 
-      // unselect copied blocks
-      this.forEachSelectedBlock((block: BlockDTO): void => {
-        this.updateIndicatorVisibility(block, false);
-        block.strokedRect.visible = false;
-      });
-
-      this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-
-      if (this.selectionBorder != null) {
-        this.clearSelectionBorder();
+      // remove old handlers, if active
+      if (this.pointerMoveHandler != null) {
+        window.removeEventListener("pointermove", this.pointerMoveHandler);
       }
 
-      this.renderedGroupBorders.forEach(
-        (borderData: GroupBorderData, groupId: number) => {
-          this.clearGroupBorder(groupId);
-        },
+      if (this.pointerUpHandler != null) {
+        window.removeEventListener("pointerup", this.pointerUpHandler);
+      }
+
+      // init new handlers
+      this.pointerMoveHandler = (event: PointerEvent) => this.moveBlock(event);
+
+      this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+      clearLocks(false, false);
+
+      this.clearSelectionBorder();
+      this.clearGroupBorder();
+      this.eventBus.dispatchEvent(
+        new CustomEvent(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, {
+          detail: false,
+        }),
       );
+
+      // add EventListeners
+      window.addEventListener("pointermove", this.pointerMoveHandler);
     }
   }
   private pasteSelection(): void {
     if (this.copiedBlocks.length == 0) return;
-    const copiedBlockData: CopiedBlockData[] = this.createBlockDataFromBlocks(
+    const copiedBlockData: BlockData[] = this.createBlockDataFromBlocks(
       this.copiedBlocks,
     );
-    const addedBlockIds: number[] = [];
+    const addedBlockUuids: string[] = [];
+    let groupCounter: number = 0;
 
     // separate by groupId
-    const groupedCopiedBlockData: Map<number | undefined, CopiedBlockData[]> =
-      new Map<number | undefined, CopiedBlockData[]>();
+    const groupedCopiedBlockData: Map<string | null, BlockData[]> = new Map<
+      string | null,
+      BlockData[]
+    >();
 
     for (const block of copiedBlockData) {
-      const key: number | undefined = block.groupId;
+      const key: string | null = block.groupUuid;
+
       if (!groupedCopiedBlockData.has(key)) {
         groupedCopiedBlockData.set(key, []);
       }
@@ -1205,48 +948,46 @@ export class BlockManager {
     }
 
     groupedCopiedBlockData.forEach(
-      (
-        copiedBlockData: CopiedBlockData[],
-        oldGroupId: number | undefined,
-      ): void => {
-        if (oldGroupId == undefined) {
+      (copiedBlockData: BlockData[], oldGroupId: string | null): void => {
+        if (oldGroupId == null) {
           // blocks were not grouped
-          copiedBlockData.forEach((blockData: CopiedBlockData): void => {
+          copiedBlockData.forEach((blockData: BlockData): void => {
             const block: BlockDTO = this.createBlock(blockData);
-            addedBlockIds.push(block.rect.uid);
+            addedBlockUuids.push(block.uuid);
           });
         } else {
           // blocks were grouped
-          let groupId: number | undefined;
+          const dummyGroupUuid: string = `${DUMMY_GROUP_UUID}${groupCounter++}`;
+          let groupUuid: string | null = null;
           const groupSelectionData: BlockSelection[] = [];
 
           // create new blocks
-          copiedBlockData.forEach((blockData: CopiedBlockData): void => {
+          copiedBlockData.forEach((blockData: BlockData): void => {
             // create block
             const block: BlockDTO = this.createBlock(blockData);
 
-            if (groupId == undefined) {
-              groupId = block.rect.uid;
+            if (groupUuid == null) {
+              groupUuid = block.uuid;
             }
-            block.groupId = groupId;
+            block.groupUuid = dummyGroupUuid;
 
-            addedBlockIds.push(block.rect.uid);
+            addedBlockUuids.push(block.uuid);
             // 0 is used as dummy index, after adding all copied blocks, the stored data is sorted, thus updating the indices to the correct values
             groupSelectionData.push({
               trackId: block.trackId,
               index: 0,
-              uid: block.rect.uid,
+              uuid: block.uuid,
             });
           });
 
-          if (groupId == undefined) {
+          if (groupUuid == null) {
             console.error("GroupId is undefined");
             return;
           }
 
           // create group
           this.store.dispatch(TimelineActionTypes.ADD_GROUP, {
-            groupId: groupId,
+            groupUuid: groupUuid,
             selection: groupSelectionData,
           });
         }
@@ -1259,7 +1000,9 @@ export class BlockManager {
         this.store.state.timeline.blocks[trackId].forEach(
           (block: BlockDTO): void => {
             if (
-              addedBlockIds.some((id: number): boolean => id == block.rect.uid)
+              addedBlockUuids.some(
+                (uuid: string): boolean => uuid == block.uuid,
+              )
             ) {
               this.updateBlock(block);
               this.updateHandles(block);
@@ -1272,18 +1015,14 @@ export class BlockManager {
       },
     );
 
+    this.clearCopiedBlocks();
     this.calculateVirtualViewportLength();
-
-    // remove copies and clear arrays
-    this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
-      block.container.destroy({ children: true });
-    });
 
     // enable handles of previously selected blocks
     this.forEachBlock((block: BlockDTO): void => {
       if (
-        this.selectedBlockUids.some(
-          (uid: number): boolean => uid == block.rect.uid,
+        this.selectedBlockUuids.some(
+          (uuid: string): boolean => uuid == block.uuid,
         )
       ) {
         // enable handles
@@ -1294,7 +1033,6 @@ export class BlockManager {
       }
     });
 
-    this.copiedBlocks = [];
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private clearCopiedBlocks(): void {
@@ -1304,42 +1042,64 @@ export class BlockManager {
       });
 
       this.copiedBlocks = [];
-      return;
+      this.eventBus.dispatchEvent(
+        new CustomEvent(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, {
+          detail: true,
+        }),
+      );
+      if (this.pointerMoveHandler != null) {
+        window.removeEventListener("pointermove", this.pointerMoveHandler);
+      }
+
+      const viewport: number =
+        (this.store.state.timeline.canvasWidth -
+          config.leftPadding +
+          this.store.state.timeline.horizontalViewportOffset) /
+        this.store.state.timeline.zoomLevel;
+
+      this.store.dispatch(
+        TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
+        viewport,
+      );
     }
   }
   private deleteBlock(): void {
+    this.editedGroupMemberUuid = null;
+    this.editedGroupUuid = null;
+    this.clearGroupBorder();
     this.store.dispatch(TimelineActionTypes.DELETE_SELECTED_BLOCKS);
     this.calculateVirtualViewportLength();
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    stopLockTimer();
   }
   private onMoveBlock(event: FederatedPointerEvent, block: BlockDTO): void {
-    // if groupBorder is active, update
-    if (this.selectionBorder) {
-      // dont update, if there will be less then two blocks (requirement for proportional resizing)
-      const isBlockSelected: boolean =
-        this.store.state.timeline.selectedBlocks.some(
-          (selection: BlockSelection): boolean =>
-            selection.uid == block.rect.uid,
-        );
-      if (
-        this.store.state.timeline.selectedBlocks.length >= 3 ||
-        !isBlockSelected
-      ) {
-        // select / deselect block
-        this.handleSelection(block);
+    if (!this.canSelect()) return;
+    const isSelected = this.isBlockSelected(block);
 
-        if (isBlockSelected) {
-          this.updateHandleInteractivity(block, true);
+    if (block.groupUuid && isSelected && this.isDoubleClick) {
+      this.toggleMemberEdit(block);
+    } else {
+      if (this.editedGroupMemberUuid == null) {
+        this.handleSelection(block);
+      } else {
+        // block is not from this group -> normal selection
+        const isDifferentGroup: boolean =
+          this.editedGroupUuid !== block.groupUuid;
+        if (isDifferentGroup) {
+          this.handleSelection(block);
+        } else {
+          // switching group-member
+          if (this.editedGroupMemberUuid !== block.uuid) {
+            this.switchMember(block);
+          }
         }
       }
-      this.drawSelectionBorder();
-    } else {
-      // select block
-      this.handleSelection(block);
     }
+    this.isDoubleClick = false;
+    clearTimeout(this.doubleTimeout);
 
     // early exit if user is pressing shift --> multi-selection
-    if (this.store.state.timeline.isPressingShift) {
+    if (this.isPressingShift) {
       this.isSelecting = true;
       this.pointerUpHandler = () => this.onSelectingEnd();
       window.addEventListener("pointerup", this.pointerUpHandler);
@@ -1360,11 +1120,6 @@ export class BlockManager {
     // set interactionState to block multiSelection
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
 
-    // return if nothing is selected (e.g. by using multi-selection via shift
-    if (this.store.state.timeline.selectedBlocks.length == 0) {
-      return;
-    }
-
     // calculate and init borders for collision detection
     this.createBorders();
 
@@ -1382,14 +1137,30 @@ export class BlockManager {
     // add EventListeners
     window.addEventListener("pointermove", this.pointerMoveHandler);
     window.addEventListener("pointerup", this.pointerUpHandler);
+
+    // reset timer
+    stopLockTimer();
   }
   private moveBlock(event: PointerEvent): void {
+    const x: number = event.clientX - this.store.state.timeline.wrapperXOffset;
+    const y: number = event.clientY;
+
+    this.scrollViewportHorizontal(x);
+    this.scrollViewportVertical(y);
+    this.updateBlockPositionFromCursor(x, y);
+
+    this.lastCursorX = x;
+    this.lastCursorY = y;
+
+    this.moved = true;
+  }
+  private updateBlockPositionFromCursor(x: number, y: number): void {
     if (this.currentTacton == null) return;
     const changes: BlockChanges = new BlockChanges();
+    changes.x = 0;
     changes.track = 0;
-    const deltaX: number =
-      event.clientX - this.initialX - this.store.state.timeline.wrapperXOffset;
-    const deltaY: number = event.clientY - this.initialY;
+    const deltaX: number = x - this.initialX;
+    const deltaY: number = y - this.initialY;
 
     // detect switching tracks
     let currentYTrackId: number =
@@ -1407,30 +1178,31 @@ export class BlockManager {
       ),
     );
 
-    // scroll viewport if needed
-    // TODO maybe improve this by using lowest start and highest end position of the whole selection
-    this.scrollViewportHorizontal(
-      event.clientX - this.store.state.timeline.wrapperXOffset,
-    );
-    this.scrollViewportVertical(event.clientY);
+    const adjustedDeltaX: number = this.adjustOffset(deltaX, changes.track);
+    changes.x = this.initialBlockX + adjustedDeltaX - this.currentTacton.rect.x;
+    this.applyChanges(changes);
 
-    if (!this.isScrolling) {
-      const adjustedDeltaX: number = this.adjustOffset(deltaX, changes.track);
-      changes.x =
-        this.initialBlockX + adjustedDeltaX - this.currentTacton.rect.x;
-      this.applyChanges(changes);
-
-      if (this.selectionBorder != null) {
-        // update selectionBorder
-        this.selectionBorder.lastStartX += changes.x;
-        this.selectionBorder.initY =
-          this.selectionBorder.lastY + changes.track * config.trackHeight;
-        this.resizeSelectionBorder(this.selectionBorder);
-        this.isCollidingOnResize = false;
+    this.copiedBlocks.forEach((block: CopiedBlockDTO): void => {
+      if (changes.x != null) {
+        block.rect.x += changes.x;
       }
+
+      if (changes.track != null) {
+        block.rect.y = block.initY + (changes.track ?? 0) * config.trackHeight;
+      }
+    });
+
+    if (this.selectionBorder != null) {
+      // update selectionBorder
+      this.selectionBorder.lastStartX += changes.x;
+      this.updateBorder(undefined, true);
     }
 
-    this.moved = true;
+    this.renderedGroupBorders.forEach(
+      (borderData: Border, groupId: string): void => {
+        this.updateBorder(groupId, true);
+      },
+    );
   }
   private onMoveBlockEnd(): void {
     if (this.currentTacton == null) return;
@@ -1440,55 +1212,53 @@ export class BlockManager {
     this.stopAutoScroll();
     window.removeEventListener("pointermove", this.pointerMoveHandler);
     window.removeEventListener("pointerup", this.pointerUpHandler);
-
-    let borderData: SelectionBorderData | null = this.selectionBorder;
-
-    if (borderData == null) {
-      // only set InteractionState if groupBorder (from proportional resizing) is not active
-      this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
-    }
-    if (borderData == null && this.currentTacton.groupId != null) {
-      borderData = this.renderedGroupBorders.get(this.currentTacton.groupId)!;
-    }
-    if (borderData != null) {
-      borderData.lastY = borderData.initY;
-    }
-
     this.pointerMoveHandler = null;
     this.pointerUpHandler = null;
+
+    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
+
     this.lastVerticalOffset = this.store.state.timeline.verticalViewportOffset;
 
     this.store.dispatch(
       TimelineActionTypes.CHANGE_BLOCK_TRACK,
       this.lastTrackOffset,
     );
+    this.lastTrackOffset = 0;
 
     this.calculateVirtualViewportLength();
     this.currentTacton = null;
+
     if (this.moved) {
       this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    } else {
+      resetLockTimer();
     }
-    this.moved = false;
     getLine().visible = false;
+
+    this.isDoubleClick = true;
+    this.doubleTimeout = setTimeout((): void => {
+      this.isDoubleClick = false;
+    }, 100);
   }
   private onSelectingEnd(): void {
     if (this.pointerUpHandler == null) return;
     this.isSelecting = false;
     window.removeEventListener("pointerup", this.pointerUpHandler);
+    this.handleLocking();
   }
   private onAbsoluteResizeStart(
     event: FederatedPointerEvent,
     block: BlockDTO,
-    direction: Direction.LEFT | Direction.RIGHT,
+    direction: Direction,
   ): void {
     this.resizeDirection = direction;
     this.initialX = event.globalX;
     this.initialBlockWidth = block.rect.width;
     this.initialBlockX = block.rect.x;
     this.isCollidingOnResize = false;
+    this.lastTrackOffset = 0;
 
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
-    this.handleSelection(block);
 
     this.pointerMoveHandler = (event: PointerEvent) =>
       this.onAbsoluteResize(event, block);
@@ -1505,11 +1275,6 @@ export class BlockManager {
     let newWidth;
     let newX: number = prevX;
 
-    // exit, if user is pressing strg (proportional-resizing is active)
-    if (this.strgDown) {
-      return;
-    }
-
     if (this.resizeDirection === Direction.RIGHT) {
       // calculate new tacton width
       newWidth = Math.max(this.initialBlockWidth + deltaX, minBlockWidth);
@@ -1520,7 +1285,6 @@ export class BlockManager {
       // calculate x coordinate of right border
       const newRightX: number = this.initialBlockX + newWidth;
 
-      this.isCollidingOnResize = false;
       if (!this.isCollidingOnResize || deltaX < this.lastValidDeltaX) {
         this.isCollidingOnResize = false;
         const selectedTracks: number[] =
@@ -1671,17 +1435,27 @@ export class BlockManager {
     }
     changes.width = newWidth - prevWidth;
     this.applyChanges(changes);
+
+    // update borders
+    if (this.selectionBorder != null) {
+      this.updateBorder(undefined, true);
+    }
+    this.renderedGroupBorders.forEach(
+      (borderData: Border, groupId: string): void => {
+        this.updateBorder(groupId, true);
+      },
+    );
   }
   private onProportionalResizeStart(
     event: FederatedPointerEvent,
-    direction: Direction.LEFT | Direction.RIGHT,
-    groupId?: number,
+    direction: Direction,
+    groupId?: string | null,
   ): void {
-    let borderData: SelectionBorderData | null = this.selectionBorder;
-    if (borderData == null && groupId != null) {
+    let borderData: Border | undefined = this.selectionBorder;
+    if (borderData == undefined && groupId != null) {
       borderData = this.renderedGroupBorders.get(groupId)!;
     }
-    if (borderData == null) {
+    if (borderData == undefined) {
       return;
     }
 
@@ -1693,27 +1467,19 @@ export class BlockManager {
     this.initialX = event.globalX;
 
     this.pointerMoveHandler = (event: PointerEvent) =>
-      this.onProportionalResize(event, groupId);
+      this.onProportionalResize(event, borderData);
     this.pointerUpHandler = () => this.onResizeEnd();
     window.addEventListener("pointermove", this.pointerMoveHandler);
     window.addEventListener("pointerup", this.pointerUpHandler);
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
   }
-  private onProportionalResize(event: PointerEvent, groupId?: number): void {
-    let borderData: SelectionBorderData | null = this.selectionBorder;
-    if (borderData == null && groupId != null) {
-      borderData = this.renderedGroupBorders.get(groupId)!;
-    }
-    if (borderData == null) {
-      return;
-    }
-
+  private onProportionalResize(event: PointerEvent, borderData: Border): void {
     const deltaX: number =
       event.clientX - this.initialX - this.store.state.timeline.wrapperXOffset;
     const initWidth: number = borderData.initWidth;
     const initStartX: number = borderData.initStartX;
-    const collisionsLeft: number = this.lastUidsCollisionLeft.length;
-    const collisionsRight: number = this.lastUidsCollisionRight.length;
+    const collisionsLeft: number = this.lastUuidsCollisionLeft.length;
+    const collisionsRight: number = this.lastUuidsCollisionRight.length;
 
     let newGroupWidth: number = initWidth;
     let newGroupStartX: number = initStartX;
@@ -1734,7 +1500,7 @@ export class BlockManager {
 
       if (
         collisionsLeft == 1 &&
-        this.lastUidsCollisionLeft[0] != borderData.firstBlockOfGroup.uid
+        this.lastUuidsCollisionLeft[0] != borderData.firstBlock.uuid
       ) {
         isDeltaXValid = deltaX > this.lastValidDeltaX;
       }
@@ -1754,7 +1520,7 @@ export class BlockManager {
 
       if (
         collisionsRight == 1 &&
-        this.lastUidsCollisionRight[0] != borderData.lastBlockOfGroup.uid
+        this.lastUuidsCollisionRight[0] != borderData.lastBlock.uuid
       ) {
         isDeltaXValid = deltaX < this.lastValidDeltaX;
       }
@@ -1774,8 +1540,8 @@ export class BlockManager {
     }
 
     const scale: number = newGroupWidth / initWidth;
-    const uidsCollisionLeft: number[] = [];
-    const uidsCollisionRight: number[] = [];
+    const uuidsCollisionLeft: string[] = [];
+    const uuidsCollisionRight: string[] = [];
 
     for (const selection of this.store.state.timeline.selectedBlocks) {
       // calculate new block parameters
@@ -1794,7 +1560,7 @@ export class BlockManager {
         const otherRightX: number = other.rect.x + other.rect.width;
         if (otherRightX >= newX && otherRightX < newRightX) {
           // collision left
-          uidsCollisionLeft.push(selection.uid);
+          uuidsCollisionLeft.push(selection.uuid);
 
           // calculate diff and new group parameters
           const diff: number = otherRightX - newX;
@@ -1804,7 +1570,7 @@ export class BlockManager {
 
         if (other.rect.x <= newRightX && other.rect.x > newX) {
           // collision right
-          uidsCollisionRight.push(selection.uid);
+          uuidsCollisionRight.push(selection.uuid);
 
           // calculate diff and new group parameters
           const diff: number = newX + newWidth - other.rect.x;
@@ -1842,21 +1608,21 @@ export class BlockManager {
 
         block.strokedRect.x = newX;
         block.strokedRect.width = newWidth;
+
+        this.store.state.timeline.sorted[block.trackId] = false;
       });
 
       // update groups
       this.renderedGroupBorders.forEach(
-        (borderData: GroupBorderData, groupId: number): void => {
-          this.updateGroup(groupId, !this.strgDown);
+        (borderData: Border, groupId: string): void => {
+          this.updateBorder(groupId, true);
         },
       );
+      this.updateBorder(undefined, true);
 
-      if (groupId == undefined) {
-        this.resizeSelectionBorder(borderData, newGroupStartX, newGroupWidth);
-        this.lastValidDeltaX = deltaX;
-        this.lastUidsCollisionRight = uidsCollisionRight;
-        this.lastUidsCollisionLeft = uidsCollisionLeft;
-      }
+      this.lastValidDeltaX = deltaX;
+      this.lastUuidsCollisionRight = uuidsCollisionRight;
+      this.lastUuidsCollisionLeft = uuidsCollisionLeft;
     }
   }
   private onResizeEnd(): void {
@@ -1865,17 +1631,13 @@ export class BlockManager {
     this.resizeDirection = null;
     window.removeEventListener("pointermove", this.pointerMoveHandler);
     window.removeEventListener("pointerup", this.pointerUpHandler);
+    this.pointerMoveHandler = null;
+    this.pointerUpHandler = null;
 
     // only set InteractionState if groupBorder is not active
-    if (this.selectionBorder == null) {
+    if (this.selectionBorder == undefined) {
       this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     }
-
-    // update borderData
-    this.renderedGroupBorders.forEach((borderData: GroupBorderData): void => {
-      borderData.initStartX = borderData.lastStartX;
-      borderData.initWidth = borderData.lastWidth;
-    });
 
     this.forEachSelectedBlock((block: BlockDTO): void => {
       this.updateHandles(block);
@@ -1883,37 +1645,125 @@ export class BlockManager {
       this.updateBlockInitData(block);
     });
     this.calculateVirtualViewportLength();
+    this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+  }
+
+  // change amplitude for groups
+  private onChangeGroupAmplitude(
+    event: FederatedPointerEvent,
+    direction: Direction,
+    members: BlockSelection[],
+    border: Border,
+  ): void {
+    // save initial values
+    this.initialY = event.globalY;
+
+    // calculate possible offset based on members
+    let minChange: number = Infinity;
+    let maxChange: number = Infinity;
+    members.forEach((selection: BlockSelection) => {
+      const block: BlockDTO =
+        this.store.state.timeline.blocks[selection.trackId][selection.index];
+      const deltaToMin: number = config.minBlockHeight - block.rect.height;
+      const deltaToMax: number = config.maxBlockHeight - block.rect.height;
+      if (
+        deltaToMin > -Infinity &&
+        Math.abs(deltaToMin) < Math.abs(minChange)
+      ) {
+        minChange = deltaToMin;
+      }
+      if (deltaToMax > 0 && deltaToMax < maxChange) {
+        maxChange = deltaToMax;
+      }
+    });
+    if (minChange === Infinity) minChange = 0;
+    if (maxChange === Infinity) maxChange = 0;
+
+    this.pointerMoveHandler = (event: PointerEvent) =>
+      this.changeGroupAmplitude(event, direction, border, minChange, maxChange);
+    this.pointerUpHandler = () => this.onChangeGroupAmplitudeEnd(border);
+    window.addEventListener("pointermove", this.pointerMoveHandler);
+    window.addEventListener("pointerup", this.pointerUpHandler);
+    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
+    // reset timer
+    stopLockTimer();
+  }
+  private changeGroupAmplitude(
+    event: PointerEvent,
+    direction: Direction,
+    border: Border,
+    minChange: number,
+    maxChange: number,
+  ): void {
+    let deltaY: number = 0;
+    if (direction == Direction.TOP) {
+      deltaY = this.initialY - event.clientY;
+      deltaY += this.store.state.timeline.wrapperYOffset;
+    } else if (direction == Direction.BOTTOM) {
+      deltaY = event.clientY - this.initialY;
+      deltaY -= this.store.state.timeline.wrapperYOffset;
+    }
+
+    if (deltaY <= maxChange && deltaY >= minChange) {
+      const prevHeight: number = border.border.height;
+      const newHeight: number = border.initHeight + deltaY;
+      const heightChange: number = newHeight - prevHeight;
+      const changes: BlockChanges = new BlockChanges();
+      changes.height = heightChange;
+      this.applyChanges(changes);
+
+      this.renderedGroupBorders.forEach(
+        (borderData: Border, groupId: string): void => {
+          this.updateBorder(groupId, true);
+        },
+      );
+      this.updateBorder(undefined, true);
+    }
+  }
+
+  private onChangeGroupAmplitudeEnd(border: Border): void {
+    // update data
+    border.initHeight = border.border.height;
+    this.forEachSelectedBlock((block: BlockDTO): void => {
+      this.updateBlockInitData(block);
+    });
+
+    // remove eventListener
+    if (this.pointerMoveHandler == null) return;
+    if (this.pointerUpHandler == null) return;
+    window.removeEventListener("pointermove", this.pointerMoveHandler);
+    window.removeEventListener("pointerup", this.pointerUpHandler);
     this.pointerMoveHandler = null;
     this.pointerUpHandler = null;
+
+    // update instructions
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
   }
   private onChangeAmplitude(
     event: FederatedPointerEvent,
     block: BlockDTO,
-    direction: Direction.TOP | Direction.BOTTOM,
+    direction: Direction,
   ): void {
     this.initialY = event.globalY;
     this.initialBlockHeight = block.rect.height;
     this.currentTacton = block;
-    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
-    this.handleSelection(block);
+    this.lastTrackOffset = 0;
 
     this.pointerMoveHandler = (event: PointerEvent) =>
       this.changeAmplitude(event, block, direction);
     this.pointerUpHandler = () => this.onChangeAmplitudeEnd();
     window.addEventListener("pointermove", this.pointerMoveHandler);
     window.addEventListener("pointerup", this.pointerUpHandler);
+    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
+    // reset timer
+    stopLockTimer();
   }
   private changeAmplitude(
     event: PointerEvent,
     block: BlockDTO,
     direction: Direction,
   ): void {
-    // exit, if user is pressing strg (proportional-resizing is active)
-    if (this.strgDown) {
-      return;
-    }
-
     let deltaY: number = 0;
     if (direction == Direction.TOP) {
       deltaY = this.initialY - event.clientY;
@@ -1932,46 +1782,51 @@ export class BlockManager {
     const changes: BlockChanges = new BlockChanges();
     changes.height = heightChange;
     this.applyChanges(changes);
+
+    // update borders
+    if (this.selectionBorder != null) {
+      this.updateBorder(undefined, true);
+    }
+    this.renderedGroupBorders.forEach(
+      (borderData: Border, groupId: string): void => {
+        this.updateBorder(groupId, true);
+      },
+    );
   }
   private onChangeAmplitudeEnd(): void {
     if (this.pointerMoveHandler == null) return;
     if (this.pointerUpHandler == null) return;
     window.removeEventListener("pointermove", this.pointerMoveHandler);
     window.removeEventListener("pointerup", this.pointerUpHandler);
-
-    // only set InteractionState if groupBorder is not active
-    if (this.selectionBorder == null) {
-      this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
-    }
+    this.pointerMoveHandler = null;
+    this.pointerUpHandler = null;
 
     this.forEachSelectedBlock((block: BlockDTO): void => {
       this.updateHandles(block);
       this.updateBlockInitData(block);
     });
-
-    this.pointerMoveHandler = null;
-    this.pointerUpHandler = null;
     this.currentTacton = null;
+    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
   }
   private groupSelectedBlocks(): void {
     if (this.store.state.timeline.selectedBlocks.length <= 1) return;
-    let groupId: number;
+    let groupUuid: string;
     let hasNewBlocks: boolean = true;
-    const foundGroupIds: number[] = [];
+    const foundGroupIds: string[] = [];
 
     if (this.store.state.timeline.groups.size > 0) {
       hasNewBlocks = false;
 
       // get all groupIds of selection
       this.forEachSelectedBlock((block: BlockDTO): void => {
-        if (block.groupId) {
+        if (block.groupUuid) {
           if (
             !foundGroupIds.some(
-              (groupId: number): boolean => groupId == block.groupId,
+              (groupId: string): boolean => groupId == block.groupUuid,
             )
           ) {
-            foundGroupIds.push(block.groupId);
+            foundGroupIds.push(block.groupUuid);
           }
         } else {
           hasNewBlocks = true;
@@ -1985,19 +1840,19 @@ export class BlockManager {
     if (!hasNewBlocks) {
       // ungroup
 
-      // get groupId
-      const groupId: number = foundGroupIds[0];
+      // get groupUuid
+      const groupUuid: string = foundGroupIds[0];
 
-      // remove groupId from blocks
+      // remove groupUuid from blocks
       this.forEachSelectedBlock((block: BlockDTO): void => {
-        block.groupId = undefined;
+        block.groupUuid = null;
       });
 
       // clear border
-      this.clearGroupBorder(groupId);
+      this.clearGroupBorder(groupUuid);
 
       // remove group from store
-      this.store.state.timeline.groups.delete(groupId);
+      this.store.state.timeline.groups.delete(groupUuid);
 
       // create selection border
       this.drawSelectionBorder();
@@ -2007,12 +1862,12 @@ export class BlockManager {
       // create new group
 
       // remove existing groups from store and clear border
-      foundGroupIds.forEach((groupId: number): void => {
+      foundGroupIds.forEach((groupId: string): void => {
         this.clearGroupBorder(groupId);
         this.store.state.timeline.groups.delete(groupId);
       });
 
-      groupId = this.store.state.timeline.selectedBlocks[0].uid;
+      groupUuid = this.store.state.timeline.selectedBlocks[0].uuid;
       const blocksOfGroup: BlockSelection[] = [];
 
       this.store.state.timeline.selectedBlocks.forEach(
@@ -2021,49 +1876,426 @@ export class BlockManager {
             this.store.state.timeline.blocks[selection.trackId][
               selection.index
             ];
-          block.groupId = groupId;
+          block.groupUuid = groupUuid;
           blocksOfGroup.push(selection);
         },
       );
 
       this.store.dispatch(TimelineActionTypes.ADD_GROUP, {
-        groupId: groupId,
+        groupUuid: groupUuid,
         selection: blocksOfGroup,
       });
       this.clearSelectionBorder();
-      this.createGroupBorder(groupId, this.store.state.timeline.selectedBlocks);
+      this.createGroupBorder(
+        groupUuid,
+        this.store.state.timeline.selectedBlocks,
+      );
     }
   }
 
   //*************** Helper ***************
-  private onGroupResize(
-    event: FederatedPointerEvent,
-    direction: Direction.LEFT | Direction.RIGHT,
-    groupId: number,
-  ): void {
-    // check, if only the group is selected, or other blocks | groups
-    const groupData = this.store.state.timeline.groups.get(groupId);
-    const borderData: GroupBorderData | undefined =
-      this.renderedGroupBorders.get(groupId);
 
-    if (groupData == undefined || borderData == undefined) return;
+  private handleLocking(): void {
+    this.store.state.timeline.selectedBlocks.length === 0
+      ? stopLockTimer()
+      : resetLockTimer();
+  }
 
-    if (groupData.length == this.store.state.timeline.selectedBlocks.length) {
-      this.onProportionalResizeStart(event, direction, groupId);
-    } else {
-      const blockOfGroup: BlockSelection = borderData.firstBlockOfGroup;
-      this.onAbsoluteResizeStart(
-        event,
-        this.store.state.timeline.blocks[blockOfGroup.trackId][
-          blockOfGroup.index
-        ],
-        direction,
-      );
+  private canSelect(displaySnackbar: boolean = true): boolean {
+    // notify user on click about edit-state
+    if (this.isInteractionBlocked) {
+      if (displaySnackbar) {
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
+          SnackbarTexts.TACTON_IS_READONLY(),
+        );
+      }
+      return false;
     }
+    return true;
+  }
+  private toggleMemberEdit(block: BlockDTO) {
+    if (!(this.editedGroupMemberUuid === block.uuid)) {
+      this.enterMemberEdit(block);
+    } else {
+      this.leaveMemberEdit();
+    }
+  }
+  private highlightCurrentMember(block: BlockDTO): void {
+    this.forEachBlock((block: BlockDTO): void => {
+      const isActive = block.uuid === this.editedGroupMemberUuid;
+      block.strokedRect.visible = isActive;
+      this.updateHandleInteractivity(block, isActive);
+      this.updateIndicatorVisibility(block, isActive);
+
+      if (block.groupUuid !== this.editedGroupUuid) {
+        block.rect.alpha = 0.5;
+      }
+    });
+
+    if (block.groupUuid == null) return;
+
+    // clear other borders
+    this.clearSelectionBorder();
+    this.renderedGroupBorders.forEach((border: Border) => {
+      if (border.groupUuid !== block.groupUuid) {
+        this.clearGroupBorder(border.groupUuid);
+      }
+    });
+
+    // hide handles of own border
+    this.toggleBorderHandles(block.groupUuid, false);
+  }
+  private enterMemberEdit(block: BlockDTO): void {
+    this.editedGroupMemberUuid = block.uuid;
+    this.editedGroupUuid = block.groupUuid;
+
+    this.highlightCurrentMember(block);
+    const members: BlockSelection[] | undefined =
+      this.store.state.timeline.groups.get(block.groupUuid!);
+    if (members == undefined) return;
+
+    members.forEach((sel) => this.stashedSelection.set(sel.uuid, sel));
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.store.dispatch(
+      TimelineActionTypes.SELECT_BLOCK,
+      this.stashedSelection.get(block.uuid),
+    );
+  }
+  private switchMember(block: BlockDTO): void {
+    this.editedGroupMemberUuid = block.uuid;
+    this.highlightCurrentMember(block);
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.store.dispatch(
+      TimelineActionTypes.SELECT_BLOCK,
+      this.stashedSelection.get(block.uuid),
+    );
+  }
+  private leaveMemberEdit(): void {
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.stashedSelection.forEach((sel) =>
+      this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, sel),
+    );
+    this.stashedSelection.clear();
+
+    this.forEachUnselectedBlock((b): void => {
+      b.rect.alpha = 1;
+    });
+
+    this.forEachSelectedBlock((b): void => {
+      b.strokedRect.visible = true;
+      this.updateHandleInteractivity(b, false);
+      this.updateIndicatorVisibility(b, false);
+    });
+
+    if (this.editedGroupUuid != null) {
+      this.toggleBorderHandles(this.editedGroupUuid, true);
+    }
+
+    this.editedGroupMemberUuid = null;
+    this.editedGroupUuid = null;
+  }
+  private toggleBorderHandles(
+    groupId: string | undefined,
+    isVisible: boolean,
+  ): void {
+    let border: Border | undefined;
+    if (groupId) {
+      border = this.renderedGroupBorders.get(groupId);
+    } else {
+      border = this.selectionBorder;
+    }
+    if (border == undefined) return;
+    this.updateBorder(groupId, isVisible);
+    border.rightHandle.visible = isVisible;
+    border.rightIndicator.visible = isVisible;
+    border.leftHandle.visible = isVisible;
+    border.leftIndicator.visible = isVisible;
+    border.topHandle.visible = isVisible;
+    border.topIndicator.visible = isVisible;
+    border.bottomHandle.visible = isVisible;
+    border.bottomIndicator.visible = isVisible;
+  }
+  private updateSelection(toSelect: BlockSelection[] | BlockDTO): void {
+    if (Array.isArray(toSelect)) {
+      if (!this.isPressingShift || this.editedGroupMemberUuid != null) {
+        this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+      }
+
+      // detect groups
+      const foundGroupIds: string[] = [];
+      toSelect.forEach((selection: BlockSelection): void => {
+        const block: BlockDTO =
+          this.store.state.timeline.blocks[selection.trackId][selection.index];
+        if (block.groupUuid) {
+          // save groupId
+          if (
+            !foundGroupIds.some(
+              (groupId: string): boolean => groupId == block.groupUuid,
+            )
+          ) {
+            foundGroupIds.push(block.groupUuid);
+          }
+        } else {
+          // select, if not grouped
+          this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, selection);
+        }
+      });
+
+      foundGroupIds.forEach((groupId: string): void => {
+        this.store.state.timeline.groups
+          .get(groupId)!
+          .forEach((selection: BlockSelection): void => {
+            this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, selection);
+          });
+      });
+    } else {
+      // check if selected or not
+      const index: number = this.store.state.timeline.blocks[
+        toSelect.trackId
+      ].findIndex((other: BlockDTO): boolean => other.uuid === toSelect.uuid);
+      if (index !== -1) {
+        const selectionIndex: number =
+          this.store.state.timeline.selectedBlocks.findIndex(
+            (selection: BlockSelection): boolean =>
+              selection.uuid === toSelect.uuid,
+          );
+        const selection: BlockSelection = {
+          trackId: toSelect.trackId,
+          index: index,
+          uuid: toSelect.uuid,
+        };
+        if (selectionIndex == -1) {
+          // block is not selected
+          if (!this.isPressingShift) {
+            // clear selection
+            this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+          }
+
+          if (this.editedGroupUuid != null) {
+            this.clearGroupBorder(this.editedGroupUuid);
+            this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+          }
+
+          // check for group
+          if (toSelect.groupUuid == null) {
+            this.store.dispatch(TimelineActionTypes.SELECT_BLOCK, selection);
+          } else {
+            this.store.state.timeline.groups
+              .get(toSelect.groupUuid)!
+              .forEach((selection: BlockSelection): void => {
+                this.store.dispatch(
+                  TimelineActionTypes.SELECT_BLOCK,
+                  selection,
+                );
+              });
+          }
+        } else {
+          // block already selected
+          if (this.isPressingShift) {
+            if (toSelect.groupUuid != null) {
+              // remove from store
+              this.store.state.timeline.groups
+                .get(toSelect.groupUuid)!
+                .forEach((selection: BlockSelection): void => {
+                  const selectionIndex: number =
+                    this.store.state.timeline.selectedBlocks.findIndex(
+                      (other: BlockSelection): boolean =>
+                        other.uuid === selection.uuid,
+                    );
+                  this.store.dispatch(
+                    TimelineActionTypes.UNSELECT_BLOCK,
+                    selectionIndex,
+                  );
+                });
+              // remove groupBorder
+              this.clearGroupBorder(toSelect.groupUuid);
+            } else {
+              // remove block from selection
+              this.store.dispatch(
+                TimelineActionTypes.UNSELECT_BLOCK,
+                selectionIndex,
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+  private createBoundingRectangle(
+    bounds: GroupBounds,
+    width: number,
+    color: string,
+  ): Graphics {
+    const groupWidth = bounds.endX - bounds.startX;
+    const groupHeight =
+      (bounds.highestTrack - bounds.lowestTrack) * config.trackHeight +
+      Math.min(bounds.maxHeightLowest, bounds.maxHeightHighest) +
+      Math.abs(bounds.maxHeightLowest - bounds.maxHeightHighest) / 2;
+
+    const rect = new Graphics();
+    rect.rect(bounds.startX, bounds.y, groupWidth, groupHeight);
+    rect.fill("rgb(0, 0, 0, 0)");
+    rect.stroke({ width: width, color: color });
+
+    return rect;
+  }
+  private computeGroupBounds(blocks: BlockDTO[]): GroupBounds {
+    let startX: number = Infinity;
+    let endX: number = -Infinity;
+    let lowestTrack: number = Infinity;
+    let highestTrack: number = 0;
+    let maxHeightLowest: number = config.minBlockHeight;
+    let maxHeightHighest: number = config.minBlockHeight;
+    let y: number = 0;
+
+    for (const block of blocks) {
+      const blockStart: number = block.rect.x;
+      const blockEnd: number = blockStart + block.rect.width;
+      const trackId: number = block.trackId;
+      const height: number = block.rect.height;
+
+      if (blockStart < startX) {
+        startX = blockStart;
+      }
+      if (blockEnd > endX) {
+        endX = blockEnd;
+      }
+
+      if (
+        trackId < lowestTrack ||
+        (trackId === lowestTrack && height > maxHeightLowest)
+      ) {
+        lowestTrack = trackId;
+        maxHeightLowest = height;
+        y = block.rect.y;
+      }
+
+      if (trackId > highestTrack) {
+        highestTrack = trackId;
+        maxHeightHighest = height;
+      } else if (trackId === highestTrack) {
+        maxHeightHighest = Math.max(maxHeightHighest, height);
+      }
+    }
+
+    return {
+      startX,
+      endX,
+      lowestTrack,
+      highestTrack,
+      maxHeightLowest,
+      maxHeightHighest,
+      y,
+    };
+  }
+  private findBlocksByUuids(uuids: string[]): BlockDTO[] {
+    const result: BlockDTO[] = [];
+    for (const uuid of uuids) {
+      for (const trackBlocks of Object.values(
+        this.store.state.timeline.blocks,
+      )) {
+        const found = trackBlocks.find((b) => b.uuid === uuid);
+        if (found) {
+          result.push(found);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  // wrapper for horizontal block resizing (left, right)
+  // decides, what implementation to use
+  private onHorizontalResize(
+    event: FederatedPointerEvent,
+    direction: Direction,
+    block: BlockDTO,
+  ): void {
+    if (!this.canSelect()) return;
+    const isSelected: boolean = this.isBlockSelected(block);
+    if (!isSelected) {
+      if (block.groupUuid) {
+        const members: BlockSelection[] | undefined =
+          this.store.state.timeline.groups.get(block.groupUuid);
+        if (members == undefined) return;
+        this.handleSelection(members);
+      } else {
+        this.handleSelection(block);
+      }
+    }
+
+    const isMultiSelection: boolean =
+      this.store.state.timeline.selectedBlocks.length > 1;
+    if (
+      (this.editedGroupMemberUuid == null && block.groupUuid != null) ||
+      isMultiSelection
+    ) {
+      this.onProportionalResizeStart(event, direction, block.groupUuid);
+    } else {
+      this.onAbsoluteResizeStart(event, block, direction);
+    }
+  }
+
+  // wrapper for vertical block resizing (amplitude)
+  // decides, what implementation to use
+  private onVerticalResize(
+    event: FederatedPointerEvent,
+    direction: Direction,
+    block: BlockDTO,
+  ): void {
+    if (!this.canSelect()) return;
+    const isSelected: boolean = this.isBlockSelected(block);
+    if (!isSelected) {
+      if (block.groupUuid) {
+        const members: BlockSelection[] | undefined =
+          this.store.state.timeline.groups.get(block.groupUuid);
+        if (members == undefined) return;
+        this.handleSelection(members);
+      } else {
+        this.handleSelection(block);
+      }
+    }
+
+    const isMultiSelection: boolean =
+      this.store.state.timeline.selectedBlocks.length > 1;
+    if (
+      (this.editedGroupMemberUuid == null && block.groupUuid != null) ||
+      isMultiSelection
+    ) {
+      this.onVerticalGroupResize(event, direction, block.groupUuid);
+    } else {
+      this.onChangeAmplitude(event, block, direction);
+    }
+  }
+  private onVerticalGroupResize(
+    event: FederatedPointerEvent,
+    direction: Direction,
+    groupUuid?: string | null,
+  ): void {
+    let border: Border | undefined;
+    let members: BlockSelection[] | undefined;
+    // get group
+    if (groupUuid) {
+      border = this.renderedGroupBorders.get(groupUuid);
+      members = this.store.state.timeline.groups.get(groupUuid);
+    }
+    const selectionIsOnlyGroup: boolean =
+      this.store.state.timeline.selectedBlocks.length === members?.length;
+    // get multiselection
+    if (border == undefined || !selectionIsOnlyGroup) {
+      border = this.selectionBorder;
+      members = this.store.state.timeline.selectedBlocks;
+    }
+    // exit
+    if (border == undefined || members == undefined) {
+      return;
+    }
+    this.onChangeGroupAmplitude(event, direction, members, border);
   }
   private isBlockSelected(block: BlockDTO): boolean {
     return this.store.state.timeline.selectedBlocks.some(
-      (selection: BlockSelection): boolean => selection.uid == block.rect.uid,
+      (selection: BlockSelection): boolean => selection.uuid == block.uuid,
     );
   }
   private snapToGrid(positionToCheck: number) {
@@ -2082,13 +2314,13 @@ export class BlockManager {
     newGroupStartX: number,
     scale: number,
   ): { x: number; width: number } {
-    let borderData: SelectionBorderData | null = this.selectionBorder;
+    let borderData: Border | undefined = this.selectionBorder;
 
-    if (borderData == null && block.groupId != null) {
-      borderData = this.renderedGroupBorders.get(block.groupId)!;
+    if (borderData == undefined && block.groupUuid != null) {
+      borderData = this.renderedGroupBorders.get(block.groupUuid);
     }
 
-    if (borderData == null) {
+    if (borderData == undefined) {
       return { x: NaN, width: NaN };
     }
 
@@ -2102,15 +2334,147 @@ export class BlockManager {
       block.initWidth * this.store.state.timeline.zoomLevel * scale;
     return { x: newX, width: newWidth };
   }
+  private drawBorderForBlocks(
+    blocks: BlockSelection[],
+    groupId?: string,
+  ): Border {
+    // calculate bounds
+    const {
+      startX,
+      groupWidth,
+      groupY,
+      groupHeight,
+      firstBlock,
+      lastBlock,
+      topBlock,
+      bottomBlock,
+    }: BoundingData = getBoundingData(blocks, null);
+
+    // create container
+    const container = new Container();
+    const border = new Graphics()
+      .rect(startX, groupY, groupWidth, groupHeight)
+      .fill("rgb(0, 0, 0, 0)")
+      .stroke({ width: 2, color: config.colors.groupHandleColor });
+
+    // create handles
+    const makeHandle = (
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+      cursor: string,
+    ) => {
+      const hdl = new Graphics();
+      hdl.rect(x, y, w, h);
+      hdl.fill(config.colors.handleColor);
+      hdl.interactive = true;
+      hdl.cursor = cursor;
+      return hdl;
+    };
+
+    const makeIndicator = (x: number, y: number) => {
+      const ind = new Graphics();
+      ind.circle(x, y, config.groupHandleRadius);
+      ind.fill(config.colors.groupHandleColor);
+      return ind;
+    };
+
+    const rightHandle = makeHandle(
+      startX + groupWidth - config.resizingHandleWidth / 2,
+      groupY,
+      config.resizingHandleWidth,
+      groupHeight,
+      "ew-resize",
+    );
+    const leftHandle = makeHandle(
+      startX - config.resizingHandleWidth / 2,
+      groupY,
+      config.resizingHandleWidth,
+      groupHeight,
+      "ew-resize",
+    );
+    const topHandle = makeHandle(
+      startX,
+      groupY - config.resizingHandleWidth / 2,
+      groupWidth,
+      config.resizingHandleWidth,
+      "ns-resize",
+    );
+    const bottomHandle = makeHandle(
+      startX,
+      groupY + groupHeight - config.resizingHandleWidth / 2,
+      groupWidth,
+      config.resizingHandleWidth,
+      "ns-resize",
+    );
+
+    const rightIndicator = makeIndicator(
+      startX + groupWidth,
+      groupY + groupHeight / 2,
+    );
+    const leftIndicator = makeIndicator(startX, groupY + groupHeight / 2);
+    const topIndicator = makeIndicator(startX + groupWidth / 2, groupY);
+    const bottomIndicator = makeIndicator(
+      startX + groupWidth / 2,
+      groupY + groupHeight,
+    );
+
+    // build dto
+    [
+      border,
+      rightHandle,
+      rightIndicator,
+      leftHandle,
+      leftIndicator,
+      topHandle,
+      topIndicator,
+      bottomHandle,
+      bottomIndicator,
+    ].forEach((el) => container.addChild(el));
+
+    const newBorderData: Border = new Border(
+      container,
+      border,
+      leftHandle,
+      leftIndicator,
+      rightHandle,
+      rightIndicator,
+      topHandle,
+      topIndicator,
+      bottomHandle,
+      bottomIndicator,
+      firstBlock!,
+      lastBlock!,
+      topBlock!,
+      bottomBlock!,
+      startX,
+      startX,
+      groupWidth,
+      groupWidth,
+      groupY,
+      groupY,
+      groupHeight,
+    );
+    newBorderData.groupUuid = groupId;
+
+    newBorderData.addListeners({
+      onHorizontalResize: this.onProportionalResizeStart.bind(this),
+      onVerticalResize: this.onVerticalGroupResize.bind(this),
+    });
+
+    getDynamicContainer().addChild(container);
+    return newBorderData;
+  }
   private drawSelectionBorder(): void {
     this.clearSelectionBorder();
     if (this.store.state.timeline.selectedBlocks.length <= 1) return;
 
     if (this.renderedGroupBorders.size == 1) {
       // there is only one group active, check if only members of this group are selected
-      const iterator: IterableIterator<number> =
+      const iterator: IterableIterator<string> =
         this.renderedGroupBorders.keys();
-      const groupId: number = iterator.next().value;
+      const groupId: string = iterator.next().value;
 
       const groupSelection: BlockSelection[] | undefined =
         this.store.state.timeline.groups.get(groupId);
@@ -2127,497 +2491,91 @@ export class BlockManager {
       }
     }
 
-    // hide indicators
-    this.forEachSelectedBlock((block: BlockDTO) =>
-      this.updateIndicatorVisibility(block, false),
+    this.renderedGroupBorders.forEach((borderData, groupId) =>
+      this.toggleBorderHandles(groupId, false),
     );
-    this.renderedGroupBorders.forEach((borderData: GroupBorderData): void => {
-      borderData.rightHandle.visible = false;
-      borderData.rightIndicator.visible = false;
-      borderData.leftHandle.visible = false;
-      borderData.leftIndicator.visible = false;
-      borderData.topHandle!.visible = false;
-      borderData.topIndicator!.visible = false;
-      borderData.bottomHandle!.visible = false;
-      borderData.bottomIndicator!.visible = false;
+    this.forEachSelectedBlock((block) => {
+      this.updateHandleInteractivity(block, false);
+      this.updateIndicatorVisibility(block, false);
     });
-
-    let groupStartX: number = Infinity;
-    let groupEndX: number = -Infinity;
-    let groupLowestTrack: number = Infinity;
-    let groupHighestTrack: number = 0;
-    let maxHeightOfLowestTrack: number = config.minBlockHeight;
-    let maxHeightOfHighestTrack: number = config.minBlockHeight;
-    let firstBlockOfGroup: BlockSelection;
-    let lastBlockOfGroup: BlockSelection;
-    let topBlockOfGroup: BlockSelection;
-
-    this.store.state.timeline.selectedBlocks.forEach(
-      (selection: BlockSelection): void => {
-        const block: BlockDTO =
-          this.store.state.timeline.blocks[selection.trackId][selection.index];
-
-        // disable handles
-        this.updateHandleInteractivity(block, false);
-
-        const blockStart: number = block.rect.x;
-        const blockEnd: number = blockStart + block.rect.width;
-        const trackId: number = block.trackId;
-        const height: number = block.rect.height;
-
-        // track block range
-        if (blockStart < groupStartX) {
-          groupStartX = blockStart;
-          firstBlockOfGroup = selection;
-        }
-        if (blockEnd > groupEndX) {
-          groupEndX = blockEnd;
-          lastBlockOfGroup = selection;
-        }
-
-        // highest / lowest track logic
-        if (trackId < groupLowestTrack) {
-          groupLowestTrack = trackId;
-          maxHeightOfLowestTrack = height;
-          topBlockOfGroup = selection;
-        } else if (trackId === groupLowestTrack) {
-          if (maxHeightOfLowestTrack < height) {
-            maxHeightOfLowestTrack = height;
-            topBlockOfGroup = selection;
-          }
-        }
-
-        if (trackId > groupHighestTrack) {
-          groupHighestTrack = trackId;
-          maxHeightOfHighestTrack = height;
-        } else if (trackId === groupHighestTrack) {
-          maxHeightOfHighestTrack = Math.max(maxHeightOfHighestTrack, height);
-        }
-      },
+    this.selectionBorder = this.drawBorderForBlocks(
+      this.store.state.timeline.selectedBlocks,
     );
-
-    const groupWidth: number = groupEndX - groupStartX;
-    const groupY: number =
-      this.store.state.timeline.blocks[topBlockOfGroup!.trackId][
-        topBlockOfGroup!.index
-      ].rect.y;
-    const groupHeight: number =
-      (groupHighestTrack - groupLowestTrack) * config.trackHeight +
-      Math.min(maxHeightOfLowestTrack, maxHeightOfHighestTrack) +
-      Math.abs(maxHeightOfLowestTrack - maxHeightOfHighestTrack) / 2;
-
-    const borderContainer: Container = new Container();
-    const border: Graphics = new Graphics();
-    border.rect(groupStartX, groupY, groupWidth, groupHeight);
-    border.fill("rgb(0, 0, 0, 0)");
-    border.stroke({ width: 2, color: config.colors.groupHandleColor });
-
-    const rightHandle: Graphics = new Graphics();
-    rightHandle.rect(
-      groupStartX + groupWidth - config.resizingHandleWidth / 2,
-      groupY,
-      config.resizingHandleWidth,
-      groupHeight,
-    );
-    rightHandle.fill(config.colors.handleColor);
-    rightHandle.interactive = true;
-    rightHandle.cursor = "ew-resize";
-
-    const rightIndicator: Graphics = new Graphics();
-    rightIndicator.circle(
-      groupStartX + groupWidth,
-      groupY + groupHeight / 2,
-      config.groupHandleRadius,
-    );
-    rightIndicator.fill(config.colors.groupHandleColor);
-
-    const leftHandle: Graphics = new Graphics();
-    leftHandle.rect(
-      groupStartX - config.resizingHandleWidth / 2,
-      groupY,
-      config.resizingHandleWidth,
-      groupHeight,
-    );
-    leftHandle.fill(config.colors.handleColor);
-    leftHandle.interactive = true;
-    leftHandle.cursor = "ew-resize";
-
-    const leftIndicator: Graphics = new Graphics();
-    leftIndicator.circle(
-      groupStartX,
-      groupY + groupHeight / 2,
-      config.groupHandleRadius,
-    );
-    leftIndicator.fill(config.colors.groupHandleColor);
-
-    // add eventListeners
-
-    leftHandle.on("pointerdown", (event) =>
-      this.onProportionalResizeStart(event, Direction.LEFT),
-    );
-    rightHandle.on("pointerdown", (event) =>
-      this.onProportionalResizeStart(event, Direction.RIGHT),
-    );
-
-    borderContainer.addChild(border);
-    borderContainer.addChild(rightHandle);
-    borderContainer.addChild(rightIndicator);
-    borderContainer.addChild(leftHandle);
-    borderContainer.addChild(leftIndicator);
-
-    this.selectionBorder = {
-      container: borderContainer,
-      border: border,
-      rightHandle: rightHandle,
-      rightIndicator: rightIndicator,
-      leftHandle: leftHandle,
-      leftIndicator: leftIndicator,
-      initWidth: groupWidth,
-      lastWidth: groupWidth,
-      initStartX: groupStartX,
-      lastStartX: groupStartX,
-      initY: groupY,
-      lastY: groupY,
-      initHeight: groupHeight,
-      firstBlockOfGroup: firstBlockOfGroup!,
-      lastBlockOfGroup: lastBlockOfGroup!,
-    };
-
-    getDynamicContainer().addChild(borderContainer);
-    this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, true);
-  }
-  private resizeSelectionBorder(
-    borderData: SelectionBorderData,
-    newGroupStartX?: number,
-    newGroupWidth?: number,
-  ): void {
-    if (!newGroupWidth) newGroupWidth = borderData.lastWidth;
-    if (!newGroupStartX) newGroupStartX = borderData.lastStartX;
-
-    const groupY: number = borderData.initY;
-    const groupHeight: number = borderData.initHeight;
-
-    borderData.border.clear();
-    borderData.border.rect(newGroupStartX, groupY, newGroupWidth, groupHeight);
-    borderData.border.fill("rgb(0, 0, 0, 0)");
-    borderData.border.stroke({
-      width: 2,
-      color: config.colors.groupHandleColor,
-    });
-
-    borderData.rightHandle.clear();
-    borderData.rightHandle.rect(
-      newGroupStartX + newGroupWidth - config.resizingHandleWidth / 2,
-      groupY,
-      config.resizingHandleWidth,
-      groupHeight,
-    );
-    borderData.rightHandle.fill(config.colors.handleColor);
-
-    borderData.rightIndicator.clear();
-    borderData.rightIndicator.circle(
-      newGroupStartX + newGroupWidth,
-      groupY + groupHeight / 2,
-      config.groupHandleRadius,
-    );
-    borderData.rightIndicator.fill(config.colors.groupHandleColor);
-
-    borderData.leftHandle.clear();
-    borderData.leftHandle.rect(
-      newGroupStartX - config.resizingHandleWidth / 2,
-      groupY,
-      config.resizingHandleWidth,
-      groupHeight,
-    );
-    borderData.leftHandle.fill(config.colors.handleColor);
-
-    borderData.leftIndicator.clear();
-    borderData.leftIndicator.circle(
-      newGroupStartX,
-      groupY + groupHeight / 2,
-      config.groupHandleRadius,
-    );
-    borderData.leftIndicator.fill(config.colors.groupHandleColor);
-
-    borderData.lastStartX = newGroupStartX;
-    borderData.lastWidth = newGroupWidth;
-  }
-  private updateSelectionBorder(): void {
-    if (this.selectionBorder) {
-      const firstSelection: BlockSelection =
-        this.selectionBorder.firstBlockOfGroup;
-      const lastSelection: BlockSelection =
-        this.selectionBorder.lastBlockOfGroup;
-
-      const firstBlock: BlockDTO =
-        this.store.state.timeline.blocks[firstSelection.trackId][
-          firstSelection.index
-        ];
-      const lastBlock: BlockDTO =
-        this.store.state.timeline.blocks[lastSelection.trackId][
-          lastSelection.index
-        ];
-
-      const newGroupStartX: number = firstBlock.rect.x;
-      const newGroupEndX: number = lastBlock.rect.x + lastBlock.rect.width;
-      const newGroupWidth: number = newGroupEndX - newGroupStartX;
-      this.resizeSelectionBorder(
-        this.selectionBorder,
-        newGroupStartX,
-        newGroupWidth,
-      );
-    }
   }
   private clearSelectionBorder(): void {
     if (this.selectionBorder != null) {
+      this.selectionBorder.removeListeners();
       getDynamicContainer().removeChild(this.selectionBorder.container);
       this.selectionBorder.container.destroy({ children: true });
-      this.selectionBorder = null;
-      this.renderedGroupBorders.forEach(
-        (borderData: GroupBorderData, groupId: number): void => {
-          this.updateGroup(groupId, true);
-          borderData.rightHandle.visible = true;
-          borderData.rightIndicator.visible = true;
-          borderData.leftHandle.visible = true;
-          borderData.leftIndicator.visible = true;
-          borderData.topHandle!.visible = true;
-          borderData.topIndicator!.visible = true;
-          borderData.bottomHandle!.visible = true;
-          borderData.bottomIndicator!.visible = true;
-        },
+      this.selectionBorder = undefined;
+      this.renderedGroupBorders.forEach((borderData, groupId) =>
+        this.toggleBorderHandles(groupId, true),
       );
       this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     }
   }
   private createGroupBorder(
-    groupId: number,
-    groupSelection: BlockSelection[],
-  ): void {
-    let groupStartX: number = Infinity;
-    let groupEndX: number = -Infinity;
-    let groupLowestTrack: number = Infinity;
-    let groupHighestTrack: number = 0;
-    let maxHeightOfLowestTrack: number = config.minBlockHeight;
-    let maxHeightOfHighestTrack: number = config.minBlockHeight;
-    let firstBlockOfGroup: BlockSelection;
-    let lastBlockOfGroup: BlockSelection;
-    let topBlockOfGroup: BlockSelection;
-    let bottomBlockOfGroup: BlockSelection;
+    groupId: string,
+    selection: BlockSelection[],
+  ): Border {
+    const groupBorder: Border = this.drawBorderForBlocks(selection, groupId);
+    this.renderedGroupBorders.set(groupId, groupBorder);
+    return groupBorder;
+  }
 
-    groupSelection.forEach((selection: BlockSelection): void => {
-      const block: BlockDTO =
-        this.store.state.timeline.blocks[selection.trackId][selection.index];
-
-      // disable handles
-      this.updateHandleInteractivity(block, false);
-
-      const blockStart: number = block.rect.x;
-      const blockEnd: number = blockStart + block.rect.width;
-      const trackId: number = block.trackId;
-      const height: number = block.rect.height;
-
-      // collect data
-      if (blockStart < groupStartX) {
-        groupStartX = block.rect.x;
-        firstBlockOfGroup = selection;
-      }
-      if (blockEnd > groupEndX) {
-        groupEndX = blockEnd;
-        lastBlockOfGroup = selection;
-      }
-
-      if (trackId < groupLowestTrack) {
-        groupLowestTrack = trackId;
-        maxHeightOfLowestTrack = height;
-        topBlockOfGroup = selection;
-      } else if (trackId === groupLowestTrack) {
-        if (height > maxHeightOfLowestTrack) {
-          maxHeightOfLowestTrack = height;
-          topBlockOfGroup = selection;
-        }
-      }
-
-      if (trackId > groupHighestTrack) {
-        groupHighestTrack = trackId;
-        maxHeightOfHighestTrack = height;
-        bottomBlockOfGroup = selection;
-      } else if (trackId === groupHighestTrack) {
-        if (height > maxHeightOfHighestTrack) {
-          maxHeightOfHighestTrack = height;
-          bottomBlockOfGroup = selection;
-        }
-      }
-    });
-
-    const groupWidth: number = groupEndX - groupStartX;
-    const groupY: number =
-      this.store.state.timeline.blocks[topBlockOfGroup!.trackId][
-        topBlockOfGroup!.index
-      ].rect.y;
+  private reuseOldBoundingData(border: Border): BoundingData {
+    const firstBlock: BlockDTO =
+      this.store.state.timeline.blocks[border.firstBlock.trackId][
+        border.firstBlock.index
+      ];
+    const lastBlock: BlockDTO =
+      this.store.state.timeline.blocks[border.lastBlock.trackId][
+        border.lastBlock.index
+      ];
+    const topBlock: BlockDTO =
+      this.store.state.timeline.blocks[border.topBlock.trackId][
+        border.topBlock.index
+      ];
+    const bottomBlock: BlockDTO =
+      this.store.state.timeline.blocks[border.bottomBlock.trackId][
+        border.bottomBlock.index
+      ];
+    const startX: number = firstBlock.rect.x;
+    const endX: number = lastBlock.rect.x + lastBlock.rect.width;
+    const groupWidth: number = endX - startX;
+    const groupY: number = topBlock.rect.y;
+    const highestTrack: number = bottomBlock.trackId;
+    const lowestTrack: number = topBlock.trackId;
+    const maxHeightOfHighestTrack: number = bottomBlock.rect.height;
+    const maxHeightOfLowestTrack: number = topBlock.rect.height;
     const groupHeight: number =
-      (groupHighestTrack - groupLowestTrack) * config.trackHeight +
+      (highestTrack - lowestTrack) * config.trackHeight +
       Math.min(maxHeightOfLowestTrack, maxHeightOfHighestTrack) +
       Math.abs(maxHeightOfLowestTrack - maxHeightOfHighestTrack) / 2;
 
-    const borderContainer: Container = new Container();
-    const border: Graphics = new Graphics();
-    border.rect(groupStartX, groupY, groupWidth, groupHeight);
-    border.fill("rgb(0, 0, 0, 0)");
-    border.stroke({ width: 2, color: config.colors.groupHandleColor });
-
-    const rightHandle: Graphics = new Graphics();
-    rightHandle.rect(
-      groupStartX + groupWidth - config.resizingHandleWidth / 2,
-      groupY,
-      config.resizingHandleWidth,
-      groupHeight,
-    );
-    rightHandle.fill(config.colors.handleColor);
-    rightHandle.interactive = true;
-    rightHandle.cursor = "ew-resize";
-
-    const rightIndicator: Graphics = new Graphics();
-    rightIndicator.circle(
-      groupStartX + groupWidth,
-      groupY + groupHeight / 2,
-      config.groupHandleRadius,
-    );
-    rightIndicator.fill(config.colors.groupHandleColor);
-
-    const leftHandle: Graphics = new Graphics();
-    leftHandle.rect(
-      groupStartX - config.resizingHandleWidth / 2,
-      groupY,
-      config.resizingHandleWidth,
-      groupHeight,
-    );
-    leftHandle.fill(config.colors.handleColor);
-    leftHandle.interactive = true;
-    leftHandle.cursor = "ew-resize";
-
-    const leftIndicator: Graphics = new Graphics();
-    leftIndicator.circle(
-      groupStartX,
-      groupY + groupHeight / 2,
-      config.groupHandleRadius,
-    );
-    leftIndicator.fill(config.colors.groupHandleColor);
-
-    const topHandle: Graphics = new Graphics();
-    topHandle.rect(
-      groupStartX,
-      groupY - config.resizingHandleWidth / 2,
+    return {
+      startX,
       groupWidth,
-      config.resizingHandleWidth,
-    );
-    topHandle.fill(config.colors.handleColor);
-    topHandle.interactive = true;
-    topHandle.cursor = "ns-resize";
-
-    const topIndicator: Graphics = new Graphics();
-    topIndicator.circle(
-      groupStartX + groupWidth / 2,
       groupY,
-      config.groupHandleRadius,
-    );
-    topIndicator.fill(config.colors.groupHandleColor);
-
-    const bottomHandle: Graphics = new Graphics();
-    bottomHandle.rect(
-      groupStartX,
-      groupY + groupHeight - config.resizingHandleWidth / 2,
-      groupWidth,
-      config.resizingHandleWidth,
-    );
-    bottomHandle.fill(config.colors.handleColor);
-    bottomHandle.interactive = true;
-    bottomHandle.cursor = "ns-resize";
-
-    const bottomIndicator: Graphics = new Graphics();
-    bottomIndicator.circle(
-      groupStartX + groupWidth / 2,
-      groupY + groupHeight,
-      config.groupHandleRadius,
-    );
-    bottomIndicator.fill(config.colors.groupHandleColor);
-
-    // add eventListeners
-    leftHandle.on("pointerdown", (event) =>
-      this.onGroupResize(event, Direction.LEFT, groupId),
-    );
-    rightHandle.on("pointerdown", (event) =>
-      this.onGroupResize(event, Direction.RIGHT, groupId),
-    );
-    const block: BlockDTO =
-      this.store.state.timeline.blocks[firstBlockOfGroup!.trackId][
-        firstBlockOfGroup!.index
-      ];
-    topHandle.on("pointerdown", (event) =>
-      this.onChangeAmplitude(event, block, Direction.TOP),
-    );
-    bottomHandle.on("pointerdown", (event) =>
-      this.onChangeAmplitude(event, block, Direction.BOTTOM),
-    );
-
-    borderContainer.addChild(border);
-    borderContainer.addChild(rightHandle);
-    borderContainer.addChild(rightIndicator);
-    borderContainer.addChild(leftHandle);
-    borderContainer.addChild(leftIndicator);
-    borderContainer.addChild(topHandle);
-    borderContainer.addChild(topIndicator);
-    borderContainer.addChild(bottomHandle);
-    borderContainer.addChild(bottomIndicator);
-
-    const groupBorder: GroupBorderData = {
-      container: borderContainer,
-      border: border,
-      rightHandle: rightHandle,
-      rightIndicator: rightIndicator,
-      leftHandle: leftHandle,
-      leftIndicator: leftIndicator,
-      topHandle: topHandle,
-      topIndicator: topIndicator,
-      bottomHandle: bottomHandle,
-      bottomIndicator: bottomIndicator,
-      initWidth: groupWidth,
-      lastWidth: groupWidth,
-      lastStartX: groupStartX,
-      initStartX: groupStartX,
-      initY: groupY,
-      lastY: groupY,
-      initHeight: groupHeight,
-      firstBlockOfGroup: firstBlockOfGroup!,
-      lastBlockOfGroup: lastBlockOfGroup!,
-      topBlockOfGroup: topBlockOfGroup!,
-      bottomBlockOfGroup: bottomBlockOfGroup!,
+      groupHeight,
     };
-
-    this.renderedGroupBorders.set(groupId, groupBorder);
-
-    getDynamicContainer().addChild(borderContainer);
   }
-  private clearGroupBorder(groupId?: number): void {
+  // TODO be consequent, if no groupId, clear selection -> why not directly pass border as parameter
+  private clearGroupBorder(groupId?: string): void {
     if (groupId != undefined) {
-      const borderData: GroupBorderData | undefined =
-        this.renderedGroupBorders.get(groupId);
-
-      if (borderData == undefined) {
-        console.error(
-          `GroupId ${groupId} was not found. Currently rendered Groups: ${Array.from(this.renderedGroupBorders.entries())}`,
-        );
-        return;
-      }
-
-      getDynamicContainer().removeChild(borderData.container);
-      borderData.container.destroy({ children: true });
+      const border: Border | undefined = this.renderedGroupBorders.get(groupId);
+      if (border == undefined) return;
+      border.removeListeners();
+      getDynamicContainer().removeChild(border.container);
+      border.container.destroy({ children: true });
       this.renderedGroupBorders.delete(groupId);
     } else {
       // clear all
       this.renderedGroupBorders.forEach(
-        (borderData: GroupBorderData, groupId: number): void => {
-          getDynamicContainer().removeChild(borderData.container);
-          borderData.container.destroy({ children: true });
+        (border: Border, groupId: string): void => {
+          border.removeListeners();
+          getDynamicContainer().removeChild(border.container);
+          border.container.destroy({ children: true });
 
           const groupSelection: BlockSelection[] | undefined =
             this.store.state.timeline.groups.get(groupId);
@@ -2644,40 +2602,49 @@ export class BlockManager {
       );
     }
   }
-  private updateGroup(groupId: number, updateHandles: boolean = false): void {
-    const borderData: GroupBorderData = this.renderedGroupBorders.get(groupId)!;
+  private updateBorder(groupId?: string, updateHandles: boolean = false) {
+    let borderData: Border;
+    if (groupId) {
+      borderData = this.renderedGroupBorders.get(groupId)!;
+    } else {
+      if (this.selectionBorder == undefined) return;
+      borderData = this.selectionBorder;
+    }
 
-    const firstBlock: BlockDTO =
-      this.store.state.timeline.blocks[borderData.firstBlockOfGroup.trackId][
-        borderData.firstBlockOfGroup.index
-      ];
-    const lastBlock: BlockDTO =
-      this.store.state.timeline.blocks[borderData.lastBlockOfGroup.trackId][
-        borderData.lastBlockOfGroup.index
-      ];
-    const topBlock: BlockDTO =
-      this.store.state.timeline.blocks[borderData.topBlockOfGroup.trackId][
-        borderData.topBlockOfGroup.index
-      ];
-    const bottomBlock: BlockDTO =
-      this.store.state.timeline.blocks[borderData.bottomBlockOfGroup.trackId][
-        borderData.bottomBlockOfGroup.index
-      ];
-    const groupStartX: number = firstBlock.rect.x;
-    const groupEndX: number = lastBlock.rect.x + lastBlock.rect.width;
-    const groupWidth: number = groupEndX - groupStartX;
-    const groupY: number = topBlock.rect.y;
-    const groupHighestTrack: number = bottomBlock.trackId;
-    const groupLowestTrack: number = topBlock.trackId;
-    const maxHeightOfHighestTrack: number = bottomBlock.rect.height;
-    const maxHeightOfLowestTrack: number = topBlock.rect.height;
-    const groupHeight: number =
-      (groupHighestTrack - groupLowestTrack) * config.trackHeight +
-      Math.min(maxHeightOfLowestTrack, maxHeightOfHighestTrack) +
-      Math.abs(maxHeightOfLowestTrack - maxHeightOfHighestTrack) / 2;
+    let members: BlockSelection[] | undefined;
+    if (borderData.groupUuid != undefined) {
+      members = this.store.state.timeline.groups.get(borderData.groupUuid);
+    } else {
+      members = this.store.state.timeline.selectedBlocks;
+    }
+    if (members == undefined) return;
+    const {
+      startX,
+      groupWidth,
+      groupY,
+      groupHeight,
+      firstBlock,
+      lastBlock,
+      topBlock,
+      bottomBlock,
+    }: BoundingData =
+      this.editedGroupMemberUuid != null
+        ? getBoundingData(
+            members,
+            this.editedGroupMemberUuid,
+            this.lastTrackOffset,
+          )
+        : this.reuseOldBoundingData(borderData);
+
+    if (this.editedGroupMemberUuid) {
+      borderData.topBlock = topBlock!;
+      borderData.bottomBlock = bottomBlock!;
+      borderData.firstBlock = firstBlock!;
+      borderData.lastBlock = lastBlock!;
+    }
 
     borderData.border.clear();
-    borderData.border.rect(groupStartX, groupY, groupWidth, groupHeight);
+    borderData.border.rect(startX, groupY, groupWidth, groupHeight);
     borderData.border.fill("rgb(0, 0, 0, 0)");
     borderData.border.stroke({
       width: 2,
@@ -2687,7 +2654,7 @@ export class BlockManager {
     if (updateHandles) {
       borderData.rightHandle.clear();
       borderData.rightHandle.rect(
-        groupStartX + groupWidth - config.resizingHandleWidth / 2,
+        startX + groupWidth - config.resizingHandleWidth / 2,
         groupY,
         config.resizingHandleWidth,
         groupHeight,
@@ -2696,7 +2663,7 @@ export class BlockManager {
 
       borderData.rightIndicator.clear();
       borderData.rightIndicator.circle(
-        groupStartX + groupWidth,
+        startX + groupWidth,
         groupY + groupHeight / 2,
         config.groupHandleRadius,
       );
@@ -2704,7 +2671,7 @@ export class BlockManager {
 
       borderData.leftHandle.clear();
       borderData.leftHandle.rect(
-        groupStartX - config.resizingHandleWidth / 2,
+        startX - config.resizingHandleWidth / 2,
         groupY,
         config.resizingHandleWidth,
         groupHeight,
@@ -2713,7 +2680,7 @@ export class BlockManager {
 
       borderData.leftIndicator.clear();
       borderData.leftIndicator.circle(
-        groupStartX,
+        startX,
         groupY + groupHeight / 2,
         config.groupHandleRadius,
       );
@@ -2721,7 +2688,7 @@ export class BlockManager {
 
       borderData.topHandle!.clear();
       borderData.topHandle!.rect(
-        groupStartX,
+        startX,
         groupY - config.resizingHandleWidth / 2,
         groupWidth,
         config.resizingHandleWidth,
@@ -2730,7 +2697,7 @@ export class BlockManager {
 
       borderData.topIndicator!.clear();
       borderData.topIndicator!.circle(
-        groupStartX + groupWidth / 2,
+        startX + groupWidth / 2,
         groupY,
         config.groupHandleRadius,
       );
@@ -2738,7 +2705,7 @@ export class BlockManager {
 
       borderData.bottomHandle!.clear();
       borderData.bottomHandle!.rect(
-        groupStartX,
+        startX,
         groupY + groupHeight - config.resizingHandleWidth / 2,
         groupWidth,
         config.resizingHandleWidth,
@@ -2747,15 +2714,16 @@ export class BlockManager {
 
       borderData.bottomIndicator!.clear();
       borderData.bottomIndicator!.circle(
-        groupStartX + groupWidth / 2,
+        startX + groupWidth / 2,
         groupY + groupHeight,
         config.groupHandleRadius,
       );
       borderData.bottomIndicator!.fill(config.colors.groupHandleColor);
     }
 
-    borderData.lastStartX = groupStartX;
+    borderData.lastStartX = startX;
     borderData.lastWidth = groupWidth;
+    borderData.lastY = groupY;
   }
   private getMinBlockWidth(): number {
     const zoom: number = this.store.state.timeline.zoomLevel;
@@ -2833,21 +2801,7 @@ export class BlockManager {
         );
       }
     }
-
-    if (
-      this.currentDirection == Direction.LEFT ||
-      this.currentDirection == Direction.RIGHT
-    ) {
-      const changes: BlockChanges = new BlockChanges();
-      const adjustedDeltaX: number = this.adjustOffset(
-        this.lastValidOffset,
-        this.lastTrackOffset,
-      );
-      changes.x =
-        this.initialBlockX + adjustedDeltaX - this.currentTacton!.rect.x;
-      this.applyChanges(changes);
-    }
-
+    this.updateBlockPositionFromCursor(this.lastCursorX, this.lastCursorY);
     requestAnimationFrame(() => this.autoScroll());
   }
   private scrollViewportHorizontal(cursorX: number): void {
@@ -2917,6 +2871,7 @@ export class BlockManager {
   private createBorders(): void {
     this.selectedTracks = [];
     this.unselectedBorderList = [];
+    let startOfWholeSelection: number = Infinity;
     // calculate border to check
     Object.keys(this.store.state.timeline.blocks).forEach(
       (trackIdAsString: string, trackId: number): void => {
@@ -2927,7 +2882,7 @@ export class BlockManager {
             if (
               !this.store.state.timeline.selectedBlocks.some(
                 (selection: BlockSelection): boolean =>
-                  selection.uid == block.rect.uid,
+                  selection.uuid == block.uuid,
               )
             ) {
               // block is unselected
@@ -2944,6 +2899,13 @@ export class BlockManager {
                 block.rect.x + block.rect.width,
               );
 
+              if (startOfWholeSelection === undefined) {
+                startOfWholeSelection = block.rect.x;
+              }
+              if (block.rect.x < startOfWholeSelection) {
+                startOfWholeSelection = block.rect.x;
+              }
+
               const isAdded: boolean = this.selectedTracks.some(
                 (track: number): boolean => {
                   return track == block.trackId;
@@ -2956,11 +2918,11 @@ export class BlockManager {
         );
       },
     );
-
     this.calculateStickyOffsets();
   }
   private createBordersForCopies(): void {
     this.selectedTracks = [];
+    let startOfWholeSelection: number = Infinity;
     // calculate border to check
     Object.keys(this.store.state.timeline.blocks).forEach(
       (trackIdAsString: string, trackId: number): void => {
@@ -2982,6 +2944,13 @@ export class BlockManager {
       // if block is copied, add to selectedBlocks
       this.selectedBorders[block.trackId].push(block.rect.x);
       this.selectedBorders[block.trackId].push(block.rect.x + block.rect.width);
+
+      if (startOfWholeSelection === undefined) {
+        startOfWholeSelection = block.rect.x;
+      }
+      if (block.rect.x < startOfWholeSelection) {
+        startOfWholeSelection = block.rect.x;
+      }
 
       const isAdded: boolean = this.selectedTracks.some(
         (track: number): boolean => {
@@ -3011,7 +2980,6 @@ export class BlockManager {
     const horizontalOffsetDifference: number =
       this.store.state.timeline.horizontalViewportOffset -
       this.lastViewportOffset;
-
     // if track was changes lastValidOffset is invalid -> needs to be updated
     if (this.lastTrackOffset != trackOffset) {
       this.lastValidOffset = this.getValidStickyOffset(
@@ -3056,6 +3024,7 @@ export class BlockManager {
               horizontalOffsetDifference,
             );
             isSticking = true;
+            hasCollision = true;
             break;
           }
 
@@ -3183,7 +3152,6 @@ export class BlockManager {
         horizontalOffsetDifference,
       );
     }
-
     this.lastValidOffset = validOffset;
     this.lastTrackOffset = trackOffset;
     return validOffset;
@@ -3229,7 +3197,7 @@ export class BlockManager {
 
           // skip empty tracks
           if (!selectedBorders || selectedBorders.length === 0) continue;
-          if (!unselectedBorders) continue;
+          if (!unselectedBorders || unselectedBorders.length === 0) continue;
 
           // add offset to border
           // check if any of unselectedBorders is overlapping with adjusted border
@@ -3237,7 +3205,11 @@ export class BlockManager {
             const start2: number = selectedBorders[i] + possibleOffset;
             const end2: number = selectedBorders[i + 1] + possibleOffset;
 
-            if (start2 < config.leftPadding) {
+            if (
+              start2 <
+              config.leftPadding -
+                this.store.state.timeline.horizontalViewportOffset
+            ) {
               isValid = false;
               break;
             }
@@ -3263,7 +3235,6 @@ export class BlockManager {
           validOffsetsPerTrackOffset.push(possibleOffset);
         }
       }
-
       this.stickyOffsetsPerTrackOffset.set(
         trackOffset,
         validOffsetsPerTrackOffset,
@@ -3273,6 +3244,33 @@ export class BlockManager {
   private calculateStickyOffsets(): void {
     const trackOffsets: number[] = this.getValidTrackOffsets();
     const possibleOffsetPerTrackOffset: number[][] = [];
+    trackOffsets.forEach((trackOffset: number): void => {
+      possibleOffsetPerTrackOffset[trackOffset] = [];
+    });
+
+    // first, check startOfTimeline
+    for (
+      let trackId = 0;
+      trackId <
+      Math.min(this.unselectedBorders.length, this.selectedBorders.length);
+      trackId++
+    ) {
+      // loop over selectedBorders
+      for (let i = 0; i < this.selectedBorders[trackId].length; i += 2) {
+        // loop over unselected border tracks
+        trackOffsets.forEach((trackOffset: number) => {
+          const startOfTimeline: number =
+            config.leftPadding -
+            this.store.state.timeline.horizontalViewportOffset;
+
+          // calculate possible offsets
+          const offsetToStart: number =
+            startOfTimeline - this.selectedBorders[trackId][i];
+          possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
+        });
+      }
+    }
+
     for (
       let trackId = 0;
       trackId <
@@ -3284,25 +3282,27 @@ export class BlockManager {
         // loop over unselected border tracks
         trackOffsets.forEach((trackOffset: number) => {
           const track = trackId + trackOffset;
-          if (possibleOffsetPerTrackOffset[trackOffset] == undefined) {
-            possibleOffsetPerTrackOffset[trackOffset] = [];
-            possibleOffsetPerTrackOffset[trackOffset].push(
-              config.leftPadding - this.selectedBorders[trackId][0],
-            );
-          }
           // loop over every unselected border block in this track
-          for (let k = 0; k < this.unselectedBorders[track].length; k += 2) {
-            const start2: number = this.unselectedBorders[track][k];
-            const end2: number = this.unselectedBorders[track][k + 1];
+          if (this.unselectedBorders[track] != undefined) {
+            if (this.unselectedBorders[track].length != 1) {
+              for (
+                let k = 0;
+                k < this.unselectedBorders[track].length;
+                k += 2
+              ) {
+                const start2: number = this.unselectedBorders[track][k];
+                const end2: number = this.unselectedBorders[track][k + 1];
 
-            // calculate possible offsets
-            const offsetToStart: number =
-              end2 - this.selectedBorders[trackId][i];
-            const offsetToEnd: number =
-              start2 - this.selectedBorders[trackId][i + 1];
+                // calculate possible offsets
+                const offsetToStart: number =
+                  end2 - this.selectedBorders[trackId][i];
+                const offsetToEnd: number =
+                  start2 - this.selectedBorders[trackId][i + 1];
 
-            possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
-            possibleOffsetPerTrackOffset[trackOffset].push(offsetToEnd);
+                possibleOffsetPerTrackOffset[trackOffset].push(offsetToStart);
+                possibleOffsetPerTrackOffset[trackOffset].push(offsetToEnd);
+              }
+            }
           }
         });
       }
@@ -3318,7 +3318,6 @@ export class BlockManager {
       this.stickyOffsetsPerTrackOffset.get(trackOffset) || [];
     let bestOffset: number = offset;
     let minDistance: number = Infinity;
-
     for (const fallbackOffset of possibleOffsets) {
       const adjustedFallbackOffset: number =
         fallbackOffset - horizontalOffsetDifference;
@@ -3386,13 +3385,14 @@ export class BlockManager {
           const selection: BlockSelection = {
             trackId: trackId,
             index: index,
-            uid: block.rect.uid,
+            uuid: block.uuid,
           };
           selectedBlocks.push(selection);
         }
       });
     }
     this.handleSelection(selectedBlocks);
+    this.handleLocking();
   }
   private getBoundingBox() {
     const x = Math.min(this.selectionStart.x, this.selectionEnd.x);
@@ -3403,64 +3403,166 @@ export class BlockManager {
   }
 
   //******* event-listener *******
-  private onCanvasMouseDown(event: MouseEvent): void {
+  private onCanvasMouseDown = (event: MouseEvent): void => {
     if (!this.store.state.timeline.isInteracting) {
       this.pasteSelection();
     }
-
     if (this.isSelecting) return;
+    if (!this.canSelect(false)) return;
     if (event.button === 0 && !this.store.state.timeline.isInteracting) {
       this.isMouseDragging = true;
       this.selectionStart = { x: event.clientX, y: event.clientY };
       this.selectionEnd = { ...this.selectionStart };
       this.drawSelectionBox();
     }
-  }
-  private onCanvasMouseMove(event: MouseEvent): void {
+  };
+  private onCanvasMouseMove = (event: MouseEvent): void => {
+    this.currentCursorX =
+      event.clientX - this.store.state.timeline.wrapperXOffset;
+    this.currentCursorY =
+      event.clientY - this.store.state.timeline.wrapperYOffset;
     if (!this.isMouseDragging) return;
     this.selectionEnd = { x: event.clientX, y: event.clientY };
     this.drawSelectionBox();
-  }
-  private onCanvasMouseUp(event: MouseEvent): void {
+  };
+  private onCanvasMouseUp = (event: MouseEvent): void => {
     if (event.button !== 0 || !this.isMouseDragging) return;
     this.isMouseDragging = false;
     this.removeSelectionBox();
     this.selectRectanglesWithin();
-  }
+  };
 
   //******* public helpers *******
 
+  public clearMemberEditing(): void {
+    this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
+    this.stashedSelection.clear();
+    this.editedGroupMemberUuid = null;
+    this.editedGroupUuid = null;
+  }
+  public renderSelection(): void {
+    this.forEachUnselectedBlock((block) => {
+      block.strokedRect.visible = false;
+      block.rect.alpha = 1;
+      this.updateIndicatorVisibility(block, false);
+      this.updateHandleInteractivity(block, true);
+      if (block.groupUuid) {
+        this.clearGroupBorder(block.groupUuid);
+      }
+    });
+
+    if (this.store.state.timeline.selectedBlocks.length > 1) {
+      const groups: string[] = [];
+
+      // single blocks
+      this.forEachSelectedBlock((block: BlockDTO): void => {
+        block.strokedRect.visible = true;
+        block.rect.alpha = 1;
+        this.updateHandleInteractivity(block, false);
+        if (block.groupUuid) {
+          if (!groups.some((uuid) => uuid == block.groupUuid)) {
+            groups.push(block.groupUuid);
+          }
+        }
+      });
+
+      // groups
+      groups.forEach((uuid) => {
+        const members: BlockSelection[] | undefined =
+          this.store.state.timeline.groups.get(uuid);
+        if (members) {
+          if (!this.renderedGroupBorders.has(uuid)) {
+            this.createGroupBorder(uuid, members);
+          } else {
+            this.updateBorder(uuid, true);
+          }
+        }
+      });
+      this.drawSelectionBorder();
+    } else {
+      this.clearSelectionBorder();
+      this.forEachSelectedBlock((block: BlockDTO): void => {
+        block.strokedRect.visible = true;
+        block.rect.alpha = 1;
+        this.updateIndicatorVisibility(block, true);
+        this.updateHandleInteractivity(block, true);
+      });
+    }
+  }
   public clearData(): void {
     this.clearCopiedBlocks();
-    this.clearSelectionBorder();
     this.clearGroupBorder();
+    this.clearSelectionBorder();
+    getLockContainer().removeChildren();
   }
-  public installEventListeners(): void {
-    const pixiApp: Application = getPixiApp();
-    // remove existing Event-Listeners
-    pixiApp.canvas.removeEventListener(
-      "mousedown",
-      this.onCanvasMouseDown.bind(this),
-    );
-    pixiApp.canvas.removeEventListener(
-      "mousemove",
-      this.onCanvasMouseMove.bind(this),
-    );
-    pixiApp.canvas.removeEventListener(
-      "mouseup",
-      this.onCanvasMouseUp.bind(this),
-    );
+  private handleKeyDown = (event: KeyboardEvent): void => {
+    if (!this.store.state.timeline.isEditable) return;
+    const isCtrlLike: boolean =
+      event.getModifierState("Control") || event.getModifierState("Meta");
 
-    pixiApp.canvas.addEventListener(
-      "mousedown",
-      this.onCanvasMouseDown.bind(this),
+    if (isCtrlLike && event.code == "KeyC") this.copySelection();
+    if (isCtrlLike && event.code == "KeyV") this.pasteSelection();
+    if (isCtrlLike && event.code == "KeyG") {
+      event.preventDefault();
+      this.groupSelectedBlocks();
+      this.eventBus.dispatchEvent(new Event(TimelineEvents.TACTON_WAS_EDITED));
+    }
+    if (isCtrlLike && event.code == "KeyS" && !event.shiftKey) {
+      event.preventDefault();
+      this.store.dispatch(TimelineActionTypes.TOGGLE_SNAPPING_STATE);
+    }
+    if (isCtrlLike && event.code === "KeyS" && event.shiftKey) {
+      event.preventDefault();
+      this.store.dispatch(TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING);
+    }
+    if (event.code == "Escape") this.clearCopiedBlocks();
+    if (event.code == "Delete") this.deleteBlock();
+    if (isCtrlLike && event.key.toLowerCase() == "z") {
+      if (this.store.state.roomSettings.id == undefined) return;
+      if (this.store.state.tactonPlayback.currentTacton == undefined) return;
+
+      WebSocketAPI.undoAction(
+        this.store.state.roomSettings.id,
+        this.store.state.tactonPlayback.currentTacton.uuid,
+      );
+    }
+    if (isCtrlLike && event.key.toLowerCase() == "y") {
+      if (this.store.state.roomSettings.id == undefined) return;
+      if (this.store.state.tactonPlayback.currentTacton == undefined) return;
+
+      WebSocketAPI.redoAction(
+        this.store.state.roomSettings.id,
+        this.store.state.tactonPlayback.currentTacton.uuid,
+      );
+    }
+
+    // detect shift
+    if (event.key == "Shift" && !this.isPressingShift) {
+      this.isPressingShift = !this.isPressingShift;
+    }
+  };
+  private handleKeyUp = (event: KeyboardEvent): void => {
+    if (!this.store.state.timeline.isEditable) return;
+    if (event.key == "Shift" && this.isPressingShift) {
+      this.isPressingShift = !this.isPressingShift;
+    }
+  };
+  private installEventListeners(): void {
+    getPixiApp().canvas.addEventListener("mousedown", this.onCanvasMouseDown);
+    document.addEventListener("mousemove", this.onCanvasMouseMove);
+    document.addEventListener("mouseup", this.onCanvasMouseUp);
+    document.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("keyup", this.handleKeyUp);
+
+    this.eventBus.addEventListener(
+      TimelineEvents.UPDATED_USER_LOCKS,
+      this.handleUpdatedUserLocks,
     );
-    pixiApp.canvas.addEventListener(
-      "mousemove",
-      this.onCanvasMouseMove.bind(this),
-    );
-    pixiApp.canvas.addEventListener("mouseup", this.onCanvasMouseUp.bind(this));
   }
+  private handleUpdatedUserLocks = (e: Event): void => {
+    const eventData = e as CustomEvent<{ oldLocks: Record<string, string[]> }>;
+    this.updateLocks(eventData.detail.oldLocks);
+  };
   public toggleBlockVisibility(isVisible: boolean): void {
     this.clearSelectionBorder();
     this.clearGroupBorder();
@@ -3487,13 +3589,12 @@ export class BlockManager {
       });
 
       this.renderedGroupBorders.forEach(
-        (borderData: GroupBorderData, groupId: number): void => {
+        (borderData: Border, groupId: string): void => {
           this.clearGroupBorder(groupId);
         },
       );
       this.clearSelectionBorder();
       this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
-      this.strgDown = false;
     } else {
       // enable handles
       this.forEachBlock((block: BlockDTO): void => {
@@ -3501,5 +3602,30 @@ export class BlockManager {
         block.rect.interactive = true;
       });
     }
+  }
+  destroy(): void {
+    this.clearCopiedBlocks();
+    this.clearGroupBorder();
+    this.clearSelectionBorder();
+    this.store.state.timeline.selectedBlocks = [];
+    this.store.state.timeline.userLocks = {};
+    this.store.state.timeline.lockedBlocks.clear();
+
+    // remove existing Event-Listeners
+    getPixiApp().canvas.removeEventListener(
+      "mousedown",
+      this.onCanvasMouseDown,
+    );
+    document.removeEventListener("mousemove", this.onCanvasMouseMove);
+    document.removeEventListener("mouseup", this.onCanvasMouseUp);
+    document.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("keyup", this.handleKeyUp);
+
+    this.eventBus.removeEventListener(
+      TimelineEvents.UPDATED_USER_LOCKS,
+      this.handleUpdatedUserLocks,
+    );
+
+    this.unwatchHandler.forEach((unwatch) => unwatch());
   }
 }

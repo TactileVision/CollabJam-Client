@@ -1,7 +1,7 @@
 import { MutationTree } from "vuex";
 import { BlockManager } from "@/renderer/helpers/timeline/blockManager";
 import { BlockDTO, BlockSelection } from "@/renderer/helpers/timeline/types";
-import { ContainerChild, Graphics } from "pixi.js";
+import { Graphics } from "pixi.js";
 import { getDynamicContainer } from "@/renderer/helpers/timeline/pixiApp";
 import config from "@/renderer/helpers/timeline/config";
 import { State } from "./state";
@@ -28,8 +28,6 @@ export enum TimelineMutations {
   SET_INTERACTION_STATE = "setInteractionState",
   CHANGE_BLOCK_TRACK = "changeBlockTrack",
   CALCULATE_LAST_BLOCK_POSITION = "calculateLastBlockPosition",
-  TOGGLE_SHIFT_VALUE = "toggleShiftValue",
-  UPDATE_CURRENT_CURSOR_POSITION = "updateCurrentCursorPosition",
   UNGROUP_SELECTED_BLOCKS = "ungroupSelectedBlocks",
   ADD_GROUP = "addGroup",
   TOGGLE_SNAPPING_STATE = "toggleSnappingState",
@@ -40,6 +38,9 @@ export enum TimelineMutations {
   SET_WRAPPER_Y_OFFSET = "setWrapperYOffset",
   SET_CANVAS_WIDTH = "setCanvasWidth",
   SET_SNACKBAR_TEXT = "setSnackbarText",
+  UPDATE_USER_LOCKS = "updateUserLocks",
+  SET_USER_LOCKS = "setUserLocks",
+  CLEAR_LOCKS = "clearLocks",
 }
 
 export type Mutations<S = State> = {
@@ -89,15 +90,13 @@ export type Mutations<S = State> = {
     payload: { sourceTrack: number; targetTrack: number; blockIndex: number },
   ): void;
   [TimelineMutations.CALCULATE_LAST_BLOCK_POSITION](state: S): void;
-  [TimelineMutations.TOGGLE_SHIFT_VALUE](state: S): void;
-  [TimelineMutations.UPDATE_CURRENT_CURSOR_POSITION](
+  [TimelineMutations.UNGROUP_SELECTED_BLOCKS](
     state: S,
-    newPosition: { x: number; y: number },
+    groupUuid: string,
   ): void;
-  [TimelineMutations.UNGROUP_SELECTED_BLOCKS](state: S, groupId: number): void;
   [TimelineMutations.ADD_GROUP](
     state: S,
-    groupData: { groupId: number; selection: BlockSelection[] },
+    groupData: { groupUuid: string; selection: BlockSelection[] },
   ): void;
   [TimelineMutations.TOGGLE_SNAPPING_STATE](state: S): void;
   [TimelineMutations.TOGGLE_EDIT_STATE](state: S, isEditable?: boolean): void;
@@ -107,6 +106,15 @@ export type Mutations<S = State> = {
   [TimelineMutations.SET_CANVAS_WIDTH](state: S, width: number): void;
   [TimelineMutations.SET_SNACKBAR_TEXT](state: S, text: string): void;
   [TimelineMutations.TOGGLE_RELATIVE_SNAPPING](state: S): void;
+  [TimelineMutations.UPDATE_USER_LOCKS](
+    state: S,
+    props: { userId: string; uuids: string[] },
+  ): void;
+  [TimelineMutations.SET_USER_LOCKS](
+    state: S,
+    locks: Record<string, string[]>,
+  ): void;
+  [TimelineMutations.CLEAR_LOCKS](state: S): void;
 };
 
 export const mutations: MutationTree<State> & Mutations = {
@@ -202,10 +210,10 @@ export const mutations: MutationTree<State> & Mutations = {
     state.selectedBlocks.forEach((selection: BlockSelection): void => {
       const block: BlockDTO | undefined =
         sortedBlocks[selection.trackId][selection.index];
-      if (block == undefined || block.rect.uid != selection.uid) {
+      if (block == undefined || block.uuid != selection.uuid) {
         selection.index = sortedBlocks[selection.trackId].findIndex(
           (b: BlockDTO): boolean => {
-            return b.rect.uid == selection.uid;
+            return b.uuid == selection.uuid;
           },
         );
       }
@@ -216,10 +224,10 @@ export const mutations: MutationTree<State> & Mutations = {
       group.forEach((selection: BlockSelection): void => {
         const block: BlockDTO | undefined =
           sortedBlocks[selection.trackId][selection.index];
-        if (block == undefined || block.rect.uid != selection.uid) {
+        if (block == undefined || block.uuid != selection.uuid) {
           selection.index = sortedBlocks[selection.trackId].findIndex(
             (b: BlockDTO): boolean => {
-              return b.rect.uid == selection.uid;
+              return b.uuid == selection.uuid;
             },
           );
         }
@@ -239,11 +247,19 @@ export const mutations: MutationTree<State> & Mutations = {
 
     state.selectedBlocks.forEach((blockSelection: BlockSelection) => {
       const block = state.blocks[blockSelection.trackId][blockSelection.index];
+
+      if (block.groupUuid) {
+        const members = state.groups.get(block.groupUuid);
+        if (members?.length == 2) {
+          state.groups.delete(block.groupUuid);
+          members.forEach((sel: BlockSelection) => {
+            state.blocks[sel.trackId][sel.index].groupUuid = null;
+          });
+        }
+      }
+
       getDynamicContainer().removeChild(block.container);
-      block.container.children.forEach((child: ContainerChild): void => {
-        child.removeAllListeners();
-      });
-      block.container.removeAllListeners();
+      block.removeListeners();
       block.container.destroy({ children: true });
 
       state.blocks[blockSelection.trackId].splice(blockSelection.index, 1);
@@ -258,21 +274,12 @@ export const mutations: MutationTree<State> & Mutations = {
     if (state.blocks[trackId] == undefined) return;
     state.blocks[trackId].forEach((block: BlockDTO): void => {
       getDynamicContainer().removeChild(block.container);
-      block.container.children.forEach((child: ContainerChild): void => {
-        child.removeAllListeners();
-      });
+      block.removeListeners();
       block.container.removeAllListeners();
       block.container.destroy({ children: true });
     });
 
     delete state.blocks[trackId];
-
-    // remove from selection
-    for (let i: number = state.selectedBlocks.length - 1; i >= 0; i--) {
-      if (state.selectedBlocks[i].trackId == trackId) {
-        state.selectedBlocks.splice(i, 1);
-      }
-    }
   },
   [TimelineMutations.SELECT_BLOCK](state: State, block: BlockSelection): void {
     state.selectedBlocks.push(block);
@@ -345,7 +352,7 @@ export const mutations: MutationTree<State> & Mutations = {
     // update selectionData
     const selectionIndex: number = state.selectedBlocks.findIndex(
       (selection: BlockSelection): boolean => {
-        return selection.uid == block.rect.uid;
+        return selection.uuid == block.uuid;
       },
     );
     state.selectedBlocks[selectionIndex].trackId = targetTrack;
@@ -386,26 +393,17 @@ export const mutations: MutationTree<State> & Mutations = {
 
     state.lastBlockPositionX = maxPosition;
   },
-  [TimelineMutations.TOGGLE_SHIFT_VALUE](state: State): void {
-    state.isPressingShift = !state.isPressingShift;
-  },
-  [TimelineMutations.UPDATE_CURRENT_CURSOR_POSITION](
-    state: State,
-    newPosition: { x: number; y: number },
-  ): void {
-    state.currentCursorPosition = newPosition;
-  },
   [TimelineMutations.UNGROUP_SELECTED_BLOCKS](
     state: State,
-    groupId: number,
+    groupUuid: string,
   ): void {
-    state.groups.delete(groupId);
+    state.groups.delete(groupUuid);
   },
   [TimelineMutations.ADD_GROUP](
     state: State,
-    groupData: { groupId: number; selection: BlockSelection[] },
+    groupData: { groupUuid: string; selection: BlockSelection[] },
   ) {
-    state.groups.set(groupData.groupId, groupData.selection);
+    state.groups.set(groupData.groupUuid, groupData.selection);
   },
   [TimelineMutations.TOGGLE_SNAPPING_STATE](state: State): void {
     state.isSnappingActive = !state.isSnappingActive;
@@ -451,5 +449,32 @@ export const mutations: MutationTree<State> & Mutations = {
   },
   [TimelineMutations.TOGGLE_RELATIVE_SNAPPING](state: State): void {
     state.isSnappingRelativeActive = !state.isSnappingRelativeActive;
+  },
+  [TimelineMutations.UPDATE_USER_LOCKS](
+    state: State,
+    props: { userId: string; uuids: string[] },
+  ): void {
+    // remove old locks of user
+    const oldLocks: string[] = state.userLocks[props.userId] ?? [];
+    oldLocks.forEach((blockUuid) => state.lockedBlocks.delete(blockUuid));
+
+    // set new locks
+    props.uuids.forEach((uuid) => state.lockedBlocks.set(uuid, props.userId));
+
+    // update user-locks
+    state.userLocks[props.userId] = props.uuids;
+  },
+  [TimelineMutations.SET_USER_LOCKS](
+    state: State,
+    locks: Record<string, string[]>,
+  ): void {
+    state.lockedBlocks.clear();
+    state.userLocks = locks;
+  },
+  [TimelineMutations.CLEAR_LOCKS](state: State): void {
+    state.lockedBlocks.clear();
+    Object.keys(state.userLocks).forEach((userId: string): void => {
+      delete state.userLocks[userId];
+    });
   },
 };

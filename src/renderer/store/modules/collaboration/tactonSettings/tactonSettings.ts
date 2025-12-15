@@ -92,6 +92,7 @@ export enum TactonSettingsActionTypes {
   modifySpecificChannel = "modifySpecificChannel",
   addInstructionsToDebounceBuffer = "addInstructionsToDebounceBuffer",
   clearDebounceBuffer = "clearDebounceBuffer",
+  clearChannelState = "clearChannelState",
 }
 
 type AugmentedActionContext = {
@@ -114,6 +115,9 @@ export interface Actions {
     payload: Instruction[],
   ): void;
   [TactonSettingsActionTypes.clearDebounceBuffer]({
+    commit,
+  }: AugmentedActionContext): void;
+  [TactonSettingsActionTypes.clearChannelState]({
     commit,
   }: AugmentedActionContext): void;
 }
@@ -171,6 +175,20 @@ export const actions: ActionTree<State, RootState> & Actions = {
   },
   [TactonSettingsActionTypes.clearDebounceBuffer]({ commit }) {
     commit(TactonMutations.SET_DEBOUNCE_BUFFER, []);
+  },
+  [TactonSettingsActionTypes.clearChannelState]({ commit }): void {
+    state.outputChannelState.forEach(
+      (channel: OutputChannelState, index: number): void => {
+        commit(TactonMutations.UPDATE_SPECIFIC_CHANNEL, {
+          index: index,
+          channel: {
+            intensity: 0,
+            channelId: channel.channelId,
+            author: undefined,
+          },
+        });
+      },
+    );
   },
 };
 

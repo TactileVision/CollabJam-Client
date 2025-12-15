@@ -8,8 +8,8 @@ let pixiApp: Application;
 let dynamicContainer: Container;
 let staticContainer: Container;
 let liveContainer: Container;
+let lockContainer: Container;
 let resizeObserver: ResizeObserver;
-let overlay: Graphics;
 let animationFrameId: number | null = null;
 let line: Graphics;
 
@@ -21,7 +21,7 @@ export async function createPixiApp(): Promise<void> {
   dynamicContainer = new Container();
   staticContainer = new Container();
   liveContainer = new Container();
-  overlay = new Graphics();
+  lockContainer = new Container();
   line = new Graphics();
 
   // Init app
@@ -50,12 +50,6 @@ export async function createPixiApp(): Promise<void> {
   // add canvas to wrapper
   wrapper.appendChild(pixiApp.canvas);
 
-  // setup overlay-element
-  overlay.rect(0, 0, wrapper.clientWidth, height);
-  overlay.fill("rgba(0, 0, 0, 0.1)");
-  overlay.interactive = false;
-  overlay.visible = false;
-
   // setup line
   line.moveTo(0, config.sliderHeight);
   line.lineTo(0, height);
@@ -65,11 +59,23 @@ export async function createPixiApp(): Promise<void> {
 
   // add elements to canvas
   staticContainer.addChild(line);
-  pixiApp.stage.addChild(staticContainer);
-  pixiApp.stage.addChild(dynamicContainer);
-  pixiApp.stage.addChild(liveContainer);
-  pixiApp.stage.addChild(overlay);
 
+  // setup backdrop
+  // TODO load trackCount dynamically
+  const backdrop: Graphics = new Graphics();
+  backdrop.rect(
+    0,
+    config.sliderHeight + config.componentPadding,
+    config.leftPadding,
+    config.trackHeight * 4,
+  );
+  backdrop.fill("#ffffff");
+
+  pixiApp.stage.addChild(dynamicContainer);
+  pixiApp.stage.addChild(backdrop);
+  pixiApp.stage.addChild(staticContainer);
+  pixiApp.stage.addChild(liveContainer);
+  pixiApp.stage.addChild(lockContainer);
   // TODO if only the height is changed, this observer will not fire, as the wrapper_element hast zero height
   resizeObserver = new ResizeObserver((): void => {
     if (pixiApp == undefined) return;
@@ -90,7 +96,6 @@ export async function createPixiApp(): Promise<void> {
           TimelineActionTypes.UPDATE_CANVAS_WIDTH,
           wrapper.clientWidth,
         );
-        overlay.width = wrapper.clientWidth;
         pixiApp.renderer.resize(wrapper.clientWidth, height);
         pixiApp.render();
       });
@@ -121,8 +126,8 @@ export function getStaticContainer(): Container {
 export function getLiveContainer(): Container {
   return liveContainer;
 }
-export function toggleOverlay(isVisible: boolean): void {
-  overlay.visible = isVisible;
+export function getLockContainer(): Container {
+  return lockContainer;
 }
 export function getLine(): Graphics {
   return line;

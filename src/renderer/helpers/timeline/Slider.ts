@@ -31,7 +31,6 @@ export class Slider {
   private initialMouseX: number = 0;
   private initialSliderX: number = config.sliderHandleWidth;
   private sliderX: number = this.initialSliderX;
-  private initialZoomLevel: number = 0;
 
   // event throttling
   private scaleEventQueued: boolean = false;
@@ -44,7 +43,6 @@ export class Slider {
    * Initialises the timeline-slider.
    * */
   public initSlider(): void {
-    console.log("initSlider");
     // set vars
     this.viewportWidth =
       this.store.state.timeline.canvasWidth - config.leftPadding;
@@ -52,7 +50,6 @@ export class Slider {
       this.store.state.timeline.canvasWidth - 2 * config.sliderHandleWidth;
     this.sliderWidth = this.sliderMaxWidth;
     this.initialSliderWidth = this.sliderWidth;
-    this.initialZoomLevel = this.store.state.timeline.initialZoomLevel;
 
     // create slider
     this.sliderRect.rect(
@@ -141,15 +138,6 @@ export class Slider {
 
     this.watcher.push(
       watch(
-        () => this.store.state.timeline.initialZoomLevel,
-        (): void => {
-          this.initialZoomLevel = this.store.state.timeline.initialZoomLevel;
-        },
-      ),
-    );
-
-    this.watcher.push(
-      watch(
         () => this.store.state.timeline.canvasWidth,
         (newWidth: number): void => {
           this.sliderMaxWidth = newWidth - 2 * config.sliderHandleWidth;
@@ -171,13 +159,13 @@ export class Slider {
   private updateLastZoomLevel(newZoomLevel?: number): void {
     const lo: number = this.store.state.timeline.horizontalViewportOffset;
     const ro: number = this.getRightOverflow();
+    const initZoom: number = this.store.state.timeline.initialZoomLevel;
 
     if (!newZoomLevel) {
       // calculate zoom that can display sequence without overflow
       newZoomLevel =
         this.viewportWidth /
         this.store.state.timeline.initialVirtualViewportWidth;
-      this.initialZoomLevel = newZoomLevel;
       this.store.dispatch(
         TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL,
         newZoomLevel,
@@ -186,11 +174,10 @@ export class Slider {
     }
 
     if (ro == 0 && lo == 0) {
-      if (newZoomLevel > this.initialZoomLevel) {
-        this.initialZoomLevel = newZoomLevel;
+      if (newZoomLevel > initZoom) {
         this.store.dispatch(
           TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL,
-          this.initialZoomLevel,
+          newZoomLevel,
         );
       }
     }
@@ -328,14 +315,13 @@ export class Slider {
       leftHandleSpace *
       (this.store.state.timeline.initialVirtualViewportWidth /
         this.sliderWidth);
-    return newOffset * this.initialZoomLevel;
+    return newOffset * this.store.state.timeline.initialZoomLevel;
   }
-
-  // TODO visualize interactivity
   public setInteractivity(isInteractive: boolean): void {
     this.sliderContainer.children.forEach((child: ContainerChild): void => {
       child.interactive = isInteractive;
     });
+    this.sliderContainer.alpha = isInteractive ? 1 : 0.5;
   }
   private queueScaleEvent = (event: PointerEvent): void => {
     this.lastScaleEvent = event;
@@ -347,7 +333,6 @@ export class Slider {
     requestAnimationFrame(() => {
       this.scaleEventQueued = false;
       if (this.lastScaleEvent) {
-        //console.log("A");
         this.onScale(this.lastScaleEvent);
         this.lastScaleEvent = null;
       }
@@ -357,6 +342,7 @@ export class Slider {
     this.isResizingRight = false;
     this.isResizingLeft = false;
     this.isDraggingSlider = false;
+
     this.store.dispatch(TimelineActionTypes.SET_INTERACTION_STATE, false);
     this.store.dispatch(TimelineActionTypes.GET_LAST_BLOCK_POSITION);
     window.removeEventListener("pointermove", this.queueScaleEvent);

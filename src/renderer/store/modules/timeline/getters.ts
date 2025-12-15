@@ -19,8 +19,6 @@ export type Getters = {
   sorted(state: State): Record<number, boolean>;
   selectedBlocks(state: State): BlockSelection[];
   isInteracting(state: State): boolean;
-  isPressingShift(state: State): boolean;
-  currentCursorPosition(state: State): { x: number; y: number };
   isSnappingActive(state: State): boolean;
   isEditable(state: State): boolean;
   canvasTopOffset(state: State): number;
@@ -47,9 +45,6 @@ export const getters: GetterTree<State, RootState> & Getters = {
   sorted: (state: State): Record<number, boolean> => state.sorted,
   selectedBlocks: (state: State): BlockSelection[] => state.selectedBlocks,
   isInteracting: (state: State): boolean => state.isInteracting,
-  isPressingShift: (state: State): boolean => state.isPressingShift,
-  currentCursorPosition: (state: State): { x: number; y: number } =>
-    state.currentCursorPosition,
   isSnappingActive: (state: State): boolean => state.isSnappingActive,
   isEditable: (state: State): boolean => state.isEditable,
   canvasTopOffset: (state: State): number => state.canvasTopOffset,

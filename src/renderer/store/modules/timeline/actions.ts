@@ -25,14 +25,13 @@ export enum TimelineActionTypes {
   DELETE_SELECTED_BLOCKS = "deleteSelectedBlocks",
   UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH = "setInitialVirtualViewportWidth",
   UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH = "setCurrentVirtualViewportWidth",
+  // TODO rename to BlockMultiSelection -> thats what it does
   SET_INTERACTION_STATE = "setInteractionState",
   SELECT_BLOCK = "selectBlock",
   UNSELECT_BLOCK = "unselectBlock",
   CLEAR_SELECTION = "clearSelection",
   CHANGE_BLOCK_TRACK = "changeBlockTrack",
   GET_LAST_BLOCK_POSITION = "calculateLastBlockPosition",
-  TOGGLE_SHIFT_VALUE = "toggleShiftValue",
-  UPDATE_CURRENT_CURSOR_POSITION = "setCurrentCursorPosition",
   ADD_GROUP = "addGroup",
   TOGGLE_SNAPPING_STATE = "toggleSnappingState",
   TOGGLE_RELATIVE_SNAPPING = "toggleRelativeSnapping",
@@ -42,6 +41,9 @@ export enum TimelineActionTypes {
   UPDATE_WRAPPER_Y_OFFSET = "updateWrapperYOffset",
   UPDATE_CANVAS_WIDTH = "updateCanvasWidth",
   UPDATE_SNACKBAR_TEXT = "updateSnackbarText",
+  UPDATE_USER_LOCKS = "updateUserLocks",
+  SET_USER_LOCKS = "setUserLocks",
+  CLEAR_LOCKS = "clearLocks",
 }
 
 type AugmentedActionContext = {
@@ -135,16 +137,9 @@ export interface Actions {
     state,
     commit,
   }: AugmentedActionContext): number;
-  [TimelineActionTypes.TOGGLE_SHIFT_VALUE]({
-    commit,
-  }: AugmentedActionContext): void;
-  [TimelineActionTypes.UPDATE_CURRENT_CURSOR_POSITION](
-    { commit }: AugmentedActionContext,
-    payload: { x: number; y: number },
-  ): void;
   [TimelineActionTypes.ADD_GROUP](
     { commit }: AugmentedActionContext,
-    payload: { groupId: number; selection: BlockSelection[] },
+    payload: { groupUuid: string; selection: BlockSelection[] },
   ): void;
   [TimelineActionTypes.TOGGLE_SNAPPING_STATE]({
     commit,
@@ -176,6 +171,15 @@ export interface Actions {
   [TimelineActionTypes.TOGGLE_RELATIVE_SNAPPING]({
     commit,
   }: AugmentedActionContext): void;
+  [TimelineActionTypes.UPDATE_USER_LOCKS](
+    { commit }: AugmentedActionContext,
+    payload: { userId: string | null; uuids: string[] },
+  ): void;
+  [TimelineActionTypes.SET_USER_LOCKS](
+    { commit }: AugmentedActionContext,
+    payload: Record<string, string[]>,
+  ): void;
+  [TimelineActionTypes.CLEAR_LOCKS]({ commit }: AugmentedActionContext): void;
 }
 export const actions: ActionTree<State, RootState> & Actions = {
   [TimelineActionTypes.SET_BLOCK_MANAGER](
@@ -326,22 +330,9 @@ export const actions: ActionTree<State, RootState> & Actions = {
     commit(TimelineMutations.CALCULATE_LAST_BLOCK_POSITION);
     return state.lastBlockPositionX;
   },
-  [TimelineActionTypes.TOGGLE_SHIFT_VALUE]({
-    commit,
-  }: {
-    commit: Commit;
-  }): void {
-    commit(TimelineMutations.TOGGLE_SHIFT_VALUE);
-  },
-  [TimelineActionTypes.UPDATE_CURRENT_CURSOR_POSITION](
-    { commit }: { commit: Commit },
-    newPosition: { x: number; y: number },
-  ): void {
-    commit(TimelineMutations.UPDATE_CURRENT_CURSOR_POSITION, newPosition);
-  },
   [TimelineActionTypes.ADD_GROUP](
     { commit }: { commit: Commit },
-    groupData: { groupId: number; selection: BlockSelection[] },
+    groupData: { groupUuid: string; selection: BlockSelection[] },
   ): void {
     commit(TimelineMutations.ADD_GROUP, groupData);
   },
@@ -394,5 +385,23 @@ export const actions: ActionTree<State, RootState> & Actions = {
     commit: Commit;
   }): void {
     commit(TimelineMutations.TOGGLE_RELATIVE_SNAPPING);
+  },
+  [TimelineActionTypes.UPDATE_USER_LOCKS](
+    { commit }: { commit: Commit },
+    props: {
+      userId: string;
+      uuids: string[];
+    },
+  ): void {
+    commit(TimelineMutations.UPDATE_USER_LOCKS, props);
+  },
+  [TimelineActionTypes.SET_USER_LOCKS](
+    { commit }: { commit: Commit },
+    locks: Record<string, string[]>,
+  ): void {
+    commit(TimelineMutations.SET_USER_LOCKS, locks);
+  },
+  [TimelineActionTypes.CLEAR_LOCKS]({ commit }: { commit: Commit }): void {
+    commit(TimelineMutations.CLEAR_LOCKS);
   },
 };

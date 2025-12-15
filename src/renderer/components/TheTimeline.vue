@@ -10,23 +10,33 @@ import {
   createPixiApp,
   getDynamicContainer,
   getLiveContainer,
-  toggleOverlay,
+  getStaticContainer,
 } from "@/renderer/helpers/timeline/pixiApp";
 import * as PIXI from "pixi.js";
-import {Container, Graphics, Text} from "pixi.js";
+import {Graphics} from "pixi.js";
 import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import {BlockData, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
+import {BlockData, BlockSelection, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
 import {InteractionMode} from "@sharedTypes/roomTypes";
-import {TactonSettingsActionTypes} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
+import {
+  OutputChannelState,
+  TactonSettingsActionTypes
+} from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import {WebSocketAPI} from "@/main/WebSocketManager";
 import {LiveBlockBuilder} from "@/renderer/helpers/timeline/liveBlockBuilder";
 import {PlayHead} from "@/renderer/helpers/timeline/playHead";
 import {Slider} from "@/renderer/helpers/timeline/Slider";
 import SnackBar from "@/renderer/components/Snackbar.vue";
+import {resetLockTimer, clearLocks, stopLockTimer} from "@/renderer/helpers/timeline/lockManager";
 
+/*
+* For the upcoming demo, the reactive behaviour to the number of tracks
+* used will be replaced by a fixed number (4). All lines of code that 
+* have been commented out or changed in this context are marked with 
+* ‘FTC’ (Fixed Track Count).
+* */
 export default defineComponent({
   name: "TheTimeline",
   components: {
@@ -39,11 +49,11 @@ export default defineComponent({
     return {
       parser: new InstructionParser(),
       store: useStore(),
-      trackCount: 0,
+      trackCount: 3,
       mounted: false,
       tracks: [] as {
         line: Graphics,
-        container: Container
+        indicator: Graphics
       }[],
       playHead: null as PlayHead | null,
       ticker: null as PIXI.Ticker | null,
@@ -57,7 +67,7 @@ export default defineComponent({
       latency: 0,
       isFirstTick: false,
       canceledRecording: false,
-      slider: new Slider()
+      slider: new Slider(),
     };
   },
   computed: {
@@ -70,46 +80,29 @@ export default defineComponent({
     isEditable(): boolean {
       return this.store.state.timeline.isEditable;
     },
-    canEdit(): boolean {
-      return this.store.getters.canEditTacton;
-    }
+    channelStates(): OutputChannelState[] {
+      return [...this.store.state.tactonSettings.outputChannelState];
+    },
   },
   methods: {
     renderTrackLines() {
-      // clear rendered tracks
-      // TODO improve, only delete those not needed 
-      // (e.g. after removing one track, or loading new tacton that has less tracks)
-      for (const track of this.tracks) {
-        track.container.destroy({ children: true });
-      }      
       this.tracks = [];
       for (let i = 0; i <= this.trackCount; i++) {
-        const trackContainer: Container = new Container();
-        trackContainer.height = config.trackHeight;
-        trackContainer.width = this.store.state.timeline.canvasWidth;
-        trackContainer.y =
-          config.sliderHeight +
+        const y = config.sliderHeight +
           config.componentPadding +
-          i * config.trackHeight;
-        trackContainer.x = config.leftPadding;
-        trackContainer.zIndex = -1;
-
+          i * config.trackHeight + config.trackHeight / 2
         const trackLine = new Graphics();
-        trackLine.rect(0, config.trackHeight / 2, this.store.state.timeline.canvasWidth, 2);
+        trackLine.rect(0, y, this.store.state.timeline.canvasWidth, 2);
         trackLine.fill(config.colors.trackLineColor);
-        trackContainer.addChild(trackLine);
-
-        const trackLabel = new Text();
-        trackLabel.text = i + 1;
-        trackLabel.style.fontSize = 18;
-        trackLabel.x = -(config.leftPadding / 2) - trackLabel.width / 2;
-        trackLabel.y = config.trackHeight / 2 - trackLabel.height / 2;
-        trackContainer.addChild(trackLabel);
-
-        getDynamicContainer().addChild(trackContainer);
+        trackLine._zIndex = -1;
+        
+        const trackIndicator = new Graphics();
+        trackIndicator.circle((config.leftPadding / 2), y, 12);
+        trackIndicator.fill(config.colors.trackLineColor);
+        
         this.tracks.push({
-          line: trackLine,
-          container: trackContainer
+          line: getDynamicContainer().addChild(trackLine),
+          indicator: getStaticContainer().addChild(trackIndicator)
         });
       }
     },
@@ -186,6 +179,36 @@ export default defineComponent({
       const isLastBlockOutOfViewport = lastBlockXPosition > canvasWidth;
       const isLastBlockOutOfNewViewport = (lastBlockXPosition + horizontalViewportOffset) > canvasWidth;
       return isLastBlockOutOfViewport || (horizontalViewportOffset != 0 && isLastBlockOutOfNewViewport);
+    },
+    handleTactonWasEdited(): void {
+      const tacton = this.tacton
+      if (tacton == null) return;
+
+      const instructions = this.parser.parseBlocksToInstructions();
+
+      WebSocketAPI.updateTacton({
+        roomId: this.store.state.roomSettings.id || "",
+        tactonId: tacton.uuid,
+        tacton: { ...tacton, instructions },
+      });
+
+      resetLockTimer();
+    },
+    handleSelection() {
+      // add BlockUuids
+      const selectedUuids: string[] = this.store.state.timeline.selectedBlocks.map((selection: BlockSelection) => {
+        return selection.uuid;
+      });
+
+      WebSocketAPI.requestEditingForUuids(
+          this.store.state.roomSettings.id || "",
+          this.store.state.roomSettings.user.id,
+          selectedUuids
+      );
+    },
+    handleSliderInteractivityChange(e: Event) {
+      const event = e as CustomEvent<boolean>;
+      this.slider.setInteractivity(event.detail);
     }
   },
   watch: {
@@ -195,6 +218,9 @@ export default defineComponent({
           // clear data of blockManager and store
           this.store.state.timeline.blockManager?.clearData();
           this.store.state.timeline.groups.clear();
+          this.store.state.timeline.selectedBlocks = [];
+          this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
+          clearLocks()
           
           // save uuid
           this.lastTactonId = this.tacton.uuid;
@@ -208,15 +234,16 @@ export default defineComponent({
           // set initZoom
           this.calculateInitialZoom(parsed.duration);
           this.lastZoom = this.store.state.timeline.zoomLevel;
-          
+
+          // FTC
           // calculated trackCount
-          this.trackCount = Math.max(
+/*          this.trackCount = Math.max(
             ...blockData.map((block: BlockData) => block.trackId),
           );
           this.store.dispatch(
             TimelineActionTypes.SET_TRACK_COUNT,
             this.trackCount,
-          );
+          );*/
 
           // set visible height --> depends on trackCount
           const visibleHeight =
@@ -232,8 +259,9 @@ export default defineComponent({
           // create blocks
           this.store.state.timeline.blockManager?.createBlocksFromData(blockData);
 
+          // FTC
           // render trackLines
-          this.renderTrackLines();
+          //this.renderTrackLines();
 
           // TODO remove - just for debugging
           this.store.dispatch(TimelineActionTypes.TOGGLE_EDIT_STATE, true);
@@ -244,22 +272,22 @@ export default defineComponent({
           // render components
           this.mounted = true;
         } else {
-          // TODO if block was selected, this selection is lost
           // current tacton was updated
           // parse instructions
           const parsed = this.parser.parseInstructionsToBlocks(
               this.tacton.instructions,
           );
           const blockData: BlockData[] = parsed.blockData;
-
+          
+          // FTC
           // calculated trackCount
-          this.trackCount = Math.max(
+/*          this.trackCount = Math.max(
               ...blockData.map((block: BlockData) => block.trackId),
           );
           this.store.dispatch(
               TimelineActionTypes.SET_TRACK_COUNT,
               this.trackCount,
-          );
+          );*/
 
           // set visible height --> depends on trackCount
           const visibleHeight =
@@ -275,8 +303,9 @@ export default defineComponent({
           // create blocks
           this.store.state.timeline.blockManager?.createBlocksFromData(blockData);
 
+          // FTC
           // render trackLines
-          this.renderTrackLines();
+          //this.renderTrackLines();
         }
       } else {
         this.store.state.timeline.blockManager?.clearData();
@@ -289,15 +318,22 @@ export default defineComponent({
       this.liveBlockBuilder.reset();
       this.store.state.timeline.blockManager?.clearData();
       this.currentTime = 0;
+      
+      // clear timeout of changing mode -> selection is cleared anyways
+      stopLockTimer();
+      
       if (this.ticker !== null && this.ticker.count > 0) {
         this.ticker?.remove(this.recording);
         this.ticker?.remove(this.playback);
         this.ticker?.remove(this.overdubbing);
       }
-
+      
+      // clear channel state and locks
+      this.store.dispatch(TactonSettingsActionTypes.clearChannelState);
+      this.store.dispatch(TimelineActionTypes.CLEAR_LOCKS);
+    
       if (mode == InteractionMode.Recording) {
         // TODO show all possible trackLInes when recording
-
         // store values
         this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
         this.lastZoom = this.store.state.timeline.zoomLevel;
@@ -366,39 +402,13 @@ export default defineComponent({
         this.editingEnabled = true;
       } */
     },
-    canEdit() {
-      if (!this.store.getters.canEditTacton) {
-        // another user is currently editing
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-          SnackbarTexts.TACTON_IS_EDITED_BY_USER()
-        );
-        toggleOverlay(true);
-        this.store.state.timeline.blockManager?.blockInteraction(true);
-      } else {
-        this.store.dispatch(
-          TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-          SnackbarTexts.TACTON_CAN_BE_EDITED()
-        );
-        toggleOverlay(false);
-        this.store.state.timeline.blockManager?.blockInteraction(false);
-      }
-    },
     isEditable() {
       if (this.store.state.timeline.isEditable) {
-        if (this.store.getters.canEditTacton) {
-          this.store.dispatch(
+        this.store.dispatch(
             TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
             SnackbarTexts.TACTON_CAN_BE_EDITED()
-          );
-          toggleOverlay(false);
-          this.store.state.timeline.blockManager?.blockInteraction(false);
-        } else {
-          this.store.dispatch(
-            TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
-            SnackbarTexts.TACTON_IS_EDITABLE_BUT_EDITED()
-          );
-        }
+        );
+        this.store.state.timeline.blockManager?.blockInteraction(false);
       } else {
         this.store.dispatch(
           TimelineActionTypes.UPDATE_SNACKBAR_TEXT,
@@ -406,7 +416,13 @@ export default defineComponent({
         );
         this.store.state.timeline.blockManager?.blockInteraction(true);
       }
-    }
+    },
+    channelStates() {
+      this.channelStates.forEach((state) => {
+        const color = state.intensity > 0 ? state.author?.color || config.colors.selectedBlockColor : "0xFFFFFF";
+        this.tracks[state.channelId].indicator.tint = color as unknown as number;
+      });
+    },
   },
   async mounted() {
     watch(() => this.store.state.timeline.canvasWidth, (newWidth: number) => {
@@ -423,47 +439,46 @@ export default defineComponent({
     this.playHead.moveToPosition(0);
     this.slider.initSlider();
 
-    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, () => {
-      const tacton = this.tacton
-      if (tacton == null) return;
+    // FTC
+    // show all tracklines
+    this.trackCount = 3;
+    this.store.dispatch(
+        TimelineActionTypes.SET_TRACK_COUNT,
+        this.trackCount,
+    );
+    this.renderTrackLines();
+    this.playHead.drawCursor();
 
-      const instructions = this.parser.parseBlocksToInstructions();
-
-      WebSocketAPI.updateTacton({
-        roomId: this.store.state.roomSettings.id || "",
-        tactonId: tacton.uuid,
-        tacton: { ...tacton, instructions },
-      });
-    });
-
-    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, () => {
-      console.log("Selected");
-      if (this.store.state.roomSettings.currentlyEditingUserId == null) {
-        console.log("Claiming for me");
-        WebSocketAPI.requestEditingPrivilege(this.store.state.roomSettings.id || "", this.store.state.roomSettings.user.id)
-      }
-    })
-    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_ALL_DESELECTED, () => {
-      console.log("Deselected");
-      if (this.store.state.roomSettings.currentlyEditingUserId == this.store.state.roomSettings.user.id) {
-        console.log("Letting go");
-        WebSocketAPI.giveUpEditingPrivilege(this.store.state.roomSettings.id || "")
-      }
-    })
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_WAS_EDITED, this.handleTactonWasEdited);
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, this.handleSelection);
+    this.store.state.timeline.blockManager?.eventBus.addEventListener(TimelineEvents.CHANGE_SLIDER_INTERACTIVITY, this.handleSliderInteractivityChange)
 
     this.ticker = PIXI.Ticker.shared;
     this.ticker.autoStart = false;
     this.ticker.stop();
+    
+    // instantiateArray to initialize computed-value channelStates
+    this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
   },
   beforeUnmount() {
-    clearPixiApp();
-    this.slider.clearSlider();
-    this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
-    this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
+    WebSocketAPI.requestEditingForUuids(
+        this.store.state.roomSettings.id || "",
+        this.store.state.roomSettings.user.id,
+        []
+    );
 
     if (this.ticker !== null && this.ticker.count > 0) {
       this.ticker?.remove(this.recording);
     }
+
+    this.store.state.timeline.blockManager?.eventBus.removeEventListener(TimelineEvents.TACTON_WAS_EDITED, this.handleTactonWasEdited);
+    this.store.state.timeline.blockManager?.eventBus.removeEventListener(TimelineEvents.TACTON_BLOCK_SELECTED, this.handleSelection)
+    
+    this.store.state.timeline.blockManager?.destroy();
+    clearPixiApp();
+    this.slider.clearSlider();
+    this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
+    this.store.dispatch(TimelineActionTypes.SET_BLOCK_MANAGER, undefined);
   },
 });
 </script>

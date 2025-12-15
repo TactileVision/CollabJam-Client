@@ -1,18 +1,16 @@
 import { Store } from "@/renderer/store/store";
 import { IPC_CHANNELS } from "@/preload/IpcChannels";
-import {
-  /* WebSocketAPI, */ WebSocketAPI,
-  socket,
-} from "@/main/WebSocketManager/index";
+import { socket, WebSocketAPI } from "@/main/WebSocketManager/index";
 // import { TactonPlaybackActionTypes } from "@/renderer/store/modules/collaboration/tactonPlayback/tactonPlayback";
 import { TactonSettingsActionTypes } from "@/renderer/store/modules/collaboration/tactonSettings/tactonSettings";
 import { InteractionMode, Room, User } from "@sharedTypes/roomTypes";
 import { InstructionToClient, Tacton } from "@sharedTypes/tactonTypes";
 import {
   ChangeTactonMetadata,
+  ResponseEnteredRoom,
   TactonDeletion,
   UpdateAvailableTags,
-  UpdateEditingUser,
+  UpdateEditingUserUUIDS,
   UpdateRoomMode,
   UpdateTacton,
   WS_MSG_TYPE,
@@ -27,17 +25,20 @@ import { Instruction } from "../Input/InputHandling/InputHandlerManager";
 import { debouncedHandling } from "../Input/InputHandling/Debouincing";
 import { toRaw } from "vue";
 import { updateInteractionMode } from "@/renderer/helpers/recordMode";
+import { TimelineActionTypes } from "@/renderer/store/modules/timeline/actions";
+import { TimelineEvents } from "@/renderer/helpers/timeline/types";
 
 export const handleMessage = (store: Store) => {
   console.log("Regstering message handler");
   console.log("on connect");
   if (socket == null) return;
 
-  socket.on(WS_MSG_TYPE.ENTER_ROOM_CLI, (res) => {
+  socket.on(WS_MSG_TYPE.ENTER_ROOM_CLI, (res: ResponseEnteredRoom) => {
     console.log("ENTER_ROOM_CLI");
     console.log(res);
     store.dispatch(RoomSettingsActionTypes.enterRoom, res);
     store.dispatch(TactonPlaybackActionTypes.setTactonList, res.recordings);
+    store.dispatch(TimelineActionTypes.SET_USER_LOCKS, res.userLocks);
     if (store.state.roomSettings.id != undefined) {
       //MARK: Start the debouncing of inputs
       setInterval(() => {
@@ -91,13 +92,11 @@ export const handleMessage = (store: Store) => {
 
   socket.on(WS_MSG_TYPE.SEND_INSTRUCTION_CLI, (res: InstructionToClient[]) => {
     const instructions = res as InstructionToClient[];
+    store.dispatch(
+      TactonSettingsActionTypes.modifySpecificChannel,
+      instructions,
+    );
 
-    if (store.state.roomSettings.mode != InteractionMode.Playback) {
-      store.dispatch(
-        TactonSettingsActionTypes.modifySpecificChannel,
-        instructions,
-      );
-    }
     const mutedParticipants = store.state.roomSettings.mutedParticipants;
     // For playback we want to play all instructions because the "author" is always the user that started the playback
     // which makes muting pretty unintuitive
@@ -164,7 +163,6 @@ export const handleMessage = (store: Store) => {
         recordingNamePrefix: room.recordingNamePrefix,
         mode: room.mode,
         currentRecordingTime: 0,
-        currentlyEditingUser: null,
       },
     });
   });
@@ -200,11 +198,28 @@ export const handleMessage = (store: Store) => {
     },
   );
 
-  socket.on(WS_MSG_TYPE.UPDATE_EDITING_USER_CLI, (res: UpdateEditingUser) => {
-    store.dispatch(RoomSettingsActionTypes.updateEditingUserId, {
-      userId: res.userId,
-    });
-  });
+  socket.on(
+    WS_MSG_TYPE.UPDATE_EDITING_USER_UUIDS_CLI,
+    (res: UpdateEditingUserUUIDS): void => {
+      // create deep copy
+      const oldLocks = JSON.parse(
+        JSON.stringify(store.state.timeline.userLocks),
+      );
+
+      // update locks
+      store.dispatch(TimelineActionTypes.UPDATE_USER_LOCKS, {
+        userId: res.userId,
+        uuids: res.uuids,
+      });
+
+      // visualise
+      store.state.timeline.blockManager?.eventBus.dispatchEvent(
+        new CustomEvent(TimelineEvents.UPDATED_USER_LOCKS, {
+          detail: { oldLocks: oldLocks },
+        }),
+      );
+    },
+  );
   // const router = useRouter()
   /**
    * every message containing:

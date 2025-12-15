@@ -169,7 +169,7 @@ export default defineComponent({
       this.store.commit(RoomMutations.UPDATE_PARTICIPANTS, []);
       if (hideGraph) {
         this.store.commit(RoomMutations.UPDATE_ROOM_STATE, RoomState.Create);
-        this.store.commit(RoomMutations.CLEAR_ROOM_DATA);
+        this.store.commit(RoomMutations.CLEAR_ROOM_DATA, undefined);
         this.room = null;
       }
 

@@ -13,14 +13,12 @@ export type State = {
   visibleHeight: number;
   sorted: Record<number, boolean>;
   blocks: Record<number, BlockDTO[]>;
-  groups: Map<number, BlockSelection[]>;
+  groups: Map<string, BlockSelection[]>;
   lastBlockPositionX: number;
   selectedBlocks: BlockSelection[];
   initialVirtualViewportWidth: number;
   currentVirtualViewportWidth: number;
   isInteracting: boolean;
-  isPressingShift: boolean;
-  currentCursorPosition: { x: number; y: number };
   isSnappingActive: boolean;
   isSnappingRelativeActive: boolean;
   isEditable: boolean;
@@ -29,6 +27,8 @@ export type State = {
   wrapperYOffset: number;
   canvasWidth: number;
   snackbarText: { text: string; key: number };
+  lockedBlocks: Map<string, string>; // key = Uuid, value: userId
+  userLocks: Record<string, string[]>; // key = userId, value: selectedUuids
 };
 export const state: State = {
   blockManager: null,
@@ -48,8 +48,6 @@ export const state: State = {
   initialVirtualViewportWidth: 0,
   currentVirtualViewportWidth: 0,
   isInteracting: false,
-  isPressingShift: false,
-  currentCursorPosition: { x: 0, y: 0 },
   isSnappingActive: false,
   isSnappingRelativeActive: false,
   isEditable: false,
@@ -58,4 +56,6 @@ export const state: State = {
   wrapperYOffset: 0,
   canvasWidth: 0,
   snackbarText: { text: "", key: 0 },
+  lockedBlocks: new Map<string, string>(),
+  userLocks: {} as Record<string, string[]>,
 };

@@ -6,7 +6,7 @@ export enum GridLabelStyle {
 
 const config = {
   // general
-  leftPadding: 32,
+  leftPadding: 40,
   componentPadding: 32,
   horizontalScrollSpeed: 25,
   horizontalScrollThreshold: 100,
@@ -37,6 +37,9 @@ const config = {
   moveSnappingRadius: 20,
   resizingSnappingRadius: 5,
   gridLabelStyle: GridLabelStyle.Clock,
+  // lock
+  lockBorderWidth: 6,
+  maxLockTimeMs: 20000,
   //colors
   colors: {
     gridColor: "rgba(75, 75, 75, 0.2)",
@@ -49,6 +52,7 @@ const config = {
     boundingBoxBorderColor: "rgba(236,102,12, 1)",
     boundingBoxColor: "rgba(236,102,12, 0.1)",
     groupHandleColor: "rgba(236,102,12, 1)",
+    lockColor: "rgb(255,0,0)",
   },
 };
 export default config;
