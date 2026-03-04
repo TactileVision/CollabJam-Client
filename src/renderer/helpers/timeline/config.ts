@@ -12,6 +12,7 @@ const config = {
   horizontalScrollThreshold: 100,
   verticalScrollSpeed: 0.1,
   verticalScrollThreshold: 100,
+  baseTrackDurationMs: 10000,
   // slider
   sliderHeight: 28,
   sliderMinWidth: 5,
