@@ -10,7 +10,6 @@ let staticContainer: Container;
 let liveContainer: Container;
 let lockContainer: Container;
 let resizeObserver: ResizeObserver;
-let animationFrameId: number | null = null;
 let line: Graphics;
 
 /**
@@ -77,31 +76,31 @@ export async function createPixiApp(): Promise<void> {
   pixiApp.stage.addChild(liveContainer);
   pixiApp.stage.addChild(lockContainer);
   // TODO if only the height is changed, this observer will not fire, as the wrapper_element hast zero height
-  resizeObserver = new ResizeObserver((): void => {
-    if (pixiApp == undefined) return;
-    if (pixiApp.renderer.width !== wrapper.clientWidth) {
-      if (animationFrameId != null) return;
 
-      animationFrameId = requestAnimationFrame(() => {
-        const boundingRect: DOMRect = wrapper.getBoundingClientRect();
-        store.dispatch(
-          TimelineActionTypes.UPDATE_WRAPPER_X_OFFSET,
-          boundingRect.x,
-        );
-        store.dispatch(
-          TimelineActionTypes.UPDATE_WRAPPER_Y_OFFSET,
-          boundingRect.top,
-        );
-        store.dispatch(
-          TimelineActionTypes.UPDATE_CANVAS_WIDTH,
-          wrapper.clientWidth,
-        );
-        pixiApp.renderer.resize(wrapper.clientWidth, height);
-        pixiApp.render();
-      });
-      animationFrameId = null;
+  const resizeCallback = (): void => {
+    if (pixiApp == undefined) return;
+    if (pixiApp.renderer.width === wrapper.clientWidth) return;
+
+    const boundingRect: DOMRect = wrapper.getBoundingClientRect();
+    store.dispatch(TimelineActionTypes.UPDATE_WRAPPER_X_OFFSET, boundingRect.x);
+    store.dispatch(
+      TimelineActionTypes.UPDATE_WRAPPER_Y_OFFSET,
+      boundingRect.top,
+    );
+    store.dispatch(
+      TimelineActionTypes.UPDATE_CANVAS_WIDTH,
+      wrapper.clientWidth,
+    );
+
+    const newWidth: number = wrapper.clientWidth;
+    const currentWidth: number = pixiApp.renderer.width;
+
+    if (currentWidth !== newWidth) {
+      animateResize(currentWidth, newWidth, height, 250);
     }
-  });
+  };
+
+  resizeObserver = new ResizeObserver(debounce(resizeCallback, 200));
   resizeObserver.observe(wrapper);
 
   const boundingRect: DOMRect = wrapper.getBoundingClientRect();
@@ -109,6 +108,50 @@ export async function createPixiApp(): Promise<void> {
   store.dispatch(TimelineActionTypes.UPDATE_WRAPPER_Y_OFFSET, boundingRect.top);
   store.dispatch(TimelineActionTypes.UPDATE_CANVAS_WIDTH, wrapper.clientWidth);
 }
+
+function debounce<T extends (...args: unknown[]) => void>(
+  func: T,
+  delayMs: number,
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delayMs);
+  };
+}
+
+/*
+ * Interpolates between two widths.
+ * Currently height is fixed anyway.
+ * */
+function animateResize(
+  from: number,
+  to: number,
+  height: number,
+  duration: number,
+) {
+  const start = performance.now();
+
+  function frame(now: number) {
+    const progress = Math.min((now - start) / duration, 1);
+
+    // Ease-Out
+    const eased = 1 - Math.pow(1 - progress, 3);
+
+    const currentWidth = from + (to - from) * eased;
+
+    pixiApp.renderer.resize(currentWidth, height);
+    pixiApp.render();
+
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
 export function clearPixiApp(): void {
   if (pixiApp == undefined) return;
   pixiApp.destroy({ removeView: true }, { children: true });
