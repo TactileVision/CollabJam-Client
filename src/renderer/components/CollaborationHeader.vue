@@ -14,7 +14,8 @@
                 @mouseenter="showToolTip(toolTipKeys.RECORD)"
                 @mouseleave="clearToolTip"
                 :disabled="
-                  store.state.roomSettings.mode == 3
+                  store.state.roomSettings.mode == 3 ||
+                  store.state.roomSettings.id === undefined
                 "
                 :icon="
                   store.state.roomSettings.mode == 2 ? 'mdi-stop' : 'mdi-record'
