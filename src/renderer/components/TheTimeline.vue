@@ -18,7 +18,13 @@ import config from "@/renderer/helpers/timeline/config";
 import TheTimelineGrid from "@/renderer/components/TheTimelineGrid.vue";
 import TheCursorPositionIndicator from "@/renderer/components/TheCursorPositionIndicator.vue";
 import TheTimelineScrollbar from "@/renderer/components/TheTimelineScrollbar.vue";
-import {BlockData, BlockSelection, SnackbarTexts, TimelineEvents} from "@/renderer/helpers/timeline/types";
+import {
+  BlockData,
+  BlockSelection,
+  SliderStateSnapshot,
+  SnackbarTexts,
+  TimelineEvents
+} from "@/renderer/helpers/timeline/types";
 import {InteractionMode} from "@sharedTypes/roomTypes";
 import {
   OutputChannelState,
@@ -59,9 +65,7 @@ export default defineComponent({
       ticker: null as PIXI.Ticker | null,
       currentTime: 0,
       lastTactonId: null as string | null,
-      lastHorizontalViewportOffset: 0,
-      lastZoom: 0,
-      initZoom: 0,
+      sliderStateSnapshot: {} as SliderStateSnapshot,
       isSliderFollowing: false,
       liveBlockBuilder: new LiveBlockBuilder(),
       latency: 0,
@@ -106,32 +110,13 @@ export default defineComponent({
         });
       }
     },
-    calculateInitialZoom(duration: number) {
+    durationToPixels(durationMs: number): number {
+      const durationInSeconds = durationMs / 1000;
+      return durationInSeconds * config.pixelsPerSecond + config.pixelsPerSecond;
+    },
+    calculateInitialZoom(durationInPixels: number): number {
       const viewportWidth = this.store.state.timeline.canvasWidth - config.leftPadding;
-      const durationInSeconds = duration / 1000;
-      const durationInPixels =
-        durationInSeconds * config.pixelsPerSecond + config.pixelsPerSecond;
-      const zoom = viewportWidth / durationInPixels;
-
-      console.debug("viewportWidth", viewportWidth);
-      console.debug("totalDuration:", durationInSeconds.toFixed(2), "s");
-      console.debug("durationInPixels", durationInPixels);
-      console.debug("zoom: ", zoom);
-
-      this.store.dispatch(
-        TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
-        0,
-      );
-      this.store.dispatch(
-        TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
-        durationInPixels,
-      );
-      this.store.dispatch(
-        TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
-        durationInPixels,
-      );
-      this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
-      this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
+      return viewportWidth / durationInPixels;
     },
     playback() {
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
@@ -232,8 +217,31 @@ export default defineComponent({
           const blockData: BlockData[] = parsed.blockData;
           
           // set initZoom
-          this.calculateInitialZoom(parsed.duration);
-          this.lastZoom = this.store.state.timeline.zoomLevel;
+          const durationInPixels = this.durationToPixels(parsed.duration);
+          const zoom = this.calculateInitialZoom(durationInPixels);
+
+          this.store.dispatch(
+              TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
+              0,
+          );
+          this.store.dispatch(
+              TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
+              durationInPixels,
+          );
+          this.store.dispatch(
+              TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
+              durationInPixels,
+          );
+          this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
+          this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
+          
+          this.sliderStateSnapshot = {
+            horizontalViewportOffset: 0, 
+            initialViewportWidth: durationInPixels,
+            viewportWidth: durationInPixels,
+            initialZoom: zoom, 
+            zoom: zoom
+          }
 
           // FTC
           // calculated trackCount
@@ -333,16 +341,34 @@ export default defineComponent({
       this.store.dispatch(TimelineActionTypes.CLEAR_LOCKS);
     
       if (mode == InteractionMode.Recording) {
-        // TODO show all possible trackLInes when recording
         // store values
-        this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
-        this.lastZoom = this.store.state.timeline.zoomLevel;
+        this.sliderStateSnapshot.horizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+        this.sliderStateSnapshot.zoom = this.store.state.timeline.zoomLevel;
+        this.sliderStateSnapshot.viewportWidth = this.store.state.timeline.currentVirtualViewportWidth;
+        
+        // calculate full timeline zoom
+        const durationInPixels = this.durationToPixels(config.baseTrackDurationMs);
+        const zoom = this.calculateInitialZoom(durationInPixels);
+
+        this.store.dispatch(
+            TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
+            0,
+        );
+        this.store.dispatch(
+            TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
+            durationInPixels,
+        );
+        this.store.dispatch(
+            TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
+            durationInPixels,
+        );
+        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
+        this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
 
         // prepare for recording
         this.slider.setInteractivity(false);
         this.store.state.timeline.blockManager?.toggleBlockVisibility(false);
-        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
-        this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
+        this.slider.updateSliderToViewport();
         this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
         this.canceledRecording = false;
 
@@ -351,15 +377,18 @@ export default defineComponent({
       } else if (mode == InteractionMode.Overdubbing) {
         if (this.tacton != null) {
           // store values
-          this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
-          this.lastZoom = this.store.state.timeline.zoomLevel;
+          this.sliderStateSnapshot.horizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+          this.sliderStateSnapshot.zoom = this.store.state.timeline.zoomLevel;
 
+          // show full timeline
+          this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
+          this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);
+          this.slider.updateSliderToViewport();
+          
           // prepare for overdubbing
           this.slider.setInteractivity(false);
           this.isSliderFollowing = this.isTactonInViewport();
           this.store.state.timeline.blockManager?.blockInteraction(true);
-          this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.store.state.timeline.initialZoomLevel);
-          this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, 0);    
           this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
 
           this.isFirstTick = true;
@@ -377,18 +406,38 @@ export default defineComponent({
         this.store.state.timeline.blockManager?.blockInteraction(false);
         this.slider.setInteractivity(true);
         
-        // apply last horizontalViewportOffset
-        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, this.lastZoom);
-        this.store.dispatch(TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET, this.lastHorizontalViewportOffset);
+        // apply last state
 
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
+          this.sliderStateSnapshot.horizontalViewportOffset
+        );
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
+          this.sliderStateSnapshot.initialViewportWidth,
+        );
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
+          this.sliderStateSnapshot.viewportWidth,
+        );
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_ZOOM_LEVEL,
+          this.sliderStateSnapshot.zoom
+        );
+        this.store.dispatch(
+          TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL,
+          this.sliderStateSnapshot.initialZoom
+        );
+        
+        this.slider.updateSliderToViewport();
         // hide cursor
         this.playHead?.hide();
       } else if (mode == InteractionMode.Playback) {
         this.isSliderFollowing = this.isTactonInViewport();
 
         // store values
-        this.lastZoom = this.store.state.timeline.zoomLevel;
-        this.lastHorizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+        this.sliderStateSnapshot.horizontalViewportOffset = this.store.state.timeline.horizontalViewportOffset;
+        this.sliderStateSnapshot.zoom = this.store.state.timeline.zoomLevel;
 
         // prepare for playback
         this.slider.setInteractivity(false);

@@ -288,7 +288,7 @@ export class Slider {
     }
     return Math.max(0, ro);
   }
-  private updateSliderToViewport(): void {
+  public updateSliderToViewport(): void {
     const lo: number = this.store.state.timeline.horizontalViewportOffset;
     const ro: number = this.getRightOverflow();
 

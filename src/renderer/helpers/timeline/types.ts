@@ -150,3 +150,11 @@ export const SnackbarTexts = {
   SELECTION_EXPIRED: (): string =>
     "Your block selection expired due to inactivity and is now available for others to edit.",
 };
+
+export interface SliderStateSnapshot {
+  initialZoom: number;
+  zoom: number;
+  initialViewportWidth: number;
+  viewportWidth: number;
+  horizontalViewportOffset: number;
+}
