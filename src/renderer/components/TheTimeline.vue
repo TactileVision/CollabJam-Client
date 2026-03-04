@@ -118,6 +118,26 @@ export default defineComponent({
       const viewportWidth = this.store.state.timeline.canvasWidth - config.leftPadding;
       return viewportWidth / durationInPixels;
     },
+    initTimelineState(): void {
+      // init timeline
+      const durationInPixels = this.durationToPixels(config.baseTrackDurationMs);
+      const zoom = this.calculateInitialZoom(durationInPixels);
+
+      this.store.dispatch(
+        TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
+        0,
+      );
+      this.store.dispatch(
+        TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
+        durationInPixels,
+      );
+      this.store.dispatch(
+        TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
+        durationInPixels,
+      );
+      this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
+      this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
+    },
     playback() {
       const x = ((this.currentTime / 1000) * (config.pixelsPerSecond * this.store.state.timeline.zoomLevel));
       this.playHead?.moveToPosition(x, this.isSliderFollowing);
@@ -317,25 +337,7 @@ export default defineComponent({
         this.store.state.timeline.blockManager?.clearData();
         this.store.state.timeline.groups.clear();
         this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
-        
-        // init timeline
-        const durationInPixels = this.durationToPixels(config.baseTrackDurationMs);
-        const zoom = this.calculateInitialZoom(durationInPixels);
-
-        this.store.dispatch(
-            TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
-            0,
-        );
-        this.store.dispatch(
-            TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
-            durationInPixels,
-        );
-        this.store.dispatch(
-            TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
-            durationInPixels,
-        );
-        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
-        this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
+        this.initTimelineState();
       }
     },
     interactionMode(mode) {
@@ -364,23 +366,7 @@ export default defineComponent({
         this.sliderStateSnapshot.viewportWidth = this.store.state.timeline.currentVirtualViewportWidth;
         
         // calculate full timeline zoom
-        const durationInPixels = this.durationToPixels(config.baseTrackDurationMs);
-        const zoom = this.calculateInitialZoom(durationInPixels);
-
-        this.store.dispatch(
-            TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
-            0,
-        );
-        this.store.dispatch(
-            TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
-            durationInPixels,
-        );
-        this.store.dispatch(
-            TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
-            durationInPixels,
-        );
-        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
-        this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
+        this.initTimelineState();
 
         // prepare for recording
         this.slider.setInteractivity(false);
@@ -522,6 +508,8 @@ export default defineComponent({
     this.ticker = PIXI.Ticker.shared;
     this.ticker.autoStart = false;
     this.ticker.stop();
+
+    this.initTimelineState();
     
     // instantiateArray to initialize computed-value channelStates
     this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
