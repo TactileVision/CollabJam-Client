@@ -10,9 +10,8 @@ let staticContainer: Container;
 let liveContainer: Container;
 let lockContainer: Container;
 let resizeObserver: ResizeObserver;
-let animationFrameId: number | null = null;
 let line: Graphics;
-
+let store: Store;
 /**
  * Initialises the Pixi-Canvas
  */
@@ -30,7 +29,7 @@ export async function createPixiApp(): Promise<void> {
     antialias: true,
   });
 
-  const store: Store = useStore();
+  store = useStore();
 
   const wrapper: HTMLElement | null = document.getElementById("timelineCanvas");
   if (wrapper == null) {
@@ -44,7 +43,7 @@ export async function createPixiApp(): Promise<void> {
   // create canvas
   pixiApp.renderer.resize(wrapper.clientWidth, height);
   pixiApp.canvas.style.position = "absolute";
-  pixiApp.canvas.style.right = "0";
+  pixiApp.canvas.style.left = "0";
   pixiApp.canvas.style.top = "0";
 
   // add canvas to wrapper
@@ -77,31 +76,23 @@ export async function createPixiApp(): Promise<void> {
   pixiApp.stage.addChild(liveContainer);
   pixiApp.stage.addChild(lockContainer);
   // TODO if only the height is changed, this observer will not fire, as the wrapper_element hast zero height
-  resizeObserver = new ResizeObserver((): void => {
-    if (pixiApp == undefined) return;
-    if (pixiApp.renderer.width !== wrapper.clientWidth) {
-      if (animationFrameId != null) return;
 
-      animationFrameId = requestAnimationFrame(() => {
-        const boundingRect: DOMRect = wrapper.getBoundingClientRect();
-        store.dispatch(
-          TimelineActionTypes.UPDATE_WRAPPER_X_OFFSET,
-          boundingRect.x,
-        );
-        store.dispatch(
-          TimelineActionTypes.UPDATE_WRAPPER_Y_OFFSET,
-          boundingRect.top,
-        );
-        store.dispatch(
-          TimelineActionTypes.UPDATE_CANVAS_WIDTH,
-          wrapper.clientWidth,
-        );
-        pixiApp.renderer.resize(wrapper.clientWidth, height);
-        pixiApp.render();
-      });
-      animationFrameId = null;
-    }
-  });
+  const resizeCallback = (): void => {
+    if (pixiApp == undefined) return;
+    const currentWidth: number = pixiApp.renderer.width;
+    const newWidth: number = wrapper.clientWidth;
+    if (currentWidth === newWidth) return;
+
+    const boundingRect: DOMRect = wrapper.getBoundingClientRect();
+    store.dispatch(TimelineActionTypes.UPDATE_WRAPPER_X_OFFSET, boundingRect.x);
+    store.dispatch(
+      TimelineActionTypes.UPDATE_WRAPPER_Y_OFFSET,
+      boundingRect.top,
+    );
+    animateResize(currentWidth, newWidth, height, 150);
+  };
+
+  resizeObserver = new ResizeObserver(debounce(resizeCallback, 100));
   resizeObserver.observe(wrapper);
 
   const boundingRect: DOMRect = wrapper.getBoundingClientRect();
@@ -109,6 +100,48 @@ export async function createPixiApp(): Promise<void> {
   store.dispatch(TimelineActionTypes.UPDATE_WRAPPER_Y_OFFSET, boundingRect.top);
   store.dispatch(TimelineActionTypes.UPDATE_CANVAS_WIDTH, wrapper.clientWidth);
 }
+
+function debounce<T extends (...args: unknown[]) => void>(
+  func: T,
+  delayMs: number,
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  return (...args: Parameters<T>): void => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout((): void => func(...args), delayMs);
+  };
+}
+
+/*
+ * Interpolates between two widths.
+ * Currently height is fixed anyway.
+ * */
+function animateResize(
+  from: number,
+  to: number,
+  height: number,
+  duration: number,
+): void {
+  const start: number = performance.now();
+  function frame(now: number): void {
+    const progress: number = Math.min((now - start) / duration, 1);
+    const eased: number = 1 - Math.pow(1 - progress, 6);
+    const currentWidth: number = from + (to - from) * eased;
+
+    pixiApp.renderer.resize(currentWidth, height);
+    pixiApp.render();
+    // TODO could be even smoother if this is set before -> grid lines are already rendered but need to split slider update
+    store.dispatch(TimelineActionTypes.UPDATE_CANVAS_WIDTH, currentWidth);
+
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
 export function clearPixiApp(): void {
   if (pixiApp == undefined) return;
   pixiApp.destroy({ removeView: true }, { children: true });
