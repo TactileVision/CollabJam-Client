@@ -276,9 +276,6 @@ export default defineComponent({
 
           this.playHead?.drawCursor();
           this.playHead?.hide();
-
-          // render components
-          this.mounted = true;
         } else {
           // current tacton was updated
           // parse instructions
@@ -316,9 +313,29 @@ export default defineComponent({
           //this.renderTrackLines();
         }
       } else {
+        // clear data
         this.store.state.timeline.blockManager?.clearData();
         this.store.state.timeline.groups.clear();
         this.store.dispatch(TimelineActionTypes.DELETE_ALL_BLOCKS);
+        
+        // init timeline
+        const durationInPixels = this.durationToPixels(config.baseTrackDurationMs);
+        const zoom = this.calculateInitialZoom(durationInPixels);
+
+        this.store.dispatch(
+            TimelineActionTypes.UPDATE_HORIZONTAL_VIEWPORT_OFFSET,
+            0,
+        );
+        this.store.dispatch(
+            TimelineActionTypes.UPDATE_INITIAL_VIRTUAL_VIEWPORT_WIDTH,
+            durationInPixels,
+        );
+        this.store.dispatch(
+            TimelineActionTypes.UPDATE_CURRENT_VIRTUAL_VIEWPORT_WIDTH,
+            durationInPixels,
+        );
+        this.store.dispatch(TimelineActionTypes.UPDATE_ZOOM_LEVEL, zoom);
+        this.store.dispatch(TimelineActionTypes.UPDATE_INITIAL_ZOOM_LEVEL, zoom);
       }
     },
     interactionMode(mode) {
@@ -508,6 +525,7 @@ export default defineComponent({
     
     // instantiateArray to initialize computed-value channelStates
     this.store.dispatch(TactonSettingsActionTypes.instantiateArray);
+    this.mounted = true;
   },
   beforeUnmount() {
     WebSocketAPI.requestEditingForUuids(
