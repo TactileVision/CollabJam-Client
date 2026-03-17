@@ -223,14 +223,14 @@ export class BlockManager {
           (block: BlockDTO, index: number): void => {
             // check for groups
             if (block.groupUuid) {
-              if (!groups.has(block.groupUuid)) {
-                groups.set(block.groupUuid, []);
-              }
-              groups.get(block.groupUuid)!.push({
+              const group = groups.get(block.groupUuid) ?? [];
+              group.push({
                 trackId: block.trackId,
                 index: index,
                 uuid: block.uuid,
+                groupUuid: block.groupUuid,
               });
+              groups.set(block.groupUuid, group);
             }
 
             // save selectionData
@@ -242,6 +242,7 @@ export class BlockManager {
         );
       },
     );
+
     groups.forEach((selection: BlockSelection[], groupUuid: string) => {
       this.store.dispatch(TimelineActionTypes.ADD_GROUP, {
         groupUuid: groupUuid,
@@ -251,33 +252,117 @@ export class BlockManager {
 
     this.store.dispatch(TimelineActionTypes.GET_LAST_BLOCK_POSITION);
 
+    // rebuild selection data
     let toHighlight: BlockDTO | null = null;
-    // update selectionData
-    for (const selection of this.store.state.timeline.selectedBlocks) {
+    const length: number = this.store.state.timeline.selectedBlocks.length;
+    const groupsFoundInSelection: Map<string, BlockSelection[]> = new Map();
+
+    for (let i = length - 1; i >= 0; i--) {
+      const selection: BlockSelection =
+        this.store.state.timeline.selectedBlocks[i];
       let block: BlockDTO =
         this.store.state.timeline.blocks[selection.trackId][selection.index];
-      if (block == undefined || block.uuid != selection.uuid) {
-        // mismatch
+
+      if (block === undefined || block.uuid != selection.uuid) {
+        // the reference changed (e.g. pasting a block by undo / redo, thus changing the index
+        // --> assign correct index
         const correctData = correctSelectionData.get(selection.uuid);
-        if (correctData != undefined) {
-          selection.trackId = correctData.trackId;
-          selection.index = correctData.index;
-          if (block == undefined) {
-            block =
-              this.store.state.timeline.blocks[selection.trackId][
-                selection.index
-              ];
-          }
+        if (!correctData) {
+          // previously selected block was removed (e.g. by undo)
+          //  -> remove block from selection
+          this.store.state.timeline.selectedBlocks.splice(i, 1);
+          this.stashedSelection.delete(selection.uuid);
+          if (selection.groupUuid === null) continue; // was in no group, continue
+
+          const members: BlockSelection[] | undefined = groups.get(
+            selection.groupUuid,
+          );
+          if (members === undefined) continue;
+
+          // fix stale border data
+          const border: Border | undefined = this.renderedGroupBorders.get(
+            selection.groupUuid,
+          );
+          if (border === undefined) continue;
+
+          // update bounding data -> new member could result in new bounds
+          const newBoundingData: BoundingData = getBoundingData(
+            members,
+            this.editedGroupMemberUuid,
+            this.lastTrackOffset,
+          );
+
+          border.topBlock = newBoundingData.topBlock!;
+          border.bottomBlock = newBoundingData.bottomBlock!;
+          border.firstBlock = newBoundingData.firstBlock!;
+          border.lastBlock = newBoundingData.lastBlock!;
+
+          continue;
         }
+
+        selection.trackId = correctData.trackId;
+        selection.index = correctData.index;
+        block =
+          this.store.state.timeline.blocks[selection.trackId][selection.index];
       }
+
       if (block.uuid === this.editedGroupMemberUuid) {
+        // reselect
         toHighlight = block;
       }
+
+      // block could be part of a group
+      // if group is selected, a member could not be in the current selection and must be added here (e.g. due to undo / redo)
+      // filter groups from selection
+      if (block.groupUuid !== null) {
+        const group: BlockSelection[] =
+          groupsFoundInSelection.get(block.groupUuid) ?? [];
+        group.push({
+          trackId: block.trackId,
+          index: selection.index,
+          uuid: block.uuid,
+          groupUuid: block.groupUuid,
+        });
+        groupsFoundInSelection.set(block.groupUuid, group);
+      }
+    }
+    // detect and fix missing members due to undo / redo
+    for (const [groupUuid, members] of groupsFoundInSelection) {
+      const correctGroup: BlockSelection[] | undefined = groups.get(groupUuid);
+      if (correctGroup === undefined) continue;
+      if (correctGroup.length === members.length) continue; // no missmatch, no problem
+
+      // fix selection data
+      const missing: BlockSelection[] = correctGroup.filter(
+        (cm) => !members.some((m) => cm.uuid === m.uuid),
+      );
+      this.store.state.timeline.selectedBlocks.push(...missing);
+
+      const border: Border | undefined =
+        this.renderedGroupBorders.get(groupUuid);
+      if (border === undefined) continue;
+
+      // update bounding data -> new member could result in new bounds
+      const newBoundingData: BoundingData = getBoundingData(
+        correctGroup,
+        this.editedGroupMemberUuid,
+        this.lastTrackOffset,
+      );
+
+      border.topBlock = newBoundingData.topBlock!;
+      border.bottomBlock = newBoundingData.bottomBlock!;
+      border.firstBlock = newBoundingData.firstBlock!;
+      border.lastBlock = newBoundingData.lastBlock!;
     }
 
-    if (toHighlight) {
+    if (toHighlight !== null) {
+      // if previously editing group, highlight member
       this.highlightCurrentMember(toHighlight);
     } else {
+      // was not groupEditing or groupMember was removed (e.g. by undo)
+      // leave groupEditing and (if existing) render normal selection
+      this.editedGroupUuid = null;
+      this.editedGroupMemberUuid = null;
       this.renderSelection();
     }
 
@@ -977,6 +1062,7 @@ export class BlockManager {
               trackId: block.trackId,
               index: 0,
               uuid: block.uuid,
+              groupUuid: block.groupUuid,
             });
           });
 
@@ -1955,6 +2041,7 @@ export class BlockManager {
       this.store.state.timeline.groups.get(block.groupUuid!);
     if (members == undefined) return;
 
+    // if multiselection is active (e.g. one group and some other blocks), clear and select only members of group
     members.forEach((sel) => this.stashedSelection.set(sel.uuid, sel));
     this.store.dispatch(TimelineActionTypes.CLEAR_SELECTION);
     this.store.dispatch(
@@ -2064,6 +2151,7 @@ export class BlockManager {
           trackId: toSelect.trackId,
           index: index,
           uuid: toSelect.uuid,
+          groupUuid: toSelect.groupUuid,
         };
         if (selectionIndex == -1) {
           // block is not selected
@@ -3386,6 +3474,7 @@ export class BlockManager {
             trackId: trackId,
             index: index,
             uuid: block.uuid,
+            groupUuid: block.groupUuid,
           };
           selectedBlocks.push(selection);
         }

@@ -115,6 +115,7 @@ export interface BlockSelection {
   trackId: number;
   index: number;
   uuid: string;
+  groupUuid: string | null;
 }
 export interface BlockData {
   trackId: number;
